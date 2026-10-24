@@ -46,6 +46,10 @@ bool runQualityTests(){
     {
         auto fresh=std::make_unique<PRISMVSTAudioProcessor>();
         fresh->prepareToPlay(48000,512);
+        // A stopped DAW transport has no measured peaks: UI must never start red.
+        if(fresh->getRootBandPeakRevision()!=0)return false;
+        for(int root=0;root<7;++root)
+            if(fresh->getRootBandPeakDb(root)>-120.f)return false;
         {
             std::unique_ptr<juce::AudioProcessorEditor> factory(fresh->createEditor());
             auto image=factory->createComponentSnapshot(factory->getLocalBounds());

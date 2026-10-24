@@ -276,6 +276,7 @@ PRISMVSTAudioProcessor::PRISMVSTAudioProcessor()
     for (int s = 0; s < numSections; ++s)
     {
         stereoActivity[(size_t)s].store(0.0f);
+        rootBandPeakDb[(size_t)s].store(-144.0f);
         soloParameterIds[(size_t)s] = sectionId(s, "solo");
         apvts.addParameterListener(soloParameterIds[(size_t)s], this);
     }
@@ -1219,7 +1220,10 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
     rootMeters[2].store(meters.sideRms); rootMeters[3].store(meters.spaceApplied);
     rootMeters[4].store(meters.largestGrDb);
     for(int root=0;root<numSections;++root)
-        rootBandPeakDb[(size_t)root].store((float)meters.rootPeakDb[(size_t)root]);
+        rootBandPeakDb[(size_t)root].store((float)meters.rootPeakDb[(size_t)root],std::memory_order_relaxed);
+    // UI may consume a measurement only once. Otherwise stopping the host
+    // after a loud block would refresh the red warning indefinitely.
+    rootBandPeakRevision_.fetch_add(1,std::memory_order_release);
     gainReductionDb.store((float)meters.largestGrDb);
 }
 

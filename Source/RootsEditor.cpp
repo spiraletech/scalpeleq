@@ -1200,12 +1200,15 @@ void RootsEditor::setMode(int next){
 }
 void RootsEditor::updateRootButtons(){
     const double nowMs=juce::Time::getMillisecondCounterHiRes();
+    const auto revision=processor_.getRootBandPeakRevision();
+    const bool fresh=revision!=lastPeakRevision_;
+    lastPeakRevision_=revision;
     std::array<float,7> warnings{};
     for(int root=0;root<7;++root){
         const bool selected=graph_.selectedNode()/2==root;
         auto& button=rootButtons_[(size_t)root];
         button.setToggleState(selected,juce::dontSendNotification);
-        if(processor_.getRootBandPeakDb(root)>=-0.01f)
+        if(fresh&&processor_.getRootBandPeakDb(root)>=-0.01f)
             peakWarningUntilMs_[(size_t)root]=nowMs+750.0;
         const bool peak=nowMs<peakWarningUntilMs_[(size_t)root];
         const float pulse=.35f+.25f*(float)std::sin(nowMs*.0043);

@@ -146,6 +146,7 @@ private:
     float backgroundScale_=0;
     std::array<RootSelectorButton,7> rootButtons_;
     std::array<double,7> peakWarningUntilMs_{};
+    std::uint64_t lastPeakRevision_=0;
     juce::Slider gain_,threshold_,limitAmount_,analyzerSlope_,analyzerMemory_;
     juce::ComboBox analyzerDepth_,weatherMode_,jukeMode_;
     juce::Label jukeModeLabel_;
