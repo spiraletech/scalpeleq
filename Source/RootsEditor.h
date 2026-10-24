@@ -132,10 +132,9 @@ private:
     PRISMVSTAudioProcessor& processor_;
     RootsGraph graph_;
     SurgeryLookAndFeel lookAndFeel_;
-    juce::Image rackChassis_,rackBackground_;
+    juce::Image rackBackground_;
     int backgroundMode_=-1;
     float backgroundScale_=0;
-    surgery::rack::StormChassis stormChassis_;
     std::array<RootSelectorButton,7> rootButtons_;
     std::array<double,7> peakWarningUntilMs_{};
     juce::Slider gain_,threshold_,limitAmount_,analyzerSlope_,analyzerMemory_;

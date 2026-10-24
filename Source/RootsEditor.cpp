@@ -797,7 +797,7 @@ void RootsGraph::popup(){
             if(id>=80&&id<=87)change(graph.processor_,colorId,(float)swatches[id-80]);
             if(id==99){
                 auto* dialog=new juce::AlertWindow(
-                    "ROOT COLOUR","Enter a 6-digit RGB hexadecimal value",
+                    "BAND ACCENT","Enter a 6-digit RGB hexadecimal value",
                     juce::MessageBoxIconType::NoIcon);
                 dialog->addTextEditor("hex","6BBDD4","RRGGBB");
                 dialog->addButton("APPLY",1);
@@ -819,7 +819,6 @@ void RootsGraph::popup(){
 RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
 : juce::AudioProcessorEditor(&p),processor_(p),graph_(p) {
     setLookAndFeel(&lookAndFeel_);
-    rackChassis_=juce::ImageCache::getFromMemory(BinaryData::chassis1_0_3_png,BinaryData::chassis1_0_3_pngSize);
 
     addAndMakeVisible(graph_);
     graph_.onSelectNode=[this](int n){bindNode(n);};
@@ -862,8 +861,8 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         s->setColour(juce::Slider::textBoxBackgroundColourId,juce::Colour::fromRGB(13,19,25));
         s->setColour(juce::Slider::textBoxOutlineColourId,juce::Colour::fromRGB(38,55,65));
     }
-    gainLabel_.setText("ROOT GAIN (dB)",juce::dontSendNotification);
-    gain_.setTooltip("Entire ROOT frequency range gain: -60 to +60 dB");
+    gainLabel_.setText("BAND GAIN (dB)",juce::dontSendNotification);
+    gain_.setTooltip("Selected BAND frequency range gain: -60 to +60 dB");
 
     thresholdLabel_.setText("COMP THRESHOLD",juce::dontSendNotification);
     threshold_.setTooltip("Compression stays OFF until you choose a COMPRESSION profile. Double-click resets to 0 dBFS.");
@@ -926,7 +925,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         onyxLabels_[(size_t)i].setColour(juce::Label::textColourId,juce::Colours::white);
         addAndMakeVisible(onyxLabels_[(size_t)i]);
     }
-    mono_.setTooltip("Frequency-selective MONO on the selected ROOT only");
+    mono_.setTooltip("Frequency-selective MONO on the selected BAND only");
     phase_.setTooltip("Automatic per-band coherence guard: gently reduces anti-correlated SIDE power, with smoothed engagement.");
     limit_.setTooltip("Enable per-band optical leveling; adjust amount with the adjacent single knob.");
     analyzerDepthLabel_.setText("HEAT MAP",juce::dontSendNotification);
@@ -1209,10 +1208,8 @@ thresholdLabel_.setText("COMP THRESHOLD",
     const bool sonar=pval(processor_.apvts,"aura_color")>=.5f,reduced=pval(processor_.apvts,"sonar_reduced_motion")>=.5f;
     if(weatherMode_.getSelectedId()!=style+1)weatherMode_.setSelectedId(style+1,juce::dontSendNotification);
     graph_.updateWeather(newWeather?&weatherSnapshot:nullptr,elapsed,(sonar&&style>0)||juke<5||xray,reduced,pval(processor_.apvts,"aura_memory"),sonar?style:0);
-    if(stormChassis_.update(graph_.weatherMeaning(),elapsed,pval(processor_.apvts,"aura_memory"),graph_.isFrozen(),reduced,juke<5,juke)){
-        repaint(surgery::rack::StormChassis::top(getWidth()).expanded(6).toNearestInt());
-        for(bool right:{false,true})repaint(surgery::rack::StormChassis::side(getWidth(),getHeight(),right).expanded(6).toNearestInt());
-    }
+    // The old Surgery JUKE exterior is intentionally retired. X-RAY alone
+    // consumes shared weather measurements and repaints its own graph bounds.
     const auto state=processor_.getRootsMeter();
     const juce::String status=
         "IN "+juce::String(processor_.getInputPeakDb(),1)+" dBFS  /  OUT "+

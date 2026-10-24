@@ -144,7 +144,9 @@ if(PRISMVST_BUILD_TESTS)
   add_test(NAME prismvst_tests COMMAND prismvst_tests)
   add_test(NAME surgery_weather_calibration COMMAND prismvst_tests --weather-calibration)
   add_test(NAME surgery_weather_field COMMAND prismvst_tests --weather-field)
-  add_test(NAME surgery_storm_chassis COMMAND prismvst_tests --storm-chassis)
+  # The legacy Surgery JUKE river renderer is no longer displayed by Scalpel.
+  # Its historical diagnostic remains callable with --storm-chassis but is
+  # excluded from Scalpel's active visual release regression suite.
   # Independent native C++20 ROOTS core; deliberately not linked into v1.2 DSP.
   add_executable(prism_roots_tests Tests/RootsCoreTests.cpp Source/PrismRootsCore.h)
   target_compile_features(prism_roots_tests PRIVATE cxx_std_20)
