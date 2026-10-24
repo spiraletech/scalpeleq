@@ -369,6 +369,7 @@ bool runQualityTests(){
     // host rectangle to test letterboxing. Also capture the actual shipped
     // 16:9 editor size so visual review cannot mistake fixture padding for
     // the production Scalpel hardware proportions.
+    set(*p,"scalpel_xray",1);
     editor->setSize(1344,756);
     if(!click(*editor,"COLOR"))return false;
     juce::Thread::sleep(40);juce::Timer::callPendingTimersSynchronously();
