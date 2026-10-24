@@ -72,7 +72,7 @@ bool runQualityTests(){
         for(auto* child:ui->getChildren())if(auto* label=dynamic_cast<juce::Label*>(child)){
             if(label->getText()=="COMP THRESHOLD"){
                 for(auto* candidate:ui->getChildren())if(auto* slider=dynamic_cast<juce::Slider*>(candidate)){
-                    if(slider->getX()==label->getX()&&slider->isVisible()){
+                    if(std::abs(slider->getBounds().getCentreX()-label->getBounds().getCentreX())<25&&slider->isVisible()){
                         thresholdFound=true;
                         if(slider->onDragStart)slider->onDragStart();
                         slider->setValue(-42,juce::sendNotificationSync);
@@ -311,7 +311,7 @@ bool runQualityTests(){
             if(theme==0&&mode==3){
                 juce::TextButton* sonar=nullptr;
                 for(auto* child:editor->getChildren())if(auto* button=dynamic_cast<juce::TextButton*>(child))
-                    if(button->getButtonText().startsWith("SONAR "))sonar=button;
+                    if(button->getButtonText()=="HEAT MAP")sonar=button;
                 if(sonar==nullptr||!sonar->getToggleState())return false;
                 sonar->setToggleState(false,juce::sendNotificationSync);
                 juce::Thread::sleep(40);juce::Timer::callPendingTimersSynchronously();

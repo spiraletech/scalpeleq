@@ -5,8 +5,9 @@
 namespace surgery::rack {
 inline juce::AffineTransform contentTransform(int width,int height){
     const auto area=instrumentArea(width,height);
-    const float s=std::min(area.getWidth()/1120.f,area.getHeight()/755.f);
-    return juce::AffineTransform::scale(s).translated(area.getCentreX()-560*s,area.getCentreY()-377.5f*s);
+    // Scalpel is a wide 16:9 instrument, not the tall Surgery rack.
+    const float s=std::min(area.getWidth()/1120.f,area.getHeight()/630.f);
+    return juce::AffineTransform::scale(s).translated(area.getCentreX()-560*s,area.getCentreY()-315.f*s);
 }
 inline juce::Path cut(juce::Rectangle<float> r,float c=4){
     juce::Path p;

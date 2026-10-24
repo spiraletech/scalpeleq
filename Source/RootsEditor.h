@@ -147,7 +147,7 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> jukeModeA_;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> reducedMotionA_;
     juce::TextButton heatToggle_{"SONAR ON"},freezeButton_{"FREEZE"};
-    juce::TextButton mono_{"MONO"},on_{"ON"},solo_{"SOLO"},phase_{"PHASE"},limit_{"LIMIT"};
+    juce::TextButton mono_{"MONO"},on_{"ON"},off_{"OFF"},solo_{"SOLO"},phase_{"PHASE"},limit_{"LIMIT"};
     int mode_=0,carveSlot_=0;
     std::array<juce::TextButton,4> modeButtons_;
     std::array<juce::TextButton,4> carveSlotButtons_;
@@ -157,7 +157,7 @@ private:
     std::array<std::unique_ptr<SliderA>,5> onyxAttachments_;
     juce::TextButton xrayButton_{"X-RAY"};
     std::unique_ptr<ButtonA> xrayAttachment_;
-    juce::TextButton carveOn_{"CARVE ON"},carveDynamic_{"DYNAMIC"};
+    juce::TextButton carveOn_{"ON"},carveOff_{"OFF"},carveDynamic_{"DYNAMIC"};
     juce::Label carveFrequencyLabel_,carveDepthLabel_,carveQLabel_;
     std::unique_ptr<SliderA> carveFrequencyA_,carveDepthA_,carveQA_;
     std::unique_ptr<ButtonA> carveOnA_,carveDynamicA_;

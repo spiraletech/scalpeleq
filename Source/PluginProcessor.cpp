@@ -502,7 +502,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
     p.push_back(std::make_unique<juce::AudioParameterBool>(
         juce::ParameterID { "roots_mono", 1 }, "ROOTS Mono", false));
     p.push_back(std::make_unique<juce::AudioParameterBool>(
-        juce::ParameterID { "scalpel_xray", 1 }, "X-RAY Visualizer", false));
+        juce::ParameterID { "scalpel_xray", 1 }, "X-RAY Visualizer", true));
     p.push_back(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID { "roots_space", 1 }, "ROOTS Space",
         juce::NormalisableRange<float>(0.0f,100.0f,0.1f),50.0f));
