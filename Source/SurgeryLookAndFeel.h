@@ -90,6 +90,7 @@ public:
         const auto r=button.getLocalBounds().toFloat().reduced(1.5f);
         const bool active=button.getToggleState()||down;
         const bool xray=button.getButtonText()=="X-RAY";
+        const bool deckSwitch=button.getButtonText()=="ON"||button.getButtonText()=="OFF";
         const bool snow=button.getButtonText()=="FREEZE"||button.getButtonText()=="RESUME";
         const bool heat=button.getButtonText().startsWith("SONAR ")||button.getButtonText()=="HEAT MAP";
         if(snow||heat){
@@ -111,18 +112,22 @@ public:
                 return;
             }
         }
-        // Recessed, injection-molded 1980s answering-machine hardware.
-        // Raised OFF, physically depressed ON; never the old Surgery flat skin.
+        // Answering-machine ON/OFF switches really sink into a dark well when
+        // selected. The red pilot illuminates ONLY that active switch; the
+        // opposite switch stays the same raised powder-ivory as the mockup.
         g.setColour(juce::Colour(0xff33231b).withAlpha(.93f));
         g.fillRoundedRectangle(r.translated(0,2.f).expanded(1.2f),3.f);
         g.setColour(juce::Colour(0xff9b8066));
         g.drawRoundedRectangle(r.expanded(.5f),3.5f,1.2f);
         juce::ColourGradient plastic(
-            xray?juce::Colour(active?0xff4b0908:0xff34100d):juce::Colour(active?0xffd5bca0:0xffffecd3),
+            xray?juce::Colour(active?0xff4b0908:0xff34100d):
+                juce::Colour(active&&deckSwitch?0xff29201d:active?0xffd5bca0:0xffffecd3),
             r.getX(),r.getY()+1.f,
-            xray?juce::Colour(active?0xff150404:0xff581613):juce::Colour(active?0xffb89e83:0xffd4bea5),
+            xray?juce::Colour(active?0xff150404:0xff581613):
+                juce::Colour(active&&deckSwitch?0xff100e0d:active?0xffb89e83:0xffd4bea5),
             r.getX(),r.getBottom(),false);
-        plastic.addColour(.18,xray?juce::Colour(0xff681c15):juce::Colour(0xfff2ddc1));
+        plastic.addColour(.18,xray?juce::Colour(0xff681c15):
+            active&&deckSwitch?juce::Colour(0xff3a302b):juce::Colour(0xfff2ddc1));
         g.setGradientFill(plastic);g.fillRoundedRectangle(r.reduced(1.f),2.5f);
         g.setColour(juce::Colour(xray?0xffbd4d3c:0xfffff3df).withAlpha(active?.34f:.91f));
         g.drawLine(r.getX()+4,r.getY()+2,r.getRight()-4,r.getY()+2,.9f);
@@ -135,6 +140,15 @@ public:
             if(active){g.setColour(juce::Colour(0xffff4028).withAlpha(.26f));
                 g.fillEllipse(r.getX()+5,r.getCentreY()-lamp-3,2*lamp+6,2*lamp+6);}
         }
+        if(deckSwitch){
+            const auto lamp=juce::Rectangle<float>(r.getCentreX()-12.f,r.getY()+5.f,24.f,4.f);
+            g.setColour(active?juce::Colour(0xffed2d20):juce::Colour(0xff514a43));
+            g.fillRoundedRectangle(lamp,1.4f);
+            if(active){
+                g.setColour(juce::Colour(0xffff4c35).withAlpha(.23f));
+                g.fillRoundedRectangle(lamp.expanded(4.f,2.f),2.5f);
+            }
+        }
         const auto warning=button.findColour(juce::TextButton::buttonColourId);
         if(!xray&&warning.getRed()>180&&warning.getGreen()<65&&warning.getBlue()<65){
             g.setColour(juce::Colour(0xffed1919).withAlpha(.28f+warning.getFloatAlpha()*.62f));
@@ -145,7 +159,10 @@ public:
     void drawButtonText(juce::Graphics& g,juce::TextButton& b,bool,bool) override {
         if(b.getButtonText()=="FREEZE"||b.getButtonText()=="RESUME"||b.getButtonText().startsWith("SONAR ")||b.getButtonText()=="HEAT MAP")return;
         const bool xray=b.getButtonText()=="X-RAY";
-        g.setColour(b.isEnabled()?juce::Colour(xray?0xffff624b:0xff241a14):juce::Colour(0xff8d8177));
+        const bool depressedSwitch=b.getToggleState()&&
+            (b.getButtonText()=="ON"||b.getButtonText()=="OFF");
+        g.setColour(b.isEnabled()?juce::Colour(xray?0xffff624b:
+            depressedSwitch?0xffffeee0:0xff241a14):juce::Colour(0xff8d8177));
         g.setFont(juce::Font(juce::FontOptions(juce::jlimit(11.0f,13.0f,b.getHeight()*.43f),juce::Font::bold)));
         g.drawFittedText(b.getButtonText(),xray?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2),
                          juce::Justification::centred,1);
