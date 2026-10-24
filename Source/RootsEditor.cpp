@@ -394,6 +394,27 @@ void RootsGraph::paint(juce::Graphics& g){
     // A restrained peak-hold readout; the audio measurements are unchanged.
     g.setColour(juce::Colour(0xffdfd5c7).withAlpha(0.24f));
     g.strokePath(peakPath,juce::PathStrokeType(0.8f));
+    if(heatOn){
+        // Narrow isolated tones have too little filled area to express the
+        // heat-map toggle by tinting mercury alone (a real 4 kHz recovery
+        // regression). Add tiny glows ONLY at measured spectral local peaks.
+        // Nothing appears for silence or unmeasured frequencies.
+        juce::Path heatBubbles;
+        for(int i=1;i<N-1;++i){
+            const float db=bands_[(size_t)i];
+            if(db<=-85.f||db<bands_[(size_t)i-1]||db<bands_[(size_t)i+1])continue;
+            const float f=prism::analysis::LabBands::centreFrequency(i);
+            const float y=r.getY()-surgery::displayDb(db,f,slope,rangeDb)*r.getHeight()/rangeDb;
+            if(y>=r.getBottom()-5.f)continue;
+            const float x=freqToX(f);
+            const float radius=7.f+3.f*juce::jlimit(0.f,1.f,(db+60.f)/60.f);
+            heatBubbles.addEllipse(x-radius,y-radius,radius*2.f,radius*2.f);
+        }
+        g.setColour(juce::Colour(0xffdb795a).withAlpha(.34f));
+        g.fillPath(heatBubbles);
+        g.setColour(juce::Colour(0xffe9b887).withAlpha(.43f));
+        g.strokePath(heatBubbles,juce::PathStrokeType(.85f));
+    }
     g.restoreState();
 
     // Predict the EXACT static RBJ peak-filter response used in the CARVE DSP.
