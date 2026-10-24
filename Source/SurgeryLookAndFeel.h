@@ -39,19 +39,24 @@ public:
         if(ticked&&!separator){g.setColour(juce::Colour(0xffdd745a));g.fillRect(area.getX()+2,area.getY()+4,2,area.getHeight()-8);}
     }
     void drawRotarySlider(juce::Graphics& g,int x,int y,int w,int h,float position,
-                          float start,float end,juce::Slider&) override {
+                          float start,float end,juce::Slider& slider) override {
         const float cx=x+w*.5f,cy=y+h*.48f;
         const float radius=juce::jlimit(13.f,44.f,.48f*(float)std::min(w,h));
+        // The sculpted V mark is at twelve o'clock at each control's HOME
+        // value (0% COLOR, 0 dB gain, Q reset, etc.). It does not inherit
+        // Surgery's lower-left minimum-angle pointer drift.
+        const float neutral=(float)slider.getNormalisableRange().convertTo0to1(
+            slider.getDoubleClickReturnValue());
+        const float rotation=(position-neutral)*(end-start);
         // Exact user-approved powdery ivory knob artwork. Its molded V-index
         // rotates with the REAL APVTS parameter. No exterior calibration ticks.
         static const auto dial=juce::ImageCache::getFromMemory(
             BinaryData::scalpelknob_png,BinaryData::scalpelknob_pngSize);
         if(!dial.isNull()){
             const float scale=2*radius/(.64f*(float)dial.getWidth());
-            const float angle=start+position*(end-start);
             const auto transform=juce::AffineTransform::scale(scale)
                 .translated(cx-dial.getWidth()*scale*.5f,cy-dial.getHeight()*scale*.5f)
-                .rotated(angle-juce::MathConstants<float>::twoPi,cx,cy);
+                .rotated(rotation,cx,cy);
             g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
             g.drawImageTransformed(dial,transform,false);
             return;
@@ -74,10 +79,9 @@ public:
             g.setColour(juce::Colour(0xff7d6957).withAlpha(.065f));
             g.fillEllipse(cx+std::cos(a)*rr-.34f,cy+std::sin(a)*rr-.34f,.68f,.68f);
         }
-        const float angle=start+position*(end-start);
         juce::Path pointer;
         pointer.addTriangle(cx-3.4f,cy-radius+9.f,cx+3.4f,cy-radius+9.f,cx,cy-radius+25.f);
-        pointer.applyTransform(juce::AffineTransform::rotation(angle-juce::MathConstants<float>::twoPi,cx,cy));
+        pointer.applyTransform(juce::AffineTransform::rotation(rotation,cx,cy));
         g.setColour(juce::Colour(0xff6b4e35));g.fillPath(pointer);
         g.setColour(juce::Colour(0xfffff0d8).withAlpha(.50f));g.strokePath(pointer,juce::PathStrokeType(.5f));
     }
