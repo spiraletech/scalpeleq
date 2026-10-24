@@ -28,7 +28,7 @@ public:
     }
     // Five controls, ordered exactly as displayed: DYNAMIC, SPARKLE, SHINE,
     // SMOOTHENING, VINTAGE TAPE. Each amount is normalized to [0,1].
-    double sample(double x,const std::array<double,5>& amounts) noexcept {
+    double sampleColor(double x,const std::array<double,5>& amounts) noexcept {
         if(!std::isfinite(x))x=0;
         const double dy=law(amounts[0]),sp=law(amounts[1]),sh=law(amounts[2]);
         const double sm=law(amounts[3]),tp=law(amounts[4]);
@@ -78,7 +78,7 @@ public:
     }
     // Compatibility for historical direct Onyx callers and smoke tests.
     double sample(double x,const std::array<double,4>& oldAmounts) noexcept {
-        return sample(x,std::array<double,5>{0.0,oldAmounts[0],oldAmounts[1],oldAmounts[2],oldAmounts[3]});
+        return sampleColor(x,std::array<double,5>{0.0,oldAmounts[0],oldAmounts[1],oldAmounts[2],oldAmounts[3]});
     }
     static double law(double amount) noexcept {
         const double v=std::isfinite(amount)?std::clamp(amount,0.0,1.0):0;

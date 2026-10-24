@@ -691,6 +691,7 @@ void PRISMVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     inputPeakDb.store(kFloorDb); peakDb.store(kFloorDb); peakHoldDb.store(kFloorDb); gainReductionDb.store(0);
     lufsShort.store(kFloorDb); lufsIntegrated.store(kFloorDb);
     rootMeters[0].store(1); rootMeters[1].store(0); rootMeters[2].store(0); rootMeters[3].store(1); rootMeters[4].store(0);
+    for(auto& peak:rootBandPeakDb)peak.store(-144.f);
     rootsEngine.prepare(sampleRate);
     for(auto& state:onyxFinish)state={};
     carveEngine.prepare(sampleRate);
@@ -1124,7 +1125,10 @@ void PRISMVSTAudioProcessor::updateMeters(const juce::AudioBuffer<float>& buffer
     rootMeters[0].store(leftPower>1e-20&&rightPower>1e-20?
         std::clamp(cross/std::sqrt(leftPower*rightPower),-1.0,1.0):1.0);
     rootMeters[1].store(std::sqrt(midPower/n));rootMeters[2].store(std::sqrt(sidePower/n));
-    if(bypassMix.getCurrentValue()>=1.0f){gainReductionDb.store(0);rootMeters[4].store(0);}
+    if(bypassMix.getCurrentValue()>=1.0f){
+        gainReductionDb.store(0);rootMeters[4].store(0);
+        for(auto& band:rootBandPeakDb)band.store(-144.f);
+    }
 
     const auto count = (uint64_t)n * 2u;
     integratedEnergy += weightedEnergy;

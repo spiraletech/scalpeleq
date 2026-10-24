@@ -131,7 +131,12 @@ void RootsGraph::updateWeather(const surgery::weather::Snapshot* snapshot,double
     auto key=[](const surgery::weather::Meaning& f){return std::array<float,16>{f.bass,f.centroid,f.flux,f.width,f.rate,f.density,f.level,f.storm,f.flash,f.flashPosition,f.musicEnergy[0],f.musicEnergy[1],f.musicEnergy[2],f.musicEnergy[3],f.rms,f.crest};};
     const auto previous=key(weatherInterpretation_.state());const auto previousPhase=visualPhase_;
     const auto& meaning=weatherInterpretation_.update(elapsed,memory,reduced);
-    if(!visible)return; // JUKE still consumes this shared measured state.
+    if(!visible){
+        // X-RAY is independent of SONAR mode. Keep its mercury simulation
+        // updating from measured music even with SONAR presentation OFF.
+        if(xrayActive_&&(changed||previous!=key(meaning)||previousPhase!=visualPhase_))repaint();
+        return;
+    }
     if(visible||xrayActive_)
         visualPhase_=std::fmod(visualPhase_+(float)(std::clamp(elapsed,0.,.25)*meaning.level*(reduced?.035:1.)),64.f);
     const bool fieldChanged=style==1&&weatherField_.update(weatherInterpretation_,elapsed,memory,reduced,false);

@@ -20,8 +20,8 @@ double diffFor(int rate,const std::array<double,5>& amounts){
     double e=0;
     for(int i=0;i<16000;++i){
         const double x=source(i,rate);
-        const double y=a.sample(x,amounts);
-        const double neutral=b.sample(x,std::array<double,5>{});
+        const double y=a.sampleColor(x,amounts);
+        const double neutral=b.sampleColor(x,std::array<double,5>{});
         assert(std::isfinite(y));
         if(amounts==std::array<double,5>{})assert(y==x);
         e+=(y-neutral)*(y-neutral);
@@ -45,7 +45,7 @@ int main(){
         for(int i=0;i<2048;++i){
             const auto x=source(i,rate);
             const auto a=legacy.sample(x,std::array<double,4>{.3,.2,.4,.1});
-            const auto b=modern.sample(x,std::array<double,5>{0,.3,.2,.4,.1});
+            const auto b=modern.sampleColor(x,std::array<double,5>{0,.3,.2,.4,.1});
             assert(a==b);
         }
         // +3 dB maximum transient-boost law and -2 dB sustain contrast law.

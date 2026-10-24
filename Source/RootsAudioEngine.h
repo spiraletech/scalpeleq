@@ -96,7 +96,7 @@ public:
             node.midEq.reset();node.sideEq.reset();
             node.midTap.reset();node.sideTap.reset();
             node.e1=node.e2=node.sideEnergy=node.midEnergy=0.0;
-            node.optoEnvelope=0.0;node.phaseMix=0.0;
+            node.optoEnvelope=0.0;node.phaseMix=0.0;node.limitAmount=0.0;
             node.onyxMid.prepare(sr_);node.onyxSide.prepare(sr_);
             node.fx={node.config.dynamic,node.config.sparkle,node.config.shine,node.config.smooth,node.config.tape};
             node.enableMix=node.config.enabled?1.0:0.0;
@@ -283,7 +283,7 @@ private:
         double attack=0.99,release=0.999;
         Filter midEq,sideEq,midTap,sideTap;
         double e1=0.0,e2=0.0,midEnergy=0.0,sideEnergy=0.0;
-        double optoEnvelope=0.0,phaseMix=0.0;
+        double optoEnvelope=0.0,phaseMix=0.0,limitAmount=0.0;
         OnyxMemory onyxMid{},onyxSide{};
         std::array<double,5> fx{};
         double enableMix=1,monoMix=0,compMix=0,threshold=0;
@@ -357,8 +357,9 @@ private:
         const double coeff=incoming>node.optoEnvelope?optoAttackAlpha_:
             (node.optoEnvelope>0.15?optoReleaseDeepAlpha_:optoReleaseAlpha_);
         node.optoEnvelope=coeff*node.optoEnvelope+(1.0-coeff)*incoming;
-        if(c.limit>1.0e-7){
-            const double amount=std::clamp(c.limit,0.0,1.0);
+        node.limitAmount+=a*(std::clamp(c.limit,0.0,1.0)-node.limitAmount);
+        if(node.limitAmount>1.0e-7){
+            const double amount=node.limitAmount;
             const double threshold=-6.0-24.0*amount;
             const double signalDb=20.0*std::log10(std::max(1.0e-12,node.optoEnvelope));
             const double over=std::max(0.0,signalDb-threshold);
@@ -373,7 +374,7 @@ private:
         s=originalS+node.enableMix*(s-originalS);
     }
     double onyxSample(double x,OnyxMemory& state,const Node& node) const noexcept {
-        return state.sample(x,node.fx);
+        return state.sampleColor(x,node.fx);
     }
     // Each root's two boundary handles determine the exact frequency
     // interval for BOTH the palette and the audible bandpass.
