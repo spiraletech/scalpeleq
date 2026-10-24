@@ -1,0 +1,65 @@
+name: Scalpel EQ Windows VST3
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: scalpeleq-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -A x64 -DPRISMVST_BUILD_TESTS=ON
+      - name: Build
+        run: cmake --build build --config Release --parallel 2
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure
+      - name: Upload regression evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SCALPEL-EQ-quality-evidence
+          path: |
+            build/Testing/Temporary/LastTest.log
+            build/surgery-ui-*.png
+            build/surgery-*.csv
+          if-no-files-found: warn
+      - name: Stage VST3
+        shell: pwsh
+        run: |
+          $plugin = Get-ChildItem -Path build -Directory -Filter "Scalpel EQ.vst3" -Recurse | Select-Object -First 1
+          if (-not $plugin) { throw "Scalpel EQ VST3 was not produced" }
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item -Recurse -Force $plugin.FullName "dist\Scalpel EQ.vst3"
+          Copy-Item INSTALL.txt dist/INSTALL.txt
+          if (-not (Test-Path "dist\Scalpel EQ.vst3\Contents\x86_64-win\Scalpel EQ.vst3")) { throw "Incomplete VST3 bundle" }
+      - name: Validate VST3
+        shell: pwsh
+        run: |
+          Invoke-WebRequest "https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_Windows.zip" -OutFile pluginval.zip
+          Expand-Archive pluginval.zip -DestinationPath pluginval
+          $process = Start-Process -FilePath "$PWD\pluginval\pluginval.exe" -ArgumentList @('--strictness-level', '8', '--random-seed', '12345', '--skip-gui-tests', '--output-dir', "$PWD\validation", '--validate', "`"$PWD\dist\Scalpel EQ.vst3`"") -Wait -PassThru -WindowStyle Hidden
+          if ($process.ExitCode -ne 0) { throw "pluginval failed" }
+          $logs = Get-ChildItem validation -Filter '*.txt'
+          if (-not $logs -or -not (Select-String -Path $logs.FullName -Pattern '^SUCCESS$')) { throw "pluginval did not report SUCCESS" }
+      - name: Upload host validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SCALPEL-EQ-pluginval
+          path: validation
+          if-no-files-found: warn
+      - name: Upload VST3
+        uses: actions/upload-artifact@v4
+        with:
+          name: SCALPEL-EQ-0.1.0-Windows-x64-VST3
+          path: dist
+          if-no-files-found: error

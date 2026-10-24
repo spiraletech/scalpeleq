@@ -1,0 +1,8 @@
+/build*/
+/dist/
+/validation/
+/pluginval/
+/pluginval.zip
+/surgery-ui-*.png
+/quality-*.surgerypreset
+/quality-invalid.xml

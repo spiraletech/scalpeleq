@@ -1,0 +1,25 @@
+Scalpel EQ 0.1.0 - Windows x64 VST3
+
+Close your DAW and back up the previous bundle outside scanned folders.
+Copy the COMPLETE Scalpel EQ.vst3 folder into:
+C:\Program Files\Common Files\VST3
+Rescan and verify v1.0.12. Keep one scanned copy. Bundle/class IDs are retained.
+Unsigned development build; test copies of production projects first.
+
+ANALYZE > SONAR 2.1 / VISUAL MODE now contains Standard+ ONLY.
+All earlier saved/automated SONAR choices render Standard+.
+SONAR ON/OFF independently gates its overlays; the accurate trace remains.
+
+ANALYZE > JUKE MODE independently selects Real Jukebox, Storm Tube,
+Symbiote Flow, Pulse Rail, Ambient Idle or Off. Real Jukebox is the fresh-instance
+default. JUKE Off hides all tube energy; the manufactured glass/carbon remains.
+SONAR OFF does not turn off JUKE; use JUKE MODE > Off for the border.
+
+Freeze holds both visual simulations. Off controls override visibility while
+frozen. Reduced Motion defaults ON and preserves light response with less drift
+and turbulence. Silence leaves faint casing reflections after decay.
+
+Historical SONAR parameter IDs/ranges/values are retained for project and
+normalized automation compatibility. They cannot reactivate removed styles.
+JUKE choices, existing control positions, analyzer geometry and DSP are retained.
+See STANDARD_PLUS_1_0_12.md and BUILD-NOTES.txt for validation and limitations.
