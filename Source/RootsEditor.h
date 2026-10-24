@@ -59,7 +59,13 @@ public:
     void updateWeather(const surgery::weather::Snapshot*,double elapsed,bool active,bool reduced,double memory,int style=1);
     const surgery::weather::Meaning& weatherMeaning() const noexcept {return weatherInterpretation_.state();}
     const surgery::weather::Snapshot& weatherMeasured() const noexcept {return weatherInterpretation_.measured();}
-    bool weatherActive() const noexcept {return weatherActive_;}
+    // The parameter is authoritative even before the next UI timer tick.
+    // This matters if HEAT MAP is disabled while the graph is frozen or the
+    // host is blocking repaints: OFF must never report itself as still ON.
+    bool weatherActive() const noexcept {
+        const auto* enabled=processor_.apvts.getRawParameterValue("aura_color");
+        return weatherActive_&&enabled&&enabled->load(std::memory_order_relaxed)>=0.5f;
+    }
     const surgery::weather::Field& weatherField() const noexcept {return weatherField_;}
     std::function<void(int)> onSelectNode;
     std::function<void(int)> onSelectCarve;
