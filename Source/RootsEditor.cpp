@@ -285,14 +285,26 @@ void RootsGraph::paint(juce::Graphics& g){
         const auto& m=weatherInterpretation_.state();
         const float energy=juce::jlimit(0.f,1.f,
             .30f*m.level+.35f*m.bass+.20f*m.flux+.15f*m.width);
-        juce::ColourGradient tar(juce::Colour(0xff77706b).withAlpha(.82f),
-            r.getCentreX(),r.getY(),juce::Colour(0xff020304).withAlpha(.98f),
+        // A charcoal base remains legible even when the measured crest is
+        // far below 0 dBFS. Previously the brightest stop lived above the
+        // audio silhouette, making the real Windows X-RAY render look flat.
+        juce::ColourGradient tar(juce::Colour(0xff191d1e).withAlpha(.96f),
+            r.getCentreX(),r.getY(),juce::Colour(0xff020304).withAlpha(.99f),
             r.getCentreX(),r.getBottom(),false);
-        tar.addColour(.10,juce::Colour(0xff222728));
-        tar.addColour(.33,juce::Colour(0xff080b0d));
-        tar.addColour(.66,juce::Colour(0xff24272a));
-        tar.addColour(.87,juce::Colour(0xff050607));
+        tar.addColour(.20,juce::Colour(0xff0b0d10));
+        tar.addColour(.43,juce::Colour(0xff343738));
+        tar.addColour(.61,juce::Colour(0xff101719));
+        tar.addColour(.78,juce::Colour(0xff2e3334));
+        tar.addColour(.91,juce::Colour(0xff080a0b));
         g.setGradientFill(tar);g.fillRect(r);
+        // Material sheen is a reflection field, not an independent waveform.
+        // Its apparent ridges are clipped to the actual FFT silhouette.
+        juce::ColourGradient oblique(juce::Colour(0xffb2c8c5).withAlpha(.075f),
+            r.getX(),r.getBottom(),juce::Colour(0xffba916f).withAlpha(.10f),
+            r.getRight(),r.getY(),false);
+        oblique.addColour(.38,juce::Colour(0xff282026).withAlpha(.016f));
+        oblique.addColour(.73,juce::Colour(0xffb9a5c2).withAlpha(.048f));
+        g.setGradientFill(oblique);g.fillRect(r);
         if(heatOn){
             // HEAT MAP is independent of X-RAY. It warms the mercury's
             // specular field without reinstating Surgery's blue histogram.
@@ -302,31 +314,43 @@ void RootsGraph::paint(juce::Graphics& g){
             g.setGradientFill(heat);g.fillRect(r);
         }
 
-        // Broad viscous ribbons run WITHIN the spectrum silhouette. Narrow
-        // gold/teal/violet caustics suggest reflected material, not fake audio.
-        for(int ribbon=0;ribbon<7;++ribbon){
-            const float fraction=.18f+ribbon*.105f;
+        // Curled resin waves follow the measured crest and run down through
+        // the liquid. Dark troughs, illuminated ridges and short highlights
+        // give the surface the thickness of mercury instead of thin noodles.
+        for(int ribbon=0;ribbon<12;++ribbon){
+            const float fraction=.08f+ribbon*.078f;
             juce::Path wave;
             for(int j=0;j<N;j+=2){
-                const float t=(float)j/(N-1),x=r.getX()+t*r.getWidth();
+                const float x=freqToX(prism::analysis::LabBands::centreFrequency(j));
                 const float f=prism::analysis::LabBands::centreFrequency(j);
                 const float d=surgery::displayDb(bands_[(size_t)j],f,slope,rangeDb);
                 const float crest=r.getY()-d*r.getHeight()/rangeDb;
                 const float depth=juce::jmax(0.f,r.getBottom()-crest);
-                const float ripple=(.018f+.034f*energy)*depth*
-                    std::sin(j*.095f+ribbon*1.8f+visualPhase_*(.16f+ribbon*.05f));
+                const float phase=j*(.075f+ribbon*.004f)+ribbon*1.7f
+                    +visualPhase_*(.11f+ribbon*.025f);
+                const float ripple=(.028f+.039f*energy)*depth*
+                    (std::sin(phase)+.36f*std::sin(phase*2.3f));
                 const float y=juce::jlimit(crest,r.getBottom(),crest+fraction*depth+ripple);
                 if(j==0)wave.startNewSubPath(x,y);else wave.lineTo(x,y);
             }
-            const auto syn=surgery::synesthesia::read(m,(ribbon+.5f)/7.f);
+            const auto syn=surgery::synesthesia::read(m,(ribbon+.5f)/12.f);
             const auto accent=juce::Colour::fromFloatRGBA(syn.r,syn.g,syn.b,1.f);
             g.setColour(juce::Colour(0xff060606).withAlpha(.35f));
-            g.strokePath(wave,juce::PathStrokeType(4.5f,juce::PathStrokeType::curved,
+            g.strokePath(wave,juce::PathStrokeType(6.5f,juce::PathStrokeType::curved,
                 juce::PathStrokeType::rounded));
-            g.setColour(accent.interpolatedWith(juce::Colour(0xffd7b29a),.38f)
-                .withAlpha(.10f+.07f*energy));
-            g.strokePath(wave,juce::PathStrokeType(ribbon%3==0?2.0f:.9f,
+            g.setColour(juce::Colour(0xffdeddda).interpolatedWith(accent,.30f)
+                .withAlpha(.10f+.09f*energy));
+            g.strokePath(wave,juce::PathStrokeType(ribbon%3==0?3.5f:2.1f,
                 juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+            if(ribbon%3==0){
+                juce::ColourGradient glint(accent.withAlpha(.25f+.12f*energy),
+                    r.getX(),r.getY(),juce::Colour(0xffdccdbd).withAlpha(.22f),
+                    r.getRight(),r.getBottom(),false);
+                glint.addColour(.5,juce::Colour(0xffe7e6da).withAlpha(.10f));
+                g.setGradientFill(glint);
+                g.strokePath(wave,juce::PathStrokeType(.9f,
+                    juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+            }
         }
         const float motion=visualPhase_*3.2f;
         for(int i=0;i<53;++i){
@@ -337,7 +361,7 @@ void RootsGraph::paint(juce::Graphics& g){
                 prism::analysis::LabBands::centreFrequency(bin),slope,rangeDb);
             const float top=r.getY()-db*r.getHeight()/rangeDb;
             const float sway=std::sin(i*2.431f+motion*.15f);
-            const float radius=(1.2f+energy*5.5f)*(.40f+.60f*std::abs(sway));
+            const float radius=(1.9f+energy*7.0f)*(.35f+.65f*std::abs(sway));
             const float depth=(.13f+.75f*std::abs(std::sin(i*.71f+motion*.11f)))*
                 juce::jmax(0.f,r.getBottom()-top);
             const float y=top+depth;
@@ -346,9 +370,9 @@ void RootsGraph::paint(juce::Graphics& g){
             const auto tint=juce::Colour::fromFloatRGBA(syn.r,syn.g,syn.b,1.f);
             g.setColour(juce::Colour(0xff020304).withAlpha(.85f));
             g.fillEllipse(x-radius,y-radius,radius*2.1f,radius*1.8f);
-            g.setColour(tint.withAlpha(.18f+.13f*energy));
+            g.setColour(tint.withAlpha(.32f+.15f*energy));
             g.drawEllipse(x-radius,y-radius,radius*2.f,radius*1.7f,.85f);
-            g.setColour(juce::Colour(0xfff0ede5).withAlpha(.24f+.16f*energy));
+            g.setColour(juce::Colour(0xfff0ede5).withAlpha(.44f+.18f*energy));
             g.fillEllipse(x-radius*.5f,y-radius*.65f,radius*.56f,radius*.24f);
         }
     }
