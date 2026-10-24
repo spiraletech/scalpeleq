@@ -68,7 +68,7 @@ inline bool verifyWeatherUI(){
     feed(2,96);if(std::abs(graph->weatherMeasured().correlation)>.15||std::abs(graph->weatherMeasured().width-.5)>.1)return fail("width measurement");
     set(*p,"sonar_reduced_motion",0);feed(4,160);
     auto mode=[&](const char* text){for(auto* child:editor->getChildren())if(auto* button=dynamic_cast<juce::TextButton*>(child))if(button->getButtonText()==text){button->onClick();return true;}return false;};
-    for(const char* tab:{"ROOT","CARVE","ONYX","ANALYZE"}){
+    for(const char* tab:{"BAND MODE","CARVE","COLOR","ANALYZE"}){
         if(!mode(tab))return false;feed(4,32);
         for(float scale:{1.f,1.25f,1.5f})if(!save(editor->createComponentSnapshot(editor->getLocalBounds(),true,scale),"surgery-ui-weather-"+juce::String(tab)+"-"+juce::String((int)(scale*100))+".png"))return false;
     }

@@ -47,7 +47,7 @@ inline bool verifySonarRecovery(){
         if(!metrics.signalPresent||metrics.loudestDb<=-85){std::cerr<<"Recovery: live pipeline lacks signal "<<signal<<"\n";return false;}
         if(signal==1){firstPeak=metrics.loudestHz;if(std::abs(firstPeak-1000)>120)return false;}
         if(signal==4&&std::abs(metrics.loudestHz-4000)>400)return false;
-        for(const char* tab:{"ROOT","CARVE","ONYX","ANALYZE"}){
+        for(const char* tab:{"BAND MODE","CARVE","COLOR","ANALYZE"}){
             if(!mode(tab))return false;pump(25);graph->setFrozen(true);
             set("aura_color",1);auto on=graph->createComponentSnapshot(graph->getLocalBounds());
             set("aura_color",0);auto off=graph->createComponentSnapshot(graph->getLocalBounds());

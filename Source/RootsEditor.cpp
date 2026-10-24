@@ -1308,7 +1308,7 @@ void RootsEditor::layoutRack(){
     analyzerDepthLabel_.setBounds(285,612,175,18);analyzerDepth_.setBounds(285,638,175,34);
     analyzerSlopeLabel_.setBounds(492,588,190,18);analyzerSlope_.setBounds(492,607,190,94);
     analyzerMemoryLabel_.setBounds(697,588,190,18);analyzerMemory_.setBounds(697,607,190,94);
-    heatToggle_.setBounds(935,611,156,30);freezeButton_.setBounds(935,652,156,30);
+    heatToggle_.setBounds(935,609,68,72);freezeButton_.setBounds(1015,609,68,72);
     bypass_.setBounds(20,727,78,23);compare_.setBounds(103,727,78,23);copy_.setBounds(186,727,110,23);
     save_.setBounds(301,727,57,23);load_.setBounds(363,727,57,23);peakHold_.setBounds(425,727,120,23);
     outputLabel_.setBounds(780,727,64,23);output_.setBounds(849,727,246,23);

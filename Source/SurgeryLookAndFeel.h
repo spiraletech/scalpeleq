@@ -3,6 +3,7 @@
 // Vector components stay crisp at high DPI and every knob points to a real
 // APVTS value; the signed indicator is inside the ivory dial face.
 #include <JuceHeader.h>
+#include <BinaryData.h>
 #include <cmath>
 #include "OnyxRackSkin.h"
 class SurgeryLookAndFeel final : public juce::LookAndFeel_V4 {
@@ -41,6 +42,20 @@ public:
                           float start,float end,juce::Slider&) override {
         const float cx=x+w*.5f,cy=y+h*.48f;
         const float radius=juce::jlimit(13.f,36.f,.44f*(float)std::min(w,h));
+        // Exact user-approved powdery ivory knob artwork. Its molded V-index
+        // rotates with the REAL APVTS parameter. No exterior calibration ticks.
+        static const auto dial=juce::ImageCache::getFromMemory(
+            BinaryData::scalpelknob_png,BinaryData::scalpelknob_pngSize);
+        if(!dial.isNull()){
+            const float scale=2*radius/(.64f*(float)dial.getWidth());
+            const float angle=start+position*(end-start);
+            const auto transform=juce::AffineTransform::scale(scale)
+                .translated(cx-dial.getWidth()*scale*.5f,cy-dial.getHeight()*scale*.5f)
+                .rotated(angle-juce::MathConstants<float>::twoPi,cx,cy);
+            g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
+            g.drawImageTransformed(dial,transform,false);
+            return;
+        }
         const auto face=juce::Rectangle<float>(cx-radius,cy-radius,2*radius,2*radius);
         g.setColour(juce::Colour(0xff54483d).withAlpha(.25f));
         g.fillEllipse(face.translated(1.4f,3.f).expanded(2.f));
@@ -71,6 +86,27 @@ public:
         const auto r=button.getLocalBounds().toFloat().reduced(1.5f);
         const bool active=button.getToggleState()||down;
         const bool xray=button.getButtonText()=="X-RAY";
+        const bool snow=button.getButtonText()=="FREEZE"||button.getButtonText()=="RESUME";
+        const bool heat=button.getButtonText().startsWith("SONAR ");
+        if(snow||heat){
+            static const auto snowImage=juce::ImageCache::getFromMemory(
+                BinaryData::scalpelfreeze_png,BinaryData::scalpelfreeze_pngSize);
+            static const auto heatImage=juce::ImageCache::getFromMemory(
+                BinaryData::scalpelheatmap_png,BinaryData::scalpelheatmap_pngSize);
+            const auto& sprite=snow?snowImage:heatImage;
+            if(!sprite.isNull()){
+                const float scale=.88f*std::min((float)button.getWidth(),(float)button.getHeight())/
+                                  (.67f*(float)sprite.getWidth());
+                const auto transform=juce::AffineTransform::scale(scale)
+                    .translated(button.getWidth()*.5f-sprite.getWidth()*scale*.5f,
+                                button.getHeight()*.5f-sprite.getHeight()*scale*.5f);
+                g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
+                g.drawImageTransformed(sprite,transform,false);
+                if(active){g.setColour(juce::Colour(0xff7b5c48).withAlpha(.14f));
+                    g.fillRoundedRectangle(r.reduced(6.f),5.f);}
+                return;
+            }
+        }
         g.setColour(juce::Colour(0xff766453).withAlpha(.56f));g.fillRoundedRectangle(r.translated(0,1.2f),3.f);
         juce::ColourGradient plastic(
             xray?juce::Colour(active?0xff8e1712:0xff421613):juce::Colour(active?0xffc7af92:0xfff5e6d0),r.getX(),r.getY(),
@@ -86,6 +122,7 @@ public:
         if(over){g.setColour(juce::Colours::white.withAlpha(.08f));g.fillRoundedRectangle(r.reduced(2),3.f);}
     }
     void drawButtonText(juce::Graphics& g,juce::TextButton& b,bool,bool) override {
+        if(b.getButtonText()=="FREEZE"||b.getButtonText()=="RESUME"||b.getButtonText().startsWith("SONAR "))return;
         const bool xray=b.getButtonText()=="X-RAY";
         g.setColour(b.isEnabled()?juce::Colour(xray?0xffff4c37:0xff231b16):juce::Colour(0xff8d8177));
         g.setFont(juce::Font(juce::FontOptions(juce::jlimit(11.0f,13.0f,b.getHeight()*.43f),juce::Font::bold)));

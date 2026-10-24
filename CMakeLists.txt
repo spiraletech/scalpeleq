@@ -62,7 +62,10 @@ if(NOT SCALPEL_STORM_ERROR EQUAL 0)
 endif()
 juce_add_binary_data(SurgeryRackAssets SOURCES
   "${SCALPEL_ART_DIR}/chassis-1.0.3.png"
-  "${SCALPEL_ART_DIR}/approved-reference.png")
+  "${SCALPEL_ART_DIR}/approved-reference.png"
+  Assets/Scalpel/scalpel-knob.png
+  Assets/Scalpel/scalpel-freeze.png
+  Assets/Scalpel/scalpel-heatmap.png)
 target_link_libraries(PRISMVST PRIVATE SurgeryRackAssets)
 
 target_sources(PRISMVST PRIVATE

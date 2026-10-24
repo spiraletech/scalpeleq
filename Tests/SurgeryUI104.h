@@ -30,7 +30,7 @@ inline bool verifyUI104(PRISMVSTAudioProcessor& processor,juce::AudioProcessorEd
     editor.addToDesktop(0);editor.setTopLeftPosition(70,70);editor.setVisible(true);
     std::ofstream placements("surgery-ui-popup-placement.csv");
     placements<<"menu,scale,edge,target_x,target_y,target_bottom,popup_x,popup_y,popup_bottom,screen_contained\n";
-    for(const auto* tab:{"ROOT","ANALYZE"}){
+    for(const auto* tab:{"BAND MODE","ANALYZE"}){
         if(!clickMode(tab))return false;
         for(auto* c:editor.getChildren())if(auto* box=dynamic_cast<juce::ComboBox*>(c);box&&box->isVisible()){
             ++menus;
@@ -123,7 +123,7 @@ inline bool verifyUI104(PRISMVSTAudioProcessor& processor,juce::AudioProcessorEd
         csv<<instances<<','<<scale<<','<<frames[frames.size()/2]<<','<<frames[(frames.size()*95)/100]<<','<<frames.back()<<','<<mean<<','<<mean*6<<','<<cpuMs/frames.size()<<','<<cpuMs/frames.size()*6<<'\n';
         std::cout<<"GUI104: "<<instances<<" instance(s), scale "<<scale<<", graph paint median "<<frames[frames.size()/2]<<" ms p95 "<<frames[(frames.size()*95)/100]<<" ms\n";
     }
-    for(const char* mode:{"ROOT","CARVE","ONYX","ANALYZE"}){
+    for(const char* mode:{"BAND MODE","CARVE","COLOR","ANALYZE"}){
         if(!clickMode(mode))return false;
         for(float scale:{1.f,1.25f,1.5f}){
             auto capture=editor.createComponentSnapshot(editor.getLocalBounds(),true,scale);

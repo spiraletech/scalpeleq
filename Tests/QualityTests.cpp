@@ -292,7 +292,7 @@ bool runQualityTests(){
     juce::Thread::sleep(40); // bounded analyzer handoff for deterministic screenshot data
     set(*p,"aura_color",1);set(*p,"sonar_weather_mode",0);
     std::unique_ptr<juce::AudioProcessorEditor> editor(p->createEditor());
-    const char* modes[]={"ROOT","CARVE","ONYX","ANALYZE"};
+    const char* modes[]={"BAND MODE","CARVE","COLOR","ANALYZE"};
     for(int theme=0;theme<1;++theme){
         for(int mode=0;mode<4;++mode){
             if(!click(*editor,modes[mode]))return false;
@@ -353,6 +353,6 @@ bool runQualityTests(){
             if(rackReference.getPixelAt(x,y)!=recalled.getPixelAt(x,y)){std::cerr<<"Legacy theme changed the UI\n";return false;}
     }
     if(!verifyUI104(*p,*editor))return false;
-    std::cout<<"QUALITY: all four modes rendered; legacy theme values preserve the sole ONYX UI\n";
+    std::cout<<"QUALITY: all four modes rendered; legacy theme values preserve Scalpel COLOR UI\n";
     return true;
 }

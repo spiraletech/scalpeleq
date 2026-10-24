@@ -72,7 +72,7 @@ int main(int argc,char** argv)
     // Keep ROOTS distinct in FL Studio's plugin database / VST3 identity.
     {
         PRISMVSTAudioProcessor p;
-        if (p.getName() != "SURGERY EQ v1.0")
+        if (p.getName() != "Scalpel EQ")
         {
             std::cerr << "ROOTS plugin host-visible name mismatch\n";
             return 1;

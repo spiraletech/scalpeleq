@@ -29,7 +29,7 @@ public:
     bool hasEditor() const override { return true; }
     juce::AudioProcessorParameter* getBypassParameter() const override { return apvts.getParameter("surgery_bypass"); }
 
-    const juce::String getName() const override { return "SURGERY EQ v1.0"; }
+    const juce::String getName() const override { return "Scalpel EQ"; }
     bool acceptsMidi() const override { return false; }
     bool producesMidi() const override { return false; }
     bool isMidiEffect() const override { return false; }
