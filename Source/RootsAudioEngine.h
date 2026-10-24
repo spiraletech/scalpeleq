@@ -286,6 +286,14 @@ public:
                 m+=muted*(notchM-m);
                 s+=sideWet*(notchS-s);
             }
+            // SOLO contains only the selected territory. Its MONO switch
+            // therefore means exact L==R on the audition output, not merely
+            // a deep spectral SIDE notch. Crossfade with the same smoothed
+            // SOLO and per-root MONO envelopes during live transitions.
+            if(solo&&currentSolo_>=0){
+                const double monoSolo=soloWet_*nodes_[(size_t)(currentSolo_*2)].monoMix;
+                s*=1.0-monoSolo;
+            }
             globalMidPower_=correlationAlpha_*globalMidPower_+
                             (1.0-correlationAlpha_)*m*m;
             globalSidePower_=correlationAlpha_*globalSidePower_+

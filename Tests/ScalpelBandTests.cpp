@@ -74,6 +74,26 @@ std::pair<double,double> domainRms(prism::roots::v2::Domain domain,bool solo){
     }
     return {std::sqrt(mid/(count/2)),std::sqrt(side/(count/2))};
 }
+double soloMonoResidual(){
+    constexpr int sr=48000,count=32768;
+    using namespace prism::roots::v2;
+    Engine engine(sr);
+    auto lo=engine.get(8),hi=engine.get(9);
+    lo.hz=500;hi.hz=2000;lo.tape=.5;lo.sparkle=.5;
+    engine.config(8,lo);engine.config(9,hi);
+    engine.setRootGain(4,12);engine.setRootMono(4,true);engine.setSoloRoot(4);
+    std::vector<float> l(count),r(count);
+    for(int i=0;i<count;++i){
+        const double x=.12*std::sin(2*std::numbers::pi*900*i/sr)
+            +.035*std::sin(2*std::numbers::pi*6200*i/sr);
+        l[(size_t)i]=(float)x;r[(size_t)i]=(float)(.85*x);
+    }
+    engine.process(l.data(),r.data(),count);
+    double maximum=0;
+    for(int i=count/2;i<count;++i)
+        maximum=std::max(maximum,std::abs((double)l[(size_t)i]-r[(size_t)i]));
+    return maximum;
+}
 }
 int main(){
     // Coherence guard reduces negative SIDE contribution, with no polarity flip.
@@ -113,5 +133,6 @@ int main(){
     const auto soloSide=domainRms(prism::roots::v2::Domain::side,true);
     assert(soloMid.first>.01&&soloMid.second<1.0e-4);
     assert(soloSide.second>.01&&soloSide.first<1.0e-4);
+    assert(soloMonoResidual()<1e-6);
     std::cout<<"Scalpel bands: OFF spectral mute, MONO selected-side reduction, MID/SIDE EQ DOMAIN routing and SOLO audition, PHASE guard, LIMIT optical leveling PASS\n";
 }
