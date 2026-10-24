@@ -533,18 +533,8 @@ void RootsGraph::paint(juce::Graphics& g){
             g.setColour(slot==slot_?juce::Colours::white:focusedColor);
             g.fillEllipse(x-6.0f,y-6.0f,12.0f,12.0f);
         }
-        // The marker centre stays at the measured host parameter position.
-        // Small nearby identification plates may overlap, not the node data.
-        const int labelX=juce::jlimit((int)r.getX(),(int)r.getRight()-30,
-                                    juce::roundToInt(x)+9+(slot%2)*2);
-        const int labelY=juce::jlimit((int)r.getY(),(int)r.getBottom()-17,
-                                    juce::roundToInt(y)-25-(slot%2)*17);
-        g.setColour(juce::Colour(0xff07151c).withAlpha(0.94f));
-        g.fillRoundedRectangle((float)labelX,(float)labelY,29.0f,17.0f,4.0f);
-        g.setColour(juce::Colours::white);
-        g.setFont(juce::Font(juce::FontOptions(10.0f,juce::Font::bold)));
-        g.drawText("C"+juce::String(slot+1),labelX,labelY,29,17,
-                   juce::Justification::centred);
+        // Identification is available on hover and in the CARVE shelf;
+        // the reference X-RAY lens has clean nodes, never black C1-C4 tabs.
     }
     if(hover_&&r.contains(mouse_)){
         const int bar=prism::analysis::LabBands::indexForFrequency(xToFreq(mouse_.x));
