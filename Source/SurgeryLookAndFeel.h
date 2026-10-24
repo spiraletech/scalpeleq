@@ -91,6 +91,9 @@ public:
         const bool active=button.getToggleState()||down;
         const bool xray=button.getButtonText()=="X-RAY";
         const bool deckSwitch=button.getButtonText()=="ON"||button.getButtonText()=="OFF";
+        const bool actionSwitch=button.getButtonText()=="MONO"||button.getButtonText()=="SOLO"||
+            button.getButtonText()=="PHASE"||button.getButtonText()=="LIMIT";
+        const bool depressed=active&&(deckSwitch||actionSwitch);
         const bool snow=button.getButtonText()=="FREEZE"||button.getButtonText()=="RESUME";
         const bool heat=button.getButtonText().startsWith("SONAR ")||button.getButtonText()=="HEAT MAP";
         if(snow||heat){
@@ -121,13 +124,13 @@ public:
         g.drawRoundedRectangle(r.expanded(.5f),3.5f,1.2f);
         juce::ColourGradient plastic(
             xray?juce::Colour(active?0xff4b0908:0xff34100d):
-                juce::Colour(active&&deckSwitch?0xff29201d:active?0xffd5bca0:0xffffecd3),
+                juce::Colour(depressed?0xff29201d:active?0xffd5bca0:0xffffecd3),
             r.getX(),r.getY()+1.f,
             xray?juce::Colour(active?0xff150404:0xff581613):
-                juce::Colour(active&&deckSwitch?0xff100e0d:active?0xffb89e83:0xffd4bea5),
+                juce::Colour(depressed?0xff100e0d:active?0xffb89e83:0xffd4bea5),
             r.getX(),r.getBottom(),false);
         plastic.addColour(.18,xray?juce::Colour(0xff681c15):
-            active&&deckSwitch?juce::Colour(0xff3a302b):juce::Colour(0xfff2ddc1));
+            depressed?juce::Colour(0xff3a302b):juce::Colour(0xfff2ddc1));
         g.setGradientFill(plastic);g.fillRoundedRectangle(r.reduced(1.f),2.5f);
         g.setColour(juce::Colour(xray?0xffbd4d3c:0xfffff3df).withAlpha(active?.34f:.91f));
         g.drawLine(r.getX()+4,r.getY()+2,r.getRight()-4,r.getY()+2,.9f);
@@ -149,6 +152,12 @@ public:
                 g.fillRoundedRectangle(lamp.expanded(4.f,2.f),2.5f);
             }
         }
+        if(actionSwitch&&active){
+            // A tiny pale pilot identifies engaged processing without ever
+            // painting the band red; red is reserved for true peak warnings.
+            g.setColour(juce::Colour(0xffffeed8).withAlpha(.88f));
+            g.fillEllipse(r.getRight()-10.f,r.getY()+6.f,3.5f,3.5f);
+        }
         const auto warning=button.findColour(juce::TextButton::buttonColourId);
         if(!xray&&warning.getRed()>180&&warning.getGreen()<65&&warning.getBlue()<65){
             g.setColour(juce::Colour(0xffed1919).withAlpha(.28f+warning.getFloatAlpha()*.62f));
@@ -160,7 +169,9 @@ public:
         if(b.getButtonText()=="FREEZE"||b.getButtonText()=="RESUME"||b.getButtonText().startsWith("SONAR ")||b.getButtonText()=="HEAT MAP")return;
         const bool xray=b.getButtonText()=="X-RAY";
         const bool depressedSwitch=b.getToggleState()&&
-            (b.getButtonText()=="ON"||b.getButtonText()=="OFF");
+            (b.getButtonText()=="ON"||b.getButtonText()=="OFF"||
+             b.getButtonText()=="MONO"||b.getButtonText()=="SOLO"||
+             b.getButtonText()=="PHASE"||b.getButtonText()=="LIMIT");
         g.setColour(b.isEnabled()?juce::Colour(xray?0xffff624b:
             depressedSwitch?0xffffeee0:0xff241a14):juce::Colour(0xff8d8177));
         g.setFont(juce::Font(juce::FontOptions(juce::jlimit(11.0f,13.0f,b.getHeight()*.43f),juce::Font::bold)));

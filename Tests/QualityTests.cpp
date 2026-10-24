@@ -84,6 +84,34 @@ bool runQualityTests(){
         }
         if(!thresholdFound||fresh->apvts.getRawParameterValue(
             PRISMVSTAudioProcessor::rootsRootControlId(0,"comp"))->load()!=0)return false;
+        // Hardware-contract regression: two BAND dials only, no old Surgery
+        // utility shelf, no CARVE Dynamic switch. Each processing switch must
+        // update the actual host/DSP parameter, not merely illuminate.
+        int visibleBandDials=0;
+        for(auto* child:ui->getChildren()){
+            if(dynamic_cast<juce::Slider*>(child)&&child->isVisible())++visibleBandDials;
+            if(child->isVisible())if(auto* b=dynamic_cast<juce::TextButton*>(child)){
+                const auto name=b->getButtonText();
+                if(name=="BYPASS"||name=="SAVE"||name=="LOAD"||name.startsWith("COPY "))return false;
+            }
+        }
+        if(visibleBandDials!=2){std::cerr<<"Scalpel Band panel has "<<visibleBandDials<<" visible knobs, expected 2\n";return false;}
+        for(const auto& item:std::array<std::pair<const char*,const char*>,3>{{
+                {"MONO","mono"},{"PHASE","phase"},{"LIMIT","limit_on"}}}){
+            juce::TextButton* control=nullptr;
+            for(auto* child:ui->getChildren())if(auto* b=dynamic_cast<juce::TextButton*>(child))
+                if(b->getButtonText()==item.first&&b->isVisible())control=b;
+            if(!control)return false;
+            control->setToggleState(true,juce::sendNotificationSync);
+            if(fresh->apvts.getRawParameterValue(
+                   PRISMVSTAudioProcessor::rootsRootControlId(0,item.second))->load()<0.5f)
+                return false;
+            control->setToggleState(false,juce::sendNotificationSync);
+        }
+        if(!click(*ui,"CARVE"))return false;
+        for(auto* child:ui->getChildren())if(auto* b=dynamic_cast<juce::TextButton*>(child))
+            if(b->getButtonText()=="DYNAMIC"&&b->isVisible())return false;
+        click(*ui,"BAND MODE");
         auto hidden=PRISMVSTAudioProcessor::carveId(0,0,"threshold");
         if(fresh->apvts.getRawParameterValue(hidden)==nullptr)return false;
         set(*fresh,hidden,-37.2f);
@@ -371,15 +399,19 @@ bool runQualityTests(){
     // the production Scalpel hardware proportions.
     set(*p,"scalpel_xray",1);
     editor->setSize(1344,756);
-    if(!click(*editor,"COLOR"))return false;
     juce::Thread::sleep(40);juce::Timer::callPendingTimersSynchronously();
-    {
+    // Each hardware menu gets a real native-size regression photograph, not
+    // just COLOR: missing buttons and extra rotaries become reviewable.
+    for(const auto* tab:{"BAND MODE","CARVE","COLOR","ANALYZE"}){
+        if(!click(*editor,tab))return false;
+        juce::Timer::callPendingTimersSynchronously();
         const auto native=editor->createComponentSnapshot(editor->getLocalBounds());
         const auto out=juce::File::getCurrentWorkingDirectory()
-            .getChildFile("scalpel-ui-default-1344x756-COLOR.png");
+            .getChildFile("scalpel-ui-default-1344x756-"+juce::String(tab)+".png");
         juce::FileOutputStream stream(out);stream.setPosition(0);stream.truncate();
         if(!juce::PNGImageFormat().writeImageToStream(native,stream))return false;
     }
+    click(*editor,"COLOR");
     editor->setSize(1120,755);
     // Old host/state theme values must never switch away from the current rack.
     if(!click(*editor,"FREEZE"))return false;

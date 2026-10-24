@@ -67,6 +67,19 @@ public:
         b1_=(highPass?-(1.0+co):(1.0-co))*norm;
         b2_=b0_;a1_=-2.0*co*norm;a2_=(1.0-alpha)*norm;
     }
+    // A band-stop, not a bypass: when BAND OFF is selected the measured
+    // interval is removed from the music. Two cascaded sections provide a
+    // deep notch with smooth skirts, and the engine crossfades the result.
+    void notch(double sr,double low,double high) noexcept {
+        const double f=std::clamp(std::sqrt(std::max(20.0,low)*
+            std::max(low+0.01,high)),20.0,std::min(20000.0,sr*0.45));
+        const double q=std::clamp(f/std::max(1.0,high-low),0.15,24.0);
+        const double w=2.0*std::numbers::pi*f/sr;
+        const double co=std::cos(w),a=std::sin(w)/(2.0*q);
+        const double norm=1.0/(1.0+a);
+        b0_=norm;b1_=-2.0*co*norm;b2_=norm;
+        a1_=b1_;a2_=(1.0-a)*norm;
+    }
     void reset() noexcept {z1_=z2_=0.0;}
 private:
     double b0_=1.0,b1_=0.0,b2_=0.0,a1_=0.0,a2_=0.0,z1_=0.0,z2_=0.0;
@@ -112,6 +125,7 @@ public:
             for(auto& f:taps.filters)f.reset();
             for(auto& f:rootGainBands_[(size_t)root].filters)f.reset();
             for(auto& f:rootFxBands_[(size_t)root].filters)f.reset();
+            for(auto& f:rootMuteBands_[(size_t)root].filters)f.reset();
             updateSoloBand(root);
         }
     }
@@ -202,8 +216,9 @@ public:
                 double fm=bandMid,fs=bandSide;
                 applyRootEffects(root,bandMid,bandSide,fm,fs,greatestGr);
                 processedM[(size_t)root]=fm;processedS[(size_t)root]=fs;
+                const double rootGain=std::pow(10.0,rootGainDb_[(size_t)root]/20.0);
                 blockRootPeak[(size_t)root]=std::max(blockRootPeak[(size_t)root],
-                    std::max(std::abs(fm+fs),std::abs(fm-fs)));
+                    node.enableMix*rootGain*std::max(std::abs(fm+fs),std::abs(fm-fs)));
                 m+=fm-bandMid;s+=fs-bandSide;
             }
             {
@@ -249,6 +264,16 @@ public:
             if(soloFadeLeft_>0){
                 --soloFadeLeft_;
                 if(soloFadeLeft_==0)previousSolo_=-1;
+            }
+            // BAND OFF removes the selected frequency territory from the
+            // output. The notch paths run continuously so toggling does not
+            // reset filter memory or create sharp switching discontinuities.
+            for(int root=0;root<kTerritories;++root){
+                auto& filters=rootMuteBands_[(size_t)root].filters;
+                const double notchM=filters[1].sample(filters[0].sample(m));
+                const double notchS=filters[3].sample(filters[2].sample(s));
+                const double muted=1.0-nodes_[(size_t)(root*2)].enableMix;
+                m+=muted*(notchM-m);s+=muted*(notchS-s);
             }
             globalMidPower_=correlationAlpha_*globalMidPower_+
                             (1.0-correlationAlpha_)*m*m;
@@ -393,6 +418,8 @@ private:
         auto& fxTap=rootFxBands_[(size_t)root].filters;
         fxTap[0].setEdge(sr_,low,true);fxTap[1].setEdge(sr_,high,false);
         fxTap[2].setEdge(sr_,low,true);fxTap[3].setEdge(sr_,high,false);
+        auto& mute=rootMuteBands_[(size_t)root].filters;
+        for(auto& filter:mute)filter.notch(sr_,low,high);
     }
     void updateFilters(int i) noexcept {
         auto& n=nodes_[(size_t)i];
@@ -435,6 +462,7 @@ private:
     std::array<RootBand,kTerritories> soloBands_{};
     std::array<RootBand,kTerritories> rootGainBands_{};
     std::array<RootBand,kTerritories> rootFxBands_{};
+    std::array<RootBand,kTerritories> rootMuteBands_{};
     std::array<double,kTerritories> rootGainDb_{};
     std::array<bool,kTerritories> rootMono_{};
     std::array<double,kTerritories> smoothedRootDelta_{};

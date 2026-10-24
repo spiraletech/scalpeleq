@@ -72,6 +72,9 @@ public:
     void setFrozen(bool frozen) noexcept {frozen_=frozen;repaint();}
     bool isFrozen() const noexcept {return frozen_;}
     void setXray(bool active) {if(xrayActive_!=active){xrayActive_=active;repaint();}}
+    void setPeakWarnings(const std::array<float,7>& levels){
+        if(peakWarnings_!=levels){peakWarnings_=levels;repaint();}
+    }
     void setPresentation(int mode,int slot) {
         if(mode_!=mode||slot_!=slot){mode_=mode;slot_=slot;repaint();}
     }
@@ -79,6 +82,7 @@ private:
     std::uint64_t paintedFrames_=0;
     PRISMVSTAudioProcessor& processor_;
     std::array<float,PRISMVSTAudioProcessor::labBars> bands_{},peaks_{};
+    std::array<float,7> peakWarnings_{};
     int selected_=0,dragging_=-1,draggingCarve_=-1;
     float dragStartX_=0.0f,dragStartHz_=0.0f;
     bool fineDragging_=false;
@@ -100,6 +104,11 @@ private:
     surgery::weather::Field weatherField_;
     juce::Image weatherImage_{juce::Image::RGB,128,64,true};
     bool weatherActive_=false;int weatherStyle_=0;float visualPhase_=0;
+    // Low-resolution material field is shaded at ~20 fps and composited
+    // beneath the measured FFT silhouette at full graph refresh rate.
+    juce::Image mercuryMaterial_{juce::Image::RGB,360,128,false};
+    unsigned mercuryPaintCount_=0;
+    float mercuryPhase_=0;
     juce::Image responseOverlay_;
     std::array<double,32> responseOverlayKey_{};
     bool responseOverlayValid_=false;

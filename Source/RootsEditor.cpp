@@ -132,6 +132,9 @@ void RootsGraph::updateWeather(const surgery::weather::Snapshot* snapshot,double
     auto key=[](const surgery::weather::Meaning& f){return std::array<float,16>{f.bass,f.centroid,f.flux,f.width,f.rate,f.density,f.level,f.storm,f.flash,f.flashPosition,f.musicEnergy[0],f.musicEnergy[1],f.musicEnergy[2],f.musicEnergy[3],f.rms,f.crest};};
     const auto previous=key(weatherInterpretation_.state());const auto previousPhase=visualPhase_;
     const auto& meaning=weatherInterpretation_.update(elapsed,memory,reduced);
+    if(xrayActive_&&meaning.level>0.01f)
+        mercuryPhase_=std::fmod(mercuryPhase_+(float)(std::clamp(elapsed,0.,.25)*
+            (.24f+1.1f*meaning.level+1.8f*meaning.flux)*(reduced?.5f:1.f)),64.f);
     if(visible||xrayActive_)
         visualPhase_=std::fmod(visualPhase_+(float)(std::clamp(elapsed,0.,.25)*
             meaning.level*(reduced?.035:1.)),64.f);
@@ -225,8 +228,11 @@ void RootsGraph::paint(juce::Graphics& g){
         if(!interval.enabled)continue;
         const float x1=freqToX((float)interval.lowHz);
         const float x2=freqToX((float)interval.highHz);
-        g.setColour((root==selected_/2?juce::Colour(0xffbd2b24):
-                     juce::Colour(0xff9b7b68)).withAlpha(root==selected_/2?0.16f:0.017f));
+        const auto warning=peakWarnings_[(size_t)root];
+        const auto accent=warning>0.f?juce::Colour(0xffd71916):
+            (root==selected_/2?colour(root):juce::Colour(0xff9b7b68));
+        g.setColour(accent.withAlpha(warning>0.f?warning*.33f:
+            root==selected_/2?.095f:.017f));
         g.fillRect(x1,r.getY(),juce::jmax(0.0f,x2-x1),r.getHeight());
     }
     // Single live FFT envelope. X is 20-20k logarithmic Hz; Y is measured dBFS.
@@ -305,6 +311,43 @@ void RootsGraph::paint(juce::Graphics& g){
         oblique.addColour(.38,juce::Colour(0xff282026).withAlpha(.016f));
         oblique.addColour(.73,juce::Colour(0xffb9a5c2).withAlpha(.048f));
         g.setGradientFill(oblique);g.fillRect(r);
+        // A domain-warped normal field is the glossy surface of X-RAY. The
+        // FFT itself is still the ONLY height silhouette; the procedural
+        // texture contributes reflections, never counterfeit spectrum data.
+        // Shade a compact material every third paint (~20 Hz at 60 FPS), then
+        // upscale inside the audio mask to avoid a costly per-pixel shader.
+        if(++mercuryPaintCount_%3==1){
+            juce::Image::BitmapData pixels(mercuryMaterial_,juce::Image::BitmapData::writeOnly);
+            const float time=mercuryPhase_;
+            for(int px=0;px<mercuryMaterial_.getWidth();++px){
+                const float u=(px+.5f)/(float)mercuryMaterial_.getWidth();
+                const auto syn=surgery::synesthesia::read(m,u);
+                for(int py=0;py<mercuryMaterial_.getHeight();++py){
+                    const float v=(py+.5f)/(float)mercuryMaterial_.getHeight();
+                    const float w1=std::sin(14.f*v+time*.9f+9.f*u);
+                    const float w2=std::sin(18.f*u-time*.7f+6.f*v);
+                    const float a=33.f*u+8.f*v+1.6f*w1+time;
+                    const float b=11.f*u-29.f*v+1.7f*w2-time*.68f;
+                    const float c=50.f*u+25.f*v+1.3f*w1-time*.43f;
+                    const float fold=.45f*std::sin(a)+.30f*std::cos(b)+.20f*std::sin(c);
+                    const float nx=.45f*std::cos(a)+.23f*std::sin(b)+.27f*std::cos(c);
+                    const float ny=.32f*std::cos(a)-.35f*std::sin(b)+.16f*std::cos(c);
+                    const float key=juce::jlimit(0.f,1.f,.64f+.70f*nx-.52f*ny);
+                    const float gleam=std::pow(key,15.f)*(0.25f+.50f*energy);
+                    const float ambient=.030f+.12f*juce::jlimit(0.f,1.f,.5f+.5f*fold);
+                    const float blue=.036f+.12f*juce::jlimit(0.f,1.f,.48f+.5f*fold);
+                    // Hue appears only as restrained glints in dark mercury;
+                    // synesthesia never paints a static rainbow background.
+                    const float red=juce::jlimit(0.f,1.f,ambient+gleam*(.53f+.30f*syn.r));
+                    const float green=juce::jlimit(0.f,1.f,ambient+gleam*(.57f+.29f*syn.g));
+                    const float bCol=juce::jlimit(0.f,1.f,blue+gleam*(.63f+.31f*syn.b));
+                    pixels.setPixelColour(px,py,juce::Colour::fromFloatRGBA(red,green,bCol,1.f));
+                }
+            }
+        }
+        g.setOpacity(.94f);
+        g.drawImage(mercuryMaterial_,r);
+        g.setOpacity(1.f);
         if(heatOn){
             // HEAT MAP is independent of X-RAY. It warms the mercury's
             // specular field without reinstating Surgery's blue histogram.
@@ -314,45 +357,7 @@ void RootsGraph::paint(juce::Graphics& g){
             g.setGradientFill(heat);g.fillRect(r);
         }
 
-        // Curled resin waves follow the measured crest and run down through
-        // the liquid. Dark troughs, illuminated ridges and short highlights
-        // give the surface the thickness of mercury instead of thin noodles.
-        for(int ribbon=0;ribbon<12;++ribbon){
-            const float fraction=.08f+ribbon*.078f;
-            juce::Path wave;
-            for(int j=0;j<N;j+=2){
-                const float x=freqToX(prism::analysis::LabBands::centreFrequency(j));
-                const float f=prism::analysis::LabBands::centreFrequency(j);
-                const float d=surgery::displayDb(bands_[(size_t)j],f,slope,rangeDb);
-                const float crest=r.getY()-d*r.getHeight()/rangeDb;
-                const float depth=juce::jmax(0.f,r.getBottom()-crest);
-                const float phase=j*(.075f+ribbon*.004f)+ribbon*1.7f
-                    +visualPhase_*(.11f+ribbon*.025f);
-                const float ripple=(.028f+.039f*energy)*depth*
-                    (std::sin(phase)+.36f*std::sin(phase*2.3f));
-                const float y=juce::jlimit(crest,r.getBottom(),crest+fraction*depth+ripple);
-                if(j==0)wave.startNewSubPath(x,y);else wave.lineTo(x,y);
-            }
-            const auto syn=surgery::synesthesia::read(m,(ribbon+.5f)/12.f);
-            const auto accent=juce::Colour::fromFloatRGBA(syn.r,syn.g,syn.b,1.f);
-            g.setColour(juce::Colour(0xff060606).withAlpha(.35f));
-            g.strokePath(wave,juce::PathStrokeType(6.5f,juce::PathStrokeType::curved,
-                juce::PathStrokeType::rounded));
-            g.setColour(juce::Colour(0xffdeddda).interpolatedWith(accent,.30f)
-                .withAlpha(.10f+.09f*energy));
-            g.strokePath(wave,juce::PathStrokeType(ribbon%3==0?3.5f:2.1f,
-                juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
-            if(ribbon%3==0){
-                juce::ColourGradient glint(accent.withAlpha(.25f+.12f*energy),
-                    r.getX(),r.getY(),juce::Colour(0xffdccdbd).withAlpha(.22f),
-                    r.getRight(),r.getBottom(),false);
-                glint.addColour(.5,juce::Colour(0xffe7e6da).withAlpha(.10f));
-                g.setGradientFill(glint);
-                g.strokePath(wave,juce::PathStrokeType(.9f,
-                    juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
-            }
-        }
-        const float motion=visualPhase_*3.2f;
+        const float motion=mercuryPhase_*3.2f;
         for(int i=0;i<53;++i){
             const float t=(i+.5f)/53.f;
             const float x=r.getX()+t*r.getWidth();
@@ -488,10 +493,12 @@ void RootsGraph::paint(juce::Graphics& g){
         juce::Graphics::ScopedSaveState selectedGlass(g);
         g.reduceClipRegion(r.toNearestInt());
         const float lo=std::min(selectedLo,selectedHi), hi=std::max(selectedLo,selectedHi);
-        juce::ColourGradient red(juce::Colour(0xffb82619).withAlpha(.19f),lo,r.getY(),
-            juce::Colour(0xff390906).withAlpha(.04f),hi,r.getY(),false);
-        g.setGradientFill(red);g.fillRect(lo,r.getY(),hi-lo,r.getHeight());
-        g.setColour(juce::Colour(0xffff3b26).withAlpha(.85f));
+        const float warning=peakWarnings_[(size_t)selectedRoot];
+        const auto tint=warning>0.f?juce::Colour(0xffed2d22):colour(selectedRoot);
+        juce::ColourGradient selection(tint.withAlpha(warning>0.f?.22f:.095f),lo,r.getY(),
+            juce::Colour(0xff181718).withAlpha(.015f),hi,r.getY(),false);
+        g.setGradientFill(selection);g.fillRect(lo,r.getY(),hi-lo,r.getHeight());
+        g.setColour(tint.withAlpha(warning>0.f?.95f:.60f));
         g.drawVerticalLine(juce::roundToInt(freqToX(param(selected_,"hz"))),r.getY(),r.getBottom());
     }
     // Both boundary handles always live on one horizontal rail.
@@ -509,8 +516,9 @@ void RootsGraph::paint(juce::Graphics& g){
              PRISMVSTAudioProcessor::rootsRootSoloId(i/2))>=0.5f;
         // Vertical guides represent frequency boundaries, not gain movements.
         const bool focused=i/2==selectedRoot;
-        const auto col=focused?juce::Colour(0xffff4f38):
-            colour(i/2).interpolatedWith(juce::Colour(0xffc1a997),.20f);
+        const auto col=focused&&peakWarnings_[(size_t)(i/2)]>0.f?
+            juce::Colour(0xffff4f38):
+            colour(i/2).interpolatedWith(juce::Colour(0xffc1a997),.15f);
         g.setColour(col.withAlpha(enabled?(focused?0.68f:0.18f):0.045f));
         g.drawVerticalLine(juce::roundToInt(x),r.getY(),r.getBottom());
         g.setColour(col.withAlpha(enabled?(focused?0.24f:0.045f):0.025f));
@@ -525,7 +533,7 @@ void RootsGraph::paint(juce::Graphics& g){
         // not in floating text that masks live spectrum or CARVE contours.
     }
     // Carve selection is housed in the dedicated mechanical CARVE shelf.
-    const auto focusedColor=juce::Colour(0xffeb8065);
+    const auto focusedColor=colour(selectedRoot).brighter(.25f);
 
     // Selected ROOT CARVE markers always render AFTER boundary handles and heat.
     // Active cuts use their actual host frequency and depth; inactive slots
@@ -962,7 +970,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     }
     mono_.setTooltip("Frequency-selective MONO on the selected BAND only");
     phase_.setTooltip("Automatic per-band coherence guard: gently reduces anti-correlated SIDE power, with smoothed engagement.");
-    limit_.setTooltip("Enable per-band optical leveling; adjust amount with the adjacent single knob.");
+    limit_.setTooltip("Enable fixed-depth LA-2A-inspired optical leveling for the selected band. The hidden automation amount remains compatible with saved sessions.");
     analyzerDepthLabel_.setText("HEAT MAP",juce::dontSendNotification);
     analyzerSlopeLabel_.setText("FREEZE",juce::dontSendNotification);
     analyzerMemoryLabel_.setText("VISUAL DECAY",juce::dontSendNotification);
@@ -1035,6 +1043,12 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     outputLabel_.setText("OUTPUT",juce::dontSendNotification);
     addAndMakeVisible(output_);
     outputA_=std::make_unique<SliderA>(processor_.apvts,"surgery_output_db",output_);
+    // A clean Sanyo/Game Boy control face: no inherited Surgery status strip,
+    // output gain fader, bypass, A/B, copy or file buttons on the chassis.
+    // The associated APVTS parameters/preset code survive for DAW compatibility.
+    for(auto* button:{&bypass_,&compare_,&copy_,&save_,&load_,&peakHold_})
+        button->setVisible(false);
+    output_.setVisible(false);outputLabel_.setVisible(false);
     bindNode(0);setMode(2);
     setResizable(true,true);setResizeLimits(840,470,1800,1200);setSize(1344,756);
     timerCallback();startTimerHz(60);
@@ -1142,7 +1156,10 @@ void RootsEditor::setMode(int next){
     for(auto* s:{&carveFrequency_,&carveDepth_,&carveQ_})s->setVisible(carve);
     for(auto* l:{&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_})l->setVisible(carve);
     for(auto& b:carveSlotButtons_)b.setVisible(carve);
-    carveOn_.setVisible(carve);carveOff_.setVisible(carve);carveDynamic_.setVisible(carve);
+    carveOn_.setVisible(carve);carveOff_.setVisible(carve);
+    // COLOR DYNAMIC is the sole visible transient-contrast control. Keep the
+    // historical CARVE dynamic parameter for preset compatibility only.
+    carveDynamic_.setVisible(false);
     // Legacy SONAR / JUKE settings stay automatable and preset-compatible,
     // but aren't injected into the redesigned 3-control ANALYZE shelf.
     analyzerLegend_.setVisible(false);
@@ -1152,7 +1169,8 @@ void RootsEditor::setMode(int next){
     gain_.setVisible(mode_==0);gainLabel_.setVisible(mode_==0);
     threshold_.setVisible(mode_==0);
     thresholdLabel_.setVisible(mode_==0);
-    limitAmount_.setVisible(mode_==0);
+    // LIMIT is a true single-button control; its old amount rotary is hidden.
+    limitAmount_.setVisible(false);
     phase_.setVisible(mode_==0);
     limit_.setVisible(mode_==0);
     for(int i=0;i<5;++i){
@@ -1182,6 +1200,7 @@ void RootsEditor::setMode(int next){
 }
 void RootsEditor::updateRootButtons(){
     const double nowMs=juce::Time::getMillisecondCounterHiRes();
+    std::array<float,7> warnings{};
     for(int root=0;root<7;++root){
         const bool selected=graph_.selectedNode()/2==root;
         auto& button=rootButtons_[(size_t)root];
@@ -1190,11 +1209,13 @@ void RootsEditor::updateRootButtons(){
             peakWarningUntilMs_[(size_t)root]=nowMs+750.0;
         const bool peak=nowMs<peakWarningUntilMs_[(size_t)root];
         const float pulse=.35f+.25f*(float)std::sin(nowMs*.0043);
+        warnings[(size_t)root]=peak?pulse:0.f;
         button.setColour(juce::TextButton::buttonOnColourId,
             peak?juce::Colour(0xffdf1715).withAlpha(pulse):territory(root).withAlpha(.52f));
         button.setColour(juce::TextButton::buttonColourId,
             peak?juce::Colour(0xffde1714).withAlpha(pulse):juce::Colour(0xffdbc5ac));
     }
+    graph_.setPeakWarnings(warnings);
 }
 void RootsEditor::timerCallback(){
     const bool b=processor_.comparisonSlot()==1;
@@ -1329,7 +1350,7 @@ void RootsEditor::paintRack(juce::Graphics& g){
     deck({37,48,1046,46},false);
     deck({18,91,1084,352},true);
     deck({32,444,1056,34},false);
-    deck({32,476,1056,126},false);
+    deck({32,476,1056,143},false);
     // Inset dark joints dividing the mechanical control shelf only.
     if(mode_==0){
         for(float x:{183.f,358.f,802.f}){
@@ -1375,15 +1396,17 @@ void RootsEditor::layoutRack(){
     compLabel_.setBounds(521,482,204,19);compressor_.setBounds(522,503,204,31);
     domainLabel_.setBounds(521,535,204,19);domain_.setBounds(522,556,204,32);
     detectorLabel_.setBounds(728,482,75,19);detector_.setBounds(728,502,75,30);
-    limitAmount_.setBounds(733,498,72,92);
-    mono_.setBounds(812,504,122,35);solo_.setBounds(940,504,122,35);
-    phase_.setBounds(812,549,122,35);limit_.setBounds(940,549,122,35);
+    // The fourth switch block now meets the compression selectors directly.
+    // No stray LIMIT amount/third dial is painted beside MONO.
+    limitAmount_.setBounds(0,0,1,1);
+    mono_.setBounds(788,504,133,39);solo_.setBounds(930,504,133,39);
+    phase_.setBounds(788,550,133,39);limit_.setBounds(930,550,133,39);
 
     // CARVE / real C1-C4 selector panel, two-state switches and three dials.
     selection_.setBounds(56,482,230,20);
-    carveOn_.setBounds(71,506,188,34);
-    carveOff_.setBounds(71,545,188,34);
-    carveDynamic_.setBounds(71,582,188,17);
+    carveOn_.setBounds(71,519,188,39);
+    carveOff_.setBounds(71,565,188,39);
+    carveDynamic_.setBounds(0,0,1,1);
     const std::array<juce::Slider*,3> cs{&carveFrequency_,&carveDepth_,&carveQ_};
     const std::array<juce::Label*,3> cl{&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_};
     for(int i=0;i<3;++i){

@@ -28,6 +28,27 @@ Result run(bool phase,double limit,bool opposing,double amplitude){
     }
     return {std::sqrt(rms/count),engine.meter().rootPeakDb[3]};
 }
+double bandRms(double hz,bool bandEnabled,bool mono=false,bool antiPhase=false){
+    constexpr int sr=48000,count=48000;
+    using namespace prism::roots::v2;
+    Engine engine(sr);
+    auto lo=engine.get(6),hi=engine.get(7);
+    lo.hz=250;hi.hz=500;lo.enabled=bandEnabled;hi.enabled=bandEnabled;
+    engine.config(6,lo);engine.config(7,hi);
+    engine.setRootMono(3,mono);
+    std::vector<float> l(count),r(count);
+    for(int i=0;i<count;++i){
+        const float v=(float)(0.6*std::sin(2*std::numbers::pi*hz*i/sr));
+        l[(size_t)i]=v;r[(size_t)i]=antiPhase?-v:v;
+    }
+    engine.process(l.data(),r.data(),count);
+    double rms=0;
+    for(int i=count/2;i<count;++i){
+        const double v=antiPhase?(l[(size_t)i]-r[(size_t)i])*0.5:l[(size_t)i];
+        assert(std::isfinite(v));rms+=v*v;
+    }
+    return std::sqrt(rms/(count/2));
+}
 }
 int main(){
     // Coherence guard reduces negative SIDE contribution, with no polarity flip.
@@ -44,5 +65,16 @@ int main(){
     // Off is fully neutral to band processing where defaults are all zero.
     const auto neutral=run(false,0,false,.95);
     assert(neutral.energy==loudDry.energy);
-    std::cout<<"Scalpel bands: PHASE anti-correlation guard, LIMIT optical leveling PASS\n";
+    // BAND OFF is a true deep spectral mute, not an old neutral bypass.
+    const auto inside=bandRms(350,true);
+    const auto muted=bandRms(350,false);
+    const auto outside=bandRms(8000,false);
+    const auto outsideReference=bandRms(8000,true);
+    assert(muted<inside*.35);
+    assert(outside>outsideReference*.65);
+    // MONO works on the selected band's anti-phase SIDE signal.
+    const auto stereoSide=bandRms(350,true,false,true);
+    const auto monoSide=bandRms(350,true,true,true);
+    assert(monoSide<stereoSide*.7);
+    std::cout<<"Scalpel bands: OFF removes interval, MONO collapses band side, PHASE guard, LIMIT optical leveling PASS\n";
 }

@@ -1176,8 +1176,13 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
         c.tape=juce::jlimit(0.0f,1.0f,rootParameters[(size_t)root].values[10]->load()*0.01f);
         c.dynamic=juce::jlimit(0.0f,1.0f,rootParameters[(size_t)root].values[12]->load()*0.01f);
         c.phase=rootParameters[(size_t)root].values[13]->load()>=0.5f;
+        // The front panel has a dedicated LIMIT switch but no third rotary.
+        // A previously neutral 0% hidden amount must not turn LIMIT into a
+        // placebo button. Use a musical optical default; the retained host
+        // parameter can still override it for saved advanced automation.
+        const float amount=rootParameters[(size_t)root].values[14]->load();
         c.limit=rootParameters[(size_t)root].values[15]->load()>=0.5f?
-            juce::jlimit(0.0f,1.0f,rootParameters[(size_t)root].values[14]->load()*0.01f):0.0f;
+            (amount<=0.001f?0.35f:juce::jlimit(0.0f,1.0f,amount*0.01f)):0.0f;
         rootsEngine.config(i,c);
     }
     if(buffer.getNumChannels()>=2)
