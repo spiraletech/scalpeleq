@@ -62,6 +62,12 @@ bool runQualityTests(){
             if(fresh->apvts.getRawParameterValue(comp)->load()!=0)return false;
         }
         std::unique_ptr<juce::AudioProcessorEditor> ui(fresh->createEditor());
+        // Scalpel launches in COLOR intentionally. Exercise the BAND MODE threshold
+        // only after opening the panel that owns that control.
+        if(!click(*ui,"BAND MODE")){
+            std::cerr<<"QUALITY: BAND MODE control unavailable\n";
+            return false;
+        }
         bool thresholdFound=false;
         for(auto* child:ui->getChildren())if(auto* label=dynamic_cast<juce::Label*>(child)){
             if(label->getText()=="COMP THRESHOLD"){
@@ -322,6 +328,26 @@ bool runQualityTests(){
                 juce::Thread::sleep(40);juce::Timer::callPendingTimersSynchronously();
                 if(p->apvts.getRawParameterValue("aura_color")->load()<.5f)return false;
                 std::cout<<"QUALITY 1.0.3: SONAR button enables visible full-spectrum fill ("<<changed<<" pixels), OFF hides it\n";
+            }
+            if(theme==0&&mode==2){
+                juce::TextButton* xray=nullptr;
+                for(auto* child:editor->getChildren())
+                    if(auto* b=dynamic_cast<juce::TextButton*>(child))
+                        if(b->getButtonText()=="X-RAY")xray=b;
+                if(!xray)return false;
+                xray->setToggleState(true,juce::sendNotificationSync);
+                juce::Thread::sleep(40);
+                juce::Timer::callPendingTimersSynchronously();
+                auto mercury=editor->createComponentSnapshot(editor->getLocalBounds());
+                xray->setToggleState(false,juce::sendNotificationSync);
+                juce::Thread::sleep(40);
+                juce::Timer::callPendingTimersSynchronously();
+                auto plain=editor->createComponentSnapshot(editor->getLocalBounds());
+                int difference=0;
+                for(int y=190;y<460;++y)for(int x=140;x<970;++x)
+                    if(mercury.getPixelAt(x,y)!=plain.getPixelAt(x,y))++difference;
+                if(difference<3000){std::cerr<<"X-RAY toggle did not reveal reactive mercury\n";return false;}
+                std::cout<<"SCALPEL X-RAY: visual toggle changed "<<difference<<" graph pixels\n";
             }
             if(theme==0&&mode==1){
                 auto highDpi=editor->createComponentSnapshot(editor->getLocalBounds(),true,2.0f);

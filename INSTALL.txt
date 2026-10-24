@@ -1,9 +1,13 @@
 Scalpel EQ 0.1.0 - Windows x64 VST3
 
-Close your DAW and back up the previous bundle outside scanned folders.
+Close your DAW before copying plugin files. This is a separate plugin from
+Surgery EQ and must NOT overwrite a working Surgery installation.
 Copy the COMPLETE Scalpel EQ.vst3 folder into:
 C:\Program Files\Common Files\VST3
-Rescan and verify v1.0.12. Keep one scanned copy. Bundle/class IDs are retained.
+Rescan and verify the separately named Scalpel EQ 0.1.0 instance.
+It has a distinct VST3 bundle and four-character plugin code.
+Legacy parameter IDs are retained within the new plugin for compatibility,
+but existing Surgery EQ tracks are NOT automatically converted to Scalpel EQ.
 Unsigned development build; test copies of production projects first.
 
 ANALYZE > SONAR 2.1 / VISUAL MODE now contains Standard+ ONLY.
@@ -22,4 +26,4 @@ and turbulence. Silence leaves faint casing reflections after decay.
 Historical SONAR parameter IDs/ranges/values are retained for project and
 normalized automation compatibility. They cannot reactivate removed styles.
 JUKE choices, existing control positions, analyzer geometry and DSP are retained.
-See STANDARD_PLUS_1_0_12.md and BUILD-NOTES.txt for validation and limitations.
+See docs/SCALPEL_EQ_DSP_SPEC.md for the current scope and limitations.

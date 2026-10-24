@@ -18,6 +18,7 @@ inline bool verifyWeatherUI(){
         reference->prepareToPlay(rate,512);visual->prepareToPlay(rate,512);
         std::unique_ptr<juce::AudioProcessorEditor> weatherEditor(visual->createEditor());
         set(*visual,"sonar_weather_mode",0);set(*visual,"sonar_visual_style",(float)mode);set(*visual,"juke_mode",(float)(mode%6));set(*visual,"aura_color",mode==0?0.f:1.f);set(*visual,"sonar_reduced_motion",mode%2);
+        set(*visual,"scalpel_xray",mode%2); // GUI-only visual mode cannot alter audio/FFT.
         juce::AudioBuffer<float> a(2,512),b(2,512);double difference=0;std::size_t allocations=0;
         for(int block=0;block<40;++block){
             for(int ch=0;ch<2;++ch)for(int i=0;i<512;++i){const float v=(float)(.12*std::sin((block*512+i)*juce::MathConstants<double>::twoPi*1000/rate))+(random.nextFloat()*2-1)*.02f;a.setSample(ch,i,v);b.setSample(ch,i,v);}
