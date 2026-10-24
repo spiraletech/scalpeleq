@@ -76,6 +76,7 @@ target_sources(PRISMVST PRIVATE
   Source/PluginEditor.h
   Source/RootsEditor.cpp
   Source/RootsEditor.h
+  Source/ScalpelMercuryField.h
   Source/RootsAudioEngine.h
 )
 
@@ -96,6 +97,9 @@ target_link_libraries(PRISMVST PRIVATE
 
 option(PRISMVST_BUILD_TESTS "Build DSP smoke tests" ON)
 if(PRISMVST_BUILD_TESTS)
+  add_executable(scalpel_mercury_tests Tests/ScalpelMercuryTests.cpp Source/ScalpelMercuryField.h)
+  target_compile_features(scalpel_mercury_tests PRIVATE cxx_std_20)
+  add_test(NAME scalpel_xray_liquid_surface COMMAND scalpel_mercury_tests)
   add_executable(scalpel_color_tests Tests/ScalpelColorTests.cpp Source/SurgeryOnyx.h)
   target_compile_features(scalpel_color_tests PRIVATE cxx_std_20)
   add_test(NAME scalpel_color_five_knob_dsp COMMAND scalpel_color_tests)

@@ -11,6 +11,7 @@
 #include "SurgeryPrecision.h"
 #include "SurgeryResponse.h"
 #include "SurgeryAnalysis.h"
+#include "ScalpelMercuryField.h"
 #include <array>
 #include <functional>
 #include <memory>
@@ -115,6 +116,7 @@ private:
     juce::Image mercuryMaterial_{juce::Image::RGB,360,128,false};
     unsigned mercuryPaintCount_=0;
     float mercuryPhase_=0;
+    scalpel::xray::LiquidSurface<> mercurySurface_;
     juce::Image responseOverlay_;
     std::array<double,32> responseOverlayKey_{};
     bool responseOverlayValid_=false;

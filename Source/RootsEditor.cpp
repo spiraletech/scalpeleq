@@ -132,6 +132,7 @@ void RootsGraph::updateWeather(const surgery::weather::Snapshot* snapshot,double
     auto key=[](const surgery::weather::Meaning& f){return std::array<float,16>{f.bass,f.centroid,f.flux,f.width,f.rate,f.density,f.level,f.storm,f.flash,f.flashPosition,f.musicEnergy[0],f.musicEnergy[1],f.musicEnergy[2],f.musicEnergy[3],f.rms,f.crest};};
     const auto previous=key(weatherInterpretation_.state());const auto previousPhase=visualPhase_;
     const auto& meaning=weatherInterpretation_.update(elapsed,memory,reduced);
+    if(xrayActive_)mercurySurface_.advance(bands_,elapsed,reduced);
     if(xrayActive_&&meaning.level>0.01f)
         mercuryPhase_=std::fmod(mercuryPhase_+(float)(std::clamp(elapsed,0.,.25)*
             (.24f+1.1f*meaning.level+1.8f*meaning.flux)*(reduced?.5f:1.f)),64.f);
@@ -311,36 +312,52 @@ void RootsGraph::paint(juce::Graphics& g){
         oblique.addColour(.38,juce::Colour(0xff282026).withAlpha(.016f));
         oblique.addColour(.73,juce::Colour(0xffb9a5c2).withAlpha(.048f));
         g.setGradientFill(oblique);g.fillRect(r);
-        // A domain-warped normal field is the glossy surface of X-RAY. The
-        // FFT itself is still the ONLY height silhouette; the procedural
-        // texture contributes reflections, never counterfeit spectrum data.
-        // Shade a compact material every third paint (~20 Hz at 60 FPS), then
-        // upscale inside the audio mask to avoid a costly per-pixel shader.
-        if(++mercuryPaintCount_%3==1){
+        // Approximate an oily normal/thin-film field at 30 Hz; the 60 Hz
+        // surface curves below interpolate the measured FFT at every frame.
+        // Both the material and the secondary crests stay inside filledPath.
+        if(++mercuryPaintCount_%2==1){
             juce::Image::BitmapData pixels(mercuryMaterial_,juce::Image::BitmapData::writeOnly);
             const float time=mercuryPhase_;
             for(int px=0;px<mercuryMaterial_.getWidth();++px){
                 const float u=(px+.5f)/(float)mercuryMaterial_.getWidth();
+                const int bin=juce::jlimit(0,N-1,juce::roundToInt(u*(N-1)));
+                const float spectrumDb=surgery::displayDb(bands_[(size_t)bin],
+                    prism::analysis::LabBands::centreFrequency(bin),slope,rangeDb);
+                const float surfaceTop=juce::jlimit(0.f,1.f,-spectrumDb/rangeDb);
+                const float local=juce::jlimit(0.f,1.f,(bands_[(size_t)bin]+72.f)/65.f);
+                const float fluid=mercurySurface_.at(u);
+                const float surfaceSlope=mercurySurface_.at(juce::jmin(1.f,u+.008f))-
+                    mercurySurface_.at(juce::jmax(0.f,u-.008f));
                 const auto syn=surgery::synesthesia::read(m,u);
                 for(int py=0;py<mercuryMaterial_.getHeight();++py){
                     const float v=(py+.5f)/(float)mercuryMaterial_.getHeight();
-                    const float w1=std::sin(14.f*v+time*.9f+9.f*u);
-                    const float w2=std::sin(18.f*u-time*.7f+6.f*v);
-                    const float a=33.f*u+8.f*v+1.6f*w1+time;
-                    const float b=11.f*u-29.f*v+1.7f*w2-time*.68f;
-                    const float c=50.f*u+25.f*v+1.3f*w1-time*.43f;
-                    const float fold=.45f*std::sin(a)+.30f*std::cos(b)+.20f*std::sin(c);
-                    const float nx=.45f*std::cos(a)+.23f*std::sin(b)+.27f*std::cos(c);
-                    const float ny=.32f*std::cos(a)-.35f*std::sin(b)+.16f*std::cos(c);
-                    const float key=juce::jlimit(0.f,1.f,.64f+.70f*nx-.52f*ny);
-                    const float gleam=std::pow(key,15.f)*(0.25f+.50f*energy);
-                    const float ambient=.030f+.12f*juce::jlimit(0.f,1.f,.5f+.5f*fold);
-                    const float blue=.036f+.12f*juce::jlimit(0.f,1.f,.48f+.5f*fold);
-                    // Hue appears only as restrained glints in dark mercury;
-                    // synesthesia never paints a static rainbow background.
-                    const float red=juce::jlimit(0.f,1.f,ambient+gleam*(.53f+.30f*syn.r));
-                    const float green=juce::jlimit(0.f,1.f,ambient+gleam*(.57f+.29f*syn.g));
-                    const float bCol=juce::jlimit(0.f,1.f,blue+gleam*(.63f+.31f*syn.b));
+                    // The true decibel contour gates the entire liquid. The
+                    // shading normals never create peaks in the analyzer.
+                    if(local<.005f||v<surfaceTop){pixels.setPixelColour(px,py,juce::Colour(0xff020304));continue;}
+                    const float d=juce::jlimit(0.f,1.f,(v-surfaceTop)/juce::jmax(.015f,1.f-surfaceTop));
+                    const float bend=std::sin(18.f*u-2.1f*time+3.8f*d+fluid*9.f);
+                    const float fold=std::sin(40.f*u+12.f*d-.9f*time+1.2f*bend);
+                    const float wave=std::sin(13.f*u+8.6f*d+1.7f*time+2.1f*fold);
+                    const float nx=.52f*std::cos(18.f*u+3.8f*d-2.1f*time)+
+                                   .31f*std::cos(40.f*u+12.f*d-.9f*time)+surfaceSlope*4.f;
+                    const float ny=.45f*std::cos(13.f*u+8.6f*d+1.7f*time)+.16f*wave;
+                    const float highlight=juce::jlimit(0.f,1.f,.48f+.47f*nx-.26f*ny);
+                    const float spec=std::pow(highlight,24.f);
+                    // Rounded menisci at irregular fluid depths. These
+                    // streaks move with the spectrum-driven liquid surface.
+                    const float ribbon=.12f+fluid*.25f+.07f*std::sin(15.f*u-time+2.5f*wave);
+                    const float meniscus=std::exp(-std::pow((d-ribbon)/.035f,2.f));
+                    const float lower=.53f+.07f*std::sin(12.f*u+time*.67f+wave);
+                    const float second=std::exp(-std::pow((d-lower)/.047f,2.f));
+                    const float crest=std::exp(-d*19.f);
+                    const float gloss=(.52f*spec+.26f*meniscus+.13f*second+.22f*crest)*
+                        juce::jlimit(0.f,1.f,.24f+.61f*local+.15f*energy);
+                    const float foil=.5f+.5f*std::sin(22.f*d+35.f*u+3.1f*wave-time*.45f);
+                    const float iridescence=.13f+.31f*foil;
+                    const float ambient=.009f+.018f*juce::jlimit(0.f,1.f,.5f+.5f*fold);
+                    const float red=juce::jlimit(0.f,1.f,ambient+gloss*(.42f+iridescence*syn.r));
+                    const float green=juce::jlimit(0.f,1.f,ambient+gloss*(.49f+iridescence*syn.g));
+                    const float bCol=juce::jlimit(0.f,1.f,ambient*1.13f+gloss*(.53f+iridescence*syn.b));
                     pixels.setPixelColour(px,py,juce::Colour::fromFloatRGBA(red,green,bCol,1.f));
                 }
             }
@@ -357,27 +374,57 @@ void RootsGraph::paint(juce::Graphics& g){
             g.setGradientFill(heat);g.fillRect(r);
         }
 
-        const float motion=mercuryPhase_*3.2f;
-        for(int i=0;i<53;++i){
-            const float t=(i+.5f)/53.f;
+        // Layered capillary crests follow the real FFT surface and settle
+        // when the music stops; unlike rigid colored lines they bend and
+        // uncoil with the damped liquid surface.
+        for(int layer=0;layer<3;++layer){
+            juce::Path ribbon;
+            bool open=false;
+            for(int i=0;i<192;++i){
+                const float u=(i+.5f)/192.f;
+                const int bin=juce::jlimit(0,N-1,juce::roundToInt(u*(N-1)));
+                const float db=surgery::displayDb(bands_[(size_t)bin],
+                    prism::analysis::LabBands::centreFrequency(bin),slope,rangeDb);
+                const float h=juce::jlimit(0.f,1.f,(bands_[(size_t)bin]+60.f)/56.f);
+                const float top=r.getY()-db*r.getHeight()/rangeDb;
+                if(h<.035f||top>=r.getBottom()-3.f){open=false;continue;}
+                const float uWave=mercurySurface_.at(u);
+                const float oscillation=std::sin((12.f+layer*4.1f)*u-mercuryPhase_*(.66f+layer*.16f)+uWave*9.f);
+                const float fraction=juce::jlimit(.05f,.87f,.12f+.19f*layer+.065f*oscillation+uWave*.19f);
+                const float x=r.getX()+u*r.getWidth();
+                const float y=top+(r.getBottom()-top)*fraction;
+                if(!open){ribbon.startNewSubPath(x,y);open=true;}else ribbon.lineTo(x,y);
+            }
+            const auto glaze=juce::Colour(layer==0?0xffc4c5bc:layer==1?0xff5d9f9f:0xffa3799d);
+            g.setColour(glaze.withAlpha((.23f-.045f*layer)*juce::jlimit(0.f,1.f,.35f+.65f*energy)));
+            g.strokePath(ribbon,juce::PathStrokeType(layer==0?1.55f:1.0f,
+                juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+        }
+        // Distinct meniscus bubbles only where the measured audio is strong.
+        // No permanently animated decorative droplets during silence.
+        const float motion=mercuryPhase_*1.65f;
+        for(int i=9;i<N-7;i+=13){
+            const float t=(i+.5f)/(float)N;
             const float x=r.getX()+t*r.getWidth();
-            const int bin=juce::jlimit(0,N-1,juce::roundToInt(t*(N-1)));
-            const float db=surgery::displayDb(bands_[(size_t)bin],
-                prism::analysis::LabBands::centreFrequency(bin),slope,rangeDb);
+            const float actual=bands_[(size_t)i];
+            if(actual < -46.f)continue;
+            const float db=surgery::displayDb(actual,
+                prism::analysis::LabBands::centreFrequency(i),slope,rangeDb);
             const float top=r.getY()-db*r.getHeight()/rangeDb;
-            const float sway=std::sin(i*2.431f+motion*.15f);
-            const float radius=(1.9f+energy*7.0f)*(.35f+.65f*std::abs(sway));
-            const float depth=(.13f+.75f*std::abs(std::sin(i*.71f+motion*.11f)))*
+            const float strength=juce::jlimit(0.f,1.f,(actual+46.f)/42.f);
+            const float sway=.5f+.5f*std::sin(i*2.431f+motion*.11f);
+            const float radius=(1.1f+strength*4.9f)*(.49f+.51f*sway);
+            const float depth=(.18f+.58f*std::abs(std::sin(i*.71f+motion*.14f)))*
                 juce::jmax(0.f,r.getBottom()-top);
             const float y=top+depth;
             if(y+radius>=r.getBottom()||y-radius<=top)continue;
             const auto syn=surgery::synesthesia::read(m,t);
             const auto tint=juce::Colour::fromFloatRGBA(syn.r,syn.g,syn.b,1.f);
-            g.setColour(juce::Colour(0xff020304).withAlpha(.85f));
+            g.setColour(juce::Colour(0xff020304).withAlpha(.93f));
             g.fillEllipse(x-radius,y-radius,radius*2.1f,radius*1.8f);
-            g.setColour(tint.withAlpha(.32f+.15f*energy));
+            g.setColour(tint.withAlpha(.24f+.21f*strength));
             g.drawEllipse(x-radius,y-radius,radius*2.f,radius*1.7f,.85f);
-            g.setColour(juce::Colour(0xfff0ede5).withAlpha(.44f+.18f*energy));
+            g.setColour(juce::Colour(0xfff0ede5).withAlpha(.38f+.26f*strength));
             g.fillEllipse(x-radius*.5f,y-radius*.65f,radius*.56f,radius*.24f);
         }
     }
