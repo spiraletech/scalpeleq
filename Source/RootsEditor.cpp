@@ -427,7 +427,10 @@ void RootsGraph::paint(juce::Graphics& g){
     const int selectedRoot=selected_/2;
     const double sr=processor_.getSampleRate()>8000.0?
                     processor_.getSampleRate():48000.0;
-    const float baseY=r.getCentreY()+23.0f;
+    // 0 dB of CARVE response and the frequency-only BAND handle rail are
+    // the same horizontal reference. The previous +23 px offset fabricated
+    // an apparently misplaced EQ line in BAND MODE.
+    const float baseY=r.getCentreY();
     const float lowHz=param(selectedRoot*2,"hz");
     const float highHz=param(selectedRoot*2+1,"hz");
     std::array<double,32> overlayKey{sr,(double)getWidth(),(double)getHeight(),(double)selectedRoot,lowHz,highHz,(double)slot_,(double)colour(selectedRoot).getARGB()};
@@ -570,7 +573,11 @@ void RootsGraph::paint(juce::Graphics& g){
         const float freq=xToFreq(mouse_.x);
         g.setColour(juce::Colours::white.withAlpha(0.26f));
         g.drawVerticalLine(juce::roundToInt(mouse_.x),r.getY(),r.getBottom());
-        g.drawHorizontalLine(juce::roundToInt(mouse_.y),r.getX(),r.getRight());
+        // BAND handles intentionally move in frequency only. A second,
+        // pointer-height horizontal crosshair looked like a displaced BAND
+        // response line; reserve that hover guide for ANALYZE mode.
+        if(mode_==3)
+            g.drawHorizontalLine(juce::roundToInt(mouse_.y),r.getX(),r.getRight());
         juce::String text=hzText(freq)+" Hz ~"+pitchText(freq)+" / "+
                 juce::String(bands_[(size_t)bar],1)+" dBFS / HOLD "+
                 juce::String(peaks_[(size_t)bar],1)+" dBFS";

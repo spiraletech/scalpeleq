@@ -248,8 +248,13 @@ public:
                     const double delta=smoothedRootDelta_[(size_t)root]*node.enableMix;
                     const double bm=rootM[(size_t)root],bs=rootS[(size_t)root];
                     const auto domain=node.config.domain;
-                    const double auditionMid=processedM[(size_t)root]+(domain==Domain::side?0.0:delta*bm);
-                    const double auditionSide=processedS[(size_t)root]+(domain==Domain::mid?0.0:delta*bs*(1.0-node.monoMix));
+                    // EQ DOMAIN must also select the audible channel when
+                    // auditioning a BAND in SOLO. Previously the raw MID and
+                    // SIDE taps leaked through even in the opposite domain.
+                    const double auditionMid=domain==Domain::side?0.0:
+                        processedM[(size_t)root]+delta*bm;
+                    const double auditionSide=domain==Domain::mid?0.0:
+                        processedS[(size_t)root]+delta*bs;
                     return {auditionMid,auditionSide};
                 };
                 const auto next=audition(currentSolo_);
@@ -265,15 +270,21 @@ public:
                 --soloFadeLeft_;
                 if(soloFadeLeft_==0)previousSolo_=-1;
             }
-            // BAND OFF removes the selected frequency territory from the
-            // output. The notch paths run continuously so toggling does not
-            // reset filter memory or create sharp switching discontinuities.
+            // BAND OFF removes its territory from BOTH channels. MONO uses
+            // that same independently filtered territory on SIDE only, so
+            // its audible width change extends throughout the actual root
+            // boundaries, not just the narrower colour/compressor tap.
+            // Continuous notch state + 10 ms wet smoothing prevent clicks.
             for(int root=0;root<kTerritories;++root){
                 auto& filters=rootMuteBands_[(size_t)root].filters;
                 const double notchM=filters[1].sample(filters[0].sample(m));
                 const double notchS=filters[3].sample(filters[2].sample(s));
-                const double muted=1.0-nodes_[(size_t)(root*2)].enableMix;
-                m+=muted*(notchM-m);s+=muted*(notchS-s);
+                const auto& node=nodes_[(size_t)(root*2)];
+                const double muted=1.0-node.enableMix;
+                const double monoWet=node.monoMix*node.enableMix;
+                const double sideWet=1.0-(1.0-muted)*(1.0-monoWet);
+                m+=muted*(notchM-m);
+                s+=sideWet*(notchS-s);
             }
             globalMidPower_=correlationAlpha_*globalMidPower_+
                             (1.0-correlationAlpha_)*m*m;
@@ -394,7 +405,8 @@ private:
             s+=(gain-1.0)*tapS;
             greatestGr=std::max(greatestGr,reductionDb*node.enableMix);
         }
-        s-=node.monoMix*(bandSide+s-originalS);
+        // The final frequency-selective SIDE suppression is applied after
+        // root gain and all per-root colour effects in process().
         m=originalM+node.enableMix*(m-originalM);
         s=originalS+node.enableMix*(s-originalS);
     }

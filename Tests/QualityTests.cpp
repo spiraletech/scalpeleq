@@ -112,6 +112,36 @@ bool runQualityTests(){
                 return false;
             control->setToggleState(false,juce::sendNotificationSync);
         }
+        // Real UI contract for the reported BAND MONO / EQ DOMAIN defects:
+        // changing the selected BAND rebinds both controls to that root, and
+        // the dropdown must update host automation (not just its caption).
+        if(!click(*ui,"BAND 4"))return false;
+        juce::TextButton* bandMono=nullptr;
+        juce::ComboBox* bandDomain=nullptr;
+        for(auto* child:ui->getChildren()){
+            if(auto* b=dynamic_cast<juce::TextButton*>(child))
+                if(b->getButtonText()=="MONO")bandMono=b;
+            if(auto* c=dynamic_cast<juce::ComboBox*>(child))
+                if(c->getNumItems()==3&&c->getItemText(0)=="STEREO"&&c->isVisible())bandDomain=c;
+        }
+        if(!bandMono||!bandDomain)return false;
+        bandMono->setToggleState(true,juce::sendNotificationSync);
+        bandDomain->setSelectedId(2,juce::sendNotificationSync); // MID
+        const auto monoId=PRISMVSTAudioProcessor::rootsRootControlId(3,"mono");
+        const auto domainId=PRISMVSTAudioProcessor::rootsRootControlId(3,"domain");
+        if(fresh->apvts.getRawParameterValue(monoId)->load()<.5f
+            ||std::abs(fresh->apvts.getRawParameterValue(domainId)->load()-1.f)>.01f)
+            return false;
+        bandDomain->setSelectedId(3,juce::sendNotificationSync); // SIDE
+        if(std::abs(fresh->apvts.getRawParameterValue(domainId)->load()-2.f)>.01f)return false;
+        if(!click(*ui,"BAND 5")||bandMono->getToggleState()
+            ||bandDomain->getSelectedId()!=1)return false;
+        if(!click(*ui,"BAND 4")||!bandMono->getToggleState()
+            ||bandDomain->getSelectedId()!=3)return false;
+        // Leave the test instance neutral, as a fresh project should be.
+        bandMono->setToggleState(false,juce::sendNotificationSync);
+        bandDomain->setSelectedId(1,juce::sendNotificationSync);
+        click(*ui,"BAND 1");
         if(!click(*ui,"CARVE"))return false;
         for(auto* child:ui->getChildren())if(auto* b=dynamic_cast<juce::TextButton*>(child))
             if(b->getButtonText()=="DYNAMIC"&&b->isVisible())return false;
