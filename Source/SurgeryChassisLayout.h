@@ -5,7 +5,8 @@ namespace surgery::rack {
 // thickness as editor aspect ratio changes. Original artwork is 1536x1024.
 inline constexpr float chassisScale=.75f,cornerSize=72.f;
 inline juce::Rectangle<float> instrumentArea(int width,int height){
-    return {80.f,40.f,(float)width-160.f,(float)height-100.f};
+    // A shallow molded perimeter preserves the full-width 1980s desk-deck face.
+    return {16.f,12.f,(float)width-32.f,(float)height-26.f};
 }
 inline juce::Rectangle<float> engravingArea(int width){return {width*.5f-119.f,1.f,238.f,27.f};}
 inline void drawChassis(juce::Graphics& g,const juce::Image& image,int width,int height){

@@ -30,6 +30,7 @@ jobs:
           path: |
             build/Testing/Temporary/LastTest.log
             build/surgery-ui-*.png
+            build/scalpel-ui-*.png
             build/surgery-*.csv
           if-no-files-found: warn
       - name: Stage VST3

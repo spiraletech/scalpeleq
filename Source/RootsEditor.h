@@ -11,6 +11,7 @@
 #include "SurgeryPrecision.h"
 #include "SurgeryResponse.h"
 #include "SurgeryAnalysis.h"
+#include "ScalpelMercuryField.h"
 #include <array>
 #include <functional>
 #include <memory>
@@ -59,7 +60,13 @@ public:
     void updateWeather(const surgery::weather::Snapshot*,double elapsed,bool active,bool reduced,double memory,int style=1);
     const surgery::weather::Meaning& weatherMeaning() const noexcept {return weatherInterpretation_.state();}
     const surgery::weather::Snapshot& weatherMeasured() const noexcept {return weatherInterpretation_.measured();}
-    bool weatherActive() const noexcept {return weatherActive_;}
+    // The parameter is authoritative even before the next UI timer tick.
+    // This matters if HEAT MAP is disabled while the graph is frozen or the
+    // host is blocking repaints: OFF must never report itself as still ON.
+    bool weatherActive() const noexcept {
+        const auto* enabled=processor_.apvts.getRawParameterValue("aura_color");
+        return weatherActive_&&enabled&&enabled->load(std::memory_order_relaxed)>=0.5f;
+    }
     const surgery::weather::Field& weatherField() const noexcept {return weatherField_;}
     std::function<void(int)> onSelectNode;
     std::function<void(int)> onSelectCarve;
@@ -69,9 +76,17 @@ public:
     surgery::SpectralSnapshot spectralMetrics() const noexcept {
         return surgery::summarizeSpectrum(bands_);
     }
-    void setFrozen(bool frozen) noexcept {frozen_=frozen;repaint();}
+    void setFrozen(bool frozen) noexcept {
+        if(frozen_!=frozen){frozen_=frozen;mercuryPaintCount_=0;}
+        repaint();
+    }
     bool isFrozen() const noexcept {return frozen_;}
-    void setXray(bool active) {if(xrayActive_!=active){xrayActive_=active;repaint();}}
+    void setXray(bool active) {
+        if(xrayActive_!=active){xrayActive_=active;mercuryPaintCount_=0;repaint();}
+    }
+    void setPeakWarnings(const std::array<float,7>& levels){
+        if(peakWarnings_!=levels){peakWarnings_=levels;repaint();}
+    }
     void setPresentation(int mode,int slot) {
         if(mode_!=mode||slot_!=slot){mode_=mode;slot_=slot;repaint();}
     }
@@ -79,6 +94,7 @@ private:
     std::uint64_t paintedFrames_=0;
     PRISMVSTAudioProcessor& processor_;
     std::array<float,PRISMVSTAudioProcessor::labBars> bands_{},peaks_{};
+    std::array<float,7> peakWarnings_{};
     int selected_=0,dragging_=-1,draggingCarve_=-1;
     float dragStartX_=0.0f,dragStartHz_=0.0f;
     bool fineDragging_=false;
@@ -100,6 +116,12 @@ private:
     surgery::weather::Field weatherField_;
     juce::Image weatherImage_{juce::Image::RGB,128,64,true};
     bool weatherActive_=false;int weatherStyle_=0;float visualPhase_=0;
+    // Low-resolution material field is shaded at ~20 fps and composited
+    // beneath the measured FFT silhouette at full graph refresh rate.
+    juce::Image mercuryMaterial_{juce::Image::RGB,360,128,false};
+    unsigned mercuryPaintCount_=0;
+    float mercuryPhase_=0;
+    scalpel::xray::LiquidSurface<> mercurySurface_;
     juce::Image responseOverlay_;
     std::array<double,32> responseOverlayKey_{};
     bool responseOverlayValid_=false;
@@ -132,12 +154,12 @@ private:
     PRISMVSTAudioProcessor& processor_;
     RootsGraph graph_;
     SurgeryLookAndFeel lookAndFeel_;
-    juce::Image rackChassis_,rackBackground_;
+    juce::Image rackBackground_;
     int backgroundMode_=-1;
     float backgroundScale_=0;
-    surgery::rack::StormChassis stormChassis_;
     std::array<RootSelectorButton,7> rootButtons_;
     std::array<double,7> peakWarningUntilMs_{};
+    std::uint64_t lastPeakRevision_=0;
     juce::Slider gain_,threshold_,limitAmount_,analyzerSlope_,analyzerMemory_;
     juce::ComboBox analyzerDepth_,weatherMode_,jukeMode_;
     juce::Label jukeModeLabel_;
@@ -147,7 +169,7 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> jukeModeA_;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> reducedMotionA_;
     juce::TextButton heatToggle_{"SONAR ON"},freezeButton_{"FREEZE"};
-    juce::TextButton mono_{"MONO"},on_{"ON"},solo_{"SOLO"},phase_{"PHASE"},limit_{"LIMIT"};
+    juce::TextButton mono_{"MONO"},on_{"ON"},off_{"OFF"},solo_{"SOLO"},phase_{"PHASE"},limit_{"LIMIT"};
     int mode_=0,carveSlot_=0;
     std::array<juce::TextButton,4> modeButtons_;
     std::array<juce::TextButton,4> carveSlotButtons_;
@@ -157,7 +179,7 @@ private:
     std::array<std::unique_ptr<SliderA>,5> onyxAttachments_;
     juce::TextButton xrayButton_{"X-RAY"};
     std::unique_ptr<ButtonA> xrayAttachment_;
-    juce::TextButton carveOn_{"CARVE ON"},carveDynamic_{"DYNAMIC"};
+    juce::TextButton carveOn_{"ON"},carveOff_{"OFF"},carveDynamic_{"DYNAMIC"};
     juce::Label carveFrequencyLabel_,carveDepthLabel_,carveQLabel_;
     std::unique_ptr<SliderA> carveFrequencyA_,carveDepthA_,carveQA_;
     std::unique_ptr<ButtonA> carveOnA_,carveDynamicA_;

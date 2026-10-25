@@ -9,11 +9,11 @@
 class SurgeryLookAndFeel final : public juce::LookAndFeel_V4 {
 public:
     SurgeryLookAndFeel(){
-        setColour(juce::PopupMenu::backgroundColourId,juce::Colour(0xffe3d1bc));
-        setColour(juce::PopupMenu::textColourId,juce::Colour(0xff30251e));
-        setColour(juce::PopupMenu::highlightedBackgroundColourId,juce::Colour(0xffbca48b));
-        setColour(juce::PopupMenu::highlightedTextColourId,juce::Colours::black);
-        setColour(juce::ComboBox::textColourId,juce::Colour(0xff261e18));
+        setColour(juce::PopupMenu::backgroundColourId,juce::Colour(0xff261e1a));
+        setColour(juce::PopupMenu::textColourId,juce::Colour(0xfff1ddc3));
+        setColour(juce::PopupMenu::highlightedBackgroundColourId,juce::Colour(0xff7b5340));
+        setColour(juce::PopupMenu::highlightedTextColourId,juce::Colour(0xffffe8c7));
+        setColour(juce::ComboBox::textColourId,juce::Colour(0xfff9e2c5));
     }
     juce::Font getComboBoxFont(juce::ComboBox&) override {return juce::Font(juce::FontOptions(13.0f));}
     juce::Font getPopupMenuFont() override {return juce::Font(juce::FontOptions(13.0f));}
@@ -36,22 +36,27 @@ public:
                           bool highlighted,bool ticked,bool submenu,const juce::String& text,
                           const juce::String& shortcut,const juce::Drawable* icon,const juce::Colour* colour) override {
         juce::LookAndFeel_V4::drawPopupMenuItem(g,area,separator,active,highlighted||ticked,ticked,submenu,text,shortcut,icon,colour);
-        if(ticked&&!separator){g.setColour(juce::Colour(0xff675349));g.fillRect(area.getX()+2,area.getY()+4,2,area.getHeight()-8);}
+        if(ticked&&!separator){g.setColour(juce::Colour(0xffdd745a));g.fillRect(area.getX()+2,area.getY()+4,2,area.getHeight()-8);}
     }
     void drawRotarySlider(juce::Graphics& g,int x,int y,int w,int h,float position,
-                          float start,float end,juce::Slider&) override {
+                          float start,float end,juce::Slider& slider) override {
         const float cx=x+w*.5f,cy=y+h*.48f;
-        const float radius=juce::jlimit(13.f,36.f,.44f*(float)std::min(w,h));
+        const float radius=juce::jlimit(13.f,44.f,.48f*(float)std::min(w,h));
+        // The sculpted V mark is at twelve o'clock at each control's HOME
+        // value (0% COLOR, 0 dB gain, Q reset, etc.). It does not inherit
+        // Surgery's lower-left minimum-angle pointer drift.
+        const float neutral=(float)slider.getNormalisableRange().convertTo0to1(
+            slider.getDoubleClickReturnValue());
+        const float rotation=(position-neutral)*(end-start);
         // Exact user-approved powdery ivory knob artwork. Its molded V-index
         // rotates with the REAL APVTS parameter. No exterior calibration ticks.
         static const auto dial=juce::ImageCache::getFromMemory(
             BinaryData::scalpelknob_png,BinaryData::scalpelknob_pngSize);
         if(!dial.isNull()){
             const float scale=2*radius/(.64f*(float)dial.getWidth());
-            const float angle=start+position*(end-start);
             const auto transform=juce::AffineTransform::scale(scale)
                 .translated(cx-dial.getWidth()*scale*.5f,cy-dial.getHeight()*scale*.5f)
-                .rotated(angle-juce::MathConstants<float>::twoPi,cx,cy);
+                .rotated(rotation,cx,cy);
             g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
             g.drawImageTransformed(dial,transform,false);
             return;
@@ -74,10 +79,9 @@ public:
             g.setColour(juce::Colour(0xff7d6957).withAlpha(.065f));
             g.fillEllipse(cx+std::cos(a)*rr-.34f,cy+std::sin(a)*rr-.34f,.68f,.68f);
         }
-        const float angle=start+position*(end-start);
         juce::Path pointer;
         pointer.addTriangle(cx-3.4f,cy-radius+9.f,cx+3.4f,cy-radius+9.f,cx,cy-radius+25.f);
-        pointer.applyTransform(juce::AffineTransform::rotation(angle-juce::MathConstants<float>::twoPi,cx,cy));
+        pointer.applyTransform(juce::AffineTransform::rotation(rotation,cx,cy));
         g.setColour(juce::Colour(0xff6b4e35));g.fillPath(pointer);
         g.setColour(juce::Colour(0xfffff0d8).withAlpha(.50f));g.strokePath(pointer,juce::PathStrokeType(.5f));
     }
@@ -86,8 +90,12 @@ public:
         const auto r=button.getLocalBounds().toFloat().reduced(1.5f);
         const bool active=button.getToggleState()||down;
         const bool xray=button.getButtonText()=="X-RAY";
+        const bool deckSwitch=button.getButtonText()=="ON"||button.getButtonText()=="OFF";
+        const bool actionSwitch=button.getButtonText()=="MONO"||button.getButtonText()=="SOLO"||
+            button.getButtonText()=="PHASE"||button.getButtonText()=="LIMIT";
+        const bool depressed=active&&(deckSwitch||actionSwitch);
         const bool snow=button.getButtonText()=="FREEZE"||button.getButtonText()=="RESUME";
-        const bool heat=button.getButtonText().startsWith("SONAR ");
+        const bool heat=button.getButtonText().startsWith("SONAR ")||button.getButtonText()=="HEAT MAP";
         if(snow||heat){
             static const auto snowImage=juce::ImageCache::getFromMemory(
                 BinaryData::scalpelfreeze_png,BinaryData::scalpelfreeze_pngSize);
@@ -107,13 +115,49 @@ public:
                 return;
             }
         }
-        g.setColour(juce::Colour(0xff766453).withAlpha(.56f));g.fillRoundedRectangle(r.translated(0,1.2f),3.f);
+        // Answering-machine ON/OFF switches really sink into a dark well when
+        // selected. The red pilot illuminates ONLY that active switch; the
+        // opposite switch stays the same raised powder-ivory as the mockup.
+        g.setColour(juce::Colour(0xff33231b).withAlpha(.93f));
+        g.fillRoundedRectangle(r.translated(0,2.f).expanded(1.2f),3.f);
+        g.setColour(juce::Colour(0xff9b8066));
+        g.drawRoundedRectangle(r.expanded(.5f),3.5f,1.2f);
         juce::ColourGradient plastic(
-            xray?juce::Colour(active?0xff8e1712:0xff421613):juce::Colour(active?0xffc7af92:0xfff5e6d0),r.getX(),r.getY(),
-            xray?juce::Colour(0xff290b09):juce::Colour(active?0xffe6d2b8:0xffccbaa4),r.getX(),r.getBottom(),false);
-        g.setGradientFill(plastic);g.fillRoundedRectangle(r.reduced(1.f),3.f);
-        g.setColour(juce::Colour(xray?0xff170607:0xfffef4e3).withAlpha(.70f));
-        g.drawRoundedRectangle(r.reduced(1.1f),3.f,.75f);
+            xray?juce::Colour(active?0xff4b0908:0xff34100d):
+                juce::Colour(depressed?0xff29201d:active?0xffd5bca0:0xffffecd3),
+            r.getX(),r.getY()+1.f,
+            xray?juce::Colour(active?0xff150404:0xff581613):
+                juce::Colour(depressed?0xff100e0d:active?0xffb89e83:0xffd4bea5),
+            r.getX(),r.getBottom(),false);
+        plastic.addColour(.18,xray?juce::Colour(0xff681c15):
+            depressed?juce::Colour(0xff3a302b):juce::Colour(0xfff2ddc1));
+        g.setGradientFill(plastic);g.fillRoundedRectangle(r.reduced(1.f),2.5f);
+        g.setColour(juce::Colour(xray?0xffbd4d3c:0xfffff3df).withAlpha(active?.34f:.91f));
+        g.drawLine(r.getX()+4,r.getY()+2,r.getRight()-4,r.getY()+2,.9f);
+        g.setColour(juce::Colour(0xff513c2f).withAlpha(.5f));
+        g.drawRoundedRectangle(r.reduced(1.f),2.5f,.7f);
+        if(xray){
+            const float lamp=r.getHeight()*.14f;
+            g.setColour(active?juce::Colour(0xffff4127):juce::Colour(0xff7a1e16));
+            g.fillEllipse(r.getX()+8,r.getCentreY()-lamp,lamp*2,lamp*2);
+            if(active){g.setColour(juce::Colour(0xffff4028).withAlpha(.26f));
+                g.fillEllipse(r.getX()+5,r.getCentreY()-lamp-3,2*lamp+6,2*lamp+6);}
+        }
+        if(deckSwitch){
+            const auto lamp=juce::Rectangle<float>(r.getCentreX()-12.f,r.getY()+5.f,24.f,4.f);
+            g.setColour(active?juce::Colour(0xffed2d20):juce::Colour(0xff514a43));
+            g.fillRoundedRectangle(lamp,1.4f);
+            if(active){
+                g.setColour(juce::Colour(0xffff4c35).withAlpha(.23f));
+                g.fillRoundedRectangle(lamp.expanded(4.f,2.f),2.5f);
+            }
+        }
+        if(actionSwitch&&active){
+            // A tiny pale pilot identifies engaged processing without ever
+            // painting the band red; red is reserved for true peak warnings.
+            g.setColour(juce::Colour(0xffffeed8).withAlpha(.88f));
+            g.fillEllipse(r.getRight()-10.f,r.getY()+6.f,3.5f,3.5f);
+        }
         const auto warning=button.findColour(juce::TextButton::buttonColourId);
         if(!xray&&warning.getRed()>180&&warning.getGreen()<65&&warning.getBlue()<65){
             g.setColour(juce::Colour(0xffed1919).withAlpha(.28f+warning.getFloatAlpha()*.62f));
@@ -122,18 +166,26 @@ public:
         if(over){g.setColour(juce::Colours::white.withAlpha(.08f));g.fillRoundedRectangle(r.reduced(2),3.f);}
     }
     void drawButtonText(juce::Graphics& g,juce::TextButton& b,bool,bool) override {
-        if(b.getButtonText()=="FREEZE"||b.getButtonText()=="RESUME"||b.getButtonText().startsWith("SONAR "))return;
+        if(b.getButtonText()=="FREEZE"||b.getButtonText()=="RESUME"||b.getButtonText().startsWith("SONAR ")||b.getButtonText()=="HEAT MAP")return;
         const bool xray=b.getButtonText()=="X-RAY";
-        g.setColour(b.isEnabled()?juce::Colour(xray?0xffff4c37:0xff231b16):juce::Colour(0xff8d8177));
+        const bool depressedSwitch=b.getToggleState()&&
+            (b.getButtonText()=="ON"||b.getButtonText()=="OFF"||
+             b.getButtonText()=="MONO"||b.getButtonText()=="SOLO"||
+             b.getButtonText()=="PHASE"||b.getButtonText()=="LIMIT");
+        g.setColour(b.isEnabled()?juce::Colour(xray?0xffff624b:
+            depressedSwitch?0xffffeee0:0xff241a14):juce::Colour(0xff8d8177));
         g.setFont(juce::Font(juce::FontOptions(juce::jlimit(11.0f,13.0f,b.getHeight()*.43f),juce::Font::bold)));
-        g.drawFittedText(b.getButtonText(),b.getLocalBounds().reduced(5,2),
+        g.drawFittedText(b.getButtonText(),xray?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2),
                          juce::Justification::centred,1);
     }
     void drawComboBox(juce::Graphics& g,int w,int h,bool,int,int,int,int,juce::ComboBox& box) override {
         auto r=juce::Rectangle<float>(1,1,(float)w-2,(float)h-2);
-        g.setColour(juce::Colour(0xffd1bca5));g.fillRoundedRectangle(r,3.f);
-        g.setColour(juce::Colour(0xff746456));g.drawRoundedRectangle(r,3.f,.8f);
-        g.setColour(juce::Colour(0xff40342b));
+        g.setColour(juce::Colour(0xff38261e));g.fillRoundedRectangle(r.expanded(.8f),3.f);
+        juce::ColourGradient inset(juce::Colour(0xff241b16),0,0,
+                                  juce::Colour(0xff4b3930),0,(float)h,false);
+        g.setGradientFill(inset);g.fillRoundedRectangle(r.reduced(1.f),2.f);
+        g.setColour(juce::Colour(0xffbca084));g.drawRoundedRectangle(r,3.f,.9f);
+        g.setColour(juce::Colour(0xffffe7cf));
         juce::Path arrow;arrow.startNewSubPath((float)w-20,h*.42f);arrow.lineTo((float)w-15,h*.6f);arrow.lineTo((float)w-10,h*.42f);
         g.strokePath(arrow,juce::PathStrokeType(1.6f));
     }
@@ -154,12 +206,12 @@ public:
                           juce::Slider::SliderStyle style,juce::Slider& slider) override {
         if(style!=juce::Slider::LinearHorizontal){juce::LookAndFeel_V4::drawLinearSlider(g,x,y,width,height,pos,min,max,style,slider);return;}
         auto track=juce::Rectangle<float>((float)x,(float)y+height*.35f,(float)width,height*.3f);
-        g.setColour(juce::Colour(0xff010506));g.fillRoundedRectangle(track.expanded(2),3);
-        g.setColour(juce::Colour(0xff19353d));g.fillRoundedRectangle(track,2);
+        g.setColour(juce::Colour(0xff281e19));g.fillRoundedRectangle(track.expanded(2),3);
+        g.setColour(juce::Colour(0xff4c3830));g.fillRoundedRectangle(track,2);
         auto fill=track.withWidth(juce::jlimit(0.f,(float)width,pos-x));
-        juce::ColourGradient light(juce::Colour(0xff00efff),fill.getX(),fill.getY(),juce::Colour(0xff008ea9),fill.getRight(),fill.getY(),false);
+        juce::ColourGradient light(juce::Colour(0xffe4ba89),fill.getX(),fill.getY(),juce::Colour(0xff92644b),fill.getRight(),fill.getY(),false);
         g.setGradientFill(light);g.fillRoundedRectangle(fill,2);
-        g.setColour(juce::Colour(0xff00d9ec));g.fillEllipse(pos-6,track.getCentreY()-6,12,12);
-        g.setColour(juce::Colour(0xffb2f5ff));g.drawEllipse(pos-6,track.getCentreY()-6,12,12,.7f);
+        g.setColour(juce::Colour(0xffdec4a3));g.fillEllipse(pos-6,track.getCentreY()-6,12,12);
+        g.setColour(juce::Colour(0xfffaf0dc));g.drawEllipse(pos-6,track.getCentreY()-6,12,12,.7f);
     }
 };

@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include <array>
 #include <atomic>
+#include <cstdint>
 #include "PrismLabAnalyzer.h"
 #include "RootsAudioEngine.h"
 #include "SurgeryCarveEngine.h"
@@ -92,6 +93,9 @@ public:
     float getRootBandPeakDb(int root) const noexcept {
         return root>=0&&root<numSections?rootBandPeakDb[(size_t)root].load():-144.f;
     }
+    std::uint64_t getRootBandPeakRevision() const noexcept {
+        return rootBandPeakRevision_.load(std::memory_order_acquire);
+    }
     static const char* sectionName(int section) noexcept;
 
 private:
@@ -165,6 +169,7 @@ private:
     std::atomic<float>* trimValue = nullptr;
     std::array<std::atomic<double>, 5> rootMeters { 1.0, 0.0, 0.0, 1.0, 0.0 };
     std::array<std::atomic<float>,numSections> rootBandPeakDb {};
+    std::atomic<std::uint64_t> rootBandPeakRevision_ {0};
     juce::SmoothedValue<float> outputTrimSmoother, bypassMix;
     juce::AudioBuffer<float> dryScratch;
     prism::roots::v2::Engine rootsEngine;

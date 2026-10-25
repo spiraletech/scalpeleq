@@ -39,13 +39,64 @@ bool click(juce::Component& parent,const juce::String& caption){
 }
 }
 
+// Regression for a host removing Scalpel while the UI and FFT worker have
+// both been active. This intentionally exercises the release/prepare cycles
+// used by DAWs when changing mixer chains without modifying sound parameters.
+bool verifyPluginRemovalLifecycle() {
+    constexpr int cycles=12;
+    for(int cycle=0;cycle<cycles;++cycle){
+        auto processor=std::make_unique<PRISMVSTAudioProcessor>();
+        processor->prepareToPlay(48000.0,256);
+        if(processor->getLatencySamples()!=0){
+            std::cerr<<"UNLOAD: unexpected reported plugin latency\\n";
+            return false;
+        }
+        {
+            std::unique_ptr<juce::AudioProcessorEditor> editor(processor->createEditor());
+            if(!editor){std::cerr<<"UNLOAD: editor construction failed\\n";return false;}
+            juce::AudioBuffer<float> block(2,256);
+            juce::MidiBuffer midi;
+            for(int frame=0;frame<32;++frame){
+                tone(block,frame*256);
+                processor->processBlock(block,midi);
+            }
+            juce::Timer::callPendingTimersSynchronously();
+            if(cycle%3==0){
+                const auto image=editor->createComponentSnapshot(editor->getLocalBounds());
+                if(!image.isValid()){std::cerr<<"UNLOAD: invalid editor snapshot\\n";return false;}
+            }
+            // The editor is removed while the analyzer worker still exists.
+            editor.reset();
+        }
+        processor->releaseResources();
+        if(cycle%2==0){
+            processor->prepareToPlay(48000.0,256);
+            juce::AudioBuffer<float> block(2,256);
+            juce::MidiBuffer midi;
+            tone(block,cycle*256);
+            processor->processBlock(block,midi);
+            processor->releaseResources();
+        }
+        // Processor destruction must join the analyzer and unregister async
+        // parameter listeners without leaving a callback into dead memory.
+        processor.reset();
+    }
+    std::cerr<<"UNLOAD: "<<cycles<<" open/play/remove/restart cycles passed\\n";
+    return true;
+}
+
 bool runQualityTests(){
     juce::ScopedJuceInitialiser_GUI gui;
     if(!verifySonarRecovery()||!verifyChassis105()||!verifyWeatherUI())return false;
+    if(!verifyPluginRemovalLifecycle())return false;
     juce::MidiBuffer midi;
     {
         auto fresh=std::make_unique<PRISMVSTAudioProcessor>();
         fresh->prepareToPlay(48000,512);
+        // A stopped DAW transport has no measured peaks: UI must never start red.
+        if(fresh->getRootBandPeakRevision()!=0)return false;
+        for(int root=0;root<7;++root)
+            if(fresh->getRootBandPeakDb(root)>-120.f)return false;
         {
             std::unique_ptr<juce::AudioProcessorEditor> factory(fresh->createEditor());
             auto image=factory->createComponentSnapshot(factory->getLocalBounds());
@@ -72,7 +123,7 @@ bool runQualityTests(){
         for(auto* child:ui->getChildren())if(auto* label=dynamic_cast<juce::Label*>(child)){
             if(label->getText()=="COMP THRESHOLD"){
                 for(auto* candidate:ui->getChildren())if(auto* slider=dynamic_cast<juce::Slider*>(candidate)){
-                    if(slider->getX()==label->getX()&&slider->isVisible()){
+                    if(std::abs(slider->getBounds().getCentreX()-label->getBounds().getCentreX())<25&&slider->isVisible()){
                         thresholdFound=true;
                         if(slider->onDragStart)slider->onDragStart();
                         slider->setValue(-42,juce::sendNotificationSync);
@@ -84,6 +135,64 @@ bool runQualityTests(){
         }
         if(!thresholdFound||fresh->apvts.getRawParameterValue(
             PRISMVSTAudioProcessor::rootsRootControlId(0,"comp"))->load()!=0)return false;
+        // Hardware-contract regression: two BAND dials only, no old Surgery
+        // utility shelf, no CARVE Dynamic switch. Each processing switch must
+        // update the actual host/DSP parameter, not merely illuminate.
+        int visibleBandDials=0;
+        for(auto* child:ui->getChildren()){
+            if(dynamic_cast<juce::Slider*>(child)&&child->isVisible())++visibleBandDials;
+            if(child->isVisible())if(auto* b=dynamic_cast<juce::TextButton*>(child)){
+                const auto name=b->getButtonText();
+                if(name=="BYPASS"||name=="SAVE"||name=="LOAD"||name.startsWith("COPY "))return false;
+            }
+        }
+        if(visibleBandDials!=2){std::cerr<<"Scalpel Band panel has "<<visibleBandDials<<" visible knobs, expected 2\n";return false;}
+        for(const auto& item:std::array<std::pair<const char*,const char*>,3>{{
+                {"MONO","mono"},{"PHASE","phase"},{"LIMIT","limit_on"}}}){
+            juce::TextButton* control=nullptr;
+            for(auto* child:ui->getChildren())if(auto* b=dynamic_cast<juce::TextButton*>(child))
+                if(b->getButtonText()==item.first&&b->isVisible())control=b;
+            if(!control)return false;
+            control->setToggleState(true,juce::sendNotificationSync);
+            if(fresh->apvts.getRawParameterValue(
+                   PRISMVSTAudioProcessor::rootsRootControlId(0,item.second))->load()<0.5f)
+                return false;
+            control->setToggleState(false,juce::sendNotificationSync);
+        }
+        // Real UI contract for the reported BAND MONO / EQ DOMAIN defects:
+        // changing the selected BAND rebinds both controls to that root, and
+        // the dropdown must update host automation (not just its caption).
+        if(!click(*ui,"BAND 4"))return false;
+        juce::TextButton* bandMono=nullptr;
+        juce::ComboBox* bandDomain=nullptr;
+        for(auto* child:ui->getChildren()){
+            if(auto* b=dynamic_cast<juce::TextButton*>(child))
+                if(b->getButtonText()=="MONO")bandMono=b;
+            if(auto* c=dynamic_cast<juce::ComboBox*>(child))
+                if(c->getNumItems()==3&&c->getItemText(0)=="STEREO"&&c->isVisible())bandDomain=c;
+        }
+        if(!bandMono||!bandDomain)return false;
+        bandMono->setToggleState(true,juce::sendNotificationSync);
+        bandDomain->setSelectedId(2,juce::sendNotificationSync); // MID
+        const auto monoId=PRISMVSTAudioProcessor::rootsRootControlId(3,"mono");
+        const auto domainId=PRISMVSTAudioProcessor::rootsRootControlId(3,"domain");
+        if(fresh->apvts.getRawParameterValue(monoId)->load()<.5f
+            ||std::abs(fresh->apvts.getRawParameterValue(domainId)->load()-1.f)>.01f)
+            return false;
+        bandDomain->setSelectedId(3,juce::sendNotificationSync); // SIDE
+        if(std::abs(fresh->apvts.getRawParameterValue(domainId)->load()-2.f)>.01f)return false;
+        if(!click(*ui,"BAND 5")||bandMono->getToggleState()
+            ||bandDomain->getSelectedId()!=1)return false;
+        if(!click(*ui,"BAND 4")||!bandMono->getToggleState()
+            ||bandDomain->getSelectedId()!=3)return false;
+        // Leave the test instance neutral, as a fresh project should be.
+        bandMono->setToggleState(false,juce::sendNotificationSync);
+        bandDomain->setSelectedId(1,juce::sendNotificationSync);
+        click(*ui,"BAND 1");
+        if(!click(*ui,"CARVE"))return false;
+        for(auto* child:ui->getChildren())if(auto* b=dynamic_cast<juce::TextButton*>(child))
+            if(b->getButtonText()=="DYNAMIC"&&b->isVisible())return false;
+        click(*ui,"BAND MODE");
         auto hidden=PRISMVSTAudioProcessor::carveId(0,0,"threshold");
         if(fresh->apvts.getRawParameterValue(hidden)==nullptr)return false;
         set(*fresh,hidden,-37.2f);
@@ -311,7 +420,7 @@ bool runQualityTests(){
             if(theme==0&&mode==3){
                 juce::TextButton* sonar=nullptr;
                 for(auto* child:editor->getChildren())if(auto* button=dynamic_cast<juce::TextButton*>(child))
-                    if(button->getButtonText().startsWith("SONAR "))sonar=button;
+                    if(button->getButtonText()=="HEAT MAP")sonar=button;
                 if(sonar==nullptr||!sonar->getToggleState())return false;
                 sonar->setToggleState(false,juce::sendNotificationSync);
                 juce::Thread::sleep(40);juce::Timer::callPendingTimersSynchronously();
@@ -365,9 +474,39 @@ bool runQualityTests(){
             }
         }
     }
+    // The legacy regression screenshots deliberately use a taller 1120x755
+    // host rectangle to test letterboxing. Also capture the actual shipped
+    // 16:9 editor size so visual review cannot mistake fixture padding for
+    // the production Scalpel hardware proportions.
+    set(*p,"scalpel_xray",1);
+    editor->setSize(1344,756);
+    juce::Thread::sleep(40);juce::Timer::callPendingTimersSynchronously();
+    // Each hardware menu gets a real native-size regression photograph, not
+    // just COLOR: missing buttons and extra rotaries become reviewable.
+    for(const auto* tab:{"BAND MODE","CARVE","COLOR","ANALYZE"}){
+        if(!click(*editor,tab))return false;
+        juce::Timer::callPendingTimersSynchronously();
+        const auto native=editor->createComponentSnapshot(editor->getLocalBounds());
+        const auto out=juce::File::getCurrentWorkingDirectory()
+            .getChildFile("scalpel-ui-default-1344x756-"+juce::String(tab)+".png");
+        juce::FileOutputStream stream(out);stream.setPosition(0);stream.truncate();
+        if(!juce::PNGImageFormat().writeImageToStream(native,stream))return false;
+    }
+    click(*editor,"COLOR");
+    editor->setSize(1120,755);
     // Old host/state theme values must never switch away from the current rack.
     if(!click(*editor,"FREEZE"))return false;
     juce::Thread::sleep(40);juce::Timer::callPendingTimersSynchronously();
+    // Legacy themes must leave Scalpel's HARDWARE/CONTROLS unchanged.
+    // The analyzer is independently animated visual telemetry, and its
+    // X-RAY/FREEZE behavior is checked separately: a full-frame byte-for-
+    // byte comparison wrongly reports a legacy theme regression whenever
+    // a fresh graphic surface is rasterized between screenshots.
+    juce::Rectangle<int> liveLens;
+    for(auto* child:editor->getChildren())
+        if(auto* graph=dynamic_cast<RootsGraph*>(child))
+            liveLens=editor->getLocalArea(graph,graph->getLocalBounds()).reduced(3);
+    if(liveLens.isEmpty())return false;
     auto rackReference=editor->createComponentSnapshot(editor->getLocalBounds());
     for(int legacy=0;legacy<4;++legacy){
         set(*p,"surgery_theme",(float)legacy);
@@ -375,8 +514,13 @@ bool runQualityTests(){
         auto recalled=editor->createComponentSnapshot(editor->getLocalBounds());
         for(auto* child:editor->getChildren())if(auto* button=dynamic_cast<juce::TextButton*>(child))
             if(button->getButtonText().startsWith("THEME"))return false;
-        for(int y=0;y<rackReference.getHeight();++y)for(int x=0;x<rackReference.getWidth();++x)
-            if(rackReference.getPixelAt(x,y)!=recalled.getPixelAt(x,y)){std::cerr<<"Legacy theme changed the UI\n";return false;}
+        for(int y=0;y<rackReference.getHeight();++y)for(int x=0;x<rackReference.getWidth();++x){
+            if(liveLens.contains(x,y))continue;
+            if(rackReference.getPixelAt(x,y)!=recalled.getPixelAt(x,y)){
+                std::cerr<<"Legacy theme changed static UI chrome at "<<x<<','<<y<<"\n";
+                return false;
+            }
+        }
     }
     if(!verifyUI104(*p,*editor))return false;
     std::cout<<"QUALITY: all four modes rendered; legacy theme values preserve Scalpel COLOR UI\n";
