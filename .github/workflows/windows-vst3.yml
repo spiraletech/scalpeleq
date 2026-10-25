@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, design/scalpel-vintage-hardware ]
   workflow_dispatch:
 
 concurrency:
