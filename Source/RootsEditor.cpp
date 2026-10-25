@@ -315,7 +315,10 @@ void RootsGraph::paint(juce::Graphics& g){
         // Approximate an oily normal/thin-film field at 30 Hz; the 60 Hz
         // surface curves below interpolate the measured FFT at every frame.
         // Both the material and the secondary crests stay inside filledPath.
-        if(++mercuryPaintCount_%2==1){
+        // A frozen frame must render from the exact same surface/material
+        // state every time. Never show a cached pre-freeze frame on one
+        // capture and a newly shaded frame on the next paint.
+        if(frozen_||++mercuryPaintCount_%2==1){
             juce::Image::BitmapData pixels(mercuryMaterial_,juce::Image::BitmapData::writeOnly);
             const float time=mercuryPhase_;
             for(int px=0;px<mercuryMaterial_.getWidth();++px){

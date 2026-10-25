@@ -76,9 +76,14 @@ public:
     surgery::SpectralSnapshot spectralMetrics() const noexcept {
         return surgery::summarizeSpectrum(bands_);
     }
-    void setFrozen(bool frozen) noexcept {frozen_=frozen;repaint();}
+    void setFrozen(bool frozen) noexcept {
+        if(frozen_!=frozen){frozen_=frozen;mercuryPaintCount_=0;}
+        repaint();
+    }
     bool isFrozen() const noexcept {return frozen_;}
-    void setXray(bool active) {if(xrayActive_!=active){xrayActive_=active;repaint();}}
+    void setXray(bool active) {
+        if(xrayActive_!=active){xrayActive_=active;mercuryPaintCount_=0;repaint();}
+    }
     void setPeakWarnings(const std::array<float,7>& levels){
         if(peakWarnings_!=levels){peakWarnings_=levels;repaint();}
     }
