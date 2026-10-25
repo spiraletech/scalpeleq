@@ -292,12 +292,13 @@ void RootsGraph::paint(juce::Graphics& g){
             const float surface=juce::jlimit(0.f,1.f,-measured/rangeDb);
             const float intensity=juce::jlimit(0.f,1.f,(measured+60.f)/53.f);
             const auto tone=surgery::synesthesia::palette(u);
+            const float chromaStrength=.13f*std::sqrt(intensity)+.66f*intensity;
             for(int y=0;y<spectralHeat_.getHeight();++y){
                 const float v=(y+.5f)/(float)spectralHeat_.getHeight();
                 const float d=v-surface;
                 const float decay=std::exp(-juce::jmax(0.f,d)/
-                    (0.045f+0.12f*intensity));
-                const float alpha=d>=0.f?0.44f*intensity*intensity*decay:0.f;
+                    (0.10f+0.20f*intensity));
+                const float alpha=d>=0.f?juce::jmin(.64f,chromaStrength*decay):0.f;
                 heatPixels.setPixelColour(x,y,juce::Colour::fromFloatRGBA(
                     tone.r,tone.g,tone.b,alpha));
             }
