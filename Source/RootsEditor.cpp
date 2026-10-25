@@ -1,5 +1,6 @@
 #include "RootsEditor.h"
 #include "RootsSpectrumColours.h"
+#include "ScalpelXRayChroma.h"
 #include "SurgerySpectralColours.h"
 #include <BinaryData.h>
 #include <cmath>
@@ -120,6 +121,7 @@ void RootsGraph::updateAnalyzer(
 }
 void RootsGraph::updateWeather(const surgery::weather::Snapshot* snapshot,double elapsed,bool active,bool reduced,double memory,int style){
     style=style>0?7:0; // All retained legacy values resolve to Standard+.
+    if(xrayActive_)mercuryElapsed_=elapsed;
     const bool visible=active&&style>0;
     const bool changed=visible!=weatherActive_||style!=weatherStyle_;
     weatherActive_=visible;
@@ -127,7 +129,15 @@ void RootsGraph::updateWeather(const surgery::weather::Snapshot* snapshot,double
     if(!visible&&changed)repaint();
     if(frozen_)return;
     if(changed){heatValid_=false;weatherStyle_=style;weatherField_.clear();repaint();}
-    if(!active){weatherInterpretation_.update(elapsed,memory,true);return;}
+    if(!active){
+        weatherInterpretation_.update(elapsed,memory,true);
+        // X-RAY is independent of SONAR, even on sustained steady notes.
+        if(xrayActive_){
+            mercurySurface_.advance(bands_,elapsed,reduced);
+            repaint();
+        }
+        return;
+    }
     if(snapshot)weatherInterpretation_.accept(*snapshot);
     auto key=[](const surgery::weather::Meaning& f){return std::array<float,16>{f.bass,f.centroid,f.flux,f.width,f.rate,f.density,f.level,f.storm,f.flash,f.flashPosition,f.musicEnergy[0],f.musicEnergy[1],f.musicEnergy[2],f.musicEnergy[3],f.rms,f.crest};};
     const auto previous=key(weatherInterpretation_.state());const auto previousPhase=visualPhase_;
@@ -268,27 +278,47 @@ void RootsGraph::paint(juce::Graphics& g){
     filledPath.closeSubPath();
     g.saveState();
     g.reduceClipRegion(r.toNearestInt());
+    if(heatOn){
+        // Parametric EQ 2 / Frequency Splitter inspired BOTTOM heatmap.
+        // Each column is fixed to a logarithmic Hz address: NO time scroll,
+        // circular icons, waterfall, simulated energy, or animated x motion.
+        // Intensity uses the calibrated FFT dBFS BEFORE presentation tilt.
+        juce::Image::BitmapData heatPixels(spectralHeat_,
+            juce::Image::BitmapData::writeOnly);
+        const int width=spectralHeat_.getWidth();
+        const int height=spectralHeat_.getHeight();
+        for(int x=0;x<width;++x){
+            const float u=(x+.5f)/(float)width;
+            const float hz=(float)prism::roots::visual::heatmapFrequencyAt(x,width);
+            const int bin=prism::analysis::LabBands::indexForFrequency(hz);
+            const float intensity=prism::roots::visual::heatmapStrength(
+                bands_[(size_t)bin]);
+            const auto tone=surgery::synesthesia::palette(u);
+            for(int y=0;y<height;++y){
+                const float v=(y+.5f)/(float)height;
+                const float shape=prism::roots::visual::heatmapVerticalWeight(v);
+                const float alpha=juce::jlimit(0.f,.92f,
+                    intensity*(.12f+.80f*shape));
+                heatPixels.setPixelColour(x,y,juce::Colour::fromFloatRGBA(
+                    tone.r,tone.g,tone.b,alpha));
+            }
+        }
+    }
     if(!xrayActive_){
         // Standard Scalpel graph is smoked graphite, never Surgery's bright
-        // cyan/blue filled histogram. HEAT MAP adds restrained spectral warmth.
+        // cyan/blue filled histogram. HEAT MAP adds frequency-locked spectral colour.
         juce::ColourGradient graphite(juce::Colour(0xff35302b).withAlpha(.64f),
             r.getX(),r.getY(),juce::Colour(0xff0b0a09).withAlpha(.9f),
             r.getX(),r.getBottom(),false);
         g.setGradientFill(graphite);g.fillPath(filledPath);
-        if(heatOn){
-            juce::Graphics::ScopedSaveState heat(g);
-            g.reduceClipRegion(filledPath);
-            juce::ColourGradient glint(juce::Colour(0xffb2816d).withAlpha(.12f),
-                r.getX(),r.getY(),juce::Colour(0xff0c1111).withAlpha(.01f),
-                r.getRight(),r.getBottom(),false);
-            g.setGradientFill(glint);g.fillRect(r);
-        }
     } else {
         // SCALPEL X-RAY: depth-layered black mercury, driven only by the
         // existing measured FFT and shared synesthesia/weather state.
         // The clipping path prevents any decorative peaks outside the data.
         juce::Graphics::ScopedSaveState mercury(g);
-        g.reduceClipRegion(filledPath);
+        // The cinematic volume is a separate visual stratum *behind*
+        // the exact FFT path. Clipping it to the FFT silhouette hid the
+        // 3D motion across much of the graph.
         const auto& m=weatherInterpretation_.state();
         const float energy=juce::jlimit(0.f,1.f,
             .30f*m.level+.35f*m.bass+.20f*m.flux+.15f*m.width);
@@ -320,7 +350,46 @@ void RootsGraph::paint(juce::Graphics& g){
         // capture and a newly shaded frame on the next paint.
         // Shade each active 60 Hz visual frame, not alternate paints (~30 Hz).
         // FREEZE shades once after toggling, then reuses the exact texture.
-        if (!frozen_ || mercuryPaintCount_++ == 0) {
+        const bool needsNewFrame=!frozen_||mercuryPaintCount_++==0;
+        if(needsNewFrame){
+            std::array<scalpel::xray::FluidColumn,scalpel::xray::FluidVolume3D::gridWidth> source{};
+            const auto pitch=scalpel::xray::chroma::estimate(bands_);
+            float measuredLevel=0.f,measuredBass=0.f;
+            for(int column=0;column<(int)source.size();++column){
+                const float u=(column+.5f)/(float)source.size();
+                const int bin=juce::jlimit(0,N-1,juce::roundToInt(u*(N-1)));
+                const auto syn=surgery::synesthesia::read(m,u);
+                const float local=juce::jlimit(0.f,1.f,(bands_[(size_t)bin]+72.f)/65.f);
+                measuredLevel=juce::jmax(measuredLevel,local);
+                if(column<22)measuredBass=juce::jmax(measuredBass,local);
+                // Musical pitch-class estimates transport coloured liquid
+                // through the volume. Confidence-gating keeps noise from
+                // inventing specific notes; measured spectrum stays intact.
+                const double f=prism::analysis::LabBands::centreFrequency(bin);
+                const int note=juce::roundToInt(69.+12.*std::log2(f/440.));
+                const int pitchClass=(note%12+12)%12;
+                const float tint=.66f*pitch.confidence*pitch.weight[(size_t)pitchClass];
+                const auto musical=scalpel::xray::chroma::palette[(size_t)pitchClass];
+                source[(size_t)column]={local,
+                    syn.r*(1.f-tint)+musical.r*tint,
+                    syn.g*(1.f-tint)+musical.g*tint,
+                    syn.b*(1.f-tint)+musical.b*tint};
+            }
+            // GPU velocity/pressure/phase transport is restricted to this UI path.
+            // The measured contour, parameter IDs and all audio code are unchanged.
+            mercury3D_.render(source,juce::jmax(m.bass,measuredBass),
+                              m.flux,juce::jmax(m.level,measuredLevel*.85f),
+                              mercuryElapsed_,
+                              pval(processor_.apvts,"sonar_reduced_motion")>=.5f,
+                              mercury3DImage_);
+        }
+        if(mercury3D_.hasFrame()){
+            g.setOpacity(.88f);g.drawImage(mercury3DImage_,r);g.setOpacity(1.f);
+        }else{
+        // Restrict the old CPU fallback, not the actual 3D volume.
+        juce::Graphics::ScopedSaveState fallbackClip(g);
+        g.reduceClipRegion(filledPath);
+        if(needsNewFrame){
             juce::Image::BitmapData pixels(mercuryMaterial_,juce::Image::BitmapData::writeOnly);
             const float time=mercuryPhase_;
             for(int px=0;px<mercuryMaterial_.getWidth();++px){
@@ -364,9 +433,10 @@ void RootsGraph::paint(juce::Graphics& g){
                     const float foil=.5f+.5f*std::sin(22.f*d+35.f*u+3.1f*wave-time*.45f);
                     const float iridescence=.13f+.31f*foil;
                     const float ambient=.009f+.018f*juce::jlimit(0.f,1.f,.5f+.5f*fold);
-                    const float red=juce::jlimit(0.f,1.f,ambient+gloss*(.42f+iridescence*syn.r));
-                    const float green=juce::jlimit(0.f,1.f,ambient+gloss*(.49f+iridescence*syn.g));
-                    const float bCol=juce::jlimit(0.f,1.f,ambient*1.13f+gloss*(.53f+iridescence*syn.b));
+                    const float body=.070f*local*(.5f+.5f*fold);
+                    const float red=juce::jlimit(0.f,1.f,ambient+gloss*(.17f+1.40f*iridescence*syn.r)+body*syn.r);
+                    const float green=juce::jlimit(0.f,1.f,ambient+gloss*(.18f+1.40f*iridescence*syn.g)+body*syn.g);
+                    const float bCol=juce::jlimit(0.f,1.f,ambient*1.13f+gloss*(.21f+1.48f*iridescence*syn.b)+body*syn.b);
                     pixels.setPixelColour(px,py,juce::Colour::fromFloatRGBA(red,green,bCol,1.f));
                 }
             }
@@ -374,18 +444,11 @@ void RootsGraph::paint(juce::Graphics& g){
         g.setOpacity(.94f);
         g.drawImage(mercuryMaterial_,r);
         g.setOpacity(1.f);
-        if(heatOn){
-            // Heat visualization is a restrained thin-film reflection, not
-            // an orange/brown overlay obscuring the pitch-black material.
-            juce::ColourGradient heat(juce::Colour(0xff84756d).withAlpha(.085f),
-                r.getX(),r.getY(),juce::Colour(0xff517983).withAlpha(.045f),
-                r.getRight(),r.getBottom(),false);
-            g.setGradientFill(heat);g.fillRect(r);
-        }
-
+        } // CPU fallback when D3D11 compute is unavailable
         // Layered capillary crests follow the real FFT surface and settle
         // when the music stops; unlike rigid colored lines they bend and
         // uncoil with the damped liquid surface.
+        if(!mercury3D_.hasFrame()){
         for(int layer=0;layer<3;++layer){
             juce::Path ribbon;
             bool open=false;
@@ -409,33 +472,31 @@ void RootsGraph::paint(juce::Graphics& g){
             g.strokePath(ribbon,juce::PathStrokeType(layer==0?1.75f:1.05f,
                 juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
         }
-        // Distinct meniscus bubbles only where the measured audio is strong.
-        // No permanently animated decorative droplets during silence.
-        const float motion=mercuryPhase_*1.65f;
-        for(int i=9;i<N-7;i+=13){
-            const float t=(i+.5f)/(float)N;
-            const float x=r.getX()+t*r.getWidth();
-            const float actual=bands_[(size_t)i];
-            if(actual < -46.f)continue;
-            const float db=surgery::displayDb(actual,
-                prism::analysis::LabBands::centreFrequency(i),slope,rangeDb);
-            const float top=r.getY()-db*r.getHeight()/rangeDb;
-            const float strength=juce::jlimit(0.f,1.f,(actual+46.f)/42.f);
-            const float sway=.5f+.5f*std::sin(i*2.431f+motion*.11f);
-            const float radius=(1.1f+strength*4.9f)*(.49f+.51f*sway);
-            const float depth=(.18f+.58f*std::abs(std::sin(i*.71f+motion*.14f)))*
-                juce::jmax(0.f,r.getBottom()-top);
-            const float y=top+depth;
-            if(y+radius>=r.getBottom()||y-radius<=top)continue;
-            const auto syn=surgery::synesthesia::read(m,t);
-            const auto tint=juce::Colour::fromFloatRGBA(syn.r,syn.g,syn.b,1.f);
-            g.setColour(juce::Colour(0xff020304).withAlpha(.93f));
-            g.fillEllipse(x-radius,y-radius,radius*2.1f,radius*1.8f);
-            g.setColour(tint.withAlpha(.24f+.21f*strength));
-            g.drawEllipse(x-radius,y-radius,radius*2.f,radius*1.7f,.85f);
-            g.setColour(juce::Colour(0xfff0ede5).withAlpha(.38f+.26f*strength));
-            g.fillEllipse(x-radius*.5f,y-radius*.65f,radius*.56f,radius*.24f);
-        }
+        // No dotted bubble trail in CPU fallback: the original circles
+        // resembled heat-map markers instead of internal liquid movement.
+        } // The 3D volume already contains its own internal folds and bubbles.
+    }
+    // If all bins are below the visible -60 dBFS floor, the entire heat
+    // layer must be invisible. Even a dark backing plate at silence would
+    // manufacture a visual signal and fail the live/silence recovery proof.
+    const bool heatHasSignal=std::any_of(bands_.begin(),bands_.end(),
+        [](float db){return prism::roots::visual::heatmapStrength(db)>0.f;});
+    if(heatOn&&heatHasSignal){
+        // The heatmap has its own thin, frequency-locked bottom stratum.
+        // It is drawn after either Standard or X-RAY liquid, so GPU mercury
+        // cannot hide the measured energy colours. It never touches EQ DSP.
+        const float stripHeight=juce::jlimit(22.f,48.f,r.getHeight()*.17f);
+        const auto strip=r.withY(r.getBottom()-stripHeight).withHeight(stripHeight);
+        juce::Graphics::ScopedSaveState heatLayer(g);
+        g.setColour(juce::Colour(0xff040b10).withAlpha(xrayActive_?.79f:.62f));
+        g.fillRect(strip);
+        g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
+        g.setOpacity(xrayActive_?.92f:1.f);
+        g.drawImage(spectralHeat_,strip);
+        g.setOpacity(1.f);
+        g.setColour(juce::Colour(0xffbbc3ca).withAlpha(.16f));
+        g.drawHorizontalLine(juce::roundToInt(strip.getY()),
+            strip.getX(),strip.getRight());
     }
     // Two restrained, stationary glow layers follow ONLY the measured path.
     // Existing attack/release supplies persistence; no clock-driven shimmer,
@@ -455,28 +516,20 @@ void RootsGraph::paint(juce::Graphics& g){
     // A restrained peak-hold readout; the audio measurements are unchanged.
     g.setColour(juce::Colour(0xffdfd5c7).withAlpha(0.24f));
     g.strokePath(peakPath,juce::PathStrokeType(0.8f));
-    if(heatOn&&!xrayActive_){
-        // Narrow isolated tones have too little filled area to express the
-        // heat-map toggle by tinting mercury alone (a real 4 kHz recovery
-        // regression). Add tiny glows ONLY at measured spectral local peaks.
-        // Nothing appears for silence or unmeasured frequencies.
-        juce::Path heatBubbles;
-        for(int i=1;i<N-1;++i){
-            const float db=bands_[(size_t)i];
-            if(db<=-85.f||db<bands_[(size_t)i-1]||db<bands_[(size_t)i+1])continue;
-            const float f=prism::analysis::LabBands::centreFrequency(i);
-            const float y=r.getY()-surgery::displayDb(db,f,slope,rangeDb)*r.getHeight()/rangeDb;
-            if(y>=r.getBottom()-5.f)continue;
-            const float x=freqToX(f);
-            const float radius=7.f+3.f*juce::jlimit(0.f,1.f,(db+60.f)/60.f);
-            heatBubbles.addEllipse(x-radius,y-radius,radius*2.f,radius*2.f);
-        }
-        g.setColour(juce::Colour(0xffdb795a).withAlpha(.34f));
-        g.fillPath(heatBubbles);
-        g.setColour(juce::Colour(0xffe9b887).withAlpha(.43f));
-        g.strokePath(heatBubbles,juce::PathStrokeType(.85f));
-    }
+    // Intentionally no outlined "heat bubbles": they obscured the true
+    // contour and made HEAT MAP resemble a trail of rigid copper coins.
     g.restoreState();
+    if(xrayActive_){
+        // The marker distinguishes a stale installation from a GPU fallback.
+        const juce::String backend=mercury3D_.statusText();
+        g.setColour(backend=="GPU LIVE"?juce::Colour(0xff89ceba):
+                    juce::Colour(0xffd7ad81));
+        g.setFont(juce::Font(juce::FontOptions(10.0f,juce::Font::bold)));
+        g.drawText("X-RAY 3.1  |  "+backend,
+            juce::roundToInt(r.getRight()-192.f),
+            juce::roundToInt(r.getBottom()-22.f),184,14,
+            juce::Justification::centredRight);
+    }
 
     // Predict the EXACT static RBJ peak-filter response used in the CARVE DSP.
     // It shows the maximum possible response for dynamic nodes, not measured GR.

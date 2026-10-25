@@ -1,5 +1,6 @@
 #include <JuceHeader.h>
 #include "../Source/PluginProcessor.h"
+#include "../Source/ScalpelFluid3D.h"
 #include <chrono>
 #include <fstream>
 #include <thread>
@@ -86,6 +87,10 @@ bool verifyPluginRemovalLifecycle() {
 }
 
 bool runQualityTests(){
+    if(!scalpel::xray::FluidVolume3D::validateShaderSource()){
+        std::cerr<<"X-RAY: GPU shader compilation failed\\n";
+        return false;
+    }
     juce::ScopedJuceInitialiser_GUI gui;
     if(!verifySonarRecovery()||!verifyChassis105()||!verifyWeatherUI())return false;
     if(!verifyPluginRemovalLifecycle())return false;
