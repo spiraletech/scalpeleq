@@ -38,6 +38,9 @@ public:
                 double elapsedSeconds, bool reducedMotion,
                 juce::Image& target);
 
+    // Compiles all six embedded HLSL kernels without requiring a GPU.
+    // Used by Windows CI to catch silent shader fallback before release.
+    static bool validateShaderSource() noexcept;
     bool hasFrame() const noexcept;
     void reset() noexcept;
 
