@@ -279,26 +279,26 @@ void RootsGraph::paint(juce::Graphics& g){
     g.saveState();
     g.reduceClipRegion(r.toNearestInt());
     if(heatOn){
-        // Real per-bin log-frequency heat energy, never detached circles.
-        // Hue is an explicit visual frequency mapping, while luminance and
-        // envelope position are derived from actual calibrated FFT values.
+        // Parametric EQ 2 / Frequency Splitter inspired BOTTOM heatmap.
+        // Each column is fixed to a logarithmic Hz address: NO time scroll,
+        // circular icons, waterfall, simulated energy, or animated x motion.
+        // Intensity uses the calibrated FFT dBFS BEFORE presentation tilt.
         juce::Image::BitmapData heatPixels(spectralHeat_,
             juce::Image::BitmapData::writeOnly);
-        for(int x=0;x<spectralHeat_.getWidth();++x){
-            const float u=(x+.5f)/(float)spectralHeat_.getWidth();
-            const float frequency=prism::analysis::LabBands::centreFrequency(x);
-            const float measured=surgery::displayDb(bands_[(size_t)x],
-                frequency,slope,rangeDb);
-            const float surface=juce::jlimit(0.f,1.f,-measured/rangeDb);
-            const float intensity=juce::jlimit(0.f,1.f,(measured+60.f)/53.f);
+        const int width=spectralHeat_.getWidth();
+        const int height=spectralHeat_.getHeight();
+        for(int x=0;x<width;++x){
+            const float u=(x+.5f)/(float)width;
+            const float hz=(float)prism::roots::visual::heatmapFrequencyAt(x,width);
+            const int bin=prism::analysis::LabBands::indexForFrequency(hz);
+            const float intensity=prism::roots::visual::heatmapStrength(
+                bands_[(size_t)bin]);
             const auto tone=surgery::synesthesia::palette(u);
-            const float chromaStrength=.13f*std::sqrt(intensity)+.66f*intensity;
-            for(int y=0;y<spectralHeat_.getHeight();++y){
-                const float v=(y+.5f)/(float)spectralHeat_.getHeight();
-                const float d=v-surface;
-                const float decay=std::exp(-juce::jmax(0.f,d)/
-                    (0.10f+0.20f*intensity));
-                const float alpha=d>=0.f?juce::jmin(.64f,chromaStrength*decay):0.f;
+            for(int y=0;y<height;++y){
+                const float v=(y+.5f)/(float)height;
+                const float shape=prism::roots::visual::heatmapVerticalWeight(v);
+                const float alpha=juce::jlimit(0.f,.92f,
+                    intensity*(.12f+.80f*shape));
                 heatPixels.setPixelColour(x,y,juce::Colour::fromFloatRGBA(
                     tone.r,tone.g,tone.b,alpha));
             }
@@ -306,12 +306,11 @@ void RootsGraph::paint(juce::Graphics& g){
     }
     if(!xrayActive_){
         // Standard Scalpel graph is smoked graphite, never Surgery's bright
-        // cyan/blue filled histogram. HEAT MAP adds restrained spectral warmth.
+        // cyan/blue filled histogram. HEAT MAP adds frequency-locked spectral colour.
         juce::ColourGradient graphite(juce::Colour(0xff35302b).withAlpha(.64f),
             r.getX(),r.getY(),juce::Colour(0xff0b0a09).withAlpha(.9f),
             r.getX(),r.getBottom(),false);
         g.setGradientFill(graphite);g.fillPath(filledPath);
-        if(heatOn)g.drawImage(spectralHeat_,r);
     } else {
         // SCALPEL X-RAY: depth-layered black mercury, driven only by the
         // existing measured FFT and shared synesthesia/weather state.
@@ -446,14 +445,6 @@ void RootsGraph::paint(juce::Graphics& g){
         g.drawImage(mercuryMaterial_,r);
         g.setOpacity(1.f);
         } // CPU fallback when D3D11 compute is unavailable
-        if(heatOn){
-            // Frequency colours illuminate the *interior* of the material,
-            // never the outside with a brown film.
-            g.setOpacity(.54f);
-            g.drawImage(spectralHeat_,r);
-            g.setOpacity(1.f);
-        }
-
         // Layered capillary crests follow the real FFT surface and settle
         // when the music stops; unlike rigid colored lines they bend and
         // uncoil with the damped liquid surface.
@@ -484,6 +475,23 @@ void RootsGraph::paint(juce::Graphics& g){
         // No dotted bubble trail in CPU fallback: the original circles
         // resembled heat-map markers instead of internal liquid movement.
         } // The 3D volume already contains its own internal folds and bubbles.
+    }
+    if(heatOn){
+        // The heatmap has its own thin, frequency-locked bottom stratum.
+        // It is drawn after either Standard or X-RAY liquid, so GPU mercury
+        // cannot hide the measured energy colours. It never touches EQ DSP.
+        const float stripHeight=juce::jlimit(22.f,48.f,r.getHeight()*.17f);
+        const auto strip=r.withY(r.getBottom()-stripHeight).withHeight(stripHeight);
+        juce::Graphics::ScopedSaveState heatLayer(g);
+        g.setColour(juce::Colour(0xff040b10).withAlpha(xrayActive_?.79f:.62f));
+        g.fillRect(strip);
+        g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
+        g.setOpacity(xrayActive_?.92f:1.f);
+        g.drawImage(spectralHeat_,strip);
+        g.setOpacity(1.f);
+        g.setColour(juce::Colour(0xffbbc3ca).withAlpha(.16f));
+        g.drawHorizontalLine(juce::roundToInt(strip.getY()),
+            strip.getX(),strip.getRight());
     }
     // Two restrained, stationary glow layers follow ONLY the measured path.
     // Existing attack/release supplies persistence; no clock-driven shimmer,
