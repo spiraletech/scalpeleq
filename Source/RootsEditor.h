@@ -12,6 +12,7 @@
 #include "SurgeryResponse.h"
 #include "SurgeryAnalysis.h"
 #include "ScalpelMercuryField.h"
+#include "ScalpelFluid3D.h"
 #include <array>
 #include <functional>
 #include <memory>
@@ -82,7 +83,12 @@ public:
     }
     bool isFrozen() const noexcept {return frozen_;}
     void setXray(bool active) {
-        if(xrayActive_!=active){xrayActive_=active;mercuryPaintCount_=0;repaint();}
+        if(xrayActive_!=active){
+            xrayActive_=active;
+            mercuryPaintCount_=0;
+            if(!active)mercury3D_.reset(); // release GPU resources on editor/host mode change
+            repaint();
+        }
     }
     void setPeakWarnings(const std::array<float,7>& levels){
         if(peakWarnings_!=levels){peakWarnings_=levels;repaint();}
@@ -116,9 +122,12 @@ private:
     surgery::weather::Field weatherField_;
     juce::Image weatherImage_{juce::Image::RGB,128,64,true};
     bool weatherActive_=false;int weatherStyle_=0;float visualPhase_=0;
-    // Low-resolution material field is shaded at ~20 fps and composited
-    // beneath the measured FFT silhouette at full graph refresh rate.
+    // GPU fluid runs on the editor thread and is always downstream of the FFT.
+    // The original liquid image remains a reliable CPU renderer fallback.
     juce::Image mercuryMaterial_{juce::Image::RGB,360,128,false};
+    juce::Image mercury3DImage_;
+    scalpel::xray::FluidVolume3D mercury3D_;
+    double mercuryElapsed_=1.0/60.0;
     unsigned mercuryPaintCount_=0;
     float mercuryPhase_=0;
     scalpel::xray::LiquidSurface<> mercurySurface_;
