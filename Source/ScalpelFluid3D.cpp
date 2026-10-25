@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstring>
 #include <cstdio>
+#include <cstdlib>
 
 #if defined(_WIN32)
 #ifndef NOMINMAX
@@ -271,6 +272,10 @@ struct FluidVolume3D::Impl {
     bool initialize() {
         if(attempted)return ready;
         attempted=true;
+        // Headless CI must validate HLSL without exercising virtual/software
+        // GPUs during GUI screenshots; real GTX hardware still uses D3D11.
+        if(const char* disabled=std::getenv("SCALPEL_GPU_DISABLE"))
+            if(disabled[0]=='1')return false;
         D3D_FEATURE_LEVEL feature{};
         const D3D_FEATURE_LEVEL requested[]{D3D_FEATURE_LEVEL_11_0};
         if(FAILED(D3D11CreateDevice(nullptr,D3D_DRIVER_TYPE_HARDWARE,nullptr,
