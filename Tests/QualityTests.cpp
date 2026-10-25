@@ -39,9 +39,56 @@ bool click(juce::Component& parent,const juce::String& caption){
 }
 }
 
+// Regression for a host removing Scalpel while the UI and FFT worker have
+// both been active. This intentionally exercises the release/prepare cycles
+// used by DAWs when changing mixer chains without modifying sound parameters.
+bool verifyPluginRemovalLifecycle() {
+    constexpr int cycles=12;
+    for(int cycle=0;cycle<cycles;++cycle){
+        auto processor=std::make_unique<PRISMVSTAudioProcessor>();
+        processor->prepareToPlay(48000.0,256);
+        if(processor->getLatencySamples()!=0){
+            std::cerr<<"UNLOAD: unexpected reported plugin latency\\n";
+            return false;
+        }
+        {
+            std::unique_ptr<juce::AudioProcessorEditor> editor(processor->createEditor());
+            if(!editor){std::cerr<<"UNLOAD: editor construction failed\\n";return false;}
+            juce::AudioBuffer<float> block(2,256);
+            juce::MidiBuffer midi;
+            for(int frame=0;frame<32;++frame){
+                tone(block,frame*256);
+                processor->processBlock(block,midi);
+            }
+            juce::Timer::callPendingTimersSynchronously();
+            if(cycle%3==0){
+                const auto image=editor->createComponentSnapshot(editor->getLocalBounds());
+                if(!image.isValid()){std::cerr<<"UNLOAD: invalid editor snapshot\\n";return false;}
+            }
+            // The editor is removed while the analyzer worker still exists.
+            editor.reset();
+        }
+        processor->releaseResources();
+        if(cycle%2==0){
+            processor->prepareToPlay(48000.0,256);
+            juce::AudioBuffer<float> block(2,256);
+            juce::MidiBuffer midi;
+            tone(block,cycle*256);
+            processor->processBlock(block,midi);
+            processor->releaseResources();
+        }
+        // Processor destruction must join the analyzer and unregister async
+        // parameter listeners without leaving a callback into dead memory.
+        processor.reset();
+    }
+    std::cerr<<"UNLOAD: "<<cycles<<" open/play/remove/restart cycles passed\\n";
+    return true;
+}
+
 bool runQualityTests(){
     juce::ScopedJuceInitialiser_GUI gui;
     if(!verifySonarRecovery()||!verifyChassis105()||!verifyWeatherUI())return false;
+    if(!verifyPluginRemovalLifecycle())return false;
     juce::MidiBuffer midi;
     {
         auto fresh=std::make_unique<PRISMVSTAudioProcessor>();
