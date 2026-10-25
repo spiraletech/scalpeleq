@@ -21,6 +21,8 @@ jobs:
       - name: Build
         run: cmake --build build --config Release --parallel 2
       - name: Test
+        env:
+          SCALPEL_GPU_DISABLE: '1'
         run: ctest --test-dir build -C Release --output-on-failure
       - name: Upload regression evidence
         if: always()
