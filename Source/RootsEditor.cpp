@@ -1,5 +1,6 @@
 #include "RootsEditor.h"
 #include "RootsSpectrumColours.h"
+#include "ScalpelXRayChroma.h"
 #include "SurgerySpectralColours.h"
 #include <BinaryData.h>
 #include <cmath>
@@ -324,12 +325,24 @@ void RootsGraph::paint(juce::Graphics& g){
         const bool needsNewFrame=!frozen_||mercuryPaintCount_++==0;
         if(needsNewFrame){
             std::array<scalpel::xray::FluidColumn,scalpel::xray::FluidVolume3D::gridWidth> source{};
+            const auto pitch=scalpel::xray::chroma::estimate(bands_);
             for(int column=0;column<(int)source.size();++column){
                 const float u=(column+.5f)/(float)source.size();
                 const int bin=juce::jlimit(0,N-1,juce::roundToInt(u*(N-1)));
                 const auto syn=surgery::synesthesia::read(m,u);
                 const float local=juce::jlimit(0.f,1.f,(bands_[(size_t)bin]+72.f)/65.f);
-                source[(size_t)column]={local,syn.r,syn.g,syn.b};
+                // Musical pitch-class estimates transport coloured liquid
+                // through the volume. Confidence-gating keeps noise from
+                // inventing specific notes; measured spectrum stays intact.
+                const double f=prism::analysis::LabBands::centreFrequency(bin);
+                const int note=juce::roundToInt(69.+12.*std::log2(f/440.));
+                const int pitchClass=(note%12+12)%12;
+                const float tint=.34f*pitch.confidence*pitch.weight[(size_t)pitchClass];
+                const auto musical=scalpel::xray::chroma::palette[(size_t)pitchClass];
+                source[(size_t)column]={local,
+                    syn.r*(1.f-tint)+musical.r*tint,
+                    syn.g*(1.f-tint)+musical.g*tint,
+                    syn.b*(1.f-tint)+musical.b*tint};
             }
             // GPU velocity/pressure/phase transport is restricted to this UI path.
             // The measured contour, parameter IDs and all audio code are unchanged.
