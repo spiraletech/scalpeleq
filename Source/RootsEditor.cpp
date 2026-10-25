@@ -369,10 +369,10 @@ void RootsGraph::paint(juce::Graphics& g){
         g.drawImage(mercuryMaterial_,r);
         g.setOpacity(1.f);
         if(heatOn){
-            // HEAT MAP is independent of X-RAY. It warms the mercury's
-            // specular field without reinstating Surgery's blue histogram.
-            juce::ColourGradient heat(juce::Colour(0xffdb6a46).withAlpha(.24f),
-                r.getX(),r.getY(),juce::Colour(0xff826071).withAlpha(.065f),
+            // Heat visualization is a restrained thin-film reflection, not
+            // an orange/brown overlay obscuring the pitch-black material.
+            juce::ColourGradient heat(juce::Colour(0xff84756d).withAlpha(.085f),
+                r.getX(),r.getY(),juce::Colour(0xff517983).withAlpha(.045f),
                 r.getRight(),r.getBottom(),false);
             g.setGradientFill(heat);g.fillRect(r);
         }
@@ -399,8 +399,8 @@ void RootsGraph::paint(juce::Graphics& g){
                 if(!open){ribbon.startNewSubPath(x,y);open=true;}else ribbon.lineTo(x,y);
             }
             const auto glaze=juce::Colour(layer==0?0xffc4c5bc:layer==1?0xff5d9f9f:0xffa3799d);
-            g.setColour(glaze.withAlpha((.23f-.045f*layer)*juce::jlimit(0.f,1.f,.35f+.65f*energy)));
-            g.strokePath(ribbon,juce::PathStrokeType(layer==0?1.55f:1.0f,
+            g.setColour(glaze.withAlpha((.36f-.07f*layer)*juce::jlimit(0.f,1.f,.35f+.65f*energy)));
+            g.strokePath(ribbon,juce::PathStrokeType(layer==0?1.75f:1.05f,
                 juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
         }
         // Distinct meniscus bubbles only where the measured audio is strong.
@@ -443,13 +443,13 @@ void RootsGraph::paint(juce::Graphics& g){
         g.strokePath(spectrumPath,juce::PathStrokeType(2.4f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
     }
     // A single fine readout follows the spectrum edge, never a 2D waterfall.
-    g.setColour(juce::Colour(xrayActive_?0xfff5d3bb:0xffc1b2a3));
+    g.setColour(juce::Colour(xrayActive_?0xffd9ddd6:0xffc1b2a3));
     g.strokePath(spectrumPath,juce::PathStrokeType(weatherStyle_==7?1.7f:1.3f,
         juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
     // A restrained peak-hold readout; the audio measurements are unchanged.
     g.setColour(juce::Colour(0xffdfd5c7).withAlpha(0.24f));
     g.strokePath(peakPath,juce::PathStrokeType(0.8f));
-    if(heatOn){
+    if(heatOn&&!xrayActive_){
         // Narrow isolated tones have too little filled area to express the
         // heat-map toggle by tinting mercury alone (a real 4 kHz recovery
         // regression). Add tiny glows ONLY at measured spectral local peaks.
