@@ -347,13 +347,17 @@ void RootsGraph::paint(juce::Graphics& g){
                                    .31f*std::cos(40.f*u+12.f*d-.9f*time)+surfaceSlope*4.f;
                     const float ny=.45f*std::cos(13.f*u+8.6f*d+1.7f*time)+.16f*wave;
                     const float highlight=juce::jlimit(0.f,1.f,.48f+.47f*nx-.26f*ny);
-                    const float spec=std::pow(highlight,24.f);
+                    // Exact integer-power specular lobe without a costly per-pixel pow().
+                    const float h2=highlight*highlight, h4=h2*h2, h8=h4*h4, h16=h8*h8;
+                    const float spec=h16*h8;
                     // Rounded menisci at irregular fluid depths. These
                     // streaks move with the spectrum-driven liquid surface.
                     const float ribbon=.12f+fluid*.25f+.07f*std::sin(15.f*u-time+2.5f*wave);
-                    const float meniscus=std::exp(-std::pow((d-ribbon)/.035f,2.f));
+                    const float meniscusDistance=(d-ribbon)/.035f;
+                    const float meniscus=std::exp(-meniscusDistance*meniscusDistance);
                     const float lower=.53f+.07f*std::sin(12.f*u+time*.67f+wave);
-                    const float second=std::exp(-std::pow((d-lower)/.047f,2.f));
+                    const float secondDistance=(d-lower)/.047f;
+                    const float second=std::exp(-secondDistance*secondDistance);
                     const float crest=std::exp(-d*19.f);
                     const float gloss=(.52f*spec+.26f*meniscus+.13f*second+.22f*crest)*
                         juce::jlimit(0.f,1.f,.24f+.61f*local+.15f*energy);
