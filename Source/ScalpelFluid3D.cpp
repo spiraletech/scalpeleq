@@ -4,8 +4,12 @@
 #include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <cstdio>
 
 #if defined(_WIN32)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <wrl/client.h>
@@ -355,9 +359,9 @@ struct FluidVolume3D::Impl {
     bool render(const std::array<FluidColumn,64>& columns,float bass,float flux,float level,
                 double elapsed,bool reduced,juce::Image& target) {
         if(!initialize())return false;
-        if(device->GetDeviceRemovedReason()!=S_OK) {ready=false;return false;}
+        if(device->GetDeviceRemovedReason()!=S_OK) {ready=false;imageReady=false;return false;}
         elapsed=std::clamp(elapsed,0.0,1.0/15.0);
-        accumulator=std::min(accumulator+elapsed,1.0/15.0);
+        accumulator=(std::min)(accumulator+elapsed,1.0/15.0);
         elapsedPhase=std::fmod(elapsedPhase+(float)elapsed,4096.f);
         GPUParameters frameData{};
         frameData.dynamics[0]=1.f/30.f;
@@ -422,6 +426,28 @@ struct FluidVolume3D::Impl {
 };
 #endif
 
+bool FluidVolume3D::validateShaderSource() noexcept {
+#if defined(_WIN32)
+    static constexpr const char* entries[]{
+        "AdvectVelocity","AdvectPhases","Divergence",
+        "PressureJacobi","ProjectVelocity","RenderVolume"};
+    for(const char* entry:entries){
+        ComPtr<ID3DBlob> binary,errors;
+        const HRESULT compiled=D3DCompile(fluidHlsl,std::strlen(fluidHlsl),
+            nullptr,nullptr,nullptr,entry,"cs_5_0",
+            D3DCOMPILE_ENABLE_STRICTNESS|D3DCOMPILE_OPTIMIZATION_LEVEL3,
+            0,&binary,&errors);
+        if(FAILED(compiled)){
+            if(errors){
+                std::fprintf(stderr,"X-RAY HLSL %s: %s\n",entry,
+                    (const char*)errors->GetBufferPointer());
+            }
+            return false;
+        }
+    }
+#endif
+    return true;
+}
 FluidVolume3D::FluidVolume3D()=default;
 FluidVolume3D::~FluidVolume3D()=default;
 bool FluidVolume3D::render(const std::array<FluidColumn,gridWidth>& columns,
