@@ -42,6 +42,8 @@ public:
     // Used by Windows CI to catch silent shader fallback before release.
     static bool validateShaderSource() noexcept;
     bool hasFrame() const noexcept;
+    // Used to diagnose old binaries and GPU/CPU fallbacks in FL Studio.
+    const char* statusText() const noexcept;
     void reset() noexcept;
 
 private:

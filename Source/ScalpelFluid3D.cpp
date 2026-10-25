@@ -123,18 +123,19 @@ void AdvectPhases(uint3 id : SV_DispatchThreadID) {
     float3 origin=(float3(id)+0.5)-velocity*dt;
     float4 q=phasesIn.SampleLevel(linearClamp,uvw(origin),0);
     float4 sound=spectral[id.x];
-    float floorWeight=exp(-float(id.y)*0.125);
-    float depthPattern=0.5+0.5*sin(float(id.z)*0.35+control.x*0.30);
-    float strength=sound.x*floorWeight*(0.45+0.55*depthPattern);
-    float source=strength*(0.007+0.027*dynamics.z+0.010*dynamics.w);
-    // Phase 1 is slow heavy liquid, phase 2 is lighter coloured liquid.
-    float heavy=saturate(q.x*0.998+source*0.67);
-    float light=saturate(q.y*0.991+source*(0.38+0.22*sound.z));
+    // Material must be visible promptly after a cold X-RAY opening.
+    // Interleaved phases are transported, but not yet a validated VOF solver.
+    float floorWeight=exp(-float(id.y)*0.061);
+    float depthPattern=0.65+0.35*sin(float(id.z)*0.27+control.x*0.30);
+    float adjacent=spectral[max(0,(int)id.x-1)].x+spectral[min(63,(int)id.x+1)].x;
+    float strength=max(sound.x,adjacent*0.24)*floorWeight*depthPattern;
+    float source=strength*(0.037+0.035*dynamics.z+0.026*dynamics.w);
+    float heavy=saturate(q.x*0.998+source*0.91);
+    float light=saturate(q.y*0.993+source*(0.58+0.16*sound.z));
     float total=heavy+light;
     if(total>0.96) {heavy*=0.96/total;light*=0.96/total;}
-    // Chromatic pigment and gas pockets are independently transported.
-    float pigment=saturate(q.z*0.992+source*(0.4*sound.y+0.34*sound.z+0.26*sound.w));
-    float bubbles=saturate(q.w*0.963+source*dynamics.z*(0.2+0.8*dynamics.w));
+    float pigment=saturate(q.z*0.994+source*(0.70+0.12*sound.y+0.12*sound.z));
+    float bubbles=saturate(q.w*0.978+source*(0.08+0.55*dynamics.z+0.14*dynamics.y));
     if(id.y>=GY-2) bubbles*=0.8;
     phasesOut[id]=float4(heavy,light,pigment,bubbles);
 }
@@ -176,16 +177,18 @@ void RenderVolume(uint3 id : SV_DispatchThreadID) {
     float2 uv=(float2(id.xy)+0.5)/float2(IW,IH);
     float x=uv.x;
     float y=1-uv.y;
-    float3 acc=float3(0.005,0.007,0.010);
+    float3 acc=float3(0.0018,0.0025,0.004);
     float transparency=1.0;
     float4 note=spectral[min(63,(uint)(x*64))];
+    // Derived exclusively from measured bin energy; silence stays dark.
+    float drive=saturate(note.x*1.20);
     [loop]
     for(int z=GZ-1;z>=0;--z){
         float depth=(z+0.5)/GZ;
         float3 pos=float3(x,y,depth);
         float4 f=phasesIn.SampleLevel(linearClamp,pos,0);
-        float density=saturate(1.5*f.x+1.2*f.y+0.7*f.w);
-        if(density<0.002)continue;
+        float density=saturate(1.8*f.x+1.6*f.y+0.6*f.w);
+        if(density<0.001)continue;
         float3 dx=float3(1.0/GX,0,0);
         float3 dy=float3(0,1.0/GY,0);
         float3 dz=float3(0,0,1.0/GZ);
@@ -195,24 +198,32 @@ void RenderVolume(uint3 id : SV_DispatchThreadID) {
                  phasesIn.SampleLevel(linearClamp,saturate(pos-dy),0).x;
         float nz=phasesIn.SampleLevel(linearClamp,saturate(pos+dz),0).x-
                  phasesIn.SampleLevel(linearClamp,saturate(pos-dz),0).x;
-        float3 normal=normalize(float3(-nx*3,-ny*3,0.7-nz*3));
-        float highlight=pow(saturate(dot(normal,normalize(float3(-0.4,0.6,0.8)))),20.0);
-        float twist=sin(13*x+10*y+6*depth+f.z*8+control.x*0.10);
+        float3 normal=normalize(float3(-nx*4,-ny*4,0.50-nz*4));
+        float facing=saturate(dot(normal,normalize(float3(-0.42,0.64,0.71))));
+        float highlight=pow(facing,11.0);
+        // Iridescence lives inside the transported material, not on the FFT line.
+        float twist=sin(13*x+10*y+6*depth+f.z*8+control.x*0.25);
         float oil=0.5+0.5*twist;
-        float3 base=float3(0.009,0.012,0.015);
-        float3 spectralLight=note.yzw*(0.10+0.42*oil);
-        float3 colour=base+spectralLight*f.y*(0.24+f.z*1.15)
-                       +float3(0.76,0.85,0.91)*highlight*(0.10+0.75*f.x);
-        colour+=float3(0.15,0.27,0.36)*f.w*0.12;
-        float extinction=1-exp(-density*0.22);
+        float3 violet=float3(note.z,note.w,note.y);
+        float3 tideColour=lerp(note.yzw,violet,0.20+0.30*oil);
+        float shadow=0.58+0.42*saturate(normal.z*0.5+0.5);
+        float interference=0.5+0.5*sin(20.0*f.z+12.0*depth+9.0*y+control.x*0.35);
+        float layer=saturate(f.y*1.5+f.z*0.9);
+        float3 base=float3(0.012,0.018,0.023)*(0.5+shadow);
+        float3 colour=base+
+            tideColour*layer*(0.40+0.47*interference)*drive+
+            float3(0.76,0.89,0.96)*highlight*(0.29+1.45*f.x)*drive;
+        colour+=tideColour*f.w*(0.18+0.26*oil)*drive;
+        float extinction=1-exp(-density*0.68);
         acc+=transparency*extinction*colour;
         transparency*=1-extinction;
-        if(transparency<0.025)break;
+        if(transparency<0.018)break;
     }
-    // Black metallic substrate, with chromatic energy only where liquid exists.
-    float shade=saturate(0.9-abs(y-0.45)*0.3);
-    acc+=transparency*float3(0.006,0.009,0.011)*shade;
-    imageOut[id.xy]=float4(saturate(acc),1);
+    // JUCE's image pixels are display encoded. Linear radiance written
+    // directly to UNORM previously appeared too dark to show the oil film.
+    acc+=transparency*float3(0.002,0.004,0.006);
+    float3 mapped=acc/(1.0+acc);
+    imageOut[id.xy]=float4(pow(saturate(mapped*1.45),1.0/2.2),1);
 }
 )HLSL";
 
@@ -246,6 +257,7 @@ struct FluidVolume3D::Impl {
     ComPtr<ID3D11Texture2D> staging[3];
     unsigned frame=0;
     bool attempted=false, ready=false, imageReady=false;
+    const char* status="GPU PENDING";
     double accumulator=0.0;
     float elapsedPhase=0.f;
 
@@ -275,12 +287,14 @@ struct FluidVolume3D::Impl {
         // Headless CI must validate HLSL without exercising virtual/software
         // GPUs during GUI screenshots; real GTX hardware still uses D3D11.
         if(const char* disabled=std::getenv("SCALPEL_GPU_DISABLE"))
-            if(disabled[0]=='1')return false;
+            if(disabled[0]=='1'){status="GPU DISABLED";return false;}
         D3D_FEATURE_LEVEL feature{};
         const D3D_FEATURE_LEVEL requested[]{D3D_FEATURE_LEVEL_11_0};
         if(FAILED(D3D11CreateDevice(nullptr,D3D_DRIVER_TYPE_HARDWARE,nullptr,
             D3D11_CREATE_DEVICE_BGRA_SUPPORT,requested,1,D3D11_SDK_VERSION,
-            &device,&feature,&context)) || feature<D3D_FEATURE_LEVEL_11_0)return false;
+            &device,&feature,&context)) || feature<D3D_FEATURE_LEVEL_11_0){
+            status="GPU UNAVAILABLE";return false;
+        }
         static constexpr const char* entries[]{
             "AdvectVelocity","AdvectPhases","Divergence",
             "PressureJacobi","ProjectVelocity","RenderVolume"};
@@ -288,10 +302,20 @@ struct FluidVolume3D::Impl {
             ComPtr<ID3DBlob> bytecode,errors;
             if(FAILED(D3DCompile(fluidHlsl,std::strlen(fluidHlsl),nullptr,nullptr,nullptr,
                 entries[i],"cs_5_0",D3DCOMPILE_ENABLE_STRICTNESS|D3DCOMPILE_OPTIMIZATION_LEVEL3,
-                0,&bytecode,&errors)))return false;
+                0,&bytecode,&errors))){
+                status="SHADER ERROR";
+                if(errors)std::fprintf(stderr,"Scalpel X-RAY GPU shader: %s\n",
+                    (const char*)errors->GetBufferPointer());
+                return false;
+            }
             if(FAILED(device->CreateComputeShader(bytecode->GetBufferPointer(),
-                bytecode->GetBufferSize(),nullptr,&shader[i])))return false;
+                bytecode->GetBufferSize(),nullptr,&shader[i]))){
+                status="GPU SHADER UNSUPPORTED";return false;
+            }
         }
+        // Any subsequent failure is a D3D resource/format limit rather
+        // than a silent return to the old CPU visualizer.
+        status="GPU RESOURCE ERROR";
         D3D11_SAMPLER_DESC s{};
         s.Filter=D3D11_FILTER_MIN_MAG_MIP_LINEAR;
         s.AddressU=s.AddressV=s.AddressW=D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -321,7 +345,7 @@ struct FluidVolume3D::Impl {
         image.CPUAccessFlags=D3D11_CPU_ACCESS_READ;
         for(auto& p:staging)
             if(FAILED(device->CreateTexture2D(&image,nullptr,&p)))return false;
-        ready=true;return true;
+        ready=true;status="GPU WARMING";return true;
     }
     void dispatch(int kernel, ID3D11ShaderResourceView* velocityRead,
                   ID3D11ShaderResourceView* phaseRead,
@@ -364,7 +388,9 @@ struct FluidVolume3D::Impl {
     bool render(const std::array<FluidColumn,64>& columns,float bass,float flux,float level,
                 double elapsed,bool reduced,juce::Image& target) {
         if(!initialize())return false;
-        if(device->GetDeviceRemovedReason()!=S_OK) {ready=false;imageReady=false;return false;}
+        if(device->GetDeviceRemovedReason()!=S_OK) {
+            status="GPU DEVICE LOST";ready=false;imageReady=false;return false;
+        }
         elapsed=std::clamp(elapsed,0.0,1.0/15.0);
         accumulator=(std::min)(accumulator+elapsed,1.0/15.0);
         elapsedPhase=std::fmod(elapsedPhase+(float)elapsed,4096.f);
@@ -382,7 +408,9 @@ struct FluidVolume3D::Impl {
             frameData.spectral[i][3]=std::clamp(columns[i].blue,0.f,1.f);
         }
         D3D11_MAPPED_SUBRESOURCE data{};
-        if(FAILED(context->Map(parameters.Get(),0,D3D11_MAP_WRITE_DISCARD,0,&data)))return false;
+        if(FAILED(context->Map(parameters.Get(),0,D3D11_MAP_WRITE_DISCARD,0,&data))){
+            status="GPU UPLOAD ERROR";return false;
+        }
         std::memcpy(data.pData,&frameData,sizeof(frameData));
         context->Unmap(parameters.Get(),0);
         ID3D11Buffer* constantBuffer=parameters.Get();
@@ -405,7 +433,7 @@ struct FluidVolume3D::Impl {
         const HRESULT mapped=context->Map(staging[readyIndex].Get(),0,
                                           D3D11_MAP_READ,D3D11_MAP_FLAG_DO_NOT_WAIT,&pixels);
         if(mapped==DXGI_ERROR_WAS_STILL_DRAWING)return false;
-        if(FAILED(mapped))return false;
+        if(FAILED(mapped)){status="GPU READBACK ERROR";return false;}
         if(target.getWidth()!=(int)IW||target.getHeight()!=(int)IH)
             target=juce::Image(juce::Image::RGB,(int)IW,(int)IH,true);
         {
@@ -420,12 +448,14 @@ struct FluidVolume3D::Impl {
         }
         context->Unmap(staging[readyIndex].Get(),0);
         imageReady=true;
+        status="GPU LIVE";
         return true;
     }
 };
 #else
 struct FluidVolume3D::Impl {
     bool imageReady=false;
+    const char* status="GPU UNSUPPORTED";
     bool render(const std::array<FluidColumn,64>&,float,float,float,
                 double,bool,juce::Image&) {return false;}
 };
@@ -463,6 +493,9 @@ bool FluidVolume3D::render(const std::array<FluidColumn,gridWidth>& columns,
 }
 bool FluidVolume3D::hasFrame() const noexcept {
     return impl_&&impl_->imageReady;
+}
+const char* FluidVolume3D::statusText() const noexcept {
+    return impl_?impl_->status:"GPU PENDING";
 }
 void FluidVolume3D::reset() noexcept {
     impl_.reset();
