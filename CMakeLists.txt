@@ -79,6 +79,7 @@ target_sources(PRISMVST PRIVATE
   Source/ScalpelMercuryField.h
   Source/ScalpelFluid3D.h
   Source/ScalpelFluid3D.cpp
+  Source/ScalpelXRayChroma.h
   Source/RootsAudioEngine.h
 )
 
@@ -108,6 +109,9 @@ if(PRISMVST_BUILD_TESTS)
   add_executable(scalpel_mercury_tests Tests/ScalpelMercuryTests.cpp Source/ScalpelMercuryField.h)
   target_compile_features(scalpel_mercury_tests PRIVATE cxx_std_20)
   add_test(NAME scalpel_xray_liquid_surface COMMAND scalpel_mercury_tests)
+  add_executable(scalpel_chroma_tests Tests/ScalpelChromaTests.cpp Source/ScalpelXRayChroma.h)
+  target_compile_features(scalpel_chroma_tests PRIVATE cxx_std_20)
+  add_test(NAME scalpel_xray_pitch_class_mapping COMMAND scalpel_chroma_tests)
   add_executable(scalpel_color_tests Tests/ScalpelColorTests.cpp Source/SurgeryOnyx.h)
   target_compile_features(scalpel_color_tests PRIVATE cxx_std_20)
   add_test(NAME scalpel_color_five_knob_dsp COMMAND scalpel_color_tests)
