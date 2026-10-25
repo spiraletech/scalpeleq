@@ -476,7 +476,12 @@ void RootsGraph::paint(juce::Graphics& g){
         // resembled heat-map markers instead of internal liquid movement.
         } // The 3D volume already contains its own internal folds and bubbles.
     }
-    if(heatOn){
+    // If all bins are below the visible -60 dBFS floor, the entire heat
+    // layer must be invisible. Even a dark backing plate at silence would
+    // manufacture a visual signal and fail the live/silence recovery proof.
+    const bool heatHasSignal=std::any_of(bands_.begin(),bands_.end(),
+        [](float db){return prism::roots::visual::heatmapStrength(db)>0.f;});
+    if(heatOn&&heatHasSignal){
         // The heatmap has its own thin, frequency-locked bottom stratum.
         // It is drawn after either Standard or X-RAY liquid, so GPU mercury
         // cannot hide the measured energy colours. It never touches EQ DSP.
