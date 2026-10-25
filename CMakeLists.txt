@@ -77,6 +77,8 @@ target_sources(PRISMVST PRIVATE
   Source/RootsEditor.cpp
   Source/RootsEditor.h
   Source/ScalpelMercuryField.h
+  Source/ScalpelFluid3D.h
+  Source/ScalpelFluid3D.cpp
   Source/RootsAudioEngine.h
 )
 
@@ -85,6 +87,12 @@ target_compile_definitions(PRISMVST PUBLIC
   JUCE_USE_CURL=0
   JUCE_VST3_CAN_REPLACE_VST2=0
 )
+
+if(WIN32)
+  # Compute shaders are compiled from embedded HLSL when X-RAY is activated.
+  # D3D11 resources belong to the editor, never to the real-time DSP thread.
+  target_link_libraries(PRISMVST PRIVATE d3d11 dxgi d3dcompiler)
+endif()
 
 target_link_libraries(PRISMVST PRIVATE
   juce::juce_audio_utils
@@ -126,6 +134,8 @@ if(PRISMVST_BUILD_TESTS)
     Source/PluginEditor.h
     Source/RootsEditor.cpp
     Source/RootsEditor.h
+    Source/ScalpelFluid3D.h
+    Source/ScalpelFluid3D.cpp
     Source/RootsAudioEngine.h
     Source/SurgeryCarveEngine.h
     Source/SurgeryLookAndFeel.h
@@ -142,6 +152,9 @@ if(PRISMVST_BUILD_TESTS)
     juce::juce_audio_utils
     juce::juce_dsp
   )
+  if(WIN32)
+    target_link_libraries(prismvst_tests PRIVATE d3d11 dxgi d3dcompiler)
+  endif()
   if(MSVC)
     target_link_options(prismvst_tests PRIVATE /STACK:8388608)
   endif()
