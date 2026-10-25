@@ -318,7 +318,9 @@ void RootsGraph::paint(juce::Graphics& g){
         // A frozen frame must render from the exact same surface/material
         // state every time. Never show a cached pre-freeze frame on one
         // capture and a newly shaded frame on the next paint.
-        if(frozen_||++mercuryPaintCount_%2==1){
+        // Shade each active 60 Hz visual frame, not alternate paints (~30 Hz).
+        // FREEZE shades once after toggling, then reuses the exact texture.
+        if (!frozen_ || mercuryPaintCount_++ == 0) {
             juce::Image::BitmapData pixels(mercuryMaterial_,juce::Image::BitmapData::writeOnly);
             const float time=mercuryPhase_;
             for(int px=0;px<mercuryMaterial_.getWidth();++px){
