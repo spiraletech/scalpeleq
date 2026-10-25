@@ -120,6 +120,7 @@ void RootsGraph::updateAnalyzer(
 }
 void RootsGraph::updateWeather(const surgery::weather::Snapshot* snapshot,double elapsed,bool active,bool reduced,double memory,int style){
     style=style>0?7:0; // All retained legacy values resolve to Standard+.
+    if(xrayActive_)mercuryElapsed_=elapsed;
     const bool visible=active&&style>0;
     const bool changed=visible!=weatherActive_||style!=weatherStyle_;
     weatherActive_=visible;
@@ -320,7 +321,26 @@ void RootsGraph::paint(juce::Graphics& g){
         // capture and a newly shaded frame on the next paint.
         // Shade each active 60 Hz visual frame, not alternate paints (~30 Hz).
         // FREEZE shades once after toggling, then reuses the exact texture.
-        if (!frozen_ || mercuryPaintCount_++ == 0) {
+        const bool needsNewFrame=!frozen_||mercuryPaintCount_++==0;
+        if(needsNewFrame){
+            std::array<scalpel::xray::FluidColumn,scalpel::xray::FluidVolume3D::gridWidth> source{};
+            for(int column=0;column<(int)source.size();++column){
+                const float u=(column+.5f)/(float)source.size();
+                const int bin=juce::jlimit(0,N-1,juce::roundToInt(u*(N-1)));
+                const auto syn=surgery::synesthesia::read(m,u);
+                const float local=juce::jlimit(0.f,1.f,(bands_[(size_t)bin]+72.f)/65.f);
+                source[(size_t)column]={local,syn.r,syn.g,syn.b};
+            }
+            // GPU velocity/pressure/phase transport is restricted to this UI path.
+            // The measured contour, parameter IDs and all audio code are unchanged.
+            mercury3D_.render(source,m.bass,m.flux,m.level,mercuryElapsed_,
+                              pval(processor_.apvts,"sonar_reduced_motion")>=.5f,
+                              mercury3DImage_);
+        }
+        if(mercury3D_.hasFrame()){
+            g.setOpacity(.98f);g.drawImage(mercury3DImage_,r);g.setOpacity(1.f);
+        }else{
+        if(needsNewFrame){
             juce::Image::BitmapData pixels(mercuryMaterial_,juce::Image::BitmapData::writeOnly);
             const float time=mercuryPhase_;
             for(int px=0;px<mercuryMaterial_.getWidth();++px){
@@ -374,6 +394,7 @@ void RootsGraph::paint(juce::Graphics& g){
         g.setOpacity(.94f);
         g.drawImage(mercuryMaterial_,r);
         g.setOpacity(1.f);
+        } // CPU fallback when D3D11 compute is unavailable
         if(heatOn){
             // Heat visualization is a restrained thin-film reflection, not
             // an orange/brown overlay obscuring the pitch-black material.
@@ -386,6 +407,7 @@ void RootsGraph::paint(juce::Graphics& g){
         // Layered capillary crests follow the real FFT surface and settle
         // when the music stops; unlike rigid colored lines they bend and
         // uncoil with the damped liquid surface.
+        if(!mercury3D_.hasFrame()){
         for(int layer=0;layer<3;++layer){
             juce::Path ribbon;
             bool open=false;
@@ -436,6 +458,7 @@ void RootsGraph::paint(juce::Graphics& g){
             g.setColour(juce::Colour(0xfff0ede5).withAlpha(.38f+.26f*strength));
             g.fillEllipse(x-radius*.5f,y-radius*.65f,radius*.56f,radius*.24f);
         }
+        } // The 3D volume already contains its own internal folds and bubbles.
     }
     // Two restrained, stationary glow layers follow ONLY the measured path.
     // Existing attack/release supplies persistence; no clock-driven shimmer,
