@@ -297,7 +297,7 @@ PRISMVSTAudioProcessor::~PRISMVSTAudioProcessor()
 
     analyzerWorker.signalThreadShouldExit();
     analyzerEvent.signal();
-    analyzerWorker.stopThread(1000);
+    analyzerWorker.stopThread(); // Join cleanly; never force-kill an analyzer worker.
 }
 
 int PRISMVSTAudioProcessor::getActiveSoloSection() const noexcept
@@ -406,7 +406,7 @@ void PRISMVSTAudioProcessor::releaseResources()
 {
     analyzerWorker.signalThreadShouldExit();
     analyzerEvent.signal();
-    analyzerWorker.stopThread(1000);
+    analyzerWorker.stopThread(); // Join cleanly; never force-kill an analyzer worker.
 }
 
 bool PRISMVSTAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
@@ -681,7 +681,7 @@ void PRISMVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
 
     analyzerWorker.signalThreadShouldExit();
     analyzerEvent.signal();
-    analyzerWorker.stopThread(1000);
+    analyzerWorker.stopThread(); // Join cleanly; never force-kill an analyzer worker.
 
     currentSampleRate = sampleRate;
     dryScratch.setSize(2, juce::jmax(1, samplesPerBlock));
@@ -975,6 +975,8 @@ void PRISMVSTAudioProcessor::runAnalyzerThread()
     while (!analyzerWorker.threadShouldExit())
     {
         analyzerEvent.wait(10);
+        if (analyzerWorker.threadShouldExit())
+            break;
         for (;;)
         {
             const int ready = analyzerFifo.getNumReady();
