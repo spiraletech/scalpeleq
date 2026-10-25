@@ -457,7 +457,8 @@ bool runQualityTests(){
     // a fresh graphic surface is rasterized between screenshots.
     juce::Rectangle<int> liveLens;
     for(auto* child:editor->getChildren())
-        if(auto* graph=dynamic_cast<RootsGraph*>(child))liveLens=graph->getBounds().reduced(3);
+        if(auto* graph=dynamic_cast<RootsGraph*>(child))
+            liveLens=editor->getLocalArea(graph,graph->getLocalBounds()).reduced(3);
     if(liveLens.isEmpty())return false;
     auto rackReference=editor->createComponentSnapshot(editor->getLocalBounds());
     for(int legacy=0;legacy<4;++legacy){
