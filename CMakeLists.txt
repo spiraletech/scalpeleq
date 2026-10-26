@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(SCALPELEQ VERSION 0.1.0 LANGUAGES C CXX)
+project(SCALPELEQ VERSION 0.2.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -63,6 +63,7 @@ endif()
 juce_add_binary_data(SurgeryRackAssets SOURCES
   "${SCALPEL_ART_DIR}/chassis-1.0.3.png"
   "${SCALPEL_ART_DIR}/approved-reference.png"
+  Assets/Scalpel/scalpel-screw.png
   Assets/Scalpel/scalpel-knob.png
   Assets/Scalpel/scalpel-freeze.png
   Assets/Scalpel/scalpel-heatmap.png)
@@ -217,4 +218,24 @@ if(PRISMVST_BUILD_TESTS)
   add_executable(surgery_spectral_colour_tests Tests/SurgerySpectralColoursTests.cpp Source/SurgerySpectralColours.h)
   target_compile_features(surgery_spectral_colour_tests PRIVATE cxx_std_20)
   add_test(NAME surgery_spectral_colour_mapping COMMAND surgery_spectral_colour_tests)
+endif()
+
+if(PRISMVST_BUILD_TESTS)
+  if(MSVC)
+    target_compile_options(scalpel_band_tests PRIVATE /UNDEBUG)
+    target_compile_options(scalpel_color_tests PRIVATE /UNDEBUG)
+    target_compile_options(scalpel_mercury_tests PRIVATE /UNDEBUG)
+    target_compile_options(scalpel_chroma_tests PRIVATE /UNDEBUG)
+  else()
+    target_compile_options(scalpel_band_tests PRIVATE -UNDEBUG)
+    target_compile_options(scalpel_color_tests PRIVATE -UNDEBUG)
+    target_compile_options(scalpel_mercury_tests PRIVATE -UNDEBUG)
+    target_compile_options(scalpel_chroma_tests PRIVATE -UNDEBUG)
+  endif()
+  target_sources(prismvst_tests PRIVATE Tests/ScalpelValidation.cpp)
+  add_test(NAME scalpel_native_4k_and_controls COMMAND prismvst_tests --scalpel-validation)
+endif()
+
+if(PRISMVST_BUILD_TESTS)
+  add_test(NAME scalpel_editor_processor_unload COMMAND prismvst_tests --scalpel-unload)
 endif()

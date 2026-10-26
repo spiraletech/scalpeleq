@@ -16,4 +16,9 @@ Scalpel EQ is a dedicated JUCE 8 / C++20 VST3 from Spiral Ether Tech, derived fr
 
 ## State
 
-Implementation in progress. No completed or verified Scalpel EQ VST3 release is claimed by this README.
+0.2.0 development candidate, based on the user-specified current commit
+`eaa47f0971ae8044592f9b2b5146c8faf69b1d6d` (`feature/xray-3d-fluid`).
+No side JUKE rails. Native 4K output, live GPU submission fix, reflective mercury
+surface, FIELD, clockwise compression amount, bipolar CARVE and unload regression
+coverage. See [engineering notes](docs/SCALPEL_0.2_ENGINEERING.md) for exact behavior,
+verification scope, migration and performance limits.

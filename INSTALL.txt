@@ -1,29 +1,29 @@
-Scalpel EQ 0.1.0 - Windows x64 VST3
+Scalpel EQ 0.2.0 - Windows x64 VST3 development build
 
-Close your DAW before copying plugin files. This is a separate plugin from
-Surgery EQ and must NOT overwrite a working Surgery installation.
-Copy the COMPLETE Scalpel EQ.vst3 folder into:
+Close the DAW, then copy the COMPLETE Scalpel EQ.vst3 folder into:
 C:\Program Files\Common Files\VST3
-Rescan and verify the separately named Scalpel EQ 0.1.0 instance.
-It has a distinct VST3 bundle and four-character plugin code.
-Legacy parameter IDs are retained within the new plugin for compatibility,
-but existing Surgery EQ tracks are NOT automatically converted to Scalpel EQ.
-Unsigned development build; test copies of production projects first.
+Rescan plugins and verify Scalpel EQ 0.2.0 in the host plugin information.
+This is a separate plugin from Surgery EQ. Do not overwrite Surgery EQ.
 
-ANALYZE > SONAR 2.1 / VISUAL MODE now contains Standard+ ONLY.
-All earlier saved/automated SONAR choices render Standard+.
-SONAR ON/OFF independently gates its overlays; the accurate trace remains.
+There are no jukebox bars on the sides or external animated rails.
+X-RAY changes only graph presentation; the accurate FFT trace remains.
+COLOR has five independent per-band controls; zero is neutral.
+FIELD selects STEREO, MID or SIDE for the selected band.
+COMP AMOUNT increases clockwise. Select 1176 E 4:1 for FET compression.
+PHASE is a conservative per-band stereo anti-correlation guard.
+LIMIT enables an LA-2A-inspired optical leveler, not a brickwall limiter.
 
-ANALYZE > JUKE MODE independently selects Real Jukebox, Storm Tube,
-Symbiote Flow, Pulse Rail, Ambient Idle or Off. Real Jukebox is the fresh-instance
-default. JUKE Off hides all tube energy; the manufactured glass/carbon remains.
-SONAR OFF does not turn off JUKE; use JUKE MODE > Off for the border.
+CARVE depth supports -90 to +90 dB. Existing preset meaning is preserved:
+positive DEPTH cuts, negative DEPTH boosts. Zero is neutral.
+The expanded depth parameter range changes normalized host automation scaling;
+verify old depth automation lanes when migrating from 0.1.x development builds.
+Physical depth values in plugin presets retain their meaning.
 
-Freeze holds both visual simulations. Off controls override visibility while
-frozen. Reduced Motion defaults ON and preserves light response with less drift
-and turbulence. Silence leaves faint casing reflections after decay.
+4K means verified 3840x2160 editor renders and native material buffers.
+It does not certify 60 FPS or photographic parity with reference images.
+Supplied lower-resolution references are not advertised as 4K masters.
+Sound/pitch colors are designed correspondences inspired by synesthesia,
+not universal biological frequency colors or solfeggio effects.
 
-Historical SONAR parameter IDs/ranges/values are retained for project and
-normalized automation compatibility. They cannot reactivate removed styles.
-JUKE choices, existing control positions, analyzer geometry and DSP are retained.
-See docs/SCALPEL_EQ_DSP_SPEC.md for the current scope and limitations.
+Unsigned development build. See docs/SCALPEL_0.2_ENGINEERING.md for validation,
+removal-safety changes and remaining physical DAW acceptance checks.

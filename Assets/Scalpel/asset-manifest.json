@@ -1,0 +1,154 @@
+[
+  {
+    "file": "References/analyzer-composite.png",
+    "width": 2141,
+    "height": 734,
+    "mode": "RGB",
+    "sha256": "4ea2e909f4124438c04cfe79a67b930ab8f70ce29ea528d7277f05ba3b056a63",
+    "role": "reference only"
+  },
+  {
+    "file": "References/Four Retro Audio Control Modules-2.png",
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "sha256": "1aa28ec643b519c4defb8f405785a69dd486cafa93dc86499a16e3fce0ddfd1f",
+    "role": "reference only"
+  },
+  {
+    "file": "References/L00-base-lens.png",
+    "width": 2172,
+    "height": 724,
+    "mode": "RGB",
+    "sha256": "78e1949f241be936a2893fcf47b2cf2f3a09dd5e012fd17bbfcc32f8e33fcc83",
+    "role": "reference only"
+  },
+  {
+    "file": "References/L01-grid-scale.png",
+    "width": 2172,
+    "height": 724,
+    "mode": "RGB",
+    "sha256": "84f7fe39426520e4d1f7710ae10bebb671f2276465b6cea789d2134fa305bf3e",
+    "role": "reference only"
+  },
+  {
+    "file": "References/L02-aurora.png",
+    "width": 2172,
+    "height": 724,
+    "mode": "RGB",
+    "sha256": "8b5d27408e750b5c6195858aff2765e4fce7489f21496b42541f7517dc9f5b58",
+    "role": "reference only"
+  },
+  {
+    "file": "References/L03-liquid.png",
+    "width": 2172,
+    "height": 724,
+    "mode": "RGB",
+    "sha256": "8fda14d29cc60d625ef3adb6b4bd77dec55da8c9b2491759bcc4d31ab988621e",
+    "role": "reference only"
+  },
+  {
+    "file": "References/L04-highlights.png",
+    "width": 2172,
+    "height": 724,
+    "mode": "RGB",
+    "sha256": "331e5ce7a47dc39288de8dbcedd471b6f84e15f04041eaebe619ee54ac662bc8",
+    "role": "reference only"
+  },
+  {
+    "file": "References/L05-overlay.png",
+    "width": 2172,
+    "height": 724,
+    "mode": "RGB",
+    "sha256": "2ada40198934a4a6bcf5a2a82fc016f8a5fb5344f939533b1bbe1dfa0fcb7f1b",
+    "role": "reference only"
+  },
+  {
+    "file": "References/render-pipeline.png",
+    "width": 1448,
+    "height": 1086,
+    "mode": "RGB",
+    "sha256": "d696bf910e6d6733006ae11ee3209e37c3c1636b3499e008d77b416dc252d347",
+    "role": "reference only"
+  },
+  {
+    "file": "References/Scalpel EQ analyze mode interface-3.png",
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "sha256": "c6db781ab419214395fda52e45505586d72c926ab547f83bbf7ae072207e679a",
+    "role": "reference only"
+  },
+  {
+    "file": "References/Scalpel EQ band mode controls-1.png",
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "sha256": "19686c7efba84d8f6a25239a682ec978a9d56e1418436cbffe6a2e501cba6019",
+    "role": "reference only"
+  },
+  {
+    "file": "References/SCALPEL EQ Carve Mode Panel-2.png",
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "sha256": "145232f00cf7cd20f2bc098ff94c8b27a6bba5d6965b850bb1ef53a5e5377944",
+    "role": "reference only"
+  },
+  {
+    "file": "References/SCALPEL EQ in Color Mode-4.png",
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "sha256": "c356acc2ab39502335097619b6873ffd7beb3f158c7c350e88358656d80d7d1e",
+    "role": "reference only"
+  },
+  {
+    "file": "References/Warm ivory EQ chassis backplate-1.png",
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "sha256": "ec18b1f461ba6c256d731f505ccceee058ca9eded2acbf0ea2e0ec1089b13184",
+    "role": "reference only"
+  },
+  {
+    "file": "scalpel-freeze.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "sha256": "76955ab9ea92a1b75f0097267ac406193470ba1afe4b33a3b88ff10cabb47620",
+    "role": "runtime master"
+  },
+  {
+    "file": "scalpel-heatmap.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "sha256": "628f8e9596841f25604a2df38c573015549384fb5d4f54fdb82e25c641efb61c",
+    "role": "runtime master"
+  },
+  {
+    "file": "scalpel-knob.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "sha256": "901470717b2c05db6f044f1e74b2a99f58c53867282054ca284fad7dd07c1e92",
+    "role": "runtime master"
+  },
+  {
+    "file": "scalpel-screw.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "sha256": "73bb245bc8178b941067db142e506bf4ca6397597a420899ff6ad5f6286f0879",
+    "role": "runtime master"
+  },
+  {
+    "file": "ui-approved-reference.png",
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "sha256": "476c8db415544c9210056d1e224533eb95133d996bb8318fe0823a23f8feec44",
+    "role": "reference only"
+  }
+]

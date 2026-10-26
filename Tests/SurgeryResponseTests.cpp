@@ -10,6 +10,8 @@ int main(){
     if(std::abs(carveMagnitudeDb(48000,1000,4,12,15000))>0.15)return 4;
     for(double f=20;f<=20000;f*=1.17)
         if(!std::isfinite(carveMagnitudeDb(44100,700,16,36,f)))return 5;
+    for(double depth:{-90.0,-60.0,60.0,90.0})
+        if(std::abs(carveMagnitudeDb(48000,1000,4,depth,1000)+depth)>.1)return 9;
     if(surgery::displayDb(-30,1000,4.5f,96)!=-30)return 6;
     if(std::abs(carveMagnitudeDb(48000,1000,96,24,1000)+24.0)>0.035)return 7;
     if(!(std::abs(carveMagnitudeDb(48000,1000,96,24,995))<

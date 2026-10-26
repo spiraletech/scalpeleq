@@ -36,7 +36,7 @@ public:
     bool render(const std::array<FluidColumn, gridWidth>& columns,
                 float bass, float flux, float level,
                 double elapsedSeconds, bool reducedMotion,
-                juce::Image& target);
+                juce::Image& target,int physicalWidth=imageWidth,int physicalHeight=imageHeight);
 
     // Compiles all six embedded HLSL kernels without requiring a GPU.
     // Used by Windows CI to catch silent shader fallback before release.

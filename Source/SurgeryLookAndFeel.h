@@ -45,8 +45,7 @@ public:
         // The sculpted V mark is at twelve o'clock at each control's HOME
         // value (0% COLOR, 0 dB gain, Q reset, etc.). It does not inherit
         // Surgery's lower-left minimum-angle pointer drift.
-        const float neutral=(float)slider.getNormalisableRange().convertTo0to1(
-            slider.getDoubleClickReturnValue());
+        const float neutral=(float)slider.valueToProportionOfLength(slider.getDoubleClickReturnValue());
         const float rotation=(position-neutral)*(end-start);
         // Exact user-approved powdery ivory knob artwork. Its molded V-index
         // rotates with the REAL APVTS parameter. No exterior calibration ticks.

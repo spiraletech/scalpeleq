@@ -36,8 +36,8 @@ constexpr const char* fluidHlsl = R"HLSL(
 #define GX 64
 #define GY 40
 #define GZ 32
-#define IW 640
-#define IH 224
+#define IW ((uint)control.z)
+#define IH ((uint)control.w)
 cbuffer Parameters : register(b0) {
     float4 dynamics;   // dt, bass, flux, overall level
     float4 control;    // elapsed phase, reduced-motion flag, unused, unused
@@ -222,6 +222,55 @@ void RenderVolume(uint3 id : SV_DispatchThreadID) {
     // JUCE's image pixels are display encoded. Linear radiance written
     // directly to UNORM previously appeared too dark to show the oil film.
     acc+=transparency*float3(0.002,0.004,0.006);
+    // A continuous reflective surface sits in front of the transported
+    // volume. The volume supplies refraction/turbulence, not an opaque fog
+    // covering the graph. Surface height follows smoothed measured energy;
+    // this gives an immediate material response after a cold editor opening.
+    float column=x*63.0;
+    int ci=(int)column;
+    float e=0;
+    [unroll] for(int j=-2;j<=2;++j){
+        float w=3-abs(j);
+        float energy=lerp(spectral[clamp(ci+j,0,63)].x,
+                          spectral[clamp(ci+j+1,0,63)].x,frac(column));
+        e+=w*saturate((65*energy-12)/60);
+    }
+    e/=9;
+    float t=control.x*(control.y>.5?.12:.30);
+    float height=e*(.76+.065*sin(31*x+t)+.025*sin(77*x-t));
+    if(height>.003 && y<height){
+        float v=saturate((height-y)/max(.003,height));
+        float4 transported=phasesIn.SampleLevel(linearClamp,float3(x,1-uv.y,.58),0);
+        float fold=sin(19*v+sin(37*x+t)*2+transported.z*2);
+        float nx=.28*cos(37*x+t)+.14*sin(81*x-t);
+        float ny=.68*cos(19*v+sin(37*x+t)*2+transported.z*2);
+        float3 n=normalize(float3(nx,ny,1));
+        float facing=saturate(dot(n,normalize(float3(-.3,.56,.77))));
+        float spec=pow(facing,48);
+        float rim=exp(-v*height*IH/2.2);
+        float ribbon=pow(saturate(.5+.5*fold),18);
+        float3 film=lerp(note.yzw,float3(note.w,note.y,note.z),.35+.25*sin(27*v+17*x));
+        float3 black=float3(.001,.002,.003)+float3(.003,.004,.006)*saturate(n.z);
+        acc=black+(float3(.72,.85,.94)*spec+film*ribbon*.38+rim*float3(.53,.65,.72))*saturate(e*1.7);
+        acc+=film*transported.w*.035;
+    }else{
+        acc*=.16; // L02 faint aurora remains behind the reflective body.
+    }
+    // Sparse reflective beads above the meniscus, with no independent energy
+    // or free-running flashes. Position is deterministic and Freeze holds t.
+    float cell=floor(x*31);
+    float beadX=(cell+.5+.16*sin(cell*2.37))/31;
+    float beadEnergy=saturate((65*spectral[clamp((int)(beadX*63),0,63)].x-12)/60);
+    float beadY=beadEnergy*(.80+.055*sin(cell*1.9+t));
+    float radius=.009*(.4+beadEnergy);
+    float2 delta=float2((x-beadX)*IW/IH,y-beadY);
+    float distance=dot(delta,delta)/(radius*radius);
+    if(beadEnergy>.20 && distance<1 && sin(cell*3.2)>.1){
+        float3 n=normalize(float3(delta/radius,sqrt(1-distance)));
+        float shine=pow(saturate(dot(n,normalize(float3(-.45,.6,.65)))),30);
+        float edge=pow(saturate(distance),10);
+        acc=float3(.004,.007,.01)+shine*float3(.85,.94,1)+edge*note.yzw*.24;
+    }
     float3 mapped=acc/(1.0+acc);
     imageOut[id.xy]=float4(pow(saturate(mapped*1.45),1.0/2.2),1);
 }
@@ -256,11 +305,33 @@ struct FluidVolume3D::Impl {
     ComPtr<ID3D11UnorderedAccessView> outputWrite;
     ComPtr<ID3D11Texture2D> staging[3];
     unsigned frame=0;
+    unsigned imageW=IW,imageH=IH;
     bool attempted=false, ready=false, imageReady=false;
     const char* status="GPU PENDING";
     double accumulator=0.0;
     float elapsedPhase=0.f;
 
+    ~Impl(){
+        // Release all bindings while our context/device still exist. No GPU
+        // fence or deferred callback may outlive the editor/DLL on host removal.
+        if(context){context->ClearState();context->Flush();}
+    }
+    bool resizeOutput(unsigned w,unsigned h){
+        if(w==imageW&&h==imageH)return true;
+        D3D11_TEXTURE2D_DESC d{};
+        d.Width=w;d.Height=h;d.MipLevels=1;d.ArraySize=1;d.SampleDesc.Count=1;
+        d.Format=DXGI_FORMAT_R8G8B8A8_UNORM;d.Usage=D3D11_USAGE_DEFAULT;
+        d.BindFlags=D3D11_BIND_UNORDERED_ACCESS;
+        ComPtr<ID3D11Texture2D> newOutput,newStaging[3];
+        ComPtr<ID3D11UnorderedAccessView> newWrite;
+        if(FAILED(device->CreateTexture2D(&d,nullptr,&newOutput))||
+           FAILED(device->CreateUnorderedAccessView(newOutput.Get(),nullptr,&newWrite)))return false;
+        d.Usage=D3D11_USAGE_STAGING;d.BindFlags=0;d.CPUAccessFlags=D3D11_CPU_ACCESS_READ;
+        for(auto& texture:newStaging)if(FAILED(device->CreateTexture2D(&d,nullptr,&texture)))return false;
+        output=std::move(newOutput);outputWrite=std::move(newWrite);
+        for(int i=0;i<3;++i)staging[i]=std::move(newStaging[i]);
+        imageW=w;imageH=h;frame=0;imageReady=false;return true;
+    }
     bool makeVolume(VolumeTexture& target) {
         D3D11_TEXTURE3D_DESC d{};
         d.Width=GX;d.Height=GY;d.Depth=GZ;d.MipLevels=1;
@@ -360,8 +431,8 @@ struct FluidVolume3D::Impl {
         context->CSSetShader(shader[kernel].Get(),nullptr,0);
         context->CSSetShaderResources(0,4,inputs);
         context->CSSetUnorderedAccessViews(0,4,outputs,nullptr);
-        context->Dispatch(kernel==5?(IW+7)/8:(GX+7)/8,
-                          kernel==5?(IH+7)/8:(GY+7)/8,
+        context->Dispatch(kernel==5?(imageW+7)/8:(GX+7)/8,
+                          kernel==5?(imageH+7)/8:(GY+7)/8,
                           kernel==5?1:(GZ+3)/4);
         ID3D11UnorderedAccessView* emptyOutputs[4]{};
         ID3D11ShaderResourceView* emptyInputs[4]{};
@@ -386,8 +457,9 @@ struct FluidVolume3D::Impl {
         std::swap(phases[0],phases[1]);
     }
     bool render(const std::array<FluidColumn,64>& columns,float bass,float flux,float level,
-                double elapsed,bool reduced,juce::Image& target) {
+                double elapsed,bool reduced,juce::Image& target,int physicalWidth,int physicalHeight) {
         if(!initialize())return false;
+        if(!resizeOutput((unsigned)std::clamp(physicalWidth,64,3840),(unsigned)std::clamp(physicalHeight,32,2160))){status="GPU SIZE ERROR";return false;}
         if(device->GetDeviceRemovedReason()!=S_OK) {
             status="GPU DEVICE LOST";ready=false;imageReady=false;return false;
         }
@@ -401,6 +473,7 @@ struct FluidVolume3D::Impl {
         frameData.dynamics[3]=std::clamp(level,0.f,1.f);
         frameData.control[0]=elapsedPhase;
         frameData.control[1]=reduced?1.f:0.f;
+        frameData.control[2]=(float)imageW;frameData.control[3]=(float)imageH;
         for(unsigned i=0;i<GX;++i){
             frameData.spectral[i][0]=std::clamp(columns[i].energy,0.f,1.f);
             frameData.spectral[i][1]=std::clamp(columns[i].red,0.f,1.f);
@@ -426,6 +499,11 @@ struct FluidVolume3D::Impl {
                  nullptr,nullptr,nullptr,outputWrite.Get());
         const unsigned written=frame%3;
         context->CopyResource(staging[written].Get(),output.Get());
+        // Offscreen compute has no swap-chain Present. DO_NOT_WAIT Map does
+        // not submit buffered commands; without Flush the GUI can remain at
+        // GPU WARMING forever even on supported hardware. This submits work
+        // without waiting for the GPU or involving the audio thread.
+        context->Flush();
         ++frame;
         if(frame<2)return false;
         const unsigned readyIndex=(frame+1)%3;
@@ -434,13 +512,13 @@ struct FluidVolume3D::Impl {
                                           D3D11_MAP_READ,D3D11_MAP_FLAG_DO_NOT_WAIT,&pixels);
         if(mapped==DXGI_ERROR_WAS_STILL_DRAWING)return false;
         if(FAILED(mapped)){status="GPU READBACK ERROR";return false;}
-        if(target.getWidth()!=(int)IW||target.getHeight()!=(int)IH)
-            target=juce::Image(juce::Image::RGB,(int)IW,(int)IH,true);
+        if(target.getWidth()!=(int)imageW||target.getHeight()!=(int)imageH)
+            target=juce::Image(juce::Image::RGB,(int)imageW,(int)imageH,true);
         {
             juce::Image::BitmapData destination(target,juce::Image::BitmapData::writeOnly);
-            for(unsigned y=0;y<IH;++y){
+            for(unsigned y=0;y<imageH;++y){
                 auto* source=(const std::uint8_t*)pixels.pData+(std::size_t)y*pixels.RowPitch;
-                for(unsigned x=0;x<IW;++x){
+                for(unsigned x=0;x<imageW;++x){
                     const auto* rgba=source+x*4;
                     destination.setPixelColour((int)x,(int)y,juce::Colour(rgba[0],rgba[1],rgba[2]));
                 }
@@ -457,7 +535,7 @@ struct FluidVolume3D::Impl {
     bool imageReady=false;
     const char* status="GPU UNSUPPORTED";
     bool render(const std::array<FluidColumn,64>&,float,float,float,
-                double,bool,juce::Image&) {return false;}
+                double,bool,juce::Image&,int,int) {return false;}
 };
 #endif
 
@@ -487,9 +565,9 @@ FluidVolume3D::FluidVolume3D()=default;
 FluidVolume3D::~FluidVolume3D()=default;
 bool FluidVolume3D::render(const std::array<FluidColumn,gridWidth>& columns,
                            float bass,float flux,float level,double elapsed,
-                           bool reduced,juce::Image& target) {
+                           bool reduced,juce::Image& target,int physicalWidth,int physicalHeight) {
     if(!impl_)impl_=std::make_unique<Impl>();
-    return impl_->render(columns,bass,flux,level,elapsed,reduced,target);
+    return impl_->render(columns,bass,flux,level,elapsed,reduced,target,physicalWidth,physicalHeight);
 }
 bool FluidVolume3D::hasFrame() const noexcept {
     return impl_&&impl_->imageReady;

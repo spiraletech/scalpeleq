@@ -53,5 +53,12 @@ int main(){
     if(std::abs(dynamicRms(-48,false)-dynamicRms(-6,false))>1e-6){
         std::cerr<<"hidden threshold changed static CARVE\n";return 8;
     }
+    for(double depth:{-90.0,90.0}){
+        CarveEngine extreme;extreme.prepare(48000);extreme.bounds(4,500,2000);
+        surgery::CarveConfig ec;ec.enabled=true;ec.hz=1000;ec.q=4;ec.depthDb=depth;extreme.configure(4,0,ec);
+        const double actual=toneRms(1000,extreme,true);
+        const double change=20*std::log10(actual/unity);
+        if(!std::isfinite(actual)||std::abs(change+depth)>1.2){std::cerr<<"Extreme CARVE depth "<<depth<<" measured "<<change<<"\n";return 9;}
+    }
     std::cout<<"Surgery CARVE four proof groups passed\n";return 0;
 }

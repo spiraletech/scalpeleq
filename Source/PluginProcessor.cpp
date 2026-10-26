@@ -531,7 +531,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
             juce::NormalisableRange<float>(-60.0f,0.0f,0.1f),0.0f));
         p.push_back(std::make_unique<juce::AudioParameterChoice>(
             juce::ParameterID{id("comp"),1},label+"Compression Profile",
-            juce::StringArray{"OFF","OPTICAL 3:1","OPTICAL 4:1","CLB1 TUBE 3:1","FAST 4:1"},0));
+            juce::StringArray{"OFF","OPTICAL 3:1","OPTICAL 4:1","CLB1 TUBE 3:1","1176 E 4:1"},0));
         p.push_back(std::make_unique<juce::AudioParameterChoice>(
             juce::ParameterID{id("domain"),1},label+"EQ Domain",
             juce::StringArray{"STEREO","MID","SIDE"},0));
@@ -556,7 +556,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
             juce::ParameterID{rootsRootControlId(root,"color_dynamic"),1},label+"COLOR Dynamic",
             juce::NormalisableRange<float>(0.0f,100.0f,0.1f),0.0f));
         p.push_back(std::make_unique<juce::AudioParameterBool>(
-            juce::ParameterID{rootsRootControlId(root,"phase"),1},label+"PHASE Auto Coherence",false));
+            juce::ParameterID{rootsRootControlId(root,"phase"),1},label+"PHASE AUTO CORRECTION",false));
         p.push_back(std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID{rootsRootControlId(root,"limit_amount"),1},label+"LIMIT Optical Amount",
             juce::NormalisableRange<float>(0.0f,100.0f,0.1f),0.0f));
@@ -599,7 +599,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
             juce::NormalisableRange<float>(0.0f,100.0f,0.1f),50.0f));
         p.push_back(std::make_unique<juce::AudioParameterChoice>(
             juce::ParameterID{id("comp"),1},name + "Compressor",
-            juce::StringArray{"OFF","OPTICAL 3:1","OPTICAL 4:1","CLB1 TUBE 3:1","FAST 4:1"},0));
+            juce::StringArray{"OFF","OPTICAL 3:1","OPTICAL 4:1","CLB1 TUBE 3:1","1176 E 4:1"},0));
         p.push_back(std::make_unique<juce::AudioParameterChoice>(
             juce::ParameterID{id("detector"),1},name + "Dynamics Domain",
             juce::StringArray{"STEREO LINK","DUAL MID/SIDE","MID ONLY","SIDE ONLY"},0));
@@ -640,8 +640,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
                 juce::ParameterID{id("hz"),1},name+"Frequency",range,
                 surgery::defaultCarveHz(root,slot)));
             p.push_back(std::make_unique<juce::AudioParameterFloat>(
-                juce::ParameterID{id("depth"),1},name+"Cut Depth",
-                juce::NormalisableRange<float>(0.0f,36.0f,0.01f),0.0f));
+                juce::ParameterID{id("depth"),1},name+"Depth (+Cut / -Boost)",
+                juce::NormalisableRange<float>(-90.0f,90.0f,0.01f),0.0f));
             juce::NormalisableRange<float> q(0.3f,96.0f,0.001f);q.setSkewForCentre(4.0f);
             p.push_back(std::make_unique<juce::AudioParameterFloat>(
                 juce::ParameterID{id("q"),1},name+"Q",q,2.0f));
@@ -657,7 +657,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
     p.push_back(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID{"surgery_theme",1},"Surgery UI Theme",
         juce::StringArray{"ONYX","ETHER LAB","ALIEN GRID","CINEMA VOID"},0));
-    static constexpr unsigned colours[]{0x6BBDD4,0xDFA871,0xE6BD6A,0x8DCEA8,0x9DADEA,0xD2A2E5,0xE89EAD};
+    static constexpr unsigned colours[]{0xFF4B45,0xFFC47A,0xB0D792,0x9DADEA,0xD06AF0,0xF58FAC,0xFF5678};
     for(int root=0;root<7;++root)
         p.push_back(std::make_unique<juce::AudioParameterInt>(
             juce::ParameterID{"surgery_root"+juce::String(root+1)+"_rgb",1},

@@ -48,6 +48,7 @@ bool verifyPluginRemovalLifecycle() {
     for(int cycle=0;cycle<cycles;++cycle){
         auto processor=std::make_unique<PRISMVSTAudioProcessor>();
         processor->prepareToPlay(48000.0,256);
+        set(*processor,"scalpel_xray",1);
         if(processor->getLatencySamples()!=0){
             std::cerr<<"UNLOAD: unexpected reported plugin latency\\n";
             return false;
@@ -62,16 +63,22 @@ bool verifyPluginRemovalLifecycle() {
                 processor->processBlock(block,midi);
             }
             juce::Timer::callPendingTimersSynchronously();
-            if(cycle%3==0){
+            if(true){
                 const auto image=editor->createComponentSnapshot(editor->getLocalBounds());
                 if(!image.isValid()){std::cerr<<"UNLOAD: invalid editor snapshot\\n";return false;}
             }
+            // Leave queued popup/parameter/timer messages before removal, then
+            // drain them after destruction to catch stale callback access.
+            set(*processor,PRISMVSTAudioProcessor::rootsRootSoloId(0),1);
+            set(*processor,PRISMVSTAudioProcessor::rootsRootSoloId(1),1);
             // The editor is removed while the analyzer worker still exists.
             editor.reset();
+            juce::MessageManager::getInstance()->runDispatchLoopUntil(5);
         }
         processor->releaseResources();
         if(cycle%2==0){
             processor->prepareToPlay(48000.0,256);
+        set(*processor,"scalpel_xray",1);
             juce::AudioBuffer<float> block(2,256);
             juce::MidiBuffer midi;
             tone(block,cycle*256);
@@ -81,6 +88,7 @@ bool verifyPluginRemovalLifecycle() {
         // Processor destruction must join the analyzer and unregister async
         // parameter listeners without leaving a callback into dead memory.
         processor.reset();
+        juce::MessageManager::getInstance()->runDispatchLoopUntil(5);
     }
     std::cerr<<"UNLOAD: "<<cycles<<" open/play/remove/restart cycles passed\\n";
     return true;
@@ -126,7 +134,7 @@ bool runQualityTests(){
         }
         bool thresholdFound=false;
         for(auto* child:ui->getChildren())if(auto* label=dynamic_cast<juce::Label*>(child)){
-            if(label->getText()=="COMP THRESHOLD"){
+            if(label->getText()=="COMP AMOUNT"){
                 for(auto* candidate:ui->getChildren())if(auto* slider=dynamic_cast<juce::Slider*>(candidate)){
                     if(std::abs(slider->getBounds().getCentreX()-label->getBounds().getCentreX())<25&&slider->isVisible()){
                         thresholdFound=true;

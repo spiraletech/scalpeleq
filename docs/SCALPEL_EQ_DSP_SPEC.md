@@ -1,3 +1,5 @@
+> Historical 0.1.0 first-pass contract. Current behavior and verification scope: [0.2 engineering notes](SCALPEL_0.2_ENGINEERING.md).
+
 # Scalpel EQ — engineering contract (0.1.0 development)
 
 Source: Surgery EQ 1.0.12 Standard+ commit `f3a816060520b0c0e87be466ecdb4d2d34f654a8`.

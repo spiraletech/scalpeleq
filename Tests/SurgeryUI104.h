@@ -44,7 +44,7 @@ inline bool verifyUI104(PRISMVSTAudioProcessor& processor,juce::AudioProcessorEd
                 juce::Timer::callPendingTimersSynchronously();
                 if(box->getSelectedItemIndex()!=item)return false;
             }
-            if(box->getNumItems()==5&&box->getItemText(4)!="FAST 4:1")return false;
+            if(box->getNumItems()==5&&box->getItemText(4)!="1176 E 4:1")return false;
             // Native asynchronous popup is created synchronously by JUCE;
             // inspect its real peer bounds before dismissing (no nested loop).
             for(float scale:{1.f,1.25f,1.5f})for(int edge:{0,1}){

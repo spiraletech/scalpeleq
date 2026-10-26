@@ -17,10 +17,10 @@ constexpr CarveRect carveTabBounds(float graphWidth,int slot) noexcept {
     return {first+slot*(width+gap),24.0f,width,20.0f};
 }
 constexpr float carveY(float centre,float depthDb) noexcept {
-    return centre+23.0f+std::clamp(depthDb,0.0f,36.0f)*1.10f;
+    return centre+std::clamp(depthDb,-90.0f,90.0f)*1.10f;
 }
 constexpr float depthFromY(float centre,float y) noexcept {
-    return std::clamp((y-centre-23.0f)/1.10f,0.0f,36.0f);
+    return std::clamp((y-centre)/1.10f,-90.0f,90.0f);
 }
 constexpr bool showForegroundCarve(int selectedRoot,int ownerRoot,bool enabled) noexcept {
     return selectedRoot>=0&&selectedRoot<7&&ownerRoot==selectedRoot&&enabled;

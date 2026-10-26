@@ -60,6 +60,8 @@ bool finiteBuffer(const juce::AudioBuffer<float>& buffer)
 }
 
 bool runQualityTests();
+bool runScalpelValidation();
+bool verifyPluginRemovalLifecycle();
 bool runWeatherCalibration();
 bool runWeatherFieldTests();
 bool runStormChassisTests();
@@ -69,6 +71,8 @@ int main(int argc,char** argv)
     if(argc>1&&juce::String(argv[1])=="--weather-field")return runWeatherFieldTests()?0:72;
     if(argc>1&&juce::String(argv[1])=="--storm-chassis")return runStormChassisTests()?0:73;
     juce::ScopedJuceInitialiser_GUI gui;
+    if(argc>1&&juce::String(argv[1])=="--scalpel-unload")return verifyPluginRemovalLifecycle()?0:75;
+    if(argc>1&&juce::String(argv[1])=="--scalpel-validation")return runScalpelValidation()?0:74;
     // Keep ROOTS distinct in FL Studio's plugin database / VST3 identity.
     {
         PRISMVSTAudioProcessor p;

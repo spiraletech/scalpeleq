@@ -197,33 +197,6 @@ void RootsGraph::paint(juce::Graphics& g){
     g.setColour(juce::Colour(0xffb4aaa0));
     // No inherited cyan spectrum title, old SONAR weather image or C1-C4
     // badges: the graph is a continuous, smoked-glass Scalpel lens.
-    // Frequency and calibrated dBFS dimensions.
-    static constexpr std::array<float,11> freqs{
-        20,40,80,160,315,630,1250,2500,5000,10000,20000
-    };
-    for(const float f:freqs){
-        const float x=freqToX(f);
-        g.setColour(juce::Colour(0xff8a796b).withAlpha(.20f));
-        g.drawVerticalLine(juce::roundToInt(x),r.getY(),r.getBottom());
-        g.setColour(juce::Colour(0xffc7b5a1));
-        g.drawText(hzText(f),juce::roundToInt(x-19),juce::roundToInt(r.getBottom()+6),
-                   38,17,juce::Justification::centred);
-    }
-    static constexpr std::array<int,11> dbTicks{0,-5,-10,-15,-20,-25,-30,-35,-40,-50,-60};
-    for(const int db:dbTicks){
-        const float y=r.getY()-r.getHeight()*db/60.0f;
-        g.setColour(juce::Colour(0xffa89986).withAlpha(db==-30?.34f:.19f));
-        g.drawHorizontalLine(juce::roundToInt(y),r.getX(),r.getRight());
-        g.setColour(juce::Colour(0xffc7b8a8));
-        g.drawText(juce::String(db),juce::roundToInt(r.getRight()+5),
-                   juce::roundToInt(y-8),34,16,juce::Justification::centredLeft);
-    }
-    // ROOT handle height is constant; vertical axis is exclusively dBFS.
-    // ROOT gain is a separate, single control in the bottom panel.
-    g.setFont(juce::Font(juce::FontOptions(11.0f,juce::Font::plain)));
-    g.setColour(juce::Colour(0xffc5b7a9));
-    g.drawText("Hz",8,16,34,16,juce::Justification::centredLeft);
-    g.drawText("dBFS",juce::roundToInt(r.getRight()),16,44,16,juce::Justification::centredRight);
     std::array<prism::roots::visual::Node,prism::roots::visual::kNodes> zones{};
     for(int node=0;node<prism::roots::visual::kNodes;++node)
     {
@@ -231,20 +204,6 @@ void RootsGraph::paint(juce::Graphics& g){
         zones[(size_t)node].q=param(node,"q");
         zones[(size_t)node].enabled=pval(processor_.apvts,
             PRISMVSTAudioProcessor::rootsRootControlId(node/2,"on"))>=0.5f;
-    }
-    // The visible coverage is defined by each ROOT's two boundary handles,
-    // not Q distance or a fixed index/37 palette. Regions can intersect.
-    for(int root=0;root<prism::roots::visual::kRoots;++root) {
-        const auto interval=prism::roots::visual::region(root,zones);
-        if(!interval.enabled)continue;
-        const float x1=freqToX((float)interval.lowHz);
-        const float x2=freqToX((float)interval.highHz);
-        const auto warning=peakWarnings_[(size_t)root];
-        const auto accent=warning>0.f?juce::Colour(0xffd71916):
-            (root==selected_/2?colour(root):juce::Colour(0xff9b7b68));
-        g.setColour(accent.withAlpha(warning>0.f?warning*.33f:
-            root==selected_/2?.095f:.017f));
-        g.fillRect(x1,r.getY(),juce::jmax(0.0f,x2-x1),r.getHeight());
     }
     // Single live FFT envelope. X is 20-20k logarithmic Hz; Y is measured dBFS.
     // The area beneath the one curve is closed at the -rangeDb graph floor.
@@ -379,17 +338,25 @@ void RootsGraph::paint(juce::Graphics& g){
             // The measured contour, parameter IDs and all audio code are unchanged.
             mercury3D_.render(source,juce::jmax(m.bass,measuredBass),
                               m.flux,juce::jmax(m.level,measuredLevel*.85f),
-                              mercuryElapsed_,
+                              frozen_?0.0:mercuryElapsed_,
                               pval(processor_.apvts,"sonar_reduced_motion")>=.5f,
-                              mercury3DImage_);
+                              mercury3DImage_,
+                              juce::roundToInt(r.getWidth()*g.getInternalContext().getPhysicalPixelScaleFactor()),
+                              juce::roundToInt(r.getHeight()*g.getInternalContext().getPhysicalPixelScaleFactor()));
+            mercuryElapsed_=0.0;
         }
         if(mercury3D_.hasFrame()){
-            g.setOpacity(.88f);g.drawImage(mercury3DImage_,r);g.setOpacity(1.f);
+            g.setOpacity(1.f);g.drawImage(mercury3DImage_,r);g.setOpacity(1.f);
         }else{
         // Restrict the old CPU fallback, not the actual 3D volume.
         juce::Graphics::ScopedSaveState fallbackClip(g);
         g.reduceClipRegion(filledPath);
         if(needsNewFrame){
+            const float dpi=g.getInternalContext().getPhysicalPixelScaleFactor();
+            const int pw=juce::jlimit(1,3840,juce::roundToInt(r.getWidth()*dpi));
+            const int ph=juce::jlimit(1,2160,juce::roundToInt(r.getHeight()*dpi));
+            if(mercuryMaterial_.getWidth()!=pw||mercuryMaterial_.getHeight()!=ph)
+                mercuryMaterial_=juce::Image(juce::Image::RGB,pw,ph,false);
             juce::Image::BitmapData pixels(mercuryMaterial_,juce::Image::BitmapData::writeOnly);
             const float time=mercuryPhase_;
             for(int px=0;px<mercuryMaterial_.getWidth();++px){
@@ -519,18 +486,47 @@ void RootsGraph::paint(juce::Graphics& g){
     // Intentionally no outlined "heat bubbles": they obscured the true
     // contour and made HEAT MAP resemble a trail of rigid copper coins.
     g.restoreState();
-    if(xrayActive_){
-        // The marker distinguishes a stale installation from a GPU fallback.
-        const juce::String backend=mercury3D_.statusText();
-        g.setColour(backend=="GPU LIVE"?juce::Colour(0xff89ceba):
-                    juce::Colour(0xffd7ad81));
-        g.setFont(juce::Font(juce::FontOptions(10.0f,juce::Font::bold)));
-        g.drawText("X-RAY 3.1  |  "+backend,
-            juce::roundToInt(r.getRight()-192.f),
-            juce::roundToInt(r.getBottom()-22.f),184,14,
-            juce::Justification::centredRight);
+    // Frequency and calibrated dBFS dimensions.
+    static constexpr std::array<float,11> freqs{
+        20,40,80,160,315,630,1250,2500,5000,10000,20000
+    };
+    for(const float f:freqs){
+        const float x=freqToX(f);
+        g.setColour(juce::Colour(0xff8a796b).withAlpha(.20f));
+        g.drawVerticalLine(juce::roundToInt(x),r.getY(),r.getBottom());
+        g.setColour(juce::Colour(0xffc7b5a1));
+        g.drawText(hzText(f),juce::roundToInt(x-19),juce::roundToInt(r.getBottom()+6),
+                   38,17,juce::Justification::centred);
     }
-
+    static constexpr std::array<int,11> dbTicks{0,-5,-10,-15,-20,-25,-30,-35,-40,-50,-60};
+    for(const int db:dbTicks){
+        const float y=r.getY()-r.getHeight()*db/60.0f;
+        g.setColour(juce::Colour(0xffa89986).withAlpha(db==-30?.34f:.19f));
+        g.drawHorizontalLine(juce::roundToInt(y),r.getX(),r.getRight());
+        g.setColour(juce::Colour(0xffc7b8a8));
+        g.drawText(juce::String(db),juce::roundToInt(r.getRight()+5),
+                   juce::roundToInt(y-8),34,16,juce::Justification::centredLeft);
+    }
+    // ROOT handle height is constant; vertical axis is exclusively dBFS.
+    // ROOT gain is a separate, single control in the bottom panel.
+    g.setFont(juce::Font(juce::FontOptions(11.0f,juce::Font::plain)));
+    g.setColour(juce::Colour(0xffc5b7a9));
+    g.drawText("Hz",8,16,34,16,juce::Justification::centredLeft);
+    g.drawText("dBFS",juce::roundToInt(r.getRight()-4),3,37,16,juce::Justification::centredRight);
+    // The visible coverage is defined by each ROOT's two boundary handles,
+    // not Q distance or a fixed index/37 palette. Regions can intersect.
+    for(int root=0;root<prism::roots::visual::kRoots;++root) {
+        const auto interval=prism::roots::visual::region(root,zones);
+        if(!interval.enabled)continue;
+        const float x1=freqToX((float)interval.lowHz);
+        const float x2=freqToX((float)interval.highHz);
+        const auto warning=peakWarnings_[(size_t)root];
+        const auto accent=warning>0.f?juce::Colour(0xffd71916):
+            (root==selected_/2?colour(root):juce::Colour(0xff9b7b68));
+        g.setColour(accent.withAlpha(warning>0.f?warning*.33f:
+            root==selected_/2?.095f:.017f));
+        g.fillRect(x1,r.getY(),juce::jmax(0.0f,x2-x1),r.getHeight());
+    }
     // Predict the EXACT static RBJ peak-filter response used in the CARVE DSP.
     // It shows the maximum possible response for dynamic nodes, not measured GR.
     const int selectedRoot=selected_/2;
@@ -561,7 +557,7 @@ void RootsGraph::paint(juce::Graphics& g){
             pval(processor_.apvts,id("hz")),lowHz,highHz);
         const double q=pval(processor_.apvts,id("q"));
         const double depth=pval(processor_.apvts,id("depth"));
-        if(depth<0.001)continue;
+        if(std::abs(depth)<0.001)continue;
         auto& cache=responseCache_[(size_t)slot];
         const std::array<double,9> key{sr,fc,q,depth,lowHz,highHz,(double)getWidth(),(double)getHeight(),(double)selectedRoot};
         auto& contour=cache.contour;auto& footprint=cache.footprint;
@@ -908,7 +904,7 @@ void RootsGraph::popup(){
         PRISMVSTAudioProcessor::rootsRootSoloId(root))>=0.5f;
     menu.addItem(2,"SOLO BAND / OFF",true,solo);
     menu.addSeparator();
-    menu.addSectionHeader("BAND GAIN + CARVE / EQ DOMAIN");
+    menu.addSectionHeader("BAND GAIN + CARVE / FIELD");
     menu.addItem(10,"STEREO",true,juce::roundToInt(current("domain"))==0);
     menu.addItem(11,"MID",true,juce::roundToInt(current("domain"))==1);
     menu.addItem(12,"SIDE",true,juce::roundToInt(current("domain"))==2);
@@ -1012,7 +1008,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     selection_.setFont(juce::Font(juce::FontOptions(12.0f,juce::Font::bold)));
     status_.setFont(juce::Font(juce::FontOptions(11.5f,juce::Font::plain)));
     status_.setJustificationType(juce::Justification::centredRight);
-    for(auto* s:{&gain_,&threshold_,&limitAmount_}){
+    for(auto* s:std::array<juce::Slider*,3>{&gain_,&threshold_,&limitAmount_}){
         addAndMakeVisible(*s);rotary(*s,"",0.0);
         s->setColour(juce::Slider::rotarySliderFillColourId,juce::Colour::fromRGB(143,192,204));
         s->setColour(juce::Slider::rotarySliderOutlineColourId,juce::Colour::fromRGB(38,55,65));
@@ -1023,8 +1019,10 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     gainLabel_.setText("BAND GAIN (dB)",juce::dontSendNotification);
     gain_.setTooltip("Selected BAND frequency range gain: -60 to +60 dB");
 
-    thresholdLabel_.setText("COMP THRESHOLD",juce::dontSendNotification);
-    threshold_.setTooltip("Compression stays OFF until you choose a COMPRESSION profile. Double-click resets to 0 dBFS.");
+    thresholdLabel_.setText("COMP AMOUNT",juce::dontSendNotification);
+    threshold_.textFromValueFunction=[](double value){return juce::String(-value,1)+" dB";};
+    threshold_.valueFromTextFunction=[](const juce::String& text){return -std::abs(text.getDoubleValue());};
+    threshold_.setTooltip("Clockwise adds compression by lowering the threshold. Choose a COMPRESSION profile to enable it; double-click returns to zero amount.");
     limitAmount_.setTextValueSuffix(" %");
     limitAmount_.setDoubleClickReturnValue(true,0.0);
     limitAmount_.setTooltip("LA-2A-inspired optical leveling depth. Program-dependent attack/release; not brickwall limiting.");
@@ -1055,6 +1053,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         rotary(*s,"",0.0);addAndMakeVisible(*s);
     }
     carveDepth_.setDoubleClickReturnValue(true,0.0);
+    carveDepth_.setTooltip("Depth +90 dB cuts; -90 dB boosts. Zero is neutral. Positive depth preserves existing preset meaning.");
     carveQ_.setDoubleClickReturnValue(true,2.0);
     carveFrequency_.setMouseDragSensitivity(2000);
     carveQ_.setMouseDragSensitivity(2800);
@@ -1062,7 +1061,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     carveFrequency_.setTooltip("Exact Hz value: type in the field. CTRL+drag a CARVE node for fine frequency scrubbing.");
     carveQ_.setTooltip("Ultra-surgical Q 0.300 to 96.000. Higher = tighter notch; 0-100% tightness shown above knob. SHIFT+wheel = fine Q.");
     carveFrequencyLabel_.setText("FREQUENCY Hz",juce::dontSendNotification);
-    carveDepthLabel_.setText("CUT DEPTH dB",juce::dontSendNotification);
+    carveDepthLabel_.setText("CUT / BOOST dB",juce::dontSendNotification);
     carveQLabel_.setText("Q / TIGHTNESS",juce::dontSendNotification);
     for(auto* b:{&carveOn_,&carveDynamic_}){
         b->setClickingTogglesState(true);
@@ -1128,12 +1127,12 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     reducedMotion_.setTooltip("Suppresses weather drift and lightning. Enabled by default. Full motion still limits local flashes to one per 0.75 seconds.");
     reducedMotionA_=std::make_unique<ButtonA>(processor_.apvts,"sonar_reduced_motion",reducedMotion_);
     analyzerLegend_.setText("SONAR 2.1 / VISUAL MODE",juce::dontSendNotification);
-    compressor_.addItemList({ "COMP OFF", "OPTICAL 3:1", "OPTICAL 4:1", "TUBE 3:1", "FAST 4:1" },1);
+    compressor_.addItemList({ "COMP OFF", "OPTICAL 3:1", "OPTICAL 4:1", "TUBE 3:1", "1176 E 4:1" },1);
     domain_.addItemList({ "STEREO", "MID", "SIDE" },1);
     detector_.addItemList({ "LINKED", "DUAL M/S", "MID ONLY", "SIDE ONLY" },1);
     for(auto* box:{&compressor_,&domain_,&detector_})addAndMakeVisible(*box);
     compLabel_.setText("COMPRESSION",juce::dontSendNotification);
-    domainLabel_.setText("EQ DOMAIN",juce::dontSendNotification);
+    domainLabel_.setText("FIELD",juce::dontSendNotification);
     detectorLabel_.setText("DYNAMIC",juce::dontSendNotification);
     for(auto* label:{&compLabel_,&domainLabel_,&detectorLabel_,&outputLabel_}){
         label->setFont(juce::Font(juce::FontOptions(11.0f)));
@@ -1166,17 +1165,23 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         button->setVisible(false);
     output_.setVisible(false);outputLabel_.setVisible(false);
     bindNode(0);setMode(2);
-    setResizable(true,true);setResizeLimits(840,470,1800,1200);setSize(1344,756);
+    setResizable(true,true);setResizeLimits(840,470,3840,2160);setSize(1344,756);
     timerCallback();startTimerHz(60);
 }
-RootsEditor::~RootsEditor(){stopTimer();setLookAndFeel(nullptr);}
+RootsEditor::~RootsEditor(){
+    closing_=true;stopTimer();
+    presetChooser_.reset();
+    graph_.onSelectNode=nullptr;graph_.onSelectCarve=nullptr;
+    graph_.releaseVisualResources();
+    setLookAndFeel(nullptr);
+}
 void RootsEditor::choosePreset(bool saving){
     presetChooser_=std::make_unique<juce::FileChooser>(saving?"Save Scalpel EQ preset":"Load Scalpel EQ preset",
         juce::File::getSpecialLocation(juce::File::userDocumentsDirectory).getChildFile("Scalpel EQ.surgerypreset"),"*.surgerypreset");
     const auto chooserFlags=saving?(juce::FileBrowserComponent::saveMode|juce::FileBrowserComponent::canSelectFiles|juce::FileBrowserComponent::warnAboutOverwriting):
         (juce::FileBrowserComponent::openMode|juce::FileBrowserComponent::canSelectFiles);
     presetChooser_->launchAsync(chooserFlags,[safe=juce::Component::SafePointer<RootsEditor>(this),saving](const juce::FileChooser& chooser){
-        if(safe==nullptr)return;
+        if(safe==nullptr||safe->closing_)return;
         auto file=chooser.getResult();if(file==juce::File{})return;
         const bool ok=saving?safe->processor_.savePreset(file.withFileExtension("surgerypreset")):safe->processor_.loadPreset(file);
         if(!ok)juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,"Preset could not be opened",
@@ -1352,7 +1357,7 @@ void RootsEditor::timerCallback(){
     for(auto& label:onyxLabels_)label.setColour(juce::Label::textColourId,labelColour);
     // Threshold remains editable while OFF without activating compression.
     threshold_.setEnabled(true);
-thresholdLabel_.setText("COMP THRESHOLD",
+thresholdLabel_.setText("COMP AMOUNT",
                             juce::dontSendNotification);
     updateRootButtons();
     const float factor=pval(processor_.apvts,
@@ -1379,10 +1384,10 @@ thresholdLabel_.setText("COMP THRESHOLD",
     surgery::weather::Snapshot weatherSnapshot;
     const bool newWeather=processor_.readWeather(weatherSnapshot);
     constexpr int style=7; // Standard+ is the only active SONAR mode.
-    const int juke=juce::roundToInt(pval(processor_.apvts,"juke_mode"));
+
     const bool sonar=pval(processor_.apvts,"aura_color")>=.5f,reduced=pval(processor_.apvts,"sonar_reduced_motion")>=.5f;
     if(weatherMode_.getSelectedId()!=style+1)weatherMode_.setSelectedId(style+1,juce::dontSendNotification);
-    graph_.updateWeather(newWeather?&weatherSnapshot:nullptr,elapsed,(sonar&&style>0)||juke<5||xray,reduced,pval(processor_.apvts,"aura_memory"),sonar?style:0);
+    graph_.updateWeather(newWeather?&weatherSnapshot:nullptr,elapsed,(sonar&&style>0)||xray,reduced,pval(processor_.apvts,"aura_memory"),sonar?style:0);
     // The old Surgery JUKE exterior is intentionally retired. X-RAY alone
     // consumes shared weather measurements and repaints its own graph bounds.
     const auto state=processor_.getRootsMeter();
@@ -1439,6 +1444,11 @@ void RootsEditor::paintRack(juce::Graphics& g){
     }
     // Recessed black Phillips fasteners, reference-equivalent and static.
     auto screw=[&](float cx,float cy){
+        static const auto art=juce::ImageCache::getFromMemory(BinaryData::scalpelscrew_png,BinaryData::scalpelscrew_pngSize);
+        if(art.isValid()){
+            g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);g.setOpacity(1.f);
+            g.drawImage(art,juce::Rectangle<float>(cx-15,cy-15,30,30));return;
+        }
         g.setColour(juce::Colour(0xff705542));g.fillEllipse(cx-13,cy-13,26,26);
         g.setColour(juce::Colour(0xff07090a));g.fillEllipse(cx-11.5f,cy-11.5f,23,23);
         juce::ColourGradient steel(juce::Colour(0xff4c4e4d),cx-7,cy-9,

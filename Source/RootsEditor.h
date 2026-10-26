@@ -17,6 +17,11 @@
 #include <functional>
 #include <memory>
 
+class CompressionAmountSlider final : public juce::Slider {
+public:
+    double valueToProportionOfLength(double v) override {return 1.0-juce::Slider::valueToProportionOfLength(v);}
+    double proportionOfLengthToValue(double p) override {return juce::Slider::proportionOfLengthToValue(1.0-p);}
+};
 class RootSelectorButton final : public juce::TextButton {
 public:
     std::function<void()> onContext;
@@ -82,6 +87,7 @@ public:
         repaint();
     }
     bool isFrozen() const noexcept {return frozen_;}
+    void releaseVisualResources() noexcept {mercury3D_.reset();mercury3DImage_={};}
     void setXray(bool active) {
         if(xrayActive_!=active){
             xrayActive_=active;
@@ -93,6 +99,8 @@ public:
     void setPeakWarnings(const std::array<float,7>& levels){
         if(peakWarnings_!=levels){peakWarnings_=levels;repaint();}
     }
+    juce::Point<int> gpuRasterSize() const noexcept {return {mercury3DImage_.getWidth(),mercury3DImage_.getHeight()};}
+    const char* gpuStatus() const noexcept {return mercury3D_.statusText();}
     void setPresentation(int mode,int slot) {
         if(mode_!=mode||slot_!=slot){mode_=mode;slot_=slot;repaint();}
     }
@@ -157,6 +165,7 @@ public:
     juce::Point<int> backgroundRasterSize() const noexcept {return {rackBackground_.getWidth(),rackBackground_.getHeight()};}
 private:
     using SliderA=juce::AudioProcessorValueTreeState::SliderAttachment;
+    bool closing_=false;
     void paintRack(juce::Graphics&);
     void layoutRack();
     using ButtonA=juce::AudioProcessorValueTreeState::ButtonAttachment;
@@ -169,7 +178,8 @@ private:
     std::array<RootSelectorButton,7> rootButtons_;
     std::array<double,7> peakWarningUntilMs_{};
     std::uint64_t lastPeakRevision_=0;
-    juce::Slider gain_,threshold_,limitAmount_,analyzerSlope_,analyzerMemory_;
+    juce::Slider gain_,limitAmount_,analyzerSlope_,analyzerMemory_;
+    CompressionAmountSlider threshold_;
     juce::ComboBox analyzerDepth_,weatherMode_,jukeMode_;
     juce::Label jukeModeLabel_;
     juce::TextButton reducedMotion_{"REDUCED MOTION"};

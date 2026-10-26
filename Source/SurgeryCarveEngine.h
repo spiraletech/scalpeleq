@@ -80,7 +80,7 @@ public:
         const double lower=std::clamp(low_[(size_t)root],20.0,std::min(20000.0,sr_*0.45));
         const double upper=std::clamp(high_[(size_t)root],lower,std::min(20000.0,sr_*0.45));
         c.hz=std::clamp(c.hz,lower,upper);
-        c.depthDb=std::clamp(c.depthDb,0.0,36.0);
+        c.depthDb=std::clamp(c.depthDb,-90.0,90.0);
         c.q=std::clamp(c.q,0.3,96.0);
         c.thresholdDb=std::clamp(c.thresholdDb,-60.0,0.0);
         auto& n=nodes_[(size_t)(root*kSlots+slot)];
@@ -108,7 +108,7 @@ public:
                 const auto& c=n.config;
                 const Channel channel=domain_[(size_t)root]==Channel::stereo?
                     c.channel:domain_[(size_t)root];
-                const bool active=rootActive&&c.enabled&&c.depthDb>=0.001;
+                const bool active=rootActive&&c.enabled&&std::abs(c.depthDb)>=0.001;
                 if(!active&&n.mix<1e-8){
                     // Fully dry nodes cannot replay stale ringing or detector state.
                     n.mix=0;n.env=0;

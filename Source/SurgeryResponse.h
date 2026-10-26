@@ -12,7 +12,7 @@ inline double carveMagnitudeDb(double sampleRate,double centerHz,double q,
     const double fc=std::clamp(centerHz,20.0,sr*0.45);
     const double hz=std::clamp(probeHz,10.0,sr*0.49);
     const double qq=std::clamp(q,0.3,96.0);
-    const double gain=-std::clamp(cutDb,0.0,36.0);
+    const double gain=-std::clamp(cutDb,-90.0,90.0);
     if(gain==0.0)return 0.0;
     const double w=2.0*std::numbers::pi*fc/sr;
     const double A=std::pow(10.0,gain/40.0);
@@ -29,7 +29,7 @@ inline double carveMagnitudeDb(double sampleRate,double centerHz,double q,
     const auto numerator=b0+b1*z1+b2*z2;
     const auto denominator=1.0+a1*z1+a2*z2;
     const double ratio=std::abs(numerator)/std::max(1.e-12,std::abs(denominator));
-    return std::clamp(20.0*std::log10(std::max(1.e-12,ratio)),-36.0,3.0);
+    return std::clamp(20.0*std::log10(std::max(1.e-12,ratio)),-90.0,90.0);
 }
 inline float displayDb(float measuredDb,float frequencyHz,float tiltPerOctave,
                        float rangeDb) noexcept {

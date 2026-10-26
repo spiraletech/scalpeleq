@@ -3,6 +3,7 @@
 #include <iostream>
 int main(){
     using namespace surgery::ui;
+    if(carveY(140.f,0.f)!=140.f)return 9;
     for(float width:{808.0f,1088.0f,1768.0f}){
         CarveRect last{};
         for(int slot=0;slot<4;++slot){
@@ -27,7 +28,7 @@ int main(){
             const auto selector=carveTabBounds(1088.0f,slot);
             if(!selector.contains(selector.x+20.0f,selector.y+10.0f))return 8;
         }
-    for(float depth:{0.0f,4.0f,24.0f,36.0f}){
+    for(float depth:{-90.0f,-36.0f,0.0f,4.0f,24.0f,36.0f,90.0f}){
         const float y=carveY(140.0f,depth);
         if(std::abs(depthFromY(140.0f,y)-depth)>0.002f)return 6;
     }
