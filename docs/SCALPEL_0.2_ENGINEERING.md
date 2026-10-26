@@ -64,6 +64,15 @@ it does not establish a universal note-to-hue table.
 
 ## Removal safety and verification
 
+Real VST3 validation reproduced a post-SUCCESS DLL-unload deadlock on the local
+NVIDIA driver. A captured native stack showed driver waits under loader shutdown.
+The static PNG ImageCache retained native Direct2D images until CRT/DllMain cleanup.
+Load all static artwork into SoftwareImageType instead, without leaving a native
+ImageCache entry behind. Editor-owned GPU simulation and output remain accelerated.
+The native test checks all four artwork types. `scripts/Validate-HostUnload.ps1`
+runs separate GUI pluginval processes, requires both a SUCCESS report and exit 0,
+and fails on a timeout; SUCCESS printed before a shutdown hang is not sufficient.
+
 Stop the editor timer, cancel its chooser, disable graph selection callbacks and
 release visual resources explicitly before member destruction. Chooser callbacks
 check both a closing flag and JUCE SafePointer. Clear D3D context bindings and submit

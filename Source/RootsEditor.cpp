@@ -3,6 +3,7 @@
 #include "ScalpelXRayChroma.h"
 #include "SurgerySpectralColours.h"
 #include <BinaryData.h>
+#include "ScalpelAssets.h"
 #include <cmath>
 #include <numbers>
 
@@ -1444,7 +1445,7 @@ void RootsEditor::paintRack(juce::Graphics& g){
     }
     // Recessed black Phillips fasteners, reference-equivalent and static.
     auto screw=[&](float cx,float cy){
-        static const auto art=juce::ImageCache::getFromMemory(BinaryData::scalpelscrew_png,BinaryData::scalpelscrew_pngSize);
+        static const auto art=scalpel::loadSoftwareAsset(BinaryData::scalpelscrew_png,BinaryData::scalpelscrew_pngSize);
         if(art.isValid()){
             g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);g.setOpacity(1.f);
             g.drawImage(art,juce::Rectangle<float>(cx-15,cy-15,30,30));return;

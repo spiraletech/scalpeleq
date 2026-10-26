@@ -4,6 +4,7 @@
 // APVTS value; the signed indicator is inside the ivory dial face.
 #include <JuceHeader.h>
 #include <BinaryData.h>
+#include "ScalpelAssets.h"
 #include <cmath>
 #include "OnyxRackSkin.h"
 class SurgeryLookAndFeel final : public juce::LookAndFeel_V4 {
@@ -49,7 +50,7 @@ public:
         const float rotation=(position-neutral)*(end-start);
         // Exact user-approved powdery ivory knob artwork. Its molded V-index
         // rotates with the REAL APVTS parameter. No exterior calibration ticks.
-        static const auto dial=juce::ImageCache::getFromMemory(
+        static const auto dial=scalpel::loadSoftwareAsset(
             BinaryData::scalpelknob_png,BinaryData::scalpelknob_pngSize);
         if(!dial.isNull()){
             const float scale=2*radius/(.64f*(float)dial.getWidth());
@@ -96,9 +97,9 @@ public:
         const bool snow=button.getButtonText()=="FREEZE"||button.getButtonText()=="RESUME";
         const bool heat=button.getButtonText().startsWith("SONAR ")||button.getButtonText()=="HEAT MAP";
         if(snow||heat){
-            static const auto snowImage=juce::ImageCache::getFromMemory(
+            static const auto snowImage=scalpel::loadSoftwareAsset(
                 BinaryData::scalpelfreeze_png,BinaryData::scalpelfreeze_pngSize);
-            static const auto heatImage=juce::ImageCache::getFromMemory(
+            static const auto heatImage=scalpel::loadSoftwareAsset(
                 BinaryData::scalpelheatmap_png,BinaryData::scalpelheatmap_pngSize);
             const auto& sprite=snow?snowImage:heatImage;
             if(!sprite.isNull()){

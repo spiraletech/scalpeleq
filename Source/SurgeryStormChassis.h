@@ -1,6 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include <BinaryData.h>
+#include "ScalpelAssets.h"
 #include "SurgeryChassisLayout.h"
 #include "SurgeryWeatherInterpretation.h"
 #include "SurgerySynesthesia.h"
@@ -12,7 +13,7 @@ public:
     StormChassis() {
         // The supplied artwork is used for the four X-head screws only.
         // All energy is generated from current measurements, not neon artwork.
-        const auto reference=juce::ImageCache::getFromMemory(BinaryData::approvedreference_png,BinaryData::approvedreference_pngSize);
+        const auto reference=scalpel::loadSoftwareAsset(BinaryData::approvedreference_png,BinaryData::approvedreference_pngSize);
         auto sample=[&](juce::Image& image,juce::Rectangle<int> source){juce::Graphics g(image);g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);g.drawImage(reference,0,0,image.getWidth(),image.getHeight(),source.getX(),source.getY(),source.getWidth(),source.getHeight());};
         // Plasma pixels from the reference are deliberately not used.
         for(int i=0;i<4;++i){screws_[(size_t)i]=juce::Image(juce::Image::RGB,40,40,false,juce::SoftwareImageType{});sample(screws_[(size_t)i],{i%2?917:3,i/2?630:11,40,40});}

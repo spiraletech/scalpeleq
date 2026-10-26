@@ -4,6 +4,15 @@
 #include <iostream>
 
 bool runScalpelValidation(){
+    // Native cached PNGs retained a Direct2D device until DllMain, provoking
+    // an NVIDIA loader-lock deadlock after pluginval had printed SUCCESS.
+    // Static artwork must remain software-backed, including transparent art.
+    for(const auto& image:{scalpel::loadSoftwareAsset(BinaryData::scalpelknob_png,BinaryData::scalpelknob_pngSize),
+                           scalpel::loadSoftwareAsset(BinaryData::scalpelscrew_png,BinaryData::scalpelscrew_pngSize),
+                           scalpel::loadSoftwareAsset(BinaryData::scalpelfreeze_png,BinaryData::scalpelfreeze_pngSize),
+                           scalpel::loadSoftwareAsset(BinaryData::scalpelheatmap_png,BinaryData::scalpelheatmap_pngSize)}){
+        if(!image.isValid()||image.getPixelData()->createType()->getTypeID()!=juce::SoftwareImageType{}.getTypeID())return false;
+    }
     auto processor=std::make_unique<PRISMVSTAudioProcessor>();
     auto set=[&](const juce::String& id,float v){auto* p=processor->apvts.getParameter(id);if(!p)return false;p->setValueNotifyingHost(p->convertTo0to1(v));return true;};
     processor->prepareToPlay(48000,512);
