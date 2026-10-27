@@ -279,7 +279,7 @@ void RootsGraph::paint(juce::Graphics& g){
     g.saveState();
     g.reduceClipRegion(r.toNearestInt());
     if(heatOn){
-        // Parametric EQ 2 / Frequency Splitter inspired BOTTOM heatmap.
+        // Fixed log-frequency columns beneath the measured display contour.
         // Each column is fixed to a logarithmic Hz address: NO time scroll,
         // circular icons, waterfall, simulated energy, or animated x motion.
         // Intensity uses the calibrated FFT dBFS BEFORE presentation tilt.
@@ -291,14 +291,12 @@ void RootsGraph::paint(juce::Graphics& g){
             const float u=(x+.5f)/(float)width;
             const float hz=(float)prism::roots::visual::heatmapFrequencyAt(x,width);
             const int bin=prism::analysis::LabBands::indexForFrequency(hz);
-            const float intensity=prism::roots::visual::heatmapStrength(
-                bands_[(size_t)bin]);
+            const float contour=surgery::displayDb(bands_[(size_t)bin],hz,slope,rangeDb);
             const auto tone=surgery::synesthesia::palette(u);
             for(int y=0;y<height;++y){
                 const float v=(y+.5f)/(float)height;
-                const float shape=prism::roots::visual::heatmapVerticalWeight(v);
-                const float alpha=juce::jlimit(0.f,.92f,
-                    intensity*(.12f+.80f*shape));
+                const float alpha=prism::roots::visual::underCurveAlpha(
+                    bands_[(size_t)bin],contour,v);
                 heatPixels.setPixelColour(x,y,juce::Colour::fromFloatRGBA(
                     tone.r,tone.g,tone.b,alpha));
             }
@@ -316,23 +314,19 @@ void RootsGraph::paint(juce::Graphics& g){
         // existing measured FFT and shared synesthesia/weather state.
         // The clipping path prevents any decorative peaks outside the data.
         juce::Graphics::ScopedSaveState mercury(g);
-        // The cinematic volume is a separate visual stratum *behind*
-        // the exact FFT path. Clipping it to the FFT silhouette hid the
-        // 3D motion across much of the graph.
+        // The cinematic volume is decorative; its visible material must
+        // remain beneath the authoritative FFT silhouette.
         const auto& m=weatherInterpretation_.state();
         const float energy=juce::jlimit(0.f,1.f,
             .30f*m.level+.35f*m.bass+.20f*m.flux+.15f*m.width);
         // A charcoal base remains legible even when the measured crest is
         // far below 0 dBFS. Previously the brightest stop lived above the
         // audio silhouette, making the real Windows X-RAY render look flat.
-        juce::ColourGradient tar(juce::Colour(0xff191d1e).withAlpha(.96f),
+        juce::ColourGradient tar(juce::Colour(0xff101619).withAlpha(.96f),
             r.getCentreX(),r.getY(),juce::Colour(0xff020304).withAlpha(.99f),
             r.getCentreX(),r.getBottom(),false);
-        tar.addColour(.20,juce::Colour(0xff0b0d10));
-        tar.addColour(.43,juce::Colour(0xff343738));
-        tar.addColour(.61,juce::Colour(0xff101719));
-        tar.addColour(.78,juce::Colour(0xff2e3334));
-        tar.addColour(.91,juce::Colour(0xff080a0b));
+        tar.addColour(.43,juce::Colour(0xff0b1418));
+        tar.addColour(.78,juce::Colour(0xff081018));
         g.setGradientFill(tar);g.fillRect(r);
         // Material sheen is a reflection field, not an independent waveform.
         // Its apparent ridges are clipped to the actual FFT silhouette.
@@ -384,6 +378,8 @@ void RootsGraph::paint(juce::Graphics& g){
                               mercury3DImage_);
         }
         if(mercury3D_.hasFrame()){
+            juce::Graphics::ScopedSaveState measuredClip(g);
+            g.reduceClipRegion(filledPath);
             g.setOpacity(.88f);g.drawImage(mercury3DImage_,r);g.setOpacity(1.f);
         }else{
         // Restrict the old CPU fallback, not the actual 3D volume.
@@ -482,21 +478,13 @@ void RootsGraph::paint(juce::Graphics& g){
     const bool heatHasSignal=std::any_of(bands_.begin(),bands_.end(),
         [](float db){return prism::roots::visual::heatmapStrength(db)>0.f;});
     if(heatOn&&heatHasSignal){
-        // The heatmap has its own thin, frequency-locked bottom stratum.
-        // It is drawn after either Standard or X-RAY liquid, so GPU mercury
-        // cannot hide the measured energy colours. It never touches EQ DSP.
-        const float stripHeight=juce::jlimit(22.f,48.f,r.getHeight()*.17f);
-        const auto strip=r.withY(r.getBottom()-stripHeight).withHeight(stripHeight);
+        // Full-height transparent image: each pixel is gated by measured
+        // energy and by its own column's visible FFT contour.
         juce::Graphics::ScopedSaveState heatLayer(g);
-        g.setColour(juce::Colour(0xff040b10).withAlpha(xrayActive_?.79f:.62f));
-        g.fillRect(strip);
         g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
-        g.setOpacity(xrayActive_?.92f:1.f);
-        g.drawImage(spectralHeat_,strip);
+        g.setOpacity(xrayActive_?.92f:.85f);
+        g.drawImage(spectralHeat_,r);
         g.setOpacity(1.f);
-        g.setColour(juce::Colour(0xffbbc3ca).withAlpha(.16f));
-        g.drawHorizontalLine(juce::roundToInt(strip.getY()),
-            strip.getX(),strip.getRight());
     }
     // Two restrained, stationary glow layers follow ONLY the measured path.
     // Existing attack/release supplies persistence; no clock-driven shimmer,
@@ -522,7 +510,7 @@ void RootsGraph::paint(juce::Graphics& g){
     if(xrayActive_){
         // The marker distinguishes a stale installation from a GPU fallback.
         const juce::String backend=mercury3D_.statusText();
-        g.setColour(backend=="GPU LIVE"?juce::Colour(0xff89ceba):
+        g.setColour(backend=="GPU READBACK READY"?juce::Colour(0xff89ceba):
                     juce::Colour(0xffd7ad81));
         g.setFont(juce::Font(juce::FontOptions(10.0f,juce::Font::bold)));
         g.drawText("X-RAY 3.1  |  "+backend,
