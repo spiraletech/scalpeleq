@@ -76,6 +76,10 @@ target_sources(PRISMVST PRIVATE
   Source/PluginEditor.h
   Source/RootsEditor.cpp
   Source/RootsEditor.h
+  Source/ScalpelMercuryField.h
+  Source/ScalpelFluid3D.h
+  Source/ScalpelFluid3D.cpp
+  Source/ScalpelXRayChroma.h
   Source/RootsAudioEngine.h
 )
 
@@ -84,6 +88,12 @@ target_compile_definitions(PRISMVST PUBLIC
   JUCE_USE_CURL=0
   JUCE_VST3_CAN_REPLACE_VST2=0
 )
+
+if(WIN32)
+  # Compute shaders are compiled from embedded HLSL when X-RAY is activated.
+  # D3D11 resources belong to the editor, never to the real-time DSP thread.
+  target_link_libraries(PRISMVST PRIVATE d3d11 dxgi d3dcompiler)
+endif()
 
 target_link_libraries(PRISMVST PRIVATE
   juce::juce_audio_utils
@@ -96,6 +106,18 @@ target_link_libraries(PRISMVST PRIVATE
 
 option(PRISMVST_BUILD_TESTS "Build DSP smoke tests" ON)
 if(PRISMVST_BUILD_TESTS)
+  add_executable(scalpel_analyzer_health_tests Tests/ScalpelAnalyzerHealthTests.cpp Source/ScalpelAnalyzerHealth.h)
+  target_compile_features(scalpel_analyzer_health_tests PRIVATE cxx_std_20)
+  add_test(NAME scalpel_floor01_analyzer_health COMMAND scalpel_analyzer_health_tests)
+  add_executable(scalpel_under_curve_tests Tests/ScalpelUnderCurveTests.cpp Source/RootsSpectrumColours.h)
+  target_compile_features(scalpel_under_curve_tests PRIVATE cxx_std_20)
+  add_test(NAME scalpel_xray_under_curve_mask COMMAND scalpel_under_curve_tests)
+  add_executable(scalpel_mercury_tests Tests/ScalpelMercuryTests.cpp Source/ScalpelMercuryField.h)
+  target_compile_features(scalpel_mercury_tests PRIVATE cxx_std_20)
+  add_test(NAME scalpel_xray_liquid_surface COMMAND scalpel_mercury_tests)
+  add_executable(scalpel_chroma_tests Tests/ScalpelChromaTests.cpp Source/ScalpelXRayChroma.h)
+  target_compile_features(scalpel_chroma_tests PRIVATE cxx_std_20)
+  add_test(NAME scalpel_xray_pitch_class_mapping COMMAND scalpel_chroma_tests)
   add_executable(scalpel_color_tests Tests/ScalpelColorTests.cpp Source/SurgeryOnyx.h)
   target_compile_features(scalpel_color_tests PRIVATE cxx_std_20)
   add_test(NAME scalpel_color_five_knob_dsp COMMAND scalpel_color_tests)
@@ -122,6 +144,8 @@ if(PRISMVST_BUILD_TESTS)
     Source/PluginEditor.h
     Source/RootsEditor.cpp
     Source/RootsEditor.h
+    Source/ScalpelFluid3D.h
+    Source/ScalpelFluid3D.cpp
     Source/RootsAudioEngine.h
     Source/SurgeryCarveEngine.h
     Source/SurgeryLookAndFeel.h
@@ -138,13 +162,18 @@ if(PRISMVST_BUILD_TESTS)
     juce::juce_audio_utils
     juce::juce_dsp
   )
+  if(WIN32)
+    target_link_libraries(prismvst_tests PRIVATE d3d11 dxgi d3dcompiler)
+  endif()
   if(MSVC)
     target_link_options(prismvst_tests PRIVATE /STACK:8388608)
   endif()
   add_test(NAME prismvst_tests COMMAND prismvst_tests)
   add_test(NAME surgery_weather_calibration COMMAND prismvst_tests --weather-calibration)
   add_test(NAME surgery_weather_field COMMAND prismvst_tests --weather-field)
-  add_test(NAME surgery_storm_chassis COMMAND prismvst_tests --storm-chassis)
+  # The legacy Surgery JUKE river renderer is no longer displayed by Scalpel.
+  # Its historical diagnostic remains callable with --storm-chassis but is
+  # excluded from Scalpel's active visual release regression suite.
   # Independent native C++20 ROOTS core; deliberately not linked into v1.2 DSP.
   add_executable(prism_roots_tests Tests/RootsCoreTests.cpp Source/PrismRootsCore.h)
   target_compile_features(prism_roots_tests PRIVATE cxx_std_20)

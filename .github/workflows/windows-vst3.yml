@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, design/scalpel-vintage-hardware, feature/xray-3d-fluid ]
   workflow_dispatch:
 
 concurrency:
@@ -21,6 +21,8 @@ jobs:
       - name: Build
         run: cmake --build build --config Release --parallel 2
       - name: Test
+        env:
+          SCALPEL_GPU_DISABLE: '1'
         run: ctest --test-dir build -C Release --output-on-failure
       - name: Upload regression evidence
         if: always()
@@ -30,6 +32,7 @@ jobs:
           path: |
             build/Testing/Temporary/LastTest.log
             build/surgery-ui-*.png
+            build/scalpel-ui-*.png
             build/surgery-*.csv
           if-no-files-found: warn
       - name: Stage VST3

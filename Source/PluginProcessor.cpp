@@ -276,6 +276,7 @@ PRISMVSTAudioProcessor::PRISMVSTAudioProcessor()
     for (int s = 0; s < numSections; ++s)
     {
         stereoActivity[(size_t)s].store(0.0f);
+        rootBandPeakDb[(size_t)s].store(-144.0f);
         soloParameterIds[(size_t)s] = sectionId(s, "solo");
         apvts.addParameterListener(soloParameterIds[(size_t)s], this);
     }
@@ -296,7 +297,7 @@ PRISMVSTAudioProcessor::~PRISMVSTAudioProcessor()
 
     analyzerWorker.signalThreadShouldExit();
     analyzerEvent.signal();
-    analyzerWorker.stopThread(1000);
+    analyzerWorker.stopThread(-1); // Indefinite clean join: never force-kill the FFT worker.
 }
 
 int PRISMVSTAudioProcessor::getActiveSoloSection() const noexcept
@@ -405,7 +406,7 @@ void PRISMVSTAudioProcessor::releaseResources()
 {
     analyzerWorker.signalThreadShouldExit();
     analyzerEvent.signal();
-    analyzerWorker.stopThread(1000);
+    analyzerWorker.stopThread(-1); // Indefinite clean join: never force-kill the FFT worker.
 }
 
 bool PRISMVSTAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
@@ -502,7 +503,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
     p.push_back(std::make_unique<juce::AudioParameterBool>(
         juce::ParameterID { "roots_mono", 1 }, "ROOTS Mono", false));
     p.push_back(std::make_unique<juce::AudioParameterBool>(
-        juce::ParameterID { "scalpel_xray", 1 }, "X-RAY Visualizer", false));
+        juce::ParameterID { "scalpel_xray", 1 }, "X-RAY Visualizer", true));
     p.push_back(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID { "roots_space", 1 }, "ROOTS Space",
         juce::NormalisableRange<float>(0.0f,100.0f,0.1f),50.0f));
@@ -680,7 +681,7 @@ void PRISMVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
 
     analyzerWorker.signalThreadShouldExit();
     analyzerEvent.signal();
-    analyzerWorker.stopThread(1000);
+    analyzerWorker.stopThread(-1); // Indefinite clean join: never force-kill the FFT worker.
 
     currentSampleRate = sampleRate;
     dryScratch.setSize(2, juce::jmax(1, samplesPerBlock));
@@ -746,6 +747,7 @@ void PRISMVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     }
 
     analyzerFifo.reset();
+    analyzerHealth_.reset();
     analyzerQueue.fill(0.0f);analyzerRightQueue.fill(0.0f);
     fftWritePos = 0;
     fftHopCounter = 0;
@@ -965,6 +967,7 @@ void PRISMVSTAudioProcessor::pushAnalyzerSamples(const juce::AudioBuffer<float>&
 
     const int written = size1 + size2;
     analyzerFifo.finishedWrite(written);
+    analyzerHealth_.recordAudioBlock(requested, written);
     if (written > 0)
         analyzerEvent.signal();
 }
@@ -974,6 +977,8 @@ void PRISMVSTAudioProcessor::runAnalyzerThread()
     while (!analyzerWorker.threadShouldExit())
     {
         analyzerEvent.wait(10);
+        if (analyzerWorker.threadShouldExit())
+            break;
         for (;;)
         {
             const int ready = analyzerFifo.getNumReady();
@@ -1075,6 +1080,7 @@ void PRISMVSTAudioProcessor::renderSpectrumFrame()
         spectrum[(size_t)i].store(toDb(peakMagnitude + 1.0e-12f));
     }
     publishWeatherAnalysis();
+    analyzerHealth_.recordFftFrame();
 }
 
 void PRISMVSTAudioProcessor::copySpectrum(std::array<float, spectrumBins>& destination) const noexcept
@@ -1176,8 +1182,13 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
         c.tape=juce::jlimit(0.0f,1.0f,rootParameters[(size_t)root].values[10]->load()*0.01f);
         c.dynamic=juce::jlimit(0.0f,1.0f,rootParameters[(size_t)root].values[12]->load()*0.01f);
         c.phase=rootParameters[(size_t)root].values[13]->load()>=0.5f;
+        // The front panel has a dedicated LIMIT switch but no third rotary.
+        // A previously neutral 0% hidden amount must not turn LIMIT into a
+        // placebo button. Use a musical optical default; the retained host
+        // parameter can still override it for saved advanced automation.
+        const float amount=rootParameters[(size_t)root].values[14]->load();
         c.limit=rootParameters[(size_t)root].values[15]->load()>=0.5f?
-            juce::jlimit(0.0f,1.0f,rootParameters[(size_t)root].values[14]->load()*0.01f):0.0f;
+            (amount<=0.001f?0.35f:juce::jlimit(0.0f,1.0f,amount*0.01f)):0.0f;
         rootsEngine.config(i,c);
     }
     if(buffer.getNumChannels()>=2)
@@ -1214,7 +1225,10 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
     rootMeters[2].store(meters.sideRms); rootMeters[3].store(meters.spaceApplied);
     rootMeters[4].store(meters.largestGrDb);
     for(int root=0;root<numSections;++root)
-        rootBandPeakDb[(size_t)root].store((float)meters.rootPeakDb[(size_t)root]);
+        rootBandPeakDb[(size_t)root].store((float)meters.rootPeakDb[(size_t)root],std::memory_order_relaxed);
+    // UI may consume a measurement only once. Otherwise stopping the host
+    // after a loud block would refresh the red warning indefinitely.
+    rootBandPeakRevision_.fetch_add(1,std::memory_order_release);
     gainReductionDb.store((float)meters.largestGrDb);
 }
 
