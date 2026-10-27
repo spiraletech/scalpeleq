@@ -48,6 +48,9 @@ bool verifyPluginRemovalLifecycle() {
     for(int cycle=0;cycle<cycles;++cycle){
         auto processor=std::make_unique<PRISMVSTAudioProcessor>();
         processor->prepareToPlay(48000.0,256);
+        // Alternate CPU X-RAY ON/OFF while testing host-style unload.
+        // Regresses the exact editor path that previously owned D3D11 state.
+        set(*processor,"scalpel_xray",cycle%2==0?1.0f:0.0f);
         if(processor->getLatencySamples()!=0){
             std::cerr<<"UNLOAD: unexpected reported plugin latency\\n";
             return false;
@@ -62,7 +65,7 @@ bool verifyPluginRemovalLifecycle() {
                 processor->processBlock(block,midi);
             }
             juce::Timer::callPendingTimersSynchronously();
-            if(cycle%3==0){
+            if(cycle%3==0 || cycle%2==0){
                 const auto image=editor->createComponentSnapshot(editor->getLocalBounds());
                 if(!image.isValid()){std::cerr<<"UNLOAD: invalid editor snapshot\\n";return false;}
             }

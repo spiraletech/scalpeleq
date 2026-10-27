@@ -1,8 +1,18 @@
 # Floor 01 — reproducible analyzer baseline
 
 Source baseline: `feature/xray-symbiote-liquid-canvas` at `eb33aa4`.
-This pass adds telemetry only. It does not alter audio DSP, plugin parameter IDs,
-EQ controls, or the X-RAY renderer.
+This Floor 01 sequence adds analyzer telemetry and a visual-only GPU stability
+hotfix. It does not alter audio DSP, plugin parameter IDs, or EQ controls.
+
+## Stability hotfix for the next test build
+
+The subsequent Floor 01 hotfix disables invocation of the experimental D3D11
+volumetric renderer from X-RAY painting and removes its GPU readiness label.
+The CPU presentation remains active. The D3D11 implementation stays in the
+source tree, but is not invoked by this build. This mitigates a suspected GPU
+shutdown issue; it does not prove the FL Studio unload crash is resolved.
+The unload regression now alternates X-RAY ON/OFF and creates snapshots while
+destroying/recreating editors and analyzer workers.
 
 ## Build and regression gates
 

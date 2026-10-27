@@ -310,8 +310,11 @@ void RootsGraph::paint(juce::Graphics& g){
             r.getX(),r.getBottom(),false);
         g.setGradientFill(graphite);g.fillPath(filledPath);
     } else {
-        // SCALPEL X-RAY: depth-layered black mercury, driven only by the
-        // existing measured FFT and shared synesthesia/weather state.
+        // Floor 01 stability baseline: the experimental D3D11 volume is
+        // deliberately disabled. It ran GPU dispatch/readback during paint,
+        // and Windows hosts reported an unload crash. The CPU presentation
+        // remains available; never initialize a GPU device on this path.
+        constexpr bool experimentalGpuEnabled = false;
         // The clipping path prevents any decorative peaks outside the data.
         juce::Graphics::ScopedSaveState mercury(g);
         // The cinematic volume is decorative; its visible material must
@@ -371,13 +374,14 @@ void RootsGraph::paint(juce::Graphics& g){
             }
             // GPU velocity/pressure/phase transport is restricted to this UI path.
             // The measured contour, parameter IDs and all audio code are unchanged.
-            mercury3D_.render(source,juce::jmax(m.bass,measuredBass),
-                              m.flux,juce::jmax(m.level,measuredLevel*.85f),
-                              mercuryElapsed_,
-                              pval(processor_.apvts,"sonar_reduced_motion")>=.5f,
-                              mercury3DImage_);
+            if (experimentalGpuEnabled)
+                mercury3D_.render(source,juce::jmax(m.bass,measuredBass),
+                                  m.flux,juce::jmax(m.level,measuredLevel*.85f),
+                                  mercuryElapsed_,
+                                  pval(processor_.apvts,"sonar_reduced_motion")>=.5f,
+                                  mercury3DImage_);
         }
-        if(mercury3D_.hasFrame()){
+        if(experimentalGpuEnabled && mercury3D_.hasFrame()){
             juce::Graphics::ScopedSaveState measuredClip(g);
             g.reduceClipRegion(filledPath);
             g.setOpacity(.88f);g.drawImage(mercury3DImage_,r);g.setOpacity(1.f);
@@ -444,7 +448,7 @@ void RootsGraph::paint(juce::Graphics& g){
         // Layered capillary crests follow the real FFT surface and settle
         // when the music stops; unlike rigid colored lines they bend and
         // uncoil with the damped liquid surface.
-        if(!mercury3D_.hasFrame()){
+        if(!experimentalGpuEnabled || !mercury3D_.hasFrame()){
         for(int layer=0;layer<3;++layer){
             juce::Path ribbon;
             bool open=false;
@@ -507,17 +511,8 @@ void RootsGraph::paint(juce::Graphics& g){
     // Intentionally no outlined "heat bubbles": they obscured the true
     // contour and made HEAT MAP resemble a trail of rigid copper coins.
     g.restoreState();
-    if(xrayActive_){
-        // The marker distinguishes a stale installation from a GPU fallback.
-        const juce::String backend=mercury3D_.statusText();
-        g.setColour(backend=="GPU READBACK READY"?juce::Colour(0xff89ceba):
-                    juce::Colour(0xffd7ad81));
-        g.setFont(juce::Font(juce::FontOptions(10.0f,juce::Font::bold)));
-        g.drawText("X-RAY 3.1  |  "+backend,
-            juce::roundToInt(r.getRight()-192.f),
-            juce::roundToInt(r.getBottom()-22.f),184,14,
-            juce::Justification::centredRight);
-    }
+    // No GPU readiness label in Floor 01: it was misleading and no GPU
+    // device is initialized by the active X-RAY paint path.
 
     // Predict the EXACT static RBJ peak-filter response used in the CARVE DSP.
     // It shows the maximum possible response for dynamic nodes, not measured GR.
