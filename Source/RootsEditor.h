@@ -114,7 +114,7 @@ private:
         bool valid=false;
     };
     std::array<ResponseCache,4> responseCache_;
-    juce::Image spectralHeat_{juce::Image::ARGB,PRISMVSTAudioProcessor::labBars,64,true};
+    juce::Image spectralHeat_{juce::Image::ARGB,PRISMVSTAudioProcessor::labBars,224,true};
     std::array<float,PRISMVSTAudioProcessor::labBars> heatLevels_{};
     bool heatValid_=false;
     std::array<float,3> paintOptions_{};
