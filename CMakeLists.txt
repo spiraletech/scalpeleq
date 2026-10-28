@@ -106,6 +106,12 @@ target_link_libraries(PRISMVST PRIVATE
 
 option(PRISMVST_BUILD_TESTS "Build DSP smoke tests" ON)
 if(PRISMVST_BUILD_TESTS)
+  add_executable(scalpel_analyzer_health_tests Tests/ScalpelAnalyzerHealthTests.cpp Source/ScalpelAnalyzerHealth.h)
+  target_compile_features(scalpel_analyzer_health_tests PRIVATE cxx_std_20)
+  add_test(NAME scalpel_floor01_analyzer_health COMMAND scalpel_analyzer_health_tests)
+  add_executable(scalpel_under_curve_tests Tests/ScalpelUnderCurveTests.cpp Source/RootsSpectrumColours.h)
+  target_compile_features(scalpel_under_curve_tests PRIVATE cxx_std_20)
+  add_test(NAME scalpel_xray_under_curve_mask COMMAND scalpel_under_curve_tests)
   add_executable(scalpel_mercury_tests Tests/ScalpelMercuryTests.cpp Source/ScalpelMercuryField.h)
   target_compile_features(scalpel_mercury_tests PRIVATE cxx_std_20)
   add_test(NAME scalpel_xray_liquid_surface COMMAND scalpel_mercury_tests)
