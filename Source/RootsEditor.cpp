@@ -1145,7 +1145,9 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         button->setVisible(false);
     output_.setVisible(false);outputLabel_.setVisible(false);
     bindNode(0);setMode(2);
-    setResizable(true,true);setResizeLimits(840,470,1800,1200);setSize(1344,756);
+    // Hosts may resize the editor, but Scalpel does not draw JUCE's generic
+    // bottom-right corner grip over the hardware face.
+    setResizable(true,false);setResizeLimits(840,470,1800,1200);setSize(1344,756);
     timerCallback();startTimerHz(60);
 }
 RootsEditor::~RootsEditor(){
@@ -1267,8 +1269,11 @@ void RootsEditor::setMode(int next){
     // but aren't injected into the redesigned 3-control ANALYZE shelf.
     analyzerLegend_.setVisible(false);
     weatherMode_.setVisible(false);jukeMode_.setVisible(false);jukeModeLabel_.setVisible(false);reducedMotion_.setVisible(false);
-    for(auto* box:{&compressor_,&domain_,&detector_})box->setVisible(mode_==0);
-    for(auto* label:{&compLabel_,&domainLabel_,&detectorLabel_})label->setVisible(mode_==0);
+    for(auto* box:{&compressor_,&domain_})box->setVisible(mode_==0);
+    for(auto* label:{&compLabel_,&domainLabel_})label->setVisible(mode_==0);
+    // Retain the legacy detector parameter for automation/preset recall only.
+    // Its former 75 px control collided with the MONO switch block.
+    detector_.setVisible(false);detectorLabel_.setVisible(false);
     gain_.setVisible(mode_==0);gainLabel_.setVisible(mode_==0);
     threshold_.setVisible(mode_==0);
     thresholdLabel_.setVisible(mode_==0);
@@ -1459,7 +1464,8 @@ void RootsEditor::paintRack(juce::Graphics& g){
     deck({32,476,1056,143},false);
     // Inset dark joints dividing the mechanical control shelf only.
     if(mode_==0){
-        for(float x:{183.f,358.f,802.f}){
+        // Final divider sits in the clear gutter before MONO/PHASE.
+        for(float x:{183.f,358.f,770.f}){
             g.setColour(juce::Colour(0xff735944).withAlpha(.6f));
             g.drawLine(x,477,x,600,.9f);
         }
@@ -1501,7 +1507,7 @@ void RootsEditor::layoutRack(){
     thresholdLabel_.setBounds(352,484,150,20);threshold_.setBounds(360,499,135,91);
     compLabel_.setBounds(521,482,204,19);compressor_.setBounds(522,503,204,31);
     domainLabel_.setBounds(521,535,204,19);domain_.setBounds(522,556,204,32);
-    detectorLabel_.setBounds(728,482,75,19);detector_.setBounds(728,502,75,30);
+    detectorLabel_.setBounds(0,0,1,1);detector_.setBounds(0,0,1,1);
     // The fourth switch block now meets the compression selectors directly.
     // No stray LIMIT amount/third dial is painted beside MONO.
     limitAmount_.setBounds(0,0,1,1);
