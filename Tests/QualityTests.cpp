@@ -1,6 +1,8 @@
 #include <JuceHeader.h>
 #include "../Source/PluginProcessor.h"
 #include "../Source/ScalpelFluid3D.h"
+#include "../Source/ScalpelAssets.h"
+#include <BinaryData.h>
 #include <chrono>
 #include <fstream>
 #include <thread>
@@ -44,6 +46,19 @@ bool click(juce::Component& parent,const juce::String& caption){
 // both been active. This intentionally exercises the release/prepare cycles
 // used by DAWs when changing mixer chains without modifying sound parameters.
 bool verifyPluginRemovalLifecycle() {
+    // Static PNGs must remain software-backed so no Direct2D/NVIDIA resource
+    // survives until Windows loader-lock teardown.
+    for(const auto& image:{
+        scalpel::loadSoftwareAsset(BinaryData::scalpelknob_png,BinaryData::scalpelknob_pngSize),
+        scalpel::loadSoftwareAsset(BinaryData::scalpelfreeze_png,BinaryData::scalpelfreeze_pngSize),
+        scalpel::loadSoftwareAsset(BinaryData::scalpelheatmap_png,BinaryData::scalpelheatmap_pngSize),
+        scalpel::loadSoftwareAsset(BinaryData::approvedreference_png,BinaryData::approvedreference_pngSize)}) {
+        if(!image.isValid() ||
+           image.getPixelData()->createType()->getTypeID()!=juce::SoftwareImageType{}.getTypeID()) {
+            std::cerr<<"UNLOAD: artwork is not software-backed\\n";
+            return false;
+        }
+    }
     constexpr int cycles=12;
     for(int cycle=0;cycle<cycles;++cycle){
         auto processor=std::make_unique<PRISMVSTAudioProcessor>();
