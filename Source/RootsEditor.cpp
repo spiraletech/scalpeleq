@@ -26,8 +26,8 @@ juce::String pitchText(float hz){
 }
 juce::Colour territory(int i){
     static constexpr unsigned hues[7]{
-        0xFFFF5A42u,0xFFD5A076u,0xFF9BBA89u,0xFF759ACA,
-        0xFFBB79CFu,0xFFCE8DA4u,0xFFD6474Eu
+        0xFFE05246u,0xFFD99045u,0xFF6EAA78u,0xFF55BFCBu,
+        0xFF425D9Bu,0xFF9A63B8u,0xFFD97A9Cu
     };
     return juce::Colour(hues[(size_t)juce::jlimit(0,6,i)]);
 }
@@ -930,8 +930,8 @@ void RootsGraph::popup(){
 
             const auto colorId="surgery_root"+juce::String(root+1)+"_rgb";
             static constexpr unsigned swatches[]{
-                0x6BBDD4,0xDFA871,0x8DCEA8,0xD2A2E5,
-                0xE89EAD,0x9DADEA,0xBFD678,0xE5F4F3};
+                0xE05246,0xD99045,0x6EAA78,0x55BFCB,
+                0x425D9B,0x9A63B8,0xD97A9C,0xE5F4F3};
             if(id>=80&&id<=87)change(graph.processor_,colorId,(float)swatches[id-80]);
             if(id==99){
                 auto* dialog=new juce::AlertWindow(
@@ -1144,7 +1144,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     for(auto* button:{&bypass_,&compare_,&copy_,&save_,&load_,&peakHold_})
         button->setVisible(false);
     output_.setVisible(false);outputLabel_.setVisible(false);
-    bindNode(0);setMode(2);
+    bindNode(0);setMode(0);
     // Hosts may resize the editor, but Scalpel does not draw JUCE's generic
     // bottom-right corner grip over the hardware face.
     setResizable(true,false);setResizeLimits(840,470,1800,1200);setSize(1344,756);
