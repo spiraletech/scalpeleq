@@ -218,12 +218,8 @@ void RootsGraph::paint(juce::Graphics& g){
         g.drawText(juce::String(db),juce::roundToInt(r.getRight()+5),
                    juce::roundToInt(y-8),34,16,juce::Justification::centredLeft);
     }
-    // ROOT handle height is constant; vertical axis is exclusively dBFS.
-    // ROOT gain is a separate, single control in the bottom panel.
-    g.setFont(juce::Font(juce::FontOptions(11.0f,juce::Font::plain)));
-    g.setColour(juce::Colour(0xffc5b7a9));
-    g.drawText("Hz",8,16,34,16,juce::Justification::centredLeft);
-    g.drawText("dBFS",juce::roundToInt(r.getRight()),16,44,16,juce::Justification::centredRight);
+    // Numeric axis marks carry the scale; avoid redundant corner-unit badges.
+    // ROOT handle height is constant and ROOT gain remains a separate control.
     std::array<prism::roots::visual::Node,prism::roots::visual::kNodes> zones{};
     for(int node=0;node<prism::roots::visual::kNodes;++node)
     {
@@ -989,7 +985,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     }
     title_.setText("SCALPEL EQ",juce::dontSendNotification);
     analyzerLegend_.setFont(juce::Font(juce::FontOptions(12.0f,juce::Font::bold)));
-    analyzerLegend_.setText("SYNESTHESIA V1   /   HUE x ENERGY",
+    analyzerLegend_.setText("SPECTRAL COLOR   /   LEVEL",
                             juce::dontSendNotification);
     title_.setFont(juce::Font(juce::FontOptions(24.0f,juce::Font::bold)));
     selection_.setFont(juce::Font(juce::FontOptions(12.0f,juce::Font::bold)));
@@ -1084,12 +1080,12 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     }
     analyzerSlopeA_=std::make_unique<SliderA>(processor_.apvts,"analyzer_slope",analyzerSlope_);
     analyzerMemoryA_=std::make_unique<SliderA>(processor_.apvts,"aura_memory",analyzerMemory_);
-    heatToggle_.setTooltip("Synesthesia V1: stationary frequency-to-hue / measured dBFS-to-brightness. Full rainbow, no flashing. Prototype visual mapping, not human synesthesia detection.");
+    heatToggle_.setTooltip("Measured spectral heat map. Frequency sets colour; level sets intensity.");
     heatToggle_.setClickingTogglesState(true);
     addAndMakeVisible(heatToggle_);
     heatA_=std::make_unique<ButtonA>(processor_.apvts,"aura_color",heatToggle_);
     xrayButton_.setClickingTogglesState(true);
-    xrayButton_.setTooltip("X-RAY: restrained sound-reactive black mercury and synesthesia. Visual-only, no changes to audio DSP.");
+    xrayButton_.setTooltip("X-RAY visualizer. Display only; audio processing is unchanged.");
     addAndMakeVisible(xrayButton_);
     xrayAttachment_=std::make_unique<ButtonA>(processor_.apvts,"scalpel_xray",xrayButton_);
     freezeButton_.setClickingTogglesState(true);
@@ -1152,14 +1148,22 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     setResizable(true,true);setResizeLimits(840,470,1800,1200);setSize(1344,756);
     timerCallback();startTimerHz(60);
 }
-RootsEditor::~RootsEditor(){stopTimer();setLookAndFeel(nullptr);}
+RootsEditor::~RootsEditor(){
+    closing_=true;
+    stopTimer();
+    presetChooser_.reset();
+    graph_.onSelectNode=nullptr;
+    graph_.onSelectCarve=nullptr;
+    graph_.releaseVisualResources();
+    setLookAndFeel(nullptr);
+}
 void RootsEditor::choosePreset(bool saving){
     presetChooser_=std::make_unique<juce::FileChooser>(saving?"Save Scalpel EQ preset":"Load Scalpel EQ preset",
         juce::File::getSpecialLocation(juce::File::userDocumentsDirectory).getChildFile("Scalpel EQ.surgerypreset"),"*.surgerypreset");
     const auto chooserFlags=saving?(juce::FileBrowserComponent::saveMode|juce::FileBrowserComponent::canSelectFiles|juce::FileBrowserComponent::warnAboutOverwriting):
         (juce::FileBrowserComponent::openMode|juce::FileBrowserComponent::canSelectFiles);
     presetChooser_->launchAsync(chooserFlags,[safe=juce::Component::SafePointer<RootsEditor>(this),saving](const juce::FileChooser& chooser){
-        if(safe==nullptr)return;
+        if(safe==nullptr||safe->closing_)return;
         auto file=chooser.getResult();if(file==juce::File{})return;
         const bool ok=saving?safe->processor_.savePreset(file.withFileExtension("surgerypreset")):safe->processor_.loadPreset(file);
         if(!ok)juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,"Preset could not be opened",
@@ -1377,10 +1381,10 @@ thresholdLabel_.setText("COMP THRESHOLD",
     if(mode_==3){
         const auto metrics=graph_.spectralMetrics();
         const juce::String line=metrics.signalPresent?
-            "SYN V1 / BIN ~"+hzText(metrics.loudestHz)+"Hz "+pitchText(metrics.loudestHz)+" / "+
-            juce::String(metrics.loudestDb,1)+" dBFS  /  CENTROID ~"+
-            hzText(metrics.approximateCentroidHz)+"Hz":
-            "SYN V1 / SILENCE OR BELOW DISPLAY FLOOR";
+            "PEAK "+hzText(metrics.loudestHz)+" Hz  /  "+
+            juce::String(metrics.loudestDb,1)+" dBFS  /  CENTROID "+
+            hzText(metrics.approximateCentroidHz)+" Hz":
+            "SIGNAL BELOW DISPLAY RANGE";
         status_.setText(line,juce::dontSendNotification);
     } else status_.setText(status,juce::dontSendNotification);
 }
