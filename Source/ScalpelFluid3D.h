@@ -18,6 +18,10 @@ struct FluidColumn {
 
 class FluidVolume3D final {
 public:
+    struct Diagnostics {
+        unsigned long long submitted=0, readbacks=0, pending=0, errors=0;
+        double readbackHz=0.0; // Completed CPU image transfers, not display refresh.
+    };
     static constexpr int gridWidth = 64;
     static constexpr int gridHeight = 40;
     static constexpr int gridDepth = 32;
@@ -44,6 +48,7 @@ public:
     bool hasFrame() const noexcept;
     // Used to diagnose old binaries and GPU/CPU fallbacks in FL Studio.
     const char* statusText() const noexcept;
+    Diagnostics diagnostics() const noexcept;
     void reset() noexcept;
 
 private:
