@@ -62,6 +62,17 @@ bool verifyPluginRemovalLifecycle() {
     constexpr int cycles=12;
     for(int cycle=0;cycle<cycles;++cycle){
         auto processor=std::make_unique<PRISMVSTAudioProcessor>();
+        static constexpr std::array<int,7> expectedBandColours{
+            0xE05246,0xD99045,0x6EAA78,0x55BFCB,0x425D9B,0x9A63B8,0xD97A9C
+        };
+        for(int band=0;band<7;++band){
+            const auto id="surgery_root"+juce::String(band+1)+"_rgb";
+            const auto* colour=processor->apvts.getRawParameterValue(id);
+            if(colour==nullptr||juce::roundToInt(colour->load())!=expectedBandColours[(size_t)band]){
+                std::cerr<<"UI: incorrect default colour for BAND "<<band+1<<"\\n";
+                return false;
+            }
+        }
         processor->prepareToPlay(48000.0,256);
         // Alternate CPU X-RAY ON/OFF while testing host-style unload.
         // Regresses the exact editor path that previously owned D3D11 state.
@@ -73,11 +84,20 @@ bool verifyPluginRemovalLifecycle() {
         {
             std::unique_ptr<juce::AudioProcessorEditor> editor(processor->createEditor());
             if(!editor){std::cerr<<"UNLOAD: editor construction failed\\n";return false;}
-            for(auto* child:editor->getChildren())
+            bool bandModeSelected=false;
+            for(auto* child:editor->getChildren()){
                 if(dynamic_cast<juce::ResizableCornerComponent*>(child)!=nullptr){
                     std::cerr<<"UI: generic bottom-right resize grip is visible\\n";
                     return false;
                 }
+                if(auto* button=dynamic_cast<juce::TextButton*>(child);
+                   button&&button->getButtonText()=="BAND MODE")
+                    bandModeSelected=button->getToggleState();
+            }
+            if(!bandModeSelected){
+                std::cerr<<"UI: fresh editor did not start on BAND MODE\\n";
+                return false;
+            }
             juce::AudioBuffer<float> block(2,256);
             juce::MidiBuffer midi;
             for(int frame=0;frame<32;++frame){
