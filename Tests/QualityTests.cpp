@@ -1,6 +1,8 @@
 #include <JuceHeader.h>
 #include "../Source/PluginProcessor.h"
 #include "../Source/ScalpelFluid3D.h"
+#include "../Source/ScalpelAssets.h"
+#include <BinaryData.h>
 #include <chrono>
 #include <fstream>
 #include <thread>
@@ -44,10 +46,26 @@ bool click(juce::Component& parent,const juce::String& caption){
 // both been active. This intentionally exercises the release/prepare cycles
 // used by DAWs when changing mixer chains without modifying sound parameters.
 bool verifyPluginRemovalLifecycle() {
+    // Static PNGs must remain software-backed so no Direct2D/NVIDIA resource
+    // survives until Windows loader-lock teardown.
+    for(const auto& image:{
+        scalpel::loadSoftwareAsset(BinaryData::scalpelknob_png,BinaryData::scalpelknob_pngSize),
+        scalpel::loadSoftwareAsset(BinaryData::scalpelfreeze_png,BinaryData::scalpelfreeze_pngSize),
+        scalpel::loadSoftwareAsset(BinaryData::scalpelheatmap_png,BinaryData::scalpelheatmap_pngSize),
+        scalpel::loadSoftwareAsset(BinaryData::approvedreference_png,BinaryData::approvedreference_pngSize)}) {
+        if(!image.isValid() ||
+           image.getPixelData()->createType()->getTypeID()!=juce::SoftwareImageType{}.getTypeID()) {
+            std::cerr<<"UNLOAD: artwork is not software-backed\\n";
+            return false;
+        }
+    }
     constexpr int cycles=12;
     for(int cycle=0;cycle<cycles;++cycle){
         auto processor=std::make_unique<PRISMVSTAudioProcessor>();
         processor->prepareToPlay(48000.0,256);
+        // Alternate CPU X-RAY ON/OFF while testing host-style unload.
+        // Regresses the exact editor path that previously owned D3D11 state.
+        set(*processor,"scalpel_xray",cycle%2==0?1.0f:0.0f);
         if(processor->getLatencySamples()!=0){
             std::cerr<<"UNLOAD: unexpected reported plugin latency\\n";
             return false;
@@ -55,6 +73,11 @@ bool verifyPluginRemovalLifecycle() {
         {
             std::unique_ptr<juce::AudioProcessorEditor> editor(processor->createEditor());
             if(!editor){std::cerr<<"UNLOAD: editor construction failed\\n";return false;}
+            for(auto* child:editor->getChildren())
+                if(dynamic_cast<juce::ResizableCornerComponent*>(child)!=nullptr){
+                    std::cerr<<"UI: generic bottom-right resize grip is visible\\n";
+                    return false;
+                }
             juce::AudioBuffer<float> block(2,256);
             juce::MidiBuffer midi;
             for(int frame=0;frame<32;++frame){
@@ -62,7 +85,7 @@ bool verifyPluginRemovalLifecycle() {
                 processor->processBlock(block,midi);
             }
             juce::Timer::callPendingTimersSynchronously();
-            if(cycle%3==0){
+            if(cycle%3==0 || cycle%2==0){
                 const auto image=editor->createComponentSnapshot(editor->getLocalBounds());
                 if(!image.isValid()){std::cerr<<"UNLOAD: invalid editor snapshot\\n";return false;}
             }

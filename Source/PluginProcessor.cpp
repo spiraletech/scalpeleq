@@ -747,6 +747,7 @@ void PRISMVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     }
 
     analyzerFifo.reset();
+    analyzerHealth_.reset();
     analyzerQueue.fill(0.0f);analyzerRightQueue.fill(0.0f);
     fftWritePos = 0;
     fftHopCounter = 0;
@@ -966,6 +967,7 @@ void PRISMVSTAudioProcessor::pushAnalyzerSamples(const juce::AudioBuffer<float>&
 
     const int written = size1 + size2;
     analyzerFifo.finishedWrite(written);
+    analyzerHealth_.recordAudioBlock(requested, written);
     if (written > 0)
         analyzerEvent.signal();
 }
@@ -1078,6 +1080,7 @@ void PRISMVSTAudioProcessor::renderSpectrumFrame()
         spectrum[(size_t)i].store(toDb(peakMagnitude + 1.0e-12f));
     }
     publishWeatherAnalysis();
+    analyzerHealth_.recordFftFrame();
 }
 
 void PRISMVSTAudioProcessor::copySpectrum(std::array<float, spectrumBins>& destination) const noexcept
