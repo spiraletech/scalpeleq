@@ -73,6 +73,11 @@ bool verifyPluginRemovalLifecycle() {
         {
             std::unique_ptr<juce::AudioProcessorEditor> editor(processor->createEditor());
             if(!editor){std::cerr<<"UNLOAD: editor construction failed\\n";return false;}
+            for(auto* child:editor->getChildren())
+                if(dynamic_cast<juce::ResizableCornerComponent*>(child)!=nullptr){
+                    std::cerr<<"UI: generic bottom-right resize grip is visible\\n";
+                    return false;
+                }
             juce::AudioBuffer<float> block(2,256);
             juce::MidiBuffer midi;
             for(int frame=0;frame<32;++frame){
