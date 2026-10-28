@@ -82,6 +82,7 @@ public:
         repaint();
     }
     bool isFrozen() const noexcept {return frozen_;}
+    void releaseVisualResources() noexcept {mercury3D_.reset();mercury3DImage_={};}
     void setXray(bool active) {
         if(xrayActive_!=active){
             xrayActive_=active;
@@ -157,6 +158,7 @@ public:
     juce::Point<int> backgroundRasterSize() const noexcept {return {rackBackground_.getWidth(),rackBackground_.getHeight()};}
 private:
     using SliderA=juce::AudioProcessorValueTreeState::SliderAttachment;
+    bool closing_=false;
     void paintRack(juce::Graphics&);
     void layoutRack();
     using ButtonA=juce::AudioProcessorValueTreeState::ButtonAttachment;
