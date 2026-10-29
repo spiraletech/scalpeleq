@@ -93,7 +93,7 @@ public:
         const bool xray=button.getButtonText()=="X-RAY";
         const bool deckSwitch=button.getButtonText()=="ON"||button.getButtonText()=="OFF";
         const bool actionSwitch=button.getButtonText()=="MONO"||button.getButtonText()=="SOLO"||
-            button.getButtonText()=="PHASE"||button.getButtonText()=="LIMIT";
+            button.getButtonText().startsWith("PHASE")||button.getButtonText()=="LIMIT";
         const bool depressed=active&&(deckSwitch||actionSwitch);
         const bool snow=button.getButtonText()=="FREEZE"||button.getButtonText()=="RESUME";
         const bool heat=button.getButtonText().startsWith("SONAR ")||button.getButtonText()=="HEAT MAP";
@@ -172,7 +172,7 @@ public:
         const bool depressedSwitch=b.getToggleState()&&
             (b.getButtonText()=="ON"||b.getButtonText()=="OFF"||
              b.getButtonText()=="MONO"||b.getButtonText()=="SOLO"||
-             b.getButtonText()=="PHASE"||b.getButtonText()=="LIMIT");
+             b.getButtonText().startsWith("PHASE")||b.getButtonText()=="LIMIT");
         g.setColour(b.isEnabled()?juce::Colour(xray?0xffff624b:
             depressedSwitch?0xffffeee0:0xff241a14):juce::Colour(0xff8d8177));
         g.setFont(juce::Font(juce::FontOptions(juce::jlimit(11.0f,13.0f,b.getHeight()*.43f),juce::Font::bold)));
