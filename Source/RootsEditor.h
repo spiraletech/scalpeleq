@@ -141,7 +141,7 @@ private:
     float xToFreq(float x) const;
     float param(int i,const char* suffix) const;
     void write(int i,const char* suffix,float value);
-    int hitNode(juce::Point<float>) const;
+    int hitNode(juce::Point<float>,bool cycleCoincidentBand=false) const;
     int hitCarveNode(juce::Point<float>) const;
     int hitCarveTab(juce::Point<float>) const;
     void popup();
