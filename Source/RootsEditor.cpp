@@ -76,10 +76,7 @@ float RootsGraph::param(int i,const char* suffix)const {
 void RootsGraph::write(int i,const char* suffix,float value) {
     change(processor_,PRISMVSTAudioProcessor::rootsNodeId(i,suffix),value);
 }
-int RootsGraph::hitNode(juce::Point<float> p)const{
-    // Adjacent ROOT boundary handles may occupy the identical x/y point.
-    // Cycle among geometrically coincident handles instead of making the
-    // later ROOT permanently impossible to select.
+int RootsGraph::hitNode(juce::Point<float> p,bool cycleCoincidentBand)const{
     float nearest=18.0f;
     std::array<float,prism::roots::v2::kNodes> distances{};
     for(int i=0;i<prism::roots::v2::kNodes;++i){
@@ -88,13 +85,11 @@ int RootsGraph::hitNode(juce::Point<float> p)const{
         nearest=juce::jmin(nearest,distances[(size_t)i]);
     }
     if(nearest>=18.0f)return -1;
-    int first=-1,next=-1;
-    for(int i=0;i<prism::roots::v2::kNodes;++i){
-        if(distances[(size_t)i]>nearest+1.25f)continue;
-        if(first<0)first=i;
-        if(i>selected_&&next<0)next=i;
-    }
-    return next>=0?next:first;
+    std::array<bool,prism::roots::v2::kNodes> candidates{};
+    for(int i=0;i<prism::roots::v2::kNodes;++i)
+        candidates[(size_t)i]=distances[(size_t)i]<=nearest+1.25f;
+    return surgery::ui::chooseBoundaryNode(candidates,selected_,
+                                            cycleCoincidentBand);
 }
 juce::Colour RootsGraph::colour(int root) const {
     const auto id="surgery_root"+juce::String(root+1)+"_rgb";
@@ -743,7 +738,10 @@ void RootsGraph::mouseDown(const juce::MouseEvent& e){
             return;
         }
     }
-    const int hit=hitNode(e.position);
+    // Normal clicks preserve the active band's handle priority. A deliberate
+    // triple-click is the sole gesture that cycles to a neighboring band dot.
+    const bool cycleCoincidentBand=!e.mods.isPopupMenu()&&e.getNumberOfClicks()>=3;
+    const int hit=hitNode(e.position,cycleCoincidentBand);
     if(hit>=0)selectNode(hit);
     if(e.mods.isPopupMenu()){
         if(hit<0){
@@ -819,7 +817,9 @@ void RootsGraph::mouseDoubleClick(const juce::MouseEvent& e){
     // Finish any gesture opened by the second mouse-down before resetting.
     const int tab=hitCarveTab(e.position);
     const int carve=tab>=0?tab:hitCarveNode(e.position);
-    const int boundary=carve<0?hitNode(e.position):-1;
+    const int boundary=carve<0?hitNode(e.position,false):-1;
+    const bool coincidentBand=boundary>=0&&
+        hitNode(e.position,true)!=boundary;
     if(draggingCarve_>=0||dragging_>=0)mouseUp(e);
     if(tab>=0&&pval(processor_.apvts,
         PRISMVSTAudioProcessor::carveId(selected_/2,tab,"on"))<0.5f){
@@ -834,8 +834,12 @@ void RootsGraph::mouseDoubleClick(const juce::MouseEvent& e){
     }
     if(boundary>=0){
         selectNode(boundary);
-        processor_.resetRootBoundary(boundary);
-        clampCarvesToRoot(boundary/2);
+        // Do not reset an overlapping boundary on click two of an intentional
+        // triple-click. Unique handles retain their double-click reset.
+        if(!coincidentBand){
+            processor_.resetRootBoundary(boundary);
+            clampCarvesToRoot(boundary/2);
+        }
         repaint();
     }
 }
