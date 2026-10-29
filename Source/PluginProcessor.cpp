@@ -556,7 +556,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
             juce::ParameterID{rootsRootControlId(root,"color_dynamic"),1},label+"COLOR Dynamic",
             juce::NormalisableRange<float>(0.0f,100.0f,0.1f),0.0f));
         p.push_back(std::make_unique<juce::AudioParameterBool>(
-            juce::ParameterID{rootsRootControlId(root,"phase"),1},label+"PHASE Auto Coherence",false));
+            juce::ParameterID{rootsRootControlId(root,"phase"),1},
+            "BAND "+juce::String(root+1)+" PHASE CORRECTION",false));
         p.push_back(std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID{rootsRootControlId(root,"limit_amount"),1},label+"LIMIT Optical Amount",
             juce::NormalisableRange<float>(0.0f,100.0f,0.1f),0.0f));
