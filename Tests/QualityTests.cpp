@@ -73,6 +73,12 @@ bool verifyPluginRemovalLifecycle() {
                 return false;
             }
         }
+        if(auto* phase=processor->apvts.getParameter(
+               PRISMVSTAudioProcessor::rootsRootControlId(0,"phase"));
+           phase==nullptr||phase->getName(64)!="BAND 1 PHASE CORRECTION"){
+            std::cerr<<"UI: PHASE parameter contract is not PHASE CORRECTION\\n";
+            return false;
+        }
         processor->prepareToPlay(48000.0,256);
         // Alternate CPU X-RAY ON/OFF while testing host-style unload.
         // Regresses the exact editor path that previously owned D3D11 state.
@@ -196,7 +202,7 @@ bool runQualityTests(){
         }
         if(visibleBandDials!=2){std::cerr<<"Scalpel Band panel has "<<visibleBandDials<<" visible knobs, expected 2\n";return false;}
         for(const auto& item:std::array<std::pair<const char*,const char*>,3>{{
-                {"MONO","mono"},{"PHASE","phase"},{"LIMIT","limit_on"}}}){
+                {"MONO","mono"},{"PHASE CORRECTION","phase"},{"LIMIT","limit_on"}}}){
             juce::TextButton* control=nullptr;
             for(auto* child:ui->getChildren())if(auto* b=dynamic_cast<juce::TextButton*>(child))
                 if(b->getButtonText()==item.first&&b->isVisible())control=b;
