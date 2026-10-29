@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main, design/scalpel-vintage-hardware ]
+    branches: [ main, design/scalpel-vintage-hardware, feature/xray-3d-fluid ]
   workflow_dispatch:
 
 concurrency:
@@ -63,6 +63,6 @@ jobs:
       - name: Upload VST3
         uses: actions/upload-artifact@v4
         with:
-          name: SCALPEL-EQ-0.1.0-Windows-x64-VST3
+          name: SCALPEL-EQ-1.0.3-Windows-x64-VST3
           path: dist
           if-no-files-found: error
