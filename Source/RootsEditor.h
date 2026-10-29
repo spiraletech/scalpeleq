@@ -82,6 +82,7 @@ public:
         repaint();
     }
     bool isFrozen() const noexcept {return frozen_;}
+    void releaseVisualResources() noexcept {mercury3D_.reset();mercury3DImage_={};}
     void setXray(bool active) {
         if(xrayActive_!=active){
             xrayActive_=active;
@@ -114,7 +115,7 @@ private:
         bool valid=false;
     };
     std::array<ResponseCache,4> responseCache_;
-    juce::Image spectralHeat_{juce::Image::ARGB,PRISMVSTAudioProcessor::labBars,64,true};
+    juce::Image spectralHeat_{juce::Image::ARGB,PRISMVSTAudioProcessor::labBars,224,true};
     std::array<float,PRISMVSTAudioProcessor::labBars> heatLevels_{};
     bool heatValid_=false;
     std::array<float,3> paintOptions_{};
@@ -140,7 +141,7 @@ private:
     float xToFreq(float x) const;
     float param(int i,const char* suffix) const;
     void write(int i,const char* suffix,float value);
-    int hitNode(juce::Point<float>) const;
+    int hitNode(juce::Point<float>,bool cycleCoincidentBand=false) const;
     int hitCarveNode(juce::Point<float>) const;
     int hitCarveTab(juce::Point<float>) const;
     void popup();
@@ -157,6 +158,7 @@ public:
     juce::Point<int> backgroundRasterSize() const noexcept {return {rackBackground_.getWidth(),rackBackground_.getHeight()};}
 private:
     using SliderA=juce::AudioProcessorValueTreeState::SliderAttachment;
+    bool closing_=false;
     void paintRack(juce::Graphics&);
     void layoutRack();
     using ButtonA=juce::AudioProcessorValueTreeState::ButtonAttachment;
@@ -178,7 +180,8 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> jukeModeA_;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> reducedMotionA_;
     juce::TextButton heatToggle_{"SONAR ON"},freezeButton_{"FREEZE"};
-    juce::TextButton mono_{"MONO"},on_{"ON"},off_{"OFF"},solo_{"SOLO"},phase_{"PHASE"},limit_{"LIMIT"};
+    juce::TextButton mono_{"MONO"},on_{"ON"},off_{"OFF"},solo_{"SOLO"},
+        phase_{"PHASE CORRECTION"},limit_{"LIMIT"};
     int mode_=0,carveSlot_=0;
     std::array<juce::TextButton,4> modeButtons_;
     std::array<juce::TextButton,4> carveSlotButtons_;

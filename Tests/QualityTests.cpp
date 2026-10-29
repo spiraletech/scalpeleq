@@ -1,6 +1,8 @@
 #include <JuceHeader.h>
 #include "../Source/PluginProcessor.h"
 #include "../Source/ScalpelFluid3D.h"
+#include "../Source/ScalpelAssets.h"
+#include <BinaryData.h>
 #include <chrono>
 #include <fstream>
 #include <thread>
@@ -44,10 +46,43 @@ bool click(juce::Component& parent,const juce::String& caption){
 // both been active. This intentionally exercises the release/prepare cycles
 // used by DAWs when changing mixer chains without modifying sound parameters.
 bool verifyPluginRemovalLifecycle() {
+    // Static PNGs must remain software-backed so no Direct2D/NVIDIA resource
+    // survives until Windows loader-lock teardown.
+    for(const auto& image:{
+        scalpel::loadSoftwareAsset(BinaryData::scalpelknob_png,BinaryData::scalpelknob_pngSize),
+        scalpel::loadSoftwareAsset(BinaryData::scalpelfreeze_png,BinaryData::scalpelfreeze_pngSize),
+        scalpel::loadSoftwareAsset(BinaryData::scalpelheatmap_png,BinaryData::scalpelheatmap_pngSize),
+        scalpel::loadSoftwareAsset(BinaryData::approvedreference_png,BinaryData::approvedreference_pngSize)}) {
+        if(!image.isValid() ||
+           image.getPixelData()->createType()->getTypeID()!=juce::SoftwareImageType{}.getTypeID()) {
+            std::cerr<<"UNLOAD: artwork is not software-backed\\n";
+            return false;
+        }
+    }
     constexpr int cycles=12;
     for(int cycle=0;cycle<cycles;++cycle){
         auto processor=std::make_unique<PRISMVSTAudioProcessor>();
+        static constexpr std::array<int,7> expectedBandColours{
+            0xE05246,0xD99045,0x6EAA78,0x55BFCB,0x425D9B,0x9A63B8,0xD97A9C
+        };
+        for(int band=0;band<7;++band){
+            const auto id="surgery_root"+juce::String(band+1)+"_rgb";
+            const auto* colour=processor->apvts.getRawParameterValue(id);
+            if(colour==nullptr||juce::roundToInt(colour->load())!=expectedBandColours[(size_t)band]){
+                std::cerr<<"UI: incorrect default colour for BAND "<<band+1<<"\\n";
+                return false;
+            }
+        }
+        if(auto* phase=processor->apvts.getParameter(
+               PRISMVSTAudioProcessor::rootsRootControlId(0,"phase"));
+           phase==nullptr||phase->getName(64)!="BAND 1 PHASE CORRECTION"){
+            std::cerr<<"UI: PHASE parameter contract is not PHASE CORRECTION\\n";
+            return false;
+        }
         processor->prepareToPlay(48000.0,256);
+        // Alternate CPU X-RAY ON/OFF while testing host-style unload.
+        // Regresses the exact editor path that previously owned D3D11 state.
+        set(*processor,"scalpel_xray",cycle%2==0?1.0f:0.0f);
         if(processor->getLatencySamples()!=0){
             std::cerr<<"UNLOAD: unexpected reported plugin latency\\n";
             return false;
@@ -55,6 +90,20 @@ bool verifyPluginRemovalLifecycle() {
         {
             std::unique_ptr<juce::AudioProcessorEditor> editor(processor->createEditor());
             if(!editor){std::cerr<<"UNLOAD: editor construction failed\\n";return false;}
+            bool bandModeSelected=false;
+            for(auto* child:editor->getChildren()){
+                if(dynamic_cast<juce::ResizableCornerComponent*>(child)!=nullptr){
+                    std::cerr<<"UI: generic bottom-right resize grip is visible\\n";
+                    return false;
+                }
+                if(auto* button=dynamic_cast<juce::TextButton*>(child);
+                   button&&button->getButtonText()=="BAND MODE")
+                    bandModeSelected=button->getToggleState();
+            }
+            if(!bandModeSelected){
+                std::cerr<<"UI: fresh editor did not start on BAND MODE\\n";
+                return false;
+            }
             juce::AudioBuffer<float> block(2,256);
             juce::MidiBuffer midi;
             for(int frame=0;frame<32;++frame){
@@ -62,7 +111,7 @@ bool verifyPluginRemovalLifecycle() {
                 processor->processBlock(block,midi);
             }
             juce::Timer::callPendingTimersSynchronously();
-            if(cycle%3==0){
+            if(cycle%3==0 || cycle%2==0){
                 const auto image=editor->createComponentSnapshot(editor->getLocalBounds());
                 if(!image.isValid()){std::cerr<<"UNLOAD: invalid editor snapshot\\n";return false;}
             }
@@ -153,7 +202,7 @@ bool runQualityTests(){
         }
         if(visibleBandDials!=2){std::cerr<<"Scalpel Band panel has "<<visibleBandDials<<" visible knobs, expected 2\n";return false;}
         for(const auto& item:std::array<std::pair<const char*,const char*>,3>{{
-                {"MONO","mono"},{"PHASE","phase"},{"LIMIT","limit_on"}}}){
+                {"MONO","mono"},{"PHASE CORRECTION","phase"},{"LIMIT","limit_on"}}}){
             juce::TextButton* control=nullptr;
             for(auto* child:ui->getChildren())if(auto* b=dynamic_cast<juce::TextButton*>(child))
                 if(b->getButtonText()==item.first&&b->isVisible())control=b;

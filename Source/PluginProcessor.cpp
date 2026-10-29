@@ -556,7 +556,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
             juce::ParameterID{rootsRootControlId(root,"color_dynamic"),1},label+"COLOR Dynamic",
             juce::NormalisableRange<float>(0.0f,100.0f,0.1f),0.0f));
         p.push_back(std::make_unique<juce::AudioParameterBool>(
-            juce::ParameterID{rootsRootControlId(root,"phase"),1},label+"PHASE Auto Coherence",false));
+            juce::ParameterID{rootsRootControlId(root,"phase"),1},
+            juce::String("BAND ")+juce::String(root+1)+" PHASE CORRECTION",false));
         p.push_back(std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID{rootsRootControlId(root,"limit_amount"),1},label+"LIMIT Optical Amount",
             juce::NormalisableRange<float>(0.0f,100.0f,0.1f),0.0f));
@@ -657,7 +658,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
     p.push_back(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID{"surgery_theme",1},"Surgery UI Theme",
         juce::StringArray{"ONYX","ETHER LAB","ALIEN GRID","CINEMA VOID"},0));
-    static constexpr unsigned colours[]{0x6BBDD4,0xDFA871,0xE6BD6A,0x8DCEA8,0x9DADEA,0xD2A2E5,0xE89EAD};
+    // Canonical SCALPEL seven-band identity: red, orange, green, cyan,
+    // dark blue, amethyst purple, pink.
+    static constexpr unsigned colours[]{
+        0xE05246,0xD99045,0x6EAA78,0x55BFCB,0x425D9B,0x9A63B8,0xD97A9C
+    };
     for(int root=0;root<7;++root)
         p.push_back(std::make_unique<juce::AudioParameterInt>(
             juce::ParameterID{"surgery_root"+juce::String(root+1)+"_rgb",1},
@@ -747,6 +752,7 @@ void PRISMVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     }
 
     analyzerFifo.reset();
+    analyzerHealth_.reset();
     analyzerQueue.fill(0.0f);analyzerRightQueue.fill(0.0f);
     fftWritePos = 0;
     fftHopCounter = 0;
@@ -966,6 +972,7 @@ void PRISMVSTAudioProcessor::pushAnalyzerSamples(const juce::AudioBuffer<float>&
 
     const int written = size1 + size2;
     analyzerFifo.finishedWrite(written);
+    analyzerHealth_.recordAudioBlock(requested, written);
     if (written > 0)
         analyzerEvent.signal();
 }
@@ -1078,6 +1085,7 @@ void PRISMVSTAudioProcessor::renderSpectrumFrame()
         spectrum[(size_t)i].store(toDb(peakMagnitude + 1.0e-12f));
     }
     publishWeatherAnalysis();
+    analyzerHealth_.recordFftFrame();
 }
 
 void PRISMVSTAudioProcessor::copySpectrum(std::array<float, spectrumBins>& destination) const noexcept
