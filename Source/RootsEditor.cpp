@@ -1068,7 +1068,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         addAndMakeVisible(onyxLabels_[(size_t)i]);
     }
     mono_.setTooltip("Frequency-selective MONO on the selected BAND only");
-    phase_.setTooltip("Automatic per-band coherence guard: gently reduces anti-correlated SIDE power, with smoothed engagement.");
+    phase_.setTooltip("Automatic per-band L/R phase alignment. Estimates the phase offset and rotates the right-channel band toward the left reference without reducing stereo width.");
     limit_.setTooltip("Enable fixed-depth LA-2A-inspired optical leveling for the selected band. The hidden automation amount remains compatible with saved sessions.");
     analyzerDepthLabel_.setText("HEAT MAP",juce::dontSendNotification);
     analyzerSlopeLabel_.setText("FREEZE",juce::dontSendNotification);
