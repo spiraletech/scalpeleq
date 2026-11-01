@@ -16,8 +16,8 @@ public:
         setColour(juce::PopupMenu::highlightedTextColourId,juce::Colour(0xffffe8c7));
         setColour(juce::ComboBox::textColourId,juce::Colour(0xfff9e2c5));
     }
-    juce::Font getComboBoxFont(juce::ComboBox&) override {return juce::Font(juce::FontOptions(13.0f));}
-    juce::Font getPopupMenuFont() override {return juce::Font(juce::FontOptions(13.0f));}
+    juce::Font getComboBoxFont(juce::ComboBox&) override {return juce::Font(juce::FontOptions("Segoe UI",13.0f,juce::Font::plain));}
+    juce::Font getPopupMenuFont() override {return juce::Font(juce::FontOptions("Segoe UI",13.0f,juce::Font::plain));}
     void positionComboBoxText(juce::ComboBox& box,juce::Label& label) override {
         label.setBounds(10,1,juce::jmax(0,box.getWidth()-36),box.getHeight()-2);
         label.setFont(getComboBoxFont(box));
@@ -42,39 +42,47 @@ public:
     void drawRotarySlider(juce::Graphics& g,int x,int y,int w,int h,float position,
                           float start,float end,juce::Slider& slider) override {
         const float cx=x+w*.5f,cy=y+h*.46f;
-        const float radius=juce::jlimit(14.f,43.f,.45f*(float)std::min(w,h));
+        const float radius=juce::jlimit(14.f,42.f,.43f*(float)std::min(w,h));
         const float angle=start+position*(end-start);
         const auto face=juce::Rectangle<float>(cx-radius,cy-radius,2*radius,2*radius);
 
-        // Black broadcast-console dial with a real parameter arc. This is
-        // vector-drawn so 100/125/150/200% host DPI all share one asset.
-        g.setColour(juce::Colour(0xff3b2418).withAlpha(.36f));
-        g.fillEllipse(face.translated(2.0f,4.0f).expanded(3.0f));
-        juce::ColourGradient rim(juce::Colour(0xff8e6b52),cx-radius,cy-radius,
-                                 juce::Colour(0xff160f0c),cx+radius,cy+radius,false);
-        g.setGradientFill(rim);g.fillEllipse(face.expanded(2.0f));
-        g.setColour(juce::Colour(0xff080706));g.fillEllipse(face);
-        juce::ColourGradient dial(juce::Colour(0xff3a3734),cx-radius*.5f,cy-radius,
-                                  juce::Colour(0xff151312),cx+radius*.6f,cy+radius,false);
-        g.setGradientFill(dial);g.fillEllipse(face.reduced(5.0f));
-        g.setColour(juce::Colour(0xff6c625a).withAlpha(.72f));
-        g.drawEllipse(face.reduced(5.0f),1.0f);
+        // One machined bezel, one dial face and one precise indicator. Keeping
+        // the geometry vector-native removes the stacked/rasterized "AI knob"
+        // look and remains sharp at every host DPI.
+        g.setColour(juce::Colour(0xff4a2f20).withAlpha(.26f));
+        g.fillEllipse(face.translated(1.5f,3.0f).expanded(1.5f));
+        juce::ColourGradient bezel(juce::Colour(0xff9c7657),cx-radius,cy-radius,
+                                   juce::Colour(0xff241711),cx+radius,cy+radius,false);
+        g.setGradientFill(bezel);g.fillEllipse(face.expanded(1.4f));
+        g.setColour(juce::Colour(0xff0b0908));g.fillEllipse(face);
+        juce::ColourGradient dial(juce::Colour(0xff34302c),cx-radius*.45f,cy-radius,
+                                  juce::Colour(0xff171412),cx+radius*.55f,cy+radius,false);
+        g.setGradientFill(dial);g.fillEllipse(face.reduced(4.5f));
+        g.setColour(juce::Colour(0xff8d7968).withAlpha(.58f));
+        g.drawEllipse(face.reduced(4.5f),.85f);
 
-        juce::Path backgroundArc,activeArc;
-        backgroundArc.addCentredArc(cx,cy,radius+4.0f,radius+4.0f,0.0f,start,end,true);
-        activeArc.addCentredArc(cx,cy,radius+4.0f,radius+4.0f,0.0f,start,angle,true);
-        g.setColour(juce::Colour(0xff4b3c33));g.strokePath(backgroundArc,juce::PathStrokeType(3.0f));
-        if(position>0.002f){
-            g.setColour(juce::Colour(0xffff7900).withAlpha(.18f));
-            g.strokePath(activeArc,juce::PathStrokeType(7.0f));
-            g.setColour(juce::Colour(0xffff7900));
-            g.strokePath(activeArc,juce::PathStrokeType(3.3f));
+        juce::Path track;
+        track.addCentredArc(cx,cy,radius+3.0f,radius+3.0f,0.0f,start,end,true);
+        g.setColour(juce::Colour(0xff5b4435).withAlpha(.64f));
+        g.strokePath(track,juce::PathStrokeType(2.0f));
+
+        const auto& range=slider.getNormalisableRange();
+        const float home=juce::jlimit(0.0f,1.0f,(float)range.convertTo0to1(slider.getDoubleClickReturnValue()));
+        const float homeAngle=start+home*(end-start);
+        if(std::abs(position-home)>.002f){
+            juce::Path activeArc;
+            activeArc.addCentredArc(cx,cy,radius+3.0f,radius+3.0f,0.0f,
+                                    std::min(homeAngle,angle),std::max(homeAngle,angle),true);
+            g.setColour(juce::Colour(0xffff8800).withAlpha(.16f));
+            g.strokePath(activeArc,juce::PathStrokeType(5.0f));
+            g.setColour(juce::Colour(0xffff8800));
+            g.strokePath(activeArc,juce::PathStrokeType(2.4f));
         }
 
         juce::Path pointer;
-        pointer.addRoundedRectangle(cx-1.8f,cy-radius+10.0f,3.6f,radius*.48f,1.7f);
+        pointer.addRoundedRectangle(cx-1.5f,cy-radius+10.0f,3.0f,radius*.43f,1.5f);
         pointer.applyTransform(juce::AffineTransform::rotation(angle,cx,cy));
-        g.setColour(juce::Colour(0xfffff0dc));g.fillPath(pointer);
+        g.setColour(juce::Colour(0xffffead0));g.fillPath(pointer);
     }
     void drawButtonBackground(juce::Graphics& g,juce::Button& button,
                               const juce::Colour&,bool over,bool down) override {
@@ -183,7 +191,7 @@ public:
         const bool pageTab=tabText=="BAND MODE"||tabText=="CARVE"||tabText=="COLOR"||tabText=="ANALYZE";
         if(pageTab){
             g.setColour(b.getToggleState()?juce::Colour(0xffffe8ce):juce::Colour(0xff17110d));
-            g.setFont(juce::Font(juce::FontOptions(15.0f,juce::Font::bold|juce::Font::italic)));
+            g.setFont(juce::Font(juce::FontOptions("Segoe UI",15.0f,juce::Font::bold|juce::Font::italic)));
             g.drawFittedText(tabText,b.getLocalBounds().reduced(7,3),juce::Justification::centred,1);
             return;
         }
@@ -193,7 +201,7 @@ public:
              b.getButtonText().startsWith("PHASE")||b.getButtonText()=="LIMIT");
         g.setColour(b.isEnabled()?juce::Colour(xray?0xffff624b:
             depressedSwitch?0xffffeee0:0xff241a14):juce::Colour(0xff8d8177));
-        g.setFont(juce::Font(juce::FontOptions(juce::jlimit(11.0f,13.0f,b.getHeight()*.43f),juce::Font::bold)));
+        g.setFont(juce::Font(juce::FontOptions("Segoe UI",juce::jlimit(11.0f,13.0f,b.getHeight()*.43f),juce::Font::bold)));
         g.drawFittedText(b.getButtonText(),xray?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2),
                          juce::Justification::centred,1);
     }
@@ -214,7 +222,7 @@ public:
             g.setColour(juce::Colour(0xffe2d0b9));g.fillRoundedRectangle(r,2.f);
             g.setColour(juce::Colour(0xffa88f79));g.drawRoundedRectangle(r,2.f,.7f);
             if(!label.isBeingEdited()){
-                g.setColour(juce::Colour(0xff32261f));g.setFont(juce::Font(juce::FontOptions(12.5f,juce::Font::bold)));
+                g.setColour(juce::Colour(0xff32261f));g.setFont(juce::Font(juce::FontOptions("Segoe UI",12.5f,juce::Font::bold)));
                 g.drawFittedText(label.getText(),label.getLocalBounds().reduced(2),juce::Justification::centred,1);
             }
             return;
