@@ -118,7 +118,10 @@ inline bool verifyWeatherUI(){
         if(box->getNumItems()==1&&box->getItemText(0)=="Standard+")sonarBox=box;
         if(box->getNumItems()==6&&box->getItemText(0)=="Real Jukebox")jukeBox=box;
     }
-    if(!sonarBox||!jukeBox||sonarBox->getBounds().intersects(jukeBox->getBounds()))return fail("independent dropdown layout");
+    // Legacy visual/JUKE automation remains recallable but the approved
+    // ANALYZE shelf exposes only HEAT MAP, FREEZE and VISUAL DECAY.
+    if(!sonarBox||!jukeBox||sonarBox->isVisible()||jukeBox->isVisible())
+        return fail("legacy dropdowns escaped the 1.0.5 hidden automation contract");
     set(*p,"sonar_weather_mode",1);set(*p,"sonar_visual_style",6);pump(40);
     if(p->apvts.getRawParameterValue("sonar_weather_mode")->load()!=1)return fail("host style update rewrites legacy automation");
     set(*p,"sonar_visual_style",0);pump(40);if(sonarBox->getSelectedId()!=8)return fail("legacy values must display Standard+");
