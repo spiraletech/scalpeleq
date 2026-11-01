@@ -23,14 +23,23 @@ inline bool verifyUI105(PRISMVSTAudioProcessor& processor, juce::AudioProcessorE
     if(editor.getWidth()!=1344||editor.getHeight()!=756){
         std::cerr<<"UI105: production editor is not 1344x756\n";return false;
     }
-    int tabs=0,visibleLegacyBandButtons=0;
-    for(auto* child:editor.getChildren())if(auto* button=dynamic_cast<juce::TextButton*>(child)){
-        const auto text=button->getButtonText();
-        if(text=="BAND MODE"||text=="CARVE"||text=="COLOR"||text=="ANALYZE")++tabs;
-        if(text.startsWith("BAND ")&&text!="BAND MODE"&&button->isVisible())++visibleLegacyBandButtons;
+    int tabs=0,visibleBandButtons=0;
+    RootsGraph* graph=nullptr;
+    for(auto* child:editor.getChildren()){
+        if(auto* candidate=dynamic_cast<RootsGraph*>(child))graph=candidate;
+        if(auto* button=dynamic_cast<juce::TextButton*>(child)){
+            const auto text=button->getButtonText();
+            if(text=="BAND MODE"||text=="CARVE"||text=="COLOR"||text=="ANALYZE")++tabs;
+            if(text.startsWith("BAND ")&&text!="BAND MODE"&&button->isVisible())++visibleBandButtons;
+        }
     }
-    if(tabs!=4||visibleLegacyBandButtons!=0){
-        std::cerr<<"UI105: page tabs or legacy BAND row violates approved hierarchy\n";return false;
+    if(tabs!=4||visibleBandButtons!=7||graph==nullptr){
+        std::cerr<<"UI105: four pages or canonical BAND 1-7 rail is missing\n";return false;
+    }
+    for(int band=0;band<7;++band){
+        if(!click("BAND "+juce::String(band+1))||graph->selectedNode()!=band*2){
+            std::cerr<<"UI105: BAND "<<band+1<<" did not select its routed node\n";return false;
+        }
     }
     if(!click("BAND MODE"))return false;
     auto* phase=findButton("PHASE CORRECTION");
@@ -68,6 +77,6 @@ inline bool verifyUI105(PRISMVSTAudioProcessor& processor, juce::AudioProcessorE
     for(const auto* page:{"CARVE","COLOR","ANALYZE"})
         if(!click(page))return false;
     click("BAND MODE");
-    std::cout<<"SCALPEL UI 1.0.5: approved hierarchy, phase label, measured stereo meters and reset passed\n";
+    std::cout<<"SCALPEL UI 1.0.6: BAND 1-7 routing, phase label, measured stereo meters and reset passed\n";
     return true;
 }
