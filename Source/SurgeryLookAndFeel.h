@@ -182,21 +182,25 @@ public:
                                                         juce::PathStrokeType::rounded));
             }else{
                 g.setColour(juce::Colour(0xffffead1));
-                constexpr int arms=6;
-                const float length=face.getWidth()*.38f;
-                for(int i=0;i<arms;++i){
-                    const float angle=juce::MathConstants<float>::twoPi*i/arms;
+                const float length=face.getWidth()*.36f;
+                // Three uninterrupted axes guarantee a readable crystalline
+                // centre. Six outward forks stay connected at native scale.
+                for(int axis=0;axis<3;++axis){
+                    const float angle=juce::MathConstants<float>::pi*axis/3.0f;
+                    const juce::Point<float> unit{std::cos(angle),std::sin(angle)};
+                    g.drawLine({centre-unit*length,centre+unit*length},2.7f);
+                }
+                for(int arm=0;arm<6;++arm){
+                    const float angle=juce::MathConstants<float>::twoPi*arm/6.0f;
                     const juce::Point<float> unit{std::cos(angle),std::sin(angle)};
                     const juce::Point<float> normal{-unit.y,unit.x};
-                    const auto tip=centre+unit*length;
-                    g.drawLine({centre,tip},2.35f);
-                    const auto branchRoot=centre+unit*(length*.72f);
-                    const auto back=unit*(length*.13f);
-                    const auto side=normal*(length*.10f);
-                    g.drawLine({branchRoot,branchRoot-back+side},1.55f);
-                    g.drawLine({branchRoot,branchRoot-back-side},1.55f);
+                    const auto root=centre+unit*(length*.50f);
+                    const auto forward=unit*(length*.25f);
+                    const auto side=normal*(length*.14f);
+                    g.drawLine({root,root+forward+side},1.9f);
+                    g.drawLine({root,root+forward-side},1.9f);
                 }
-                g.fillEllipse(centre.x-1.5f,centre.y-1.5f,3.0f,3.0f);
+                g.fillEllipse(centre.x-1.7f,centre.y-1.7f,3.4f,3.4f);
                 if(active){
                     g.setColour(juce::Colour(0xffffead1).withAlpha(.22f));
                     g.drawRoundedRectangle(tile.expanded(2.0f),8.5f,3.0f);
