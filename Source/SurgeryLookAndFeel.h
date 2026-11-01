@@ -116,23 +116,79 @@ public:
             return;
         }
         if(snow||heat){
-            static const auto snowImage=scalpel::loadSoftwareAsset(
-                BinaryData::scalpelfreeze_png,BinaryData::scalpelfreeze_pngSize);
-            static const auto heatImage=scalpel::loadSoftwareAsset(
-                BinaryData::scalpelheatmap_png,BinaryData::scalpelheatmap_pngSize);
-            const auto& sprite=snow?snowImage:heatImage;
-            if(!sprite.isNull()){
-                const float scale=.88f*std::min((float)button.getWidth(),(float)button.getHeight())/
-                                  (.67f*(float)sprite.getWidth());
-                const auto transform=juce::AffineTransform::scale(scale)
-                    .translated(button.getWidth()*.5f-sprite.getWidth()*scale*.5f,
-                                button.getHeight()*.5f-sprite.getHeight()*scale*.5f);
-                g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
-                g.drawImageTransformed(sprite,transform,false);
-                if(active){g.setColour(juce::Colour(0xff7b5c48).withAlpha(.14f));
-                    g.fillRoundedRectangle(r.reduced(6.f),5.f);}
-                return;
+            // ANALYZE uses scalable console switches, not pale raster tiles.
+            // The reference hierarchy is a dark recessed face, machined ivory
+            // bezel and a restrained orange lamp only for an active HEAT MAP.
+            const float side=std::min(r.getWidth(),r.getHeight())-14.0f;
+            const auto tile=juce::Rectangle<float>(r.getCentreX()-side*.5f,
+                                                   r.getCentreY()-side*.5f,
+                                                   side,side);
+            g.setColour(juce::Colour(0xff3d281c).withAlpha(.42f));
+            g.fillRoundedRectangle(tile.translated(2.0f,4.0f).expanded(2.0f),8.0f);
+            if(heat&&active){
+                g.setColour(juce::Colour(0xffff7800).withAlpha(.16f));
+                g.drawRoundedRectangle(tile.expanded(5.0f),10.0f,7.0f);
+                g.setColour(juce::Colour(0xffff8500));
+                g.drawRoundedRectangle(tile.expanded(2.0f),8.5f,2.3f);
             }
+            juce::ColourGradient bezel(juce::Colour(0xffffe7cb),tile.getX(),tile.getY(),
+                                       juce::Colour(0xff6d5140),tile.getRight(),tile.getBottom(),false);
+            g.setGradientFill(bezel);g.fillRoundedRectangle(tile,7.0f);
+            const auto face=tile.reduced(5.0f);
+            juce::ColourGradient darkFace(juce::Colour(0xff35302c),face.getX(),face.getY(),
+                                          juce::Colour(0xff0b0908),face.getRight(),face.getBottom(),false);
+            g.setGradientFill(darkFace);g.fillRoundedRectangle(face,5.0f);
+            g.setColour(juce::Colour(0xfffff0dc).withAlpha(.34f));
+            g.drawRoundedRectangle(face.reduced(.7f),4.5f,1.0f);
+            g.setColour(juce::Colour(0xff080605));
+            g.drawRoundedRectangle(tile,7.0f,1.2f);
+
+            const auto centre=face.getCentre();
+            if(heat){
+                juce::Path flame;
+                flame.startNewSubPath(centre.x+1.0f,face.getBottom()-11.0f);
+                flame.cubicTo(centre.x+15.0f,centre.y+7.0f,
+                              centre.x+11.0f,centre.y-7.0f,
+                              centre.x+2.0f,face.getY()+9.0f);
+                flame.cubicTo(centre.x+1.0f,centre.y-1.0f,
+                              centre.x-8.0f,centre.y-3.0f,
+                              centre.x-5.0f,face.getY()+18.0f);
+                flame.cubicTo(centre.x-18.0f,centre.y+2.0f,
+                              centre.x-14.0f,face.getBottom()-13.0f,
+                              centre.x+1.0f,face.getBottom()-11.0f);
+                juce::Path inner;
+                inner.startNewSubPath(centre.x,face.getBottom()-13.0f);
+                inner.cubicTo(centre.x+6.0f,centre.y+5.0f,
+                              centre.x+4.0f,centre.y-1.0f,
+                              centre.x+1.0f,centre.y-7.0f);
+                g.setColour(juce::Colour(heat&&active?0xffff9200:0xffc87932));
+                g.strokePath(flame,juce::PathStrokeType(3.6f,juce::PathStrokeType::curved,
+                                                        juce::PathStrokeType::rounded));
+                g.strokePath(inner,juce::PathStrokeType(2.8f,juce::PathStrokeType::curved,
+                                                        juce::PathStrokeType::rounded));
+            }else{
+                g.setColour(juce::Colour(0xffffead1));
+                constexpr int arms=6;
+                const float length=face.getWidth()*.34f;
+                for(int i=0;i<arms;++i){
+                    const float angle=juce::MathConstants<float>::twoPi*i/arms;
+                    const juce::Point<float> unit{std::cos(angle),std::sin(angle)};
+                    const juce::Point<float> normal{-unit.y,unit.x};
+                    const auto tip=centre+unit*length;
+                    g.drawLine({centre,tip},3.0f);
+                    const auto branchRoot=centre+unit*(length*.66f);
+                    const auto back=unit*(length*.18f);
+                    const auto side=normal*(length*.16f);
+                    g.drawLine({branchRoot,branchRoot-back+side},2.2f);
+                    g.drawLine({branchRoot,branchRoot-back-side},2.2f);
+                }
+                g.fillEllipse(centre.x-2.0f,centre.y-2.0f,4.0f,4.0f);
+                if(active){
+                    g.setColour(juce::Colour(0xffffead1).withAlpha(.22f));
+                    g.drawRoundedRectangle(tile.expanded(2.0f),8.5f,3.0f);
+                }
+            }
+            return;
         }
         // Answering-machine ON/OFF switches really sink into a dark well when
         // selected. The red pilot illuminates ONLY that active switch; the
@@ -217,13 +273,17 @@ public:
         g.strokePath(arrow,juce::PathStrokeType(1.6f));
     }
     void drawLabel(juce::Graphics& g,juce::Label& label) override {
-        if(dynamic_cast<juce::Slider*>(label.getParentComponent())!=nullptr){
+        if(auto* slider=dynamic_cast<juce::Slider*>(label.getParentComponent())){
             const auto r=label.getLocalBounds().toFloat().reduced(.5f);
-            g.setColour(juce::Colour(0xffe2d0b9));g.fillRoundedRectangle(r,2.f);
-            g.setColour(juce::Colour(0xffa88f79));g.drawRoundedRectangle(r,2.f,.7f);
+            g.setColour(slider->findColour(juce::Slider::textBoxBackgroundColourId));
+            g.fillRoundedRectangle(r,3.f);
+            g.setColour(slider->findColour(juce::Slider::textBoxOutlineColourId));
+            g.drawRoundedRectangle(r,3.f,.8f);
             if(!label.isBeingEdited()){
-                g.setColour(juce::Colour(0xff32261f));g.setFont(juce::Font(juce::FontOptions("Segoe UI",12.5f,juce::Font::bold)));
-                g.drawFittedText(label.getText(),label.getLocalBounds().reduced(2),juce::Justification::centred,1);
+                g.setColour(slider->findColour(juce::Slider::textBoxTextColourId));
+                g.setFont(juce::Font(juce::FontOptions("Segoe UI",13.0f,juce::Font::bold)));
+                g.drawFittedText(label.getText(),label.getLocalBounds().reduced(3,1),
+                                 juce::Justification::centred,1);
             }
             return;
         }
