@@ -46,8 +46,19 @@ inline bool verifyChassis105(){
                     error+=std::abs(a.getRed()-b.getRed())+std::abs(a.getGreen()-b.getGreen())+std::abs(a.getBlue()-b.getBlue());count+=3;
                 }
             error/=count;if(error>12){std::cerr<<"Chassis: corner proportions changed "<<error<<'\n';return false;}
-            for(auto point:{juce::Point<float>(2,size.y*.5f),juce::Point<float>(size.x-3.f,size.y*.5f),juce::Point<float>(size.x*.5f,3),juce::Point<float>(size.x*.5f,size.y-4.f)})
-                if(shot.getPixelAt((int)(point.x*scale),(int)(point.y*scale)).getBrightness()<.08f){std::cerr<<"Chassis: disconnected carbon/glass edge\n";return false;}
+            // 1.0.5 is a strict 16:9 product face. Extreme host aspect ratios
+            // letterbox instead of stretching the vent slots or circular knobs.
+            // Validate the transformed console perimeter, not the host window edge.
+            const auto faceTransform=surgery::rack::contentTransform(size.x,size.y);
+            for(auto logical:{juce::Point<float>(2,315),juce::Point<float>(1117,315),
+                              juce::Point<float>(560,3),juce::Point<float>(560,626)}){
+                const auto point=logical.transformedBy(faceTransform);
+                const int px=juce::jlimit(0,shot.getWidth()-1,juce::roundToInt(point.x*scale));
+                const int py=juce::jlimit(0,shot.getHeight()-1,juce::roundToInt(point.y*scale));
+                if(shot.getPixelAt(px,py).getBrightness()<.08f){
+                    std::cerr<<"Chassis: disconnected 1.0.5 console edge\n";return false;
+                }
+            }
             const auto top=surgery::rack::StormChassis::top(size.x);
             if(top.getCentreX()!=size.x*.5f||top.getBottom()>40)return false;
             for(bool right:{false,true}){const auto tube=surgery::rack::StormChassis::side(size.x,size.y,right);if(tube.getY()!=52||tube.getBottom()!=size.y-52)return false;}
@@ -60,6 +71,6 @@ inline bool verifyChassis105(){
     // Fast repeated logical resizes/moves while audio continues. Snapshot cost
     // above includes cold cache regeneration; steady paints are benchmarked separately.
     for(int n=0;n<16;++n){editor->setSize(840+n*48,610+n*28);editor->setTopLeftPosition(n*2,n);audio.clear();processor->processBlock(audio,midi);}
-    std::cout<<"STORM CHASSIS: 15 size/DPI captures, fixed X-head corners, connected glass/carbon edges, centred chamber, control containment and cache dimensions passed\n";
+    std::cout<<"STORM CHASSIS: 15 size/DPI captures, fixed X-head corners, connected 16:9 console edges, centred chamber, control containment and cache dimensions passed\n";
     return true;
 }
