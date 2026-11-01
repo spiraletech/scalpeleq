@@ -1109,6 +1109,7 @@ void PRISMVSTAudioProcessor::updateMeters(const juce::AudioBuffer<float>& buffer
 {
     const int n = buffer.getNumSamples();
     float peak = 0.0f;
+    std::array<float, 2> channelPeak {};
     double weightedEnergy = 0.0;
 
     for (int c = 0; c < juce::jmin(2, buffer.getNumChannels()); ++c)
@@ -1116,7 +1117,9 @@ void PRISMVSTAudioProcessor::updateMeters(const juce::AudioBuffer<float>& buffer
         const float* x = buffer.getReadPointer(c);
         for (int i = 0; i < n; ++i)
         {
-            peak = juce::jmax(peak, std::abs(x[i]));
+            const float magnitude = std::abs(x[i]);
+            peak = juce::jmax(peak, magnitude);
+            channelPeak[(size_t)c] = juce::jmax(channelPeak[(size_t)c], magnitude);
             float y = loudHp[(size_t)c].processSample(x[i]);
             y = loudShelf[(size_t)c].processSample(y);
             weightedEnergy += (double)y * (double)y;
@@ -1124,6 +1127,8 @@ void PRISMVSTAudioProcessor::updateMeters(const juce::AudioBuffer<float>& buffer
     }
 
     peakDb.store(toDb(peak + 1.0e-9f));
+    for (int channel = 0; channel < 2; ++channel)
+        channelPeakDb[(size_t)channel].store(toDb(channelPeak[(size_t)channel] + 1.0e-9f));
     auto held=peakHoldDb.load();
     const float measured=peakDb.load();
     while(measured>held&&!peakHoldDb.compare_exchange_weak(held,measured)) {}
