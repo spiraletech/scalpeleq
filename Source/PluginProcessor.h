@@ -57,6 +57,9 @@ public:
     float getInputPeakDb() const noexcept { return inputPeakDb.load(); }
     float getPeakDb() const noexcept { return peakDb.load(); }
     float getPeakHoldDb() const noexcept { return peakHoldDb.load(); }
+    float getChannelPeakDb(int channel) const noexcept {
+        return channelPeakDb[(size_t)juce::jlimit(0, 1, channel)].load();
+    }
     void resetPeakHold() noexcept { peakHoldDb.store(-144.0f); }
     float getGainReductionDb() const noexcept { return gainReductionDb.load(); }
     float getLufsShort() const noexcept { return lufsShort.load(); }
@@ -242,6 +245,7 @@ private:
     std::atomic<float> inputPeakDb { -144.0f };
     std::atomic<float> peakDb { -144.0f };
     std::atomic<float> peakHoldDb { -144.0f };
+    std::array<std::atomic<float>, 2> channelPeakDb {{ -144.0f, -144.0f }};
     std::atomic<float> gainReductionDb { 0.0f };
     std::atomic<float> lufsShort { -144.0f };
     std::atomic<float> lufsIntegrated { -144.0f };
