@@ -79,7 +79,10 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
         g.fillPath(slash);
     }
 
-    roundedPanel(g, {18, 118, (float)width - 36, 288}, true, 8.0f);
+    // 1.0.4 canon: seven persistent, functional BAND selectors sit between
+    // the identity plaque and analyzer. The graph remains the dominant field.
+    roundedPanel(g, {18, 118, (float)width - 36, 38}, false, 7.0f);
+    roundedPanel(g, {18, 160, (float)width - 36, 246}, true, 8.0f);
     roundedPanel(g, {32, 412, (float)width - 64, 43}, false, 8.0f);
     roundedPanel(g, {20, 461, (float)width - 40, 158}, false, 13.0f);
 
