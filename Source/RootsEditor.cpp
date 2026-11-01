@@ -1,6 +1,7 @@
 #include "RootsEditor.h"
 #include "RootsSpectrumColours.h"
 #include "ScalpelXRayChroma.h"
+#include "ScalpelUI105.h"
 #include "SurgerySpectralColours.h"
 #include <BinaryData.h>
 #include <cmath>
@@ -34,9 +35,9 @@ juce::Colour territory(int i){
 void rotary(juce::Slider& s,juce::String suffix,double resetValue) {
     s.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     s.setTextBoxStyle(juce::Slider::TextBoxBelow,false,90,22);
-    s.setColour(juce::Slider::textBoxTextColourId,juce::Colour(0xff2b2019));
-    s.setColour(juce::Slider::textBoxBackgroundColourId,juce::Colour(0xffe3cdb4));
-    s.setColour(juce::Slider::textBoxOutlineColourId,juce::Colour(0xffa58c70));
+    s.setColour(juce::Slider::textBoxTextColourId,scalpel::ui105::amber);
+    s.setColour(juce::Slider::textBoxBackgroundColourId,juce::Colour(0xff0b0908));
+    s.setColour(juce::Slider::textBoxOutlineColourId,juce::Colour(0xff5c4031));
     s.setTextValueSuffix(suffix);
     s.setDoubleClickReturnValue(true,resetValue);
 }
@@ -57,9 +58,10 @@ RootsGraph::~RootsGraph(){
                 parameter->endChangeGesture();
 }
 juce::Rectangle<float> RootsGraph::area() const {
-    // The new Scalpel lens fills the deck, with axes etched into its bezel.
+    // 1.0.5 reserves a true utility bay for PEAK and independent L/R meters.
+    // The spectrum remains logarithmic and interactive inside the left lens.
     const auto b=getLocalBounds().toFloat();
-    return {b.getX()+29.f,b.getY()+26.f,b.getWidth()-66.f,b.getHeight()-59.f};
+    return {b.getX()+55.f,b.getY()+22.f,b.getWidth()-302.f,b.getHeight()-56.f};
 }
 float RootsGraph::freqToX(float f) const {
     const auto r=area();
@@ -651,6 +653,8 @@ void RootsGraph::paint(juce::Graphics& g){
         // Identification is available on hover and in the CARVE shelf;
         // the reference X-RAY lens has clean nodes, never black C1-C4 tabs.
     }
+    scalpel::ui105::drawAnalyzerPanel(g,full,processor_.getPeakHoldDb(),
+        processor_.getChannelPeakDb(0),processor_.getChannelPeakDb(1));
     if(hover_&&r.contains(mouse_)){
         const int bar=prism::analysis::LabBands::indexForFrequency(xToFreq(mouse_.x));
         const float freq=xToFreq(mouse_.x);
@@ -1145,8 +1149,10 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     // A clean Sanyo/Game Boy control face: no inherited Surgery status strip,
     // output gain fader, bypass, A/B, copy or file buttons on the chassis.
     // The associated APVTS parameters/preset code survive for DAW compatibility.
-    for(auto* button:{&bypass_,&compare_,&copy_,&save_,&load_,&peakHold_})
+    for(auto* button:{&bypass_,&compare_,&copy_,&save_,&load_})
         button->setVisible(false);
+    peakHold_.setVisible(true);
+    peakHold_.setButtonText("RESET");
     output_.setVisible(false);outputLabel_.setVisible(false);
     bindNode(0);setMode(0);
     // Hosts may resize the editor, but Scalpel does not draw JUCE's generic
@@ -1337,8 +1343,9 @@ void RootsEditor::timerCallback(){
     compare_.setButtonText(b?"A / B: B":"A / B: A");
     copy_.setButtonText(b?"COPY B > A":"COPY A > B");
     const float held=processor_.getPeakHoldDb();
-    peakHold_.setButtonText((held>=0.0f?"CLIP ":"PEAK ")+juce::String(held,1)+" dB");
-    peakHold_.setToggleState(held>=0.0f,juce::dontSendNotification);
+    juce::ignoreUnused(held);
+    peakHold_.setButtonText("RESET");
+    peakHold_.setToggleState(false,juce::dontSendNotification);
     const auto labelColour=juce::Colour(0xff352820);
     for(auto* label:{&title_,&selection_,&status_,&gainLabel_,&thresholdLabel_,
                     &carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_,
@@ -1414,145 +1421,75 @@ void RootsEditor::paint(juce::Graphics& g){
 void RootsEditor::resized(){rackBackground_={};backgroundScale_=0;layoutRack();repaint();}
 
 void RootsEditor::paintRack(juce::Graphics& g){
-    const int width=getWidth(),height=getHeight();
-    g.fillAll(juce::Colour(0xff382b22));
-    const auto outer=getLocalBounds().toFloat().reduced(1.f);
-    juce::ColourGradient plastic(juce::Colour(0xfff7e3ca),0,0,
-                                 juce::Colour(0xffc7a486),0,(float)height,false);
-    plastic.addColour(.27,juce::Colour(0xffe6cdb0));
-    plastic.addColour(.72,juce::Colour(0xffd9bda2));
-    g.setGradientFill(plastic);g.fillRoundedRectangle(outer,12.f);
-    g.setColour(juce::Colour(0xfffff0d9).withAlpha(.86f));
-    g.drawRoundedRectangle(outer.reduced(2.f),10.f,1.4f);
-    g.setColour(juce::Colour(0xff5b4534).withAlpha(.78f));
-    g.drawRoundedRectangle(outer.reduced(5.f),8.f,.8f);
-    // Subpixel molded-powder grain, cached in the editor background.
-    juce::Random grain(50219);
-    for(int i=0;i<680;++i){
-        const float x=grain.nextFloat()*width,y=grain.nextFloat()*height;
-        g.setColour(juce::Colour(0xff705743).withAlpha(.014f+grain.nextFloat()*.018f));
-        g.fillEllipse(x,y,.65f,.65f);
-    }
-    // Recessed black Phillips fasteners, reference-equivalent and static.
-    auto screw=[&](float cx,float cy){
-        g.setColour(juce::Colour(0xff705542));g.fillEllipse(cx-13,cy-13,26,26);
-        g.setColour(juce::Colour(0xff07090a));g.fillEllipse(cx-11.5f,cy-11.5f,23,23);
-        juce::ColourGradient steel(juce::Colour(0xff4c4e4d),cx-7,cy-9,
-                                   juce::Colour(0xff090b0c),cx+9,cy+8,false);
-        g.setGradientFill(steel);g.fillEllipse(cx-9.2f,cy-9.2f,18.4f,18.4f);
-        g.setColour(juce::Colour(0xff010202));
-        g.drawLine(cx-5.3f,cy,cx+5.3f,cy,3.5f);
-        g.drawLine(cx,cy-5.3f,cx,cy+5.3f,3.5f);
-        g.setColour(juce::Colour(0xffaaaaa4).withAlpha(.24f));
-        juce::Path rimArc;rimArc.addCentredArc(cx,cy,8.2f,8.2f,0.f,3.5f,5.0f,true);
-        g.strokePath(rimArc,juce::PathStrokeType(1.f));
-    };
-    screw(19,19);screw((float)width-19,19);
-    screw(19,(float)height-19);screw((float)width-19,(float)height-19);
     juce::Graphics::ScopedSaveState saved(g);
-    g.addTransform(surgery::rack::contentTransform(width,height));
-    auto deck=[&](juce::Rectangle<float> r,bool dark){
-        g.setColour(juce::Colour(0xff4c3529).withAlpha(.82f));
-        g.fillRoundedRectangle(r.expanded(1.5f),5.f);
-        juce::ColourGradient face(dark?juce::Colour(0xff141311):juce::Colour(0xffedddc7),
-            r.getX(),r.getY(),dark?juce::Colour(0xff050504):juce::Colour(0xffd5b596),
-            r.getX(),r.getBottom(),false);
-        g.setGradientFill(face);g.fillRoundedRectangle(r,4.f);
-        g.setColour(juce::Colour(dark?0xff987b61:0xffffefda).withAlpha(.8f));
-        g.drawRoundedRectangle(r.reduced(.8f),3.f,1.f);
-    };
-    // Wide, flush, interlocking rails match the approved Scalpel render.
-    deck({37,48,1046,46},false);
-    deck({18,91,1084,352},true);
-    deck({32,444,1056,34},false);
-    deck({32,476,1056,143},false);
-    // Inset dark joints dividing the mechanical control shelf only.
-    if(mode_==0){
-        // Final divider sits in the clear gutter before MONO/PHASE.
-        for(float x:{183.f,358.f,770.f}){
-            g.setColour(juce::Colour(0xff735944).withAlpha(.6f));
-            g.drawLine(x,477,x,600,.9f);
-        }
-    } else if(mode_==1){
-        for(float x:{280.f,867.f}){
-            g.setColour(juce::Colour(0xff735944).withAlpha(.6f));
-            g.drawLine(x,477,x,600,.9f);
-        }
-    } else if(mode_==3){
-        for(float x:{384.f,736.f}){
-            g.setColour(juce::Colour(0xff735944).withAlpha(.6f));
-            g.drawLine(x,477,x,600,.9f);
-        }
-    }
+    g.addTransform(surgery::rack::contentTransform(getWidth(),getHeight()));
+    scalpel::ui105::drawRackFace(g,1120,630,mode_);
 }
 
 void RootsEditor::layoutRack(){
-    // Fixed design coordinates, uniformly scaled. JUCE inversely transforms
-    // pointer/drag events, so graphics, hit targets and text remain aligned.
+    // The approved 16:9 console is authored on a 1120 x 630 logical grid.
+    // One uniform transform keeps assets, text and hit targets pixel-aligned.
     const auto transform=surgery::rack::contentTransform(getWidth(),getHeight());
     for(auto* child:getChildren()){
-        // JUCE owns this host-sized resize handle; transforming it with the
-        // instrument panel made it float over controls after a window resize.
         if(dynamic_cast<juce::ResizableCornerComponent*>(child)!=nullptr)child->setTransform({});
         else child->setTransform(transform);
     }
-    for(auto* label:{&gainLabel_,&thresholdLabel_,&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_,&analyzerDepthLabel_,&analyzerSlopeLabel_,&analyzerMemoryLabel_})
+    for(auto* label:{&gainLabel_,&thresholdLabel_,&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_,
+                     &analyzerDepthLabel_,&analyzerSlopeLabel_,&analyzerMemoryLabel_}){
         label->setJustificationType(juce::Justification::centred);
-    title_.setBounds(54,8,395,38);
-    for(int root=0;root<7;++root)
-        rootButtons_[(size_t)root].setBounds(42+root*149,51,146,37);
-    graph_.setBounds(20,94,1080,347);
-    for(int i=0;i<4;++i)modeButtons_[(size_t)i].setBounds(35+i*263,447,260,28);
-    xrayButton_.setBounds(945,112,118,40);
+        label->setFont(juce::Font(juce::FontOptions(12.5f,juce::Font::bold)));
+    }
+    title_.setVisible(false);
+    for(auto& button:rootButtons_){button.setVisible(false);button.setBounds(0,0,1,1);}
 
-    // BAND MODE / the precise two-knob, two-menu, four-button deck.
-    on_.setBounds(53,505,120,36);off_.setBounds(53,549,120,36);
-    gainLabel_.setBounds(195,484,140,20);gain_.setBounds(200,499,130,91);
-    thresholdLabel_.setBounds(352,484,150,20);threshold_.setBounds(360,499,135,91);
-    compLabel_.setBounds(521,482,204,19);compressor_.setBounds(522,503,204,31);
-    domainLabel_.setBounds(521,535,204,19);domain_.setBounds(522,556,204,32);
+    graph_.setBounds(20,118,1080,288);
+    for(int i=0;i<4;++i)modeButtons_[(size_t)i].setBounds(36+i*262,414,258,39);
+    xrayButton_.setBounds(879,139,102,37);
+    peakHold_.setBounds(881,315,100,40);
+
+    // BAND MODE: approved two-knob, two-menu, six-button hierarchy.
+    on_.setBounds(78,492,112,43);off_.setBounds(78,548,112,43);
+    gainLabel_.setBounds(206,467,160,22);gain_.setBounds(216,484,142,110);
+    thresholdLabel_.setBounds(369,467,166,22);threshold_.setBounds(382,484,142,110);
+    compLabel_.setBounds(548,468,220,19);compressor_.setBounds(550,492,220,34);
+    domainLabel_.setBounds(548,531,220,19);domain_.setBounds(550,554,220,34);
     detectorLabel_.setBounds(0,0,1,1);detector_.setBounds(0,0,1,1);
-    // The fourth switch block now meets the compression selectors directly.
-    // No stray LIMIT amount/third dial is painted beside MONO.
     limitAmount_.setBounds(0,0,1,1);
-    mono_.setBounds(788,504,133,39);solo_.setBounds(930,504,133,39);
-    phase_.setBounds(788,550,133,39);limit_.setBounds(930,550,133,39);
+    mono_.setBounds(824,489,120,44);solo_.setBounds(965,489,120,44);
+    phase_.setBounds(824,548,120,44);limit_.setBounds(965,548,120,44);
 
-    // CARVE / real C1-C4 selector panel, two-state switches and three dials.
-    selection_.setBounds(56,482,230,20);
-    carveOn_.setBounds(71,519,188,39);
-    carveOff_.setBounds(71,565,188,39);
+    // CARVE: exact approved text, C1-C4 routing and three surgical controls.
+    selection_.setBounds(39,468,235,22);
+    carveOn_.setBounds(77,500,158,43);carveOff_.setBounds(77,554,158,43);
     carveDynamic_.setBounds(0,0,1,1);
     const std::array<juce::Slider*,3> cs{&carveFrequency_,&carveDepth_,&carveQ_};
     const std::array<juce::Label*,3> cl{&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_};
     for(int i=0;i<3;++i){
-        cl[(size_t)i]->setBounds(299+i*194,482,182,20);
-        cs[(size_t)i]->setBounds(307+i*194,497,164,94);
+        cl[(size_t)i]->setBounds(286+i*190,468,174,22);
+        cs[(size_t)i]->setBounds(300+i*190,484,146,110);
     }
     for(int i=0;i<4;++i)
-        carveSlotButtons_[(size_t)i].setBounds(880+(i%2)*96,504+(i/2)*49,90,39);
+        carveSlotButtons_[(size_t)i].setBounds(868+(i%2)*108,492+(i/2)*58,100,44);
 
-    // COLOR / five exact user-provided ivory dial assets, no tick marks.
+    // COLOR: five equal channels share the approved CARVE font and readout geometry.
     for(int i=0;i<5;++i){
-        onyxLabels_[(size_t)i].setBounds(42+i*210,483,196,20);
-        onyxSliders_[(size_t)i].setBounds(67+i*210,499,146,94);
+        onyxLabels_[(size_t)i].setBounds(18+i*210,468,194,22);
+        onyxLabels_[(size_t)i].setFont(juce::Font(juce::FontOptions(12.5f,juce::Font::bold|juce::Font::italic)));
+        onyxSliders_[(size_t)i].setBounds(45+i*210,486,140,108);
     }
 
-    // ANALYZE / centered sculpted flame, snowflake and visual-decay dial.
-    analyzerDepthLabel_.setBounds(106,482,220,22);
-    analyzerSlopeLabel_.setBounds(447,482,220,22);
-    analyzerMemoryLabel_.setBounds(785,482,220,22);
-    heatToggle_.setBounds(174,510,85,85);freezeButton_.setBounds(515,510,85,85);
-    analyzerMemory_.setBounds(828,501,135,93);
-    // Preserved automation settings have no legacy front-panel decoration.
-    jukeModeLabel_.setBounds(12,0,10,10);jukeMode_.setBounds(12,0,10,10);
-    weatherMode_.setBounds(0,0,10,10);reducedMotion_.setBounds(24,0,10,10);
-    analyzerDepth_.setBounds(0,0,10,10);analyzerSlope_.setBounds(0,0,10,10);
-    analyzerLegend_.setBounds(0,0,10,10);status_.setBounds(0,0,10,10);
+    // ANALYZE: functional heat-map/freeze assets and one real visual-decay control.
+    analyzerDepthLabel_.setBounds(70,468,220,24);
+    analyzerSlopeLabel_.setBounds(423,468,220,24);
+    analyzerMemoryLabel_.setBounds(785,468,220,24);
+    heatToggle_.setBounds(132,500,96,96);freezeButton_.setBounds(486,500,96,96);
+    analyzerMemory_.setBounds(827,484,142,110);
 
-    // Compact secondary utility strip below the visual reference shelf.
-    bypass_.setBounds(47,605,75,20);compare_.setBounds(128,605,75,20);
-    copy_.setBounds(209,605,92,20);save_.setBounds(307,605,65,20);
-    load_.setBounds(378,605,65,20);peakHold_.setBounds(449,605,119,20);
-    outputLabel_.setBounds(788,604,60,21);output_.setBounds(850,604,219,21);
+    jukeModeLabel_.setBounds(0,0,1,1);jukeMode_.setBounds(0,0,1,1);
+    weatherMode_.setBounds(0,0,1,1);reducedMotion_.setBounds(0,0,1,1);
+    analyzerDepth_.setBounds(0,0,1,1);analyzerSlope_.setBounds(0,0,1,1);
+    analyzerLegend_.setBounds(0,0,1,1);status_.setBounds(0,0,1,1);
+    bypass_.setBounds(0,0,1,1);compare_.setBounds(0,0,1,1);copy_.setBounds(0,0,1,1);
+    save_.setBounds(0,0,1,1);load_.setBounds(0,0,1,1);
+    outputLabel_.setBounds(0,0,1,1);output_.setBounds(0,0,1,1);
 }
