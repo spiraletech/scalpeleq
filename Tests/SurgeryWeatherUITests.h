@@ -84,7 +84,15 @@ inline bool verifyWeatherUI(){
     auto frozen=heldRender();feed(1,48);auto unchanged=heldRender();
     if(std::memcmp(&heldMeasurement,&graph->weatherMeasured(),sizeof(heldMeasurement))||std::memcmp(&heldMeaning,&graph->weatherMeaning(),sizeof(heldMeaning))||std::memcmp(&heldField,&graph->weatherField(),sizeof(heldField)))return fail("freeze advanced weather state");
     if(heldSpectrum.approximateCentroidHz!=graph->spectralMetrics().approximateCentroidHz)return fail("freeze advanced spectrum");
-    for(int y=0;y<frozen.getHeight();++y)for(int x=0;x<frozen.getWidth();++x)if(frozen.getPixelAt(x,y)!=unchanged.getPixelAt(x,y)){save(frozen,"surgery-ui-weather-freeze-before.png");save(unchanged,"surgery-ui-weather-freeze-after.png");return fail("freeze changed software-rendered scene");}
+    // FREEZE holds spectrum/weather history, while the 1.0.5 L/R output
+    // meters deliberately remain live. Compare only the analyzer lens.
+    const int frozenLensRight=juce::jmax(0,frozen.getWidth()-218);
+    for(int y=0;y<frozen.getHeight();++y)for(int x=0;x<frozenLensRight;++x)
+        if(frozen.getPixelAt(x,y)!=unchanged.getPixelAt(x,y)){
+            save(frozen,"surgery-ui-weather-freeze-before.png");
+            save(unchanged,"surgery-ui-weather-freeze-after.png");
+            return fail("freeze changed software-rendered spectrum/weather scene");
+        }
     set(*p,"aura_color",0);pump(40);if(graph->weatherActive())return fail("OFF ignored while frozen");
     graph->setFrozen(false);set(*p,"aura_color",0);feed(4,24);if(graph->weatherActive()||!graph->spectralMetrics().signalPresent)return fail("visualization OFF");
     if(!save(editor->createComponentSnapshot(editor->getLocalBounds()),"surgery-ui-weather-OFF.png"))return false;
