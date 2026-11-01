@@ -190,7 +190,7 @@ void RootsGraph::paint(juce::Graphics& g){
         g.setColour(juce::Colour(0xff6d5b4b));g.strokePath(surgery::rack::cut(full.reduced(1.5f),7),juce::PathStrokeType(1.15f));
         g.setColour(juce::Colour(0xff010101));g.strokePath(surgery::rack::cut(full.reduced(4),5),juce::PathStrokeType(2));
     }
-    g.setFont(juce::Font(juce::FontOptions(11.0f,juce::Font::bold)));
+    g.setFont(juce::Font(juce::FontOptions("Segoe UI",11.0f,juce::Font::bold)));
     g.setColour(juce::Colour(0xffb4aaa0));
     // No inherited cyan spectrum title, old SONAR weather image or C1-C4
     // badges: the graph is a continuous, smoked-glass Scalpel lens.
@@ -684,7 +684,7 @@ void RootsGraph::paint(juce::Graphics& g){
         g.setColour(juce::Colour::fromRGB(6,11,18).withAlpha(0.97f));
         g.fillRoundedRectangle(left,hoverTop,274,27,4.0f);
         g.setColour(juce::Colour::fromRGB(236,243,247));
-        g.setFont(juce::Font(juce::FontOptions(11.0f)));
+        g.setFont(juce::Font(juce::FontOptions("Segoe UI",11.0f,juce::Font::plain)));
         g.drawFittedText(text,(int)left+6,(int)hoverTop+3,262,21,
                          juce::Justification::centredLeft,1);
     }
@@ -988,16 +988,16 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
                      &analyzerSlopeLabel_,&analyzerMemoryLabel_,&analyzerLegend_}){
         addAndMakeVisible(*label);
         label->setColour(juce::Label::textColourId,juce::Colour::fromRGB(205,224,229));
-        label->setFont(juce::Font(juce::FontOptions(12.0f,juce::Font::plain)));
+        label->setFont(juce::Font(juce::FontOptions("Segoe UI",12.0f,juce::Font::plain)));
         label->setJustificationType(juce::Justification::centredLeft);
     }
     title_.setText("SCALPEL EQ",juce::dontSendNotification);
-    analyzerLegend_.setFont(juce::Font(juce::FontOptions(12.0f,juce::Font::bold)));
+    analyzerLegend_.setFont(juce::Font(juce::FontOptions("Segoe UI",12.0f,juce::Font::bold)));
     analyzerLegend_.setText("SPECTRAL COLOR   /   LEVEL",
                             juce::dontSendNotification);
-    title_.setFont(juce::Font(juce::FontOptions(24.0f,juce::Font::bold)));
-    selection_.setFont(juce::Font(juce::FontOptions(12.0f,juce::Font::bold)));
-    status_.setFont(juce::Font(juce::FontOptions(11.5f,juce::Font::plain)));
+    title_.setFont(juce::Font(juce::FontOptions("Segoe UI",24.0f,juce::Font::bold)));
+    selection_.setFont(juce::Font(juce::FontOptions("Segoe UI",12.0f,juce::Font::bold)));
+    status_.setFont(juce::Font(juce::FontOptions("Segoe UI",11.5f,juce::Font::plain)));
     status_.setJustificationType(juce::Justification::centredRight);
     for(auto* s:{&gain_,&threshold_,&limitAmount_}){
         addAndMakeVisible(*s);rotary(*s,"",0.0);
@@ -1110,7 +1110,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     jukeModeA_=std::make_unique<ComboA>(processor_.apvts,"juke_mode",jukeMode_);
     jukeMode_.setTooltip("Independent hollow JUKE chambers: shared music analysis, separate visual style. Off deactivates the border energy.");
     jukeModeLabel_.setText("JUKE MODE",juce::dontSendNotification);addAndMakeVisible(jukeModeLabel_);
-    jukeModeLabel_.setFont(juce::Font(juce::FontOptions(11.f)));jukeModeLabel_.setColour(juce::Label::textColourId,juce::Colour(0xffb8c5d1));
+    jukeModeLabel_.setFont(juce::Font(juce::FontOptions("Segoe UI",11.f,juce::Font::plain)));jukeModeLabel_.setColour(juce::Label::textColourId,juce::Colour(0xffb8c5d1));
     reducedMotion_.setClickingTogglesState(true);addAndMakeVisible(reducedMotion_);
     reducedMotion_.setTooltip("Suppresses weather drift and lightning. Enabled by default. Full motion still limits local flashes to one per 0.75 seconds.");
     reducedMotionA_=std::make_unique<ButtonA>(processor_.apvts,"sonar_reduced_motion",reducedMotion_);
@@ -1123,7 +1123,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     domainLabel_.setText("EQ DOMAIN",juce::dontSendNotification);
     detectorLabel_.setText("DYNAMIC",juce::dontSendNotification);
     for(auto* label:{&compLabel_,&domainLabel_,&detectorLabel_,&outputLabel_}){
-        label->setFont(juce::Font(juce::FontOptions(11.0f)));
+        label->setFont(juce::Font(juce::FontOptions("Segoe UI",11.0f,juce::Font::plain)));
         label->setColour(juce::Label::textColourId,juce::Colour(0xffafc8cf));
         addAndMakeVisible(*label);
     }
@@ -1155,9 +1155,13 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     peakHold_.setButtonText("RESET");
     output_.setVisible(false);outputLabel_.setVisible(false);
     bindNode(0);setMode(0);
-    // Hosts may resize the editor, but Scalpel does not draw JUCE's generic
-    // bottom-right corner grip over the hardware face.
-    setResizable(true,false);setResizeLimits(840,470,1800,1200);setSize(1344,756);
+    // Host resize handles remain available without JUCE's generic corner grip.
+    // Every user resize is snap-locked to the authored 16:9 rack face and
+    // clamped to tested minimum/maximum sizes.
+    setResizable(true,false);
+    setResizeLimits(896,504,1792,1008);
+    if(auto* constrainer=getConstrainer())constrainer->setFixedAspectRatio(16.0/9.0);
+    setSize(1344,756);
     timerCallback();startTimerHz(60);
 }
 RootsEditor::~RootsEditor(){
@@ -1437,7 +1441,7 @@ void RootsEditor::layoutRack(){
     for(auto* label:{&gainLabel_,&thresholdLabel_,&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_,
                      &analyzerDepthLabel_,&analyzerSlopeLabel_,&analyzerMemoryLabel_}){
         label->setJustificationType(juce::Justification::centred);
-        label->setFont(juce::Font(juce::FontOptions(12.5f,juce::Font::bold)));
+        label->setFont(juce::Font(juce::FontOptions("Segoe UI",12.5f,juce::Font::bold)));
     }
     title_.setVisible(false);
     for(auto& button:rootButtons_){button.setVisible(false);button.setBounds(0,0,1,1);}
@@ -1474,7 +1478,7 @@ void RootsEditor::layoutRack(){
     // COLOR: five equal channels share the approved CARVE font and readout geometry.
     for(int i=0;i<5;++i){
         onyxLabels_[(size_t)i].setBounds(18+i*210,468,194,22);
-        onyxLabels_[(size_t)i].setFont(juce::Font(juce::FontOptions(12.5f,juce::Font::bold|juce::Font::italic)));
+        onyxLabels_[(size_t)i].setFont(juce::Font(juce::FontOptions("Segoe UI",12.5f,juce::Font::bold|juce::Font::italic)));
         onyxSliders_[(size_t)i].setBounds(45+i*210,486,140,108);
     }
 
