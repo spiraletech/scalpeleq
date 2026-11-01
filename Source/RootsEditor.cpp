@@ -1486,12 +1486,16 @@ void RootsEditor::layoutRack(){
         onyxSliders_[(size_t)i].setBounds(45+i*210,486,140,108);
     }
 
-    // ANALYZE: functional heat-map/freeze assets and one real visual-decay control.
-    analyzerDepthLabel_.setBounds(70,468,220,24);
-    analyzerSlopeLabel_.setBounds(423,468,220,24);
-    analyzerMemoryLabel_.setBounds(785,468,220,24);
-    heatToggle_.setBounds(132,500,96,96);freezeButton_.setBounds(486,500,96,96);
-    analyzerMemory_.setBounds(827,484,142,110);
+    // ANALYZE: three optically balanced console columns matching the approved
+    // HEAT MAP / FREEZE / VISUAL DECAY hardware reference.
+    for(auto* label:{&analyzerDepthLabel_,&analyzerSlopeLabel_,&analyzerMemoryLabel_})
+        label->setFont(juce::Font(juce::FontOptions("Segoe UI",16.5f,juce::Font::bold)));
+    analyzerDepthLabel_.setBounds(79,468,220,24);
+    analyzerSlopeLabel_.setBounds(448,468,220,24);
+    analyzerMemoryLabel_.setBounds(819,468,220,24);
+    heatToggle_.setBounds(141,500,96,96);
+    freezeButton_.setBounds(510,500,96,96);
+    analyzerMemory_.setBounds(858,484,142,110);
 
     jukeModeLabel_.setBounds(0,0,1,1);jukeMode_.setBounds(0,0,1,1);
     weatherMode_.setBounds(0,0,1,1);reducedMotion_.setBounds(0,0,1,1);
