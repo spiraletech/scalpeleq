@@ -5,10 +5,11 @@
 #include <cmath>
 
 namespace scalpel::ui105 {
-inline const juce::Colour champagne{0xffd8ad8d};
-inline const juce::Colour ivory{0xffffe8cd};
-inline const juce::Colour ink{0xff100f0e};
-inline const juce::Colour amber{0xffff7900};
+inline const juce::Colour champagne{0xffd8a273};
+inline const juce::Colour ivory{0xffffe8c5};
+inline const juce::Colour ink{0xff120e0a};
+inline const juce::Colour amber{0xffff8800};
+inline const juce::Colour chassisEdge{0xffc58c60};
 
 inline void roundedPanel(juce::Graphics& g, juce::Rectangle<float> r, bool dark, float radius=8.0f)
 {
@@ -29,13 +30,15 @@ inline void roundedPanel(juce::Graphics& g, juce::Rectangle<float> r, bool dark,
 
 inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
 {
-    g.fillAll(juce::Colour(0xff0a0807));
+    // Cover every editor pixel. The rounded face may reveal this warm edge,
+    // never a black plugin-owned letterbox when a host presents the window.
+    g.fillAll(chassisEdge);
     auto outer = juce::Rectangle<float>(1, 1, (float)width - 2, (float)height - 2);
-    juce::ColourGradient shell(juce::Colour(0xffffddbd), 0, 0,
-                               juce::Colour(0xffb98669), 0, (float)height, false);
-    shell.addColour(.16, juce::Colour(0xffe9bea0));
-    shell.addColour(.62, juce::Colour(0xffd7a988));
-    shell.addColour(.92, juce::Colour(0xffc18e70));
+    juce::ColourGradient shell(juce::Colour(0xffffe0b7), 0, 0,
+                               juce::Colour(0xffb77e52), 0, (float)height, false);
+    shell.addColour(.16, juce::Colour(0xfff2c292));
+    shell.addColour(.62, juce::Colour(0xffdca476));
+    shell.addColour(.92, juce::Colour(0xffc78c60));
     g.setGradientFill(shell);
     g.fillRoundedRectangle(outer, 25.0f);
     g.setColour(juce::Colour(0xffffead4).withAlpha(.90f));
@@ -56,9 +59,9 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
 
     roundedPanel(g, {24, 64, (float)width - 48, 48}, true, 11.0f);
     g.setColour(juce::Colour(0xffffe3c8));
-    g.setFont(juce::Font(juce::FontOptions(28.0f, juce::Font::bold | juce::Font::italic)));
+    g.setFont(juce::Font(juce::FontOptions("Segoe UI", 28.0f, juce::Font::bold | juce::Font::italic)));
     g.drawFittedText("SCALPEL EQ", 58, 69, 255, 37, juce::Justification::centredLeft, 1);
-    g.setFont(juce::Font(juce::FontOptions(11.5f)));
+    g.setFont(juce::Font(juce::FontOptions("Segoe UI", 11.5f, juce::Font::plain)));
     g.drawFittedText("P R E C I S I O N   E Q U A L I Z E R", 350, 75, 360, 26,
                      juce::Justification::centred, 1);
     g.drawFittedText("A N A L O G   C O N S O L E   S E R I E S", width - 390, 75, 335, 26,
@@ -117,7 +120,7 @@ inline void drawMeter(juce::Graphics& g, juce::Rectangle<float> r, float db, con
         g.fillRect(cell);
     }
     g.setColour(ivory);
-    g.setFont(juce::Font(juce::FontOptions(10.5f, juce::Font::bold)));
+    g.setFont(juce::Font(juce::FontOptions("Segoe UI", 10.5f, juce::Font::bold)));
     g.drawText(label, (int)r.getX(), (int)r.getBottom() + 2, (int)r.getWidth(), 14,
                juce::Justification::centred);
 }
@@ -133,7 +136,7 @@ inline void drawAnalyzerPanel(juce::Graphics& g, juce::Rectangle<float> full,
     g.drawRoundedRectangle(panel, 6.0f, 1.0f);
 
     g.setColour(ivory.withAlpha(.90f));
-    g.setFont(juce::Font(juce::FontOptions(10.0f, juce::Font::bold)));
+    g.setFont(juce::Font(juce::FontOptions("Segoe UI", 10.0f, juce::Font::bold)));
     g.drawText("PEAK (dBFS)", (int)panel.getX() + 8, (int)panel.getY() + 56, 112, 16,
                juce::Justification::centred);
     auto display = juce::Rectangle<float>(panel.getX() + 11, panel.getY() + 73, 108, 38);
@@ -142,7 +145,7 @@ inline void drawAnalyzerPanel(juce::Graphics& g, juce::Rectangle<float> full,
     g.setColour(juce::Colour(0xff684a38));
     g.drawRoundedRectangle(display, 4.0f, .8f);
     g.setColour(amber);
-    g.setFont(juce::Font(juce::FontOptions(20.0f, juce::Font::bold)));
+    g.setFont(juce::Font(juce::FontOptions("Segoe UI", 20.0f, juce::Font::bold)));
     const auto text = peakHold <= -143.0f ? juce::String("-inf") : juce::String(peakHold, 2);
     g.drawText(text, display.toNearestInt(), juce::Justification::centred);
 
