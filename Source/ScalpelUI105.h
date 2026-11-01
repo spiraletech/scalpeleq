@@ -86,10 +86,12 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
     roundedPanel(g, {32, 412, (float)width - 64, 43}, false, 8.0f);
     roundedPanel(g, {20, 461, (float)width - 40, 158}, false, 13.0f);
 
-    // Mechanical shelf dividers are page-specific and stop before every button.
+    // Mechanical shelf dividers are page-specific and stay inside the
+    // intentional gutters. BAND's first and third lines must clear the
+    // ON/OFF switches and COMP THRESHOLD label/control respectively.
     std::array<float, 5> dividers{};
     int count = 0;
-    if (mode == 0) dividers = {184, 365, 520, 805, 0}, count = 4;
+    if (mode == 0) dividers = {198, 365, 536, 805, 0}, count = 4;
     else if (mode == 1) dividers = {279, 468, 658, 846, 0}, count = 4;
     else if (mode == 2) dividers = {224, 432, 640, 848, 0}, count = 4;
     else dividers = {379, 738, 0, 0, 0}, count = 2;
