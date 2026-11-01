@@ -1444,12 +1444,16 @@ void RootsEditor::layoutRack(){
         label->setFont(juce::Font(juce::FontOptions("Segoe UI",12.5f,juce::Font::bold)));
     }
     title_.setVisible(false);
-    for(auto& button:rootButtons_){button.setVisible(false);button.setBounds(0,0,1,1);}
+    for(int root=0;root<7;++root){
+        auto& button=rootButtons_[(size_t)root];
+        button.setVisible(true);
+        button.setBounds(27+root*152,122,146,30);
+    }
 
-    graph_.setBounds(20,118,1080,288);
+    graph_.setBounds(20,160,1080,246);
     for(int i=0;i<4;++i)modeButtons_[(size_t)i].setBounds(36+i*262,414,258,39);
-    xrayButton_.setBounds(879,139,102,37);
-    peakHold_.setBounds(881,315,100,40);
+    xrayButton_.setBounds(879,177,102,37);
+    peakHold_.setBounds(881,349,100,40);
 
     // BAND MODE: approved two-knob, two-menu, six-button hierarchy.
     on_.setBounds(78,492,112,43);off_.setBounds(78,548,112,43);
