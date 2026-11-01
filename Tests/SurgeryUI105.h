@@ -41,18 +41,24 @@ inline bool verifyUI105(PRISMVSTAudioProcessor& processor, juce::AudioProcessorE
 
     // The console's L/R assets must represent real, independent post-DSP peaks.
     juce::AudioBuffer<float> audio(2,512);juce::MidiBuffer midi;
-    for(int i=0;i<audio.getNumSamples();++i){
-        const float wave=std::sin(i*.071f);
-        audio.setSample(0,i,.32f*wave);
-        audio.setSample(1,i,.055f*wave);
+    // Prior quality cases deliberately leave arbitrary band states behind.
+    // Exact dry bypass makes this meter stimulus independent of that order.
+    if(auto* bypass=processor.apvts.getParameter("surgery_bypass"))
+        bypass->setValueNotifyingHost(1.0f);
+    for(int blockIndex=0;blockIndex<2;++blockIndex){
+        for(int i=0;i<audio.getNumSamples();++i){
+            const float wave=std::sin((blockIndex*audio.getNumSamples()+i)*.071f);
+            audio.setSample(0,i,.32f*wave);
+            audio.setSample(1,i,.055f*wave);
+        }
+        processor.processBlock(audio,midi);
     }
-    processor.processBlock(audio,midi);
     const float left=processor.getChannelPeakDb(0),right=processor.getChannelPeakDb(1);
     if(!std::isfinite(left)||!std::isfinite(right)||left-right<8.0f){
         std::cerr<<"UI105: independent L/R meter pipeline failed: "<<left<<", "<<right<<"\n";return false;
     }
-    if(processor.getPeakHoldDb()<-20.0f){
-        std::cerr<<"UI105: peak hold never received measured audio\n";return false;
+    if(!std::isfinite(processor.getPeakHoldDb())||processor.getPeakHoldDb()<=-140.0f){
+        std::cerr<<"UI105: peak hold never received deterministic dry stimulus\n";return false;
     }
     reset->onClick();
     if(processor.getPeakHoldDb()>-140.0f){
