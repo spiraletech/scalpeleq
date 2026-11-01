@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include "SurgeryUI104.h"
 #include "SurgeryUI105.h"
+#include "SurgeryUI106.h"
 #include "SurgeryRecoveryTests.h"
 #include "SurgeryChassisTests.h"
 #include "SurgeryWeatherUITests.h"
@@ -579,6 +580,7 @@ bool runQualityTests(){
     }
     if(!verifyUI104(*p,*editor))return false;
     if(!verifyUI105(*p,*editor))return false;
+    if(!verifyUI106(*p,*editor))return false;
     std::cout<<"QUALITY: all four modes rendered; legacy theme values preserve Scalpel COLOR UI\n";
     return true;
 }
