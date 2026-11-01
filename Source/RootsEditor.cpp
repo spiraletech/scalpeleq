@@ -1,6 +1,7 @@
 #include "RootsEditor.h"
 #include "RootsSpectrumColours.h"
 #include "ScalpelXRayChroma.h"
+#include "ScalpelUI105.h"
 #include "SurgerySpectralColours.h"
 #include <BinaryData.h>
 #include <cmath>
@@ -26,17 +27,17 @@ juce::String pitchText(float hz){
 }
 juce::Colour territory(int i){
     static constexpr unsigned hues[7]{
-        0xFFFF5A42u,0xFFD5A076u,0xFF9BBA89u,0xFF759ACA,
-        0xFFBB79CFu,0xFFCE8DA4u,0xFFD6474Eu
+        0xFFE05246u,0xFFD99045u,0xFF6EAA78u,0xFF55BFCBu,
+        0xFF425D9Bu,0xFF9A63B8u,0xFFD97A9Cu
     };
     return juce::Colour(hues[(size_t)juce::jlimit(0,6,i)]);
 }
 void rotary(juce::Slider& s,juce::String suffix,double resetValue) {
     s.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     s.setTextBoxStyle(juce::Slider::TextBoxBelow,false,90,22);
-    s.setColour(juce::Slider::textBoxTextColourId,juce::Colour(0xff2b2019));
-    s.setColour(juce::Slider::textBoxBackgroundColourId,juce::Colour(0xffe3cdb4));
-    s.setColour(juce::Slider::textBoxOutlineColourId,juce::Colour(0xffa58c70));
+    s.setColour(juce::Slider::textBoxTextColourId,scalpel::ui105::amber);
+    s.setColour(juce::Slider::textBoxBackgroundColourId,juce::Colour(0xff0b0908));
+    s.setColour(juce::Slider::textBoxOutlineColourId,juce::Colour(0xff5c4031));
     s.setTextValueSuffix(suffix);
     s.setDoubleClickReturnValue(true,resetValue);
 }
@@ -57,9 +58,10 @@ RootsGraph::~RootsGraph(){
                 parameter->endChangeGesture();
 }
 juce::Rectangle<float> RootsGraph::area() const {
-    // The new Scalpel lens fills the deck, with axes etched into its bezel.
+    // 1.0.5 reserves a true utility bay for PEAK and independent L/R meters.
+    // The spectrum remains logarithmic and interactive inside the left lens.
     const auto b=getLocalBounds().toFloat();
-    return {b.getX()+29.f,b.getY()+26.f,b.getWidth()-66.f,b.getHeight()-59.f};
+    return {b.getX()+55.f,b.getY()+22.f,b.getWidth()-302.f,b.getHeight()-56.f};
 }
 float RootsGraph::freqToX(float f) const {
     const auto r=area();
@@ -76,10 +78,7 @@ float RootsGraph::param(int i,const char* suffix)const {
 void RootsGraph::write(int i,const char* suffix,float value) {
     change(processor_,PRISMVSTAudioProcessor::rootsNodeId(i,suffix),value);
 }
-int RootsGraph::hitNode(juce::Point<float> p)const{
-    // Adjacent ROOT boundary handles may occupy the identical x/y point.
-    // Cycle among geometrically coincident handles instead of making the
-    // later ROOT permanently impossible to select.
+int RootsGraph::hitNode(juce::Point<float> p,bool cycleCoincidentBand)const{
     float nearest=18.0f;
     std::array<float,prism::roots::v2::kNodes> distances{};
     for(int i=0;i<prism::roots::v2::kNodes;++i){
@@ -88,13 +87,11 @@ int RootsGraph::hitNode(juce::Point<float> p)const{
         nearest=juce::jmin(nearest,distances[(size_t)i]);
     }
     if(nearest>=18.0f)return -1;
-    int first=-1,next=-1;
-    for(int i=0;i<prism::roots::v2::kNodes;++i){
-        if(distances[(size_t)i]>nearest+1.25f)continue;
-        if(first<0)first=i;
-        if(i>selected_&&next<0)next=i;
-    }
-    return next>=0?next:first;
+    std::array<bool,prism::roots::v2::kNodes> candidates{};
+    for(int i=0;i<prism::roots::v2::kNodes;++i)
+        candidates[(size_t)i]=distances[(size_t)i]<=nearest+1.25f;
+    return surgery::ui::chooseBoundaryNode(candidates,selected_,
+                                            cycleCoincidentBand);
 }
 juce::Colour RootsGraph::colour(int root) const {
     const auto id="surgery_root"+juce::String(root+1)+"_rgb";
@@ -218,12 +215,8 @@ void RootsGraph::paint(juce::Graphics& g){
         g.drawText(juce::String(db),juce::roundToInt(r.getRight()+5),
                    juce::roundToInt(y-8),34,16,juce::Justification::centredLeft);
     }
-    // ROOT handle height is constant; vertical axis is exclusively dBFS.
-    // ROOT gain is a separate, single control in the bottom panel.
-    g.setFont(juce::Font(juce::FontOptions(11.0f,juce::Font::plain)));
-    g.setColour(juce::Colour(0xffc5b7a9));
-    g.drawText("Hz",8,16,34,16,juce::Justification::centredLeft);
-    g.drawText("dBFS",juce::roundToInt(r.getRight()),16,44,16,juce::Justification::centredRight);
+    // Numeric axis marks carry the scale; avoid redundant corner-unit badges.
+    // ROOT handle height is constant and ROOT gain remains a separate control.
     std::array<prism::roots::visual::Node,prism::roots::visual::kNodes> zones{};
     for(int node=0;node<prism::roots::visual::kNodes;++node)
     {
@@ -279,7 +272,7 @@ void RootsGraph::paint(juce::Graphics& g){
     g.saveState();
     g.reduceClipRegion(r.toNearestInt());
     if(heatOn){
-        // Parametric EQ 2 / Frequency Splitter inspired BOTTOM heatmap.
+        // Fixed log-frequency columns beneath the measured display contour.
         // Each column is fixed to a logarithmic Hz address: NO time scroll,
         // circular icons, waterfall, simulated energy, or animated x motion.
         // Intensity uses the calibrated FFT dBFS BEFORE presentation tilt.
@@ -291,14 +284,12 @@ void RootsGraph::paint(juce::Graphics& g){
             const float u=(x+.5f)/(float)width;
             const float hz=(float)prism::roots::visual::heatmapFrequencyAt(x,width);
             const int bin=prism::analysis::LabBands::indexForFrequency(hz);
-            const float intensity=prism::roots::visual::heatmapStrength(
-                bands_[(size_t)bin]);
+            const float contour=surgery::displayDb(bands_[(size_t)bin],hz,slope,rangeDb);
             const auto tone=surgery::synesthesia::palette(u);
             for(int y=0;y<height;++y){
                 const float v=(y+.5f)/(float)height;
-                const float shape=prism::roots::visual::heatmapVerticalWeight(v);
-                const float alpha=juce::jlimit(0.f,.92f,
-                    intensity*(.12f+.80f*shape));
+                const float alpha=prism::roots::visual::underCurveAlpha(
+                    bands_[(size_t)bin],contour,v);
                 heatPixels.setPixelColour(x,y,juce::Colour::fromFloatRGBA(
                     tone.r,tone.g,tone.b,alpha));
             }
@@ -312,27 +303,26 @@ void RootsGraph::paint(juce::Graphics& g){
             r.getX(),r.getBottom(),false);
         g.setGradientFill(graphite);g.fillPath(filledPath);
     } else {
-        // SCALPEL X-RAY: depth-layered black mercury, driven only by the
-        // existing measured FFT and shared synesthesia/weather state.
+        // Floor 01 stability baseline: the experimental D3D11 volume is
+        // deliberately disabled. It ran GPU dispatch/readback during paint,
+        // and Windows hosts reported an unload crash. The CPU presentation
+        // remains available; never initialize a GPU device on this path.
+        constexpr bool experimentalGpuEnabled = false;
         // The clipping path prevents any decorative peaks outside the data.
         juce::Graphics::ScopedSaveState mercury(g);
-        // The cinematic volume is a separate visual stratum *behind*
-        // the exact FFT path. Clipping it to the FFT silhouette hid the
-        // 3D motion across much of the graph.
+        // The cinematic volume is decorative; its visible material must
+        // remain beneath the authoritative FFT silhouette.
         const auto& m=weatherInterpretation_.state();
         const float energy=juce::jlimit(0.f,1.f,
             .30f*m.level+.35f*m.bass+.20f*m.flux+.15f*m.width);
         // A charcoal base remains legible even when the measured crest is
         // far below 0 dBFS. Previously the brightest stop lived above the
         // audio silhouette, making the real Windows X-RAY render look flat.
-        juce::ColourGradient tar(juce::Colour(0xff191d1e).withAlpha(.96f),
+        juce::ColourGradient tar(juce::Colour(0xff101619).withAlpha(.96f),
             r.getCentreX(),r.getY(),juce::Colour(0xff020304).withAlpha(.99f),
             r.getCentreX(),r.getBottom(),false);
-        tar.addColour(.20,juce::Colour(0xff0b0d10));
-        tar.addColour(.43,juce::Colour(0xff343738));
-        tar.addColour(.61,juce::Colour(0xff101719));
-        tar.addColour(.78,juce::Colour(0xff2e3334));
-        tar.addColour(.91,juce::Colour(0xff080a0b));
+        tar.addColour(.43,juce::Colour(0xff0b1418));
+        tar.addColour(.78,juce::Colour(0xff081018));
         g.setGradientFill(tar);g.fillRect(r);
         // Material sheen is a reflection field, not an independent waveform.
         // Its apparent ridges are clipped to the actual FFT silhouette.
@@ -377,13 +367,16 @@ void RootsGraph::paint(juce::Graphics& g){
             }
             // GPU velocity/pressure/phase transport is restricted to this UI path.
             // The measured contour, parameter IDs and all audio code are unchanged.
-            mercury3D_.render(source,juce::jmax(m.bass,measuredBass),
-                              m.flux,juce::jmax(m.level,measuredLevel*.85f),
-                              mercuryElapsed_,
-                              pval(processor_.apvts,"sonar_reduced_motion")>=.5f,
-                              mercury3DImage_);
+            if (experimentalGpuEnabled)
+                mercury3D_.render(source,juce::jmax(m.bass,measuredBass),
+                                  m.flux,juce::jmax(m.level,measuredLevel*.85f),
+                                  mercuryElapsed_,
+                                  pval(processor_.apvts,"sonar_reduced_motion")>=.5f,
+                                  mercury3DImage_);
         }
-        if(mercury3D_.hasFrame()){
+        if(experimentalGpuEnabled && mercury3D_.hasFrame()){
+            juce::Graphics::ScopedSaveState measuredClip(g);
+            g.reduceClipRegion(filledPath);
             g.setOpacity(.88f);g.drawImage(mercury3DImage_,r);g.setOpacity(1.f);
         }else{
         // Restrict the old CPU fallback, not the actual 3D volume.
@@ -448,7 +441,7 @@ void RootsGraph::paint(juce::Graphics& g){
         // Layered capillary crests follow the real FFT surface and settle
         // when the music stops; unlike rigid colored lines they bend and
         // uncoil with the damped liquid surface.
-        if(!mercury3D_.hasFrame()){
+        if(!experimentalGpuEnabled || !mercury3D_.hasFrame()){
         for(int layer=0;layer<3;++layer){
             juce::Path ribbon;
             bool open=false;
@@ -482,21 +475,13 @@ void RootsGraph::paint(juce::Graphics& g){
     const bool heatHasSignal=std::any_of(bands_.begin(),bands_.end(),
         [](float db){return prism::roots::visual::heatmapStrength(db)>0.f;});
     if(heatOn&&heatHasSignal){
-        // The heatmap has its own thin, frequency-locked bottom stratum.
-        // It is drawn after either Standard or X-RAY liquid, so GPU mercury
-        // cannot hide the measured energy colours. It never touches EQ DSP.
-        const float stripHeight=juce::jlimit(22.f,48.f,r.getHeight()*.17f);
-        const auto strip=r.withY(r.getBottom()-stripHeight).withHeight(stripHeight);
+        // Full-height transparent image: each pixel is gated by measured
+        // energy and by its own column's visible FFT contour.
         juce::Graphics::ScopedSaveState heatLayer(g);
-        g.setColour(juce::Colour(0xff040b10).withAlpha(xrayActive_?.79f:.62f));
-        g.fillRect(strip);
         g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
-        g.setOpacity(xrayActive_?.92f:1.f);
-        g.drawImage(spectralHeat_,strip);
+        g.setOpacity(xrayActive_?.92f:.85f);
+        g.drawImage(spectralHeat_,r);
         g.setOpacity(1.f);
-        g.setColour(juce::Colour(0xffbbc3ca).withAlpha(.16f));
-        g.drawHorizontalLine(juce::roundToInt(strip.getY()),
-            strip.getX(),strip.getRight());
     }
     // Two restrained, stationary glow layers follow ONLY the measured path.
     // Existing attack/release supplies persistence; no clock-driven shimmer,
@@ -519,17 +504,8 @@ void RootsGraph::paint(juce::Graphics& g){
     // Intentionally no outlined "heat bubbles": they obscured the true
     // contour and made HEAT MAP resemble a trail of rigid copper coins.
     g.restoreState();
-    if(xrayActive_){
-        // The marker distinguishes a stale installation from a GPU fallback.
-        const juce::String backend=mercury3D_.statusText();
-        g.setColour(backend=="GPU LIVE"?juce::Colour(0xff89ceba):
-                    juce::Colour(0xffd7ad81));
-        g.setFont(juce::Font(juce::FontOptions(10.0f,juce::Font::bold)));
-        g.drawText("X-RAY 3.1  |  "+backend,
-            juce::roundToInt(r.getRight()-192.f),
-            juce::roundToInt(r.getBottom()-22.f),184,14,
-            juce::Justification::centredRight);
-    }
+    // No GPU readiness label in Floor 01: it was misleading and no GPU
+    // device is initialized by the active X-RAY paint path.
 
     // Predict the EXACT static RBJ peak-filter response used in the CARVE DSP.
     // It shows the maximum possible response for dynamic nodes, not measured GR.
@@ -677,6 +653,8 @@ void RootsGraph::paint(juce::Graphics& g){
         // Identification is available on hover and in the CARVE shelf;
         // the reference X-RAY lens has clean nodes, never black C1-C4 tabs.
     }
+    scalpel::ui105::drawAnalyzerPanel(g,full,processor_.getPeakHoldDb(),
+        processor_.getChannelPeakDb(0),processor_.getChannelPeakDb(1));
     if(hover_&&r.contains(mouse_)){
         const int bar=prism::analysis::LabBands::indexForFrequency(xToFreq(mouse_.x));
         const float freq=xToFreq(mouse_.x);
@@ -764,7 +742,10 @@ void RootsGraph::mouseDown(const juce::MouseEvent& e){
             return;
         }
     }
-    const int hit=hitNode(e.position);
+    // Normal clicks preserve the active band's handle priority. A deliberate
+    // triple-click is the sole gesture that cycles to a neighboring band dot.
+    const bool cycleCoincidentBand=!e.mods.isPopupMenu()&&e.getNumberOfClicks()>=3;
+    const int hit=hitNode(e.position,cycleCoincidentBand);
     if(hit>=0)selectNode(hit);
     if(e.mods.isPopupMenu()){
         if(hit<0){
@@ -840,7 +821,9 @@ void RootsGraph::mouseDoubleClick(const juce::MouseEvent& e){
     // Finish any gesture opened by the second mouse-down before resetting.
     const int tab=hitCarveTab(e.position);
     const int carve=tab>=0?tab:hitCarveNode(e.position);
-    const int boundary=carve<0?hitNode(e.position):-1;
+    const int boundary=carve<0?hitNode(e.position,false):-1;
+    const bool coincidentBand=boundary>=0&&
+        hitNode(e.position,true)!=boundary;
     if(draggingCarve_>=0||dragging_>=0)mouseUp(e);
     if(tab>=0&&pval(processor_.apvts,
         PRISMVSTAudioProcessor::carveId(selected_/2,tab,"on"))<0.5f){
@@ -855,8 +838,12 @@ void RootsGraph::mouseDoubleClick(const juce::MouseEvent& e){
     }
     if(boundary>=0){
         selectNode(boundary);
-        processor_.resetRootBoundary(boundary);
-        clampCarvesToRoot(boundary/2);
+        // Do not reset an overlapping boundary on click two of an intentional
+        // triple-click. Unique handles retain their double-click reset.
+        if(!coincidentBand){
+            processor_.resetRootBoundary(boundary);
+            clampCarvesToRoot(boundary/2);
+        }
         repaint();
     }
 }
@@ -951,8 +938,8 @@ void RootsGraph::popup(){
 
             const auto colorId="surgery_root"+juce::String(root+1)+"_rgb";
             static constexpr unsigned swatches[]{
-                0x6BBDD4,0xDFA871,0x8DCEA8,0xD2A2E5,
-                0xE89EAD,0x9DADEA,0xBFD678,0xE5F4F3};
+                0xE05246,0xD99045,0x6EAA78,0x55BFCB,
+                0x425D9B,0x9A63B8,0xD97A9C,0xE5F4F3};
             if(id>=80&&id<=87)change(graph.processor_,colorId,(float)swatches[id-80]);
             if(id==99){
                 auto* dialog=new juce::AlertWindow(
@@ -1006,7 +993,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     }
     title_.setText("SCALPEL EQ",juce::dontSendNotification);
     analyzerLegend_.setFont(juce::Font(juce::FontOptions(12.0f,juce::Font::bold)));
-    analyzerLegend_.setText("SYNESTHESIA V1   /   HUE x ENERGY",
+    analyzerLegend_.setText("SPECTRAL COLOR   /   LEVEL",
                             juce::dontSendNotification);
     title_.setFont(juce::Font(juce::FontOptions(24.0f,juce::Font::bold)));
     selection_.setFont(juce::Font(juce::FontOptions(12.0f,juce::Font::bold)));
@@ -1085,7 +1072,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         addAndMakeVisible(onyxLabels_[(size_t)i]);
     }
     mono_.setTooltip("Frequency-selective MONO on the selected BAND only");
-    phase_.setTooltip("Automatic per-band coherence guard: gently reduces anti-correlated SIDE power, with smoothed engagement.");
+    phase_.setTooltip("Automatic per-band L/R phase alignment. Estimates the phase offset and rotates the right-channel band toward the left reference without reducing stereo width.");
     limit_.setTooltip("Enable fixed-depth LA-2A-inspired optical leveling for the selected band. The hidden automation amount remains compatible with saved sessions.");
     analyzerDepthLabel_.setText("HEAT MAP",juce::dontSendNotification);
     analyzerSlopeLabel_.setText("FREEZE",juce::dontSendNotification);
@@ -1101,12 +1088,12 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     }
     analyzerSlopeA_=std::make_unique<SliderA>(processor_.apvts,"analyzer_slope",analyzerSlope_);
     analyzerMemoryA_=std::make_unique<SliderA>(processor_.apvts,"aura_memory",analyzerMemory_);
-    heatToggle_.setTooltip("Synesthesia V1: stationary frequency-to-hue / measured dBFS-to-brightness. Full rainbow, no flashing. Prototype visual mapping, not human synesthesia detection.");
+    heatToggle_.setTooltip("Measured spectral heat map. Frequency sets colour; level sets intensity.");
     heatToggle_.setClickingTogglesState(true);
     addAndMakeVisible(heatToggle_);
     heatA_=std::make_unique<ButtonA>(processor_.apvts,"aura_color",heatToggle_);
     xrayButton_.setClickingTogglesState(true);
-    xrayButton_.setTooltip("X-RAY: restrained sound-reactive black mercury and synesthesia. Visual-only, no changes to audio DSP.");
+    xrayButton_.setTooltip("X-RAY visualizer. Display only; audio processing is unchanged.");
     addAndMakeVisible(xrayButton_);
     xrayAttachment_=std::make_unique<ButtonA>(processor_.apvts,"scalpel_xray",xrayButton_);
     freezeButton_.setClickingTogglesState(true);
@@ -1162,21 +1149,33 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     // A clean Sanyo/Game Boy control face: no inherited Surgery status strip,
     // output gain fader, bypass, A/B, copy or file buttons on the chassis.
     // The associated APVTS parameters/preset code survive for DAW compatibility.
-    for(auto* button:{&bypass_,&compare_,&copy_,&save_,&load_,&peakHold_})
+    for(auto* button:{&bypass_,&compare_,&copy_,&save_,&load_})
         button->setVisible(false);
+    peakHold_.setVisible(true);
+    peakHold_.setButtonText("RESET");
     output_.setVisible(false);outputLabel_.setVisible(false);
-    bindNode(0);setMode(2);
-    setResizable(true,true);setResizeLimits(840,470,1800,1200);setSize(1344,756);
+    bindNode(0);setMode(0);
+    // Hosts may resize the editor, but Scalpel does not draw JUCE's generic
+    // bottom-right corner grip over the hardware face.
+    setResizable(true,false);setResizeLimits(840,470,1800,1200);setSize(1344,756);
     timerCallback();startTimerHz(60);
 }
-RootsEditor::~RootsEditor(){stopTimer();setLookAndFeel(nullptr);}
+RootsEditor::~RootsEditor(){
+    closing_=true;
+    stopTimer();
+    presetChooser_.reset();
+    graph_.onSelectNode=nullptr;
+    graph_.onSelectCarve=nullptr;
+    graph_.releaseVisualResources();
+    setLookAndFeel(nullptr);
+}
 void RootsEditor::choosePreset(bool saving){
     presetChooser_=std::make_unique<juce::FileChooser>(saving?"Save Scalpel EQ preset":"Load Scalpel EQ preset",
         juce::File::getSpecialLocation(juce::File::userDocumentsDirectory).getChildFile("Scalpel EQ.surgerypreset"),"*.surgerypreset");
     const auto chooserFlags=saving?(juce::FileBrowserComponent::saveMode|juce::FileBrowserComponent::canSelectFiles|juce::FileBrowserComponent::warnAboutOverwriting):
         (juce::FileBrowserComponent::openMode|juce::FileBrowserComponent::canSelectFiles);
     presetChooser_->launchAsync(chooserFlags,[safe=juce::Component::SafePointer<RootsEditor>(this),saving](const juce::FileChooser& chooser){
-        if(safe==nullptr)return;
+        if(safe==nullptr||safe->closing_)return;
         auto file=chooser.getResult();if(file==juce::File{})return;
         const bool ok=saving?safe->processor_.savePreset(file.withFileExtension("surgerypreset")):safe->processor_.loadPreset(file);
         if(!ok)juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,"Preset could not be opened",
@@ -1280,8 +1279,11 @@ void RootsEditor::setMode(int next){
     // but aren't injected into the redesigned 3-control ANALYZE shelf.
     analyzerLegend_.setVisible(false);
     weatherMode_.setVisible(false);jukeMode_.setVisible(false);jukeModeLabel_.setVisible(false);reducedMotion_.setVisible(false);
-    for(auto* box:{&compressor_,&domain_,&detector_})box->setVisible(mode_==0);
-    for(auto* label:{&compLabel_,&domainLabel_,&detectorLabel_})label->setVisible(mode_==0);
+    for(auto* box:{&compressor_,&domain_})box->setVisible(mode_==0);
+    for(auto* label:{&compLabel_,&domainLabel_})label->setVisible(mode_==0);
+    // Retain the legacy detector parameter for automation/preset recall only.
+    // Its former 75 px control collided with the MONO switch block.
+    detector_.setVisible(false);detectorLabel_.setVisible(false);
     gain_.setVisible(mode_==0);gainLabel_.setVisible(mode_==0);
     threshold_.setVisible(mode_==0);
     thresholdLabel_.setVisible(mode_==0);
@@ -1341,8 +1343,9 @@ void RootsEditor::timerCallback(){
     compare_.setButtonText(b?"A / B: B":"A / B: A");
     copy_.setButtonText(b?"COPY B > A":"COPY A > B");
     const float held=processor_.getPeakHoldDb();
-    peakHold_.setButtonText((held>=0.0f?"CLIP ":"PEAK ")+juce::String(held,1)+" dB");
-    peakHold_.setToggleState(held>=0.0f,juce::dontSendNotification);
+    juce::ignoreUnused(held);
+    peakHold_.setButtonText("RESET");
+    peakHold_.setToggleState(false,juce::dontSendNotification);
     const auto labelColour=juce::Colour(0xff352820);
     for(auto* label:{&title_,&selection_,&status_,&gainLabel_,&thresholdLabel_,
                     &carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_,
@@ -1394,10 +1397,10 @@ thresholdLabel_.setText("COMP THRESHOLD",
     if(mode_==3){
         const auto metrics=graph_.spectralMetrics();
         const juce::String line=metrics.signalPresent?
-            "SYN V1 / BIN ~"+hzText(metrics.loudestHz)+"Hz "+pitchText(metrics.loudestHz)+" / "+
-            juce::String(metrics.loudestDb,1)+" dBFS  /  CENTROID ~"+
-            hzText(metrics.approximateCentroidHz)+"Hz":
-            "SYN V1 / SILENCE OR BELOW DISPLAY FLOOR";
+            "PEAK "+hzText(metrics.loudestHz)+" Hz  /  "+
+            juce::String(metrics.loudestDb,1)+" dBFS  /  CENTROID "+
+            hzText(metrics.approximateCentroidHz)+" Hz":
+            "SIGNAL BELOW DISPLAY RANGE";
         status_.setText(line,juce::dontSendNotification);
     } else status_.setText(status,juce::dontSendNotification);
 }
@@ -1418,144 +1421,75 @@ void RootsEditor::paint(juce::Graphics& g){
 void RootsEditor::resized(){rackBackground_={};backgroundScale_=0;layoutRack();repaint();}
 
 void RootsEditor::paintRack(juce::Graphics& g){
-    const int width=getWidth(),height=getHeight();
-    g.fillAll(juce::Colour(0xff382b22));
-    const auto outer=getLocalBounds().toFloat().reduced(1.f);
-    juce::ColourGradient plastic(juce::Colour(0xfff7e3ca),0,0,
-                                 juce::Colour(0xffc7a486),0,(float)height,false);
-    plastic.addColour(.27,juce::Colour(0xffe6cdb0));
-    plastic.addColour(.72,juce::Colour(0xffd9bda2));
-    g.setGradientFill(plastic);g.fillRoundedRectangle(outer,12.f);
-    g.setColour(juce::Colour(0xfffff0d9).withAlpha(.86f));
-    g.drawRoundedRectangle(outer.reduced(2.f),10.f,1.4f);
-    g.setColour(juce::Colour(0xff5b4534).withAlpha(.78f));
-    g.drawRoundedRectangle(outer.reduced(5.f),8.f,.8f);
-    // Subpixel molded-powder grain, cached in the editor background.
-    juce::Random grain(50219);
-    for(int i=0;i<680;++i){
-        const float x=grain.nextFloat()*width,y=grain.nextFloat()*height;
-        g.setColour(juce::Colour(0xff705743).withAlpha(.014f+grain.nextFloat()*.018f));
-        g.fillEllipse(x,y,.65f,.65f);
-    }
-    // Recessed black Phillips fasteners, reference-equivalent and static.
-    auto screw=[&](float cx,float cy){
-        g.setColour(juce::Colour(0xff705542));g.fillEllipse(cx-13,cy-13,26,26);
-        g.setColour(juce::Colour(0xff07090a));g.fillEllipse(cx-11.5f,cy-11.5f,23,23);
-        juce::ColourGradient steel(juce::Colour(0xff4c4e4d),cx-7,cy-9,
-                                   juce::Colour(0xff090b0c),cx+9,cy+8,false);
-        g.setGradientFill(steel);g.fillEllipse(cx-9.2f,cy-9.2f,18.4f,18.4f);
-        g.setColour(juce::Colour(0xff010202));
-        g.drawLine(cx-5.3f,cy,cx+5.3f,cy,3.5f);
-        g.drawLine(cx,cy-5.3f,cx,cy+5.3f,3.5f);
-        g.setColour(juce::Colour(0xffaaaaa4).withAlpha(.24f));
-        juce::Path rimArc;rimArc.addCentredArc(cx,cy,8.2f,8.2f,0.f,3.5f,5.0f,true);
-        g.strokePath(rimArc,juce::PathStrokeType(1.f));
-    };
-    screw(19,19);screw((float)width-19,19);
-    screw(19,(float)height-19);screw((float)width-19,(float)height-19);
     juce::Graphics::ScopedSaveState saved(g);
-    g.addTransform(surgery::rack::contentTransform(width,height));
-    auto deck=[&](juce::Rectangle<float> r,bool dark){
-        g.setColour(juce::Colour(0xff4c3529).withAlpha(.82f));
-        g.fillRoundedRectangle(r.expanded(1.5f),5.f);
-        juce::ColourGradient face(dark?juce::Colour(0xff141311):juce::Colour(0xffedddc7),
-            r.getX(),r.getY(),dark?juce::Colour(0xff050504):juce::Colour(0xffd5b596),
-            r.getX(),r.getBottom(),false);
-        g.setGradientFill(face);g.fillRoundedRectangle(r,4.f);
-        g.setColour(juce::Colour(dark?0xff987b61:0xffffefda).withAlpha(.8f));
-        g.drawRoundedRectangle(r.reduced(.8f),3.f,1.f);
-    };
-    // Wide, flush, interlocking rails match the approved Scalpel render.
-    deck({37,48,1046,46},false);
-    deck({18,91,1084,352},true);
-    deck({32,444,1056,34},false);
-    deck({32,476,1056,143},false);
-    // Inset dark joints dividing the mechanical control shelf only.
-    if(mode_==0){
-        for(float x:{183.f,358.f,802.f}){
-            g.setColour(juce::Colour(0xff735944).withAlpha(.6f));
-            g.drawLine(x,477,x,600,.9f);
-        }
-    } else if(mode_==1){
-        for(float x:{280.f,867.f}){
-            g.setColour(juce::Colour(0xff735944).withAlpha(.6f));
-            g.drawLine(x,477,x,600,.9f);
-        }
-    } else if(mode_==3){
-        for(float x:{384.f,736.f}){
-            g.setColour(juce::Colour(0xff735944).withAlpha(.6f));
-            g.drawLine(x,477,x,600,.9f);
-        }
-    }
+    g.addTransform(surgery::rack::contentTransform(getWidth(),getHeight()));
+    scalpel::ui105::drawRackFace(g,1120,630,mode_);
 }
 
 void RootsEditor::layoutRack(){
-    // Fixed design coordinates, uniformly scaled. JUCE inversely transforms
-    // pointer/drag events, so graphics, hit targets and text remain aligned.
+    // The approved 16:9 console is authored on a 1120 x 630 logical grid.
+    // One uniform transform keeps assets, text and hit targets pixel-aligned.
     const auto transform=surgery::rack::contentTransform(getWidth(),getHeight());
     for(auto* child:getChildren()){
-        // JUCE owns this host-sized resize handle; transforming it with the
-        // instrument panel made it float over controls after a window resize.
         if(dynamic_cast<juce::ResizableCornerComponent*>(child)!=nullptr)child->setTransform({});
         else child->setTransform(transform);
     }
-    for(auto* label:{&gainLabel_,&thresholdLabel_,&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_,&analyzerDepthLabel_,&analyzerSlopeLabel_,&analyzerMemoryLabel_})
+    for(auto* label:{&gainLabel_,&thresholdLabel_,&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_,
+                     &analyzerDepthLabel_,&analyzerSlopeLabel_,&analyzerMemoryLabel_}){
         label->setJustificationType(juce::Justification::centred);
-    title_.setBounds(54,8,395,38);
-    for(int root=0;root<7;++root)
-        rootButtons_[(size_t)root].setBounds(42+root*149,51,146,37);
-    graph_.setBounds(20,94,1080,347);
-    for(int i=0;i<4;++i)modeButtons_[(size_t)i].setBounds(35+i*263,447,260,28);
-    xrayButton_.setBounds(945,112,118,40);
+        label->setFont(juce::Font(juce::FontOptions(12.5f,juce::Font::bold)));
+    }
+    title_.setVisible(false);
+    for(auto& button:rootButtons_){button.setVisible(false);button.setBounds(0,0,1,1);}
 
-    // BAND MODE / the precise two-knob, two-menu, four-button deck.
-    on_.setBounds(53,505,120,36);off_.setBounds(53,549,120,36);
-    gainLabel_.setBounds(195,484,140,20);gain_.setBounds(200,499,130,91);
-    thresholdLabel_.setBounds(352,484,150,20);threshold_.setBounds(360,499,135,91);
-    compLabel_.setBounds(521,482,204,19);compressor_.setBounds(522,503,204,31);
-    domainLabel_.setBounds(521,535,204,19);domain_.setBounds(522,556,204,32);
-    detectorLabel_.setBounds(728,482,75,19);detector_.setBounds(728,502,75,30);
-    // The fourth switch block now meets the compression selectors directly.
-    // No stray LIMIT amount/third dial is painted beside MONO.
+    graph_.setBounds(20,118,1080,288);
+    for(int i=0;i<4;++i)modeButtons_[(size_t)i].setBounds(36+i*262,414,258,39);
+    xrayButton_.setBounds(879,139,102,37);
+    peakHold_.setBounds(881,315,100,40);
+
+    // BAND MODE: approved two-knob, two-menu, six-button hierarchy.
+    on_.setBounds(78,492,112,43);off_.setBounds(78,548,112,43);
+    gainLabel_.setBounds(206,467,160,22);gain_.setBounds(216,484,142,110);
+    thresholdLabel_.setBounds(369,467,166,22);threshold_.setBounds(382,484,142,110);
+    compLabel_.setBounds(548,468,220,19);compressor_.setBounds(550,492,220,34);
+    domainLabel_.setBounds(548,531,220,19);domain_.setBounds(550,554,220,34);
+    detectorLabel_.setBounds(0,0,1,1);detector_.setBounds(0,0,1,1);
     limitAmount_.setBounds(0,0,1,1);
-    mono_.setBounds(788,504,133,39);solo_.setBounds(930,504,133,39);
-    phase_.setBounds(788,550,133,39);limit_.setBounds(930,550,133,39);
+    mono_.setBounds(824,489,120,44);solo_.setBounds(965,489,120,44);
+    phase_.setBounds(824,548,120,44);limit_.setBounds(965,548,120,44);
 
-    // CARVE / real C1-C4 selector panel, two-state switches and three dials.
-    selection_.setBounds(56,482,230,20);
-    carveOn_.setBounds(71,519,188,39);
-    carveOff_.setBounds(71,565,188,39);
+    // CARVE: exact approved text, C1-C4 routing and three surgical controls.
+    selection_.setBounds(39,468,235,22);
+    carveOn_.setBounds(77,500,158,43);carveOff_.setBounds(77,554,158,43);
     carveDynamic_.setBounds(0,0,1,1);
     const std::array<juce::Slider*,3> cs{&carveFrequency_,&carveDepth_,&carveQ_};
     const std::array<juce::Label*,3> cl{&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_};
     for(int i=0;i<3;++i){
-        cl[(size_t)i]->setBounds(299+i*194,482,182,20);
-        cs[(size_t)i]->setBounds(307+i*194,497,164,94);
+        cl[(size_t)i]->setBounds(286+i*190,468,174,22);
+        cs[(size_t)i]->setBounds(300+i*190,484,146,110);
     }
     for(int i=0;i<4;++i)
-        carveSlotButtons_[(size_t)i].setBounds(880+(i%2)*96,504+(i/2)*49,90,39);
+        carveSlotButtons_[(size_t)i].setBounds(868+(i%2)*108,492+(i/2)*58,100,44);
 
-    // COLOR / five exact user-provided ivory dial assets, no tick marks.
+    // COLOR: five equal channels share the approved CARVE font and readout geometry.
     for(int i=0;i<5;++i){
-        onyxLabels_[(size_t)i].setBounds(42+i*210,483,196,20);
-        onyxSliders_[(size_t)i].setBounds(67+i*210,499,146,94);
+        onyxLabels_[(size_t)i].setBounds(18+i*210,468,194,22);
+        onyxLabels_[(size_t)i].setFont(juce::Font(juce::FontOptions(12.5f,juce::Font::bold|juce::Font::italic)));
+        onyxSliders_[(size_t)i].setBounds(45+i*210,486,140,108);
     }
 
-    // ANALYZE / centered sculpted flame, snowflake and visual-decay dial.
-    analyzerDepthLabel_.setBounds(106,482,220,22);
-    analyzerSlopeLabel_.setBounds(447,482,220,22);
-    analyzerMemoryLabel_.setBounds(785,482,220,22);
-    heatToggle_.setBounds(174,510,85,85);freezeButton_.setBounds(515,510,85,85);
-    analyzerMemory_.setBounds(828,501,135,93);
-    // Preserved automation settings have no legacy front-panel decoration.
-    jukeModeLabel_.setBounds(12,0,10,10);jukeMode_.setBounds(12,0,10,10);
-    weatherMode_.setBounds(0,0,10,10);reducedMotion_.setBounds(24,0,10,10);
-    analyzerDepth_.setBounds(0,0,10,10);analyzerSlope_.setBounds(0,0,10,10);
-    analyzerLegend_.setBounds(0,0,10,10);status_.setBounds(0,0,10,10);
+    // ANALYZE: functional heat-map/freeze assets and one real visual-decay control.
+    analyzerDepthLabel_.setBounds(70,468,220,24);
+    analyzerSlopeLabel_.setBounds(423,468,220,24);
+    analyzerMemoryLabel_.setBounds(785,468,220,24);
+    heatToggle_.setBounds(132,500,96,96);freezeButton_.setBounds(486,500,96,96);
+    analyzerMemory_.setBounds(827,484,142,110);
 
-    // Compact secondary utility strip below the visual reference shelf.
-    bypass_.setBounds(47,605,75,20);compare_.setBounds(128,605,75,20);
-    copy_.setBounds(209,605,92,20);save_.setBounds(307,605,65,20);
-    load_.setBounds(378,605,65,20);peakHold_.setBounds(449,605,119,20);
-    outputLabel_.setBounds(788,604,60,21);output_.setBounds(850,604,219,21);
+    jukeModeLabel_.setBounds(0,0,1,1);jukeMode_.setBounds(0,0,1,1);
+    weatherMode_.setBounds(0,0,1,1);reducedMotion_.setBounds(0,0,1,1);
+    analyzerDepth_.setBounds(0,0,1,1);analyzerSlope_.setBounds(0,0,1,1);
+    analyzerLegend_.setBounds(0,0,1,1);status_.setBounds(0,0,1,1);
+    bypass_.setBounds(0,0,1,1);compare_.setBounds(0,0,1,1);copy_.setBounds(0,0,1,1);
+    save_.setBounds(0,0,1,1);load_.setBounds(0,0,1,1);
+    outputLabel_.setBounds(0,0,1,1);output_.setBounds(0,0,1,1);
 }

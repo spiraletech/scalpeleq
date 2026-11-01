@@ -4,6 +4,7 @@
 // APVTS value; the signed indicator is inside the ivory dial face.
 #include <JuceHeader.h>
 #include <BinaryData.h>
+#include "ScalpelAssets.h"
 #include <cmath>
 #include "OnyxRackSkin.h"
 class SurgeryLookAndFeel final : public juce::LookAndFeel_V4 {
@@ -40,50 +41,40 @@ public:
     }
     void drawRotarySlider(juce::Graphics& g,int x,int y,int w,int h,float position,
                           float start,float end,juce::Slider& slider) override {
-        const float cx=x+w*.5f,cy=y+h*.48f;
-        const float radius=juce::jlimit(13.f,44.f,.48f*(float)std::min(w,h));
-        // The sculpted V mark is at twelve o'clock at each control's HOME
-        // value (0% COLOR, 0 dB gain, Q reset, etc.). It does not inherit
-        // Surgery's lower-left minimum-angle pointer drift.
-        const float neutral=(float)slider.getNormalisableRange().convertTo0to1(
-            slider.getDoubleClickReturnValue());
-        const float rotation=(position-neutral)*(end-start);
-        // Exact user-approved powdery ivory knob artwork. Its molded V-index
-        // rotates with the REAL APVTS parameter. No exterior calibration ticks.
-        static const auto dial=juce::ImageCache::getFromMemory(
-            BinaryData::scalpelknob_png,BinaryData::scalpelknob_pngSize);
-        if(!dial.isNull()){
-            const float scale=2*radius/(.64f*(float)dial.getWidth());
-            const auto transform=juce::AffineTransform::scale(scale)
-                .translated(cx-dial.getWidth()*scale*.5f,cy-dial.getHeight()*scale*.5f)
-                .rotated(rotation,cx,cy);
-            g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
-            g.drawImageTransformed(dial,transform,false);
-            return;
-        }
+        const float cx=x+w*.5f,cy=y+h*.46f;
+        const float radius=juce::jlimit(14.f,43.f,.45f*(float)std::min(w,h));
+        const float angle=start+position*(end-start);
         const auto face=juce::Rectangle<float>(cx-radius,cy-radius,2*radius,2*radius);
-        g.setColour(juce::Colour(0xff54483d).withAlpha(.25f));
-        g.fillEllipse(face.translated(1.4f,3.f).expanded(2.f));
-        juce::ColourGradient rim(juce::Colour(0xfffcf1dc),cx-radius,cy-radius,
-                                 juce::Colour(0xff887460),cx+radius,cy+radius,false);
-        g.setGradientFill(rim);g.fillEllipse(face.expanded(1.f));
-        g.setColour(juce::Colour(0xff493b31).withAlpha(.63f));g.drawEllipse(face.expanded(1.f),1.1f);
-        juce::ColourGradient ivory(juce::Colour(0xfff6ead6),cx-radius*.4f,cy-radius,
-                                   juce::Colour(0xffd3c0a9),cx+radius*.4f,cy+radius,false);
-        g.setGradientFill(ivory);g.fillEllipse(face.reduced(3.f));
-        g.setColour(juce::Colour(0xfffdf6e8).withAlpha(.58f));g.drawEllipse(face.reduced(4.2f),.8f);
-        // Subtle powder-finish speckles stay inside the manufactured face.
-        for(int i=0;i<64;++i){
-            const float a=i*2.3999632f;
-            const float rr=radius*.73f*std::sqrt((i+.5f)/64.f);
-            g.setColour(juce::Colour(0xff7d6957).withAlpha(.065f));
-            g.fillEllipse(cx+std::cos(a)*rr-.34f,cy+std::sin(a)*rr-.34f,.68f,.68f);
+
+        // Black broadcast-console dial with a real parameter arc. This is
+        // vector-drawn so 100/125/150/200% host DPI all share one asset.
+        g.setColour(juce::Colour(0xff3b2418).withAlpha(.36f));
+        g.fillEllipse(face.translated(2.0f,4.0f).expanded(3.0f));
+        juce::ColourGradient rim(juce::Colour(0xff8e6b52),cx-radius,cy-radius,
+                                 juce::Colour(0xff160f0c),cx+radius,cy+radius,false);
+        g.setGradientFill(rim);g.fillEllipse(face.expanded(2.0f));
+        g.setColour(juce::Colour(0xff080706));g.fillEllipse(face);
+        juce::ColourGradient dial(juce::Colour(0xff3a3734),cx-radius*.5f,cy-radius,
+                                  juce::Colour(0xff151312),cx+radius*.6f,cy+radius,false);
+        g.setGradientFill(dial);g.fillEllipse(face.reduced(5.0f));
+        g.setColour(juce::Colour(0xff6c625a).withAlpha(.72f));
+        g.drawEllipse(face.reduced(5.0f),1.0f);
+
+        juce::Path backgroundArc,activeArc;
+        backgroundArc.addCentredArc(cx,cy,radius+4.0f,radius+4.0f,0.0f,start,end,true);
+        activeArc.addCentredArc(cx,cy,radius+4.0f,radius+4.0f,0.0f,start,angle,true);
+        g.setColour(juce::Colour(0xff4b3c33));g.strokePath(backgroundArc,juce::PathStrokeType(3.0f));
+        if(position>0.002f){
+            g.setColour(juce::Colour(0xffff7900).withAlpha(.18f));
+            g.strokePath(activeArc,juce::PathStrokeType(7.0f));
+            g.setColour(juce::Colour(0xffff7900));
+            g.strokePath(activeArc,juce::PathStrokeType(3.3f));
         }
+
         juce::Path pointer;
-        pointer.addTriangle(cx-3.4f,cy-radius+9.f,cx+3.4f,cy-radius+9.f,cx,cy-radius+25.f);
-        pointer.applyTransform(juce::AffineTransform::rotation(rotation,cx,cy));
-        g.setColour(juce::Colour(0xff6b4e35));g.fillPath(pointer);
-        g.setColour(juce::Colour(0xfffff0d8).withAlpha(.50f));g.strokePath(pointer,juce::PathStrokeType(.5f));
+        pointer.addRoundedRectangle(cx-1.8f,cy-radius+10.0f,3.6f,radius*.48f,1.7f);
+        pointer.applyTransform(juce::AffineTransform::rotation(angle,cx,cy));
+        g.setColour(juce::Colour(0xfffff0dc));g.fillPath(pointer);
     }
     void drawButtonBackground(juce::Graphics& g,juce::Button& button,
                               const juce::Colour&,bool over,bool down) override {
@@ -92,14 +83,34 @@ public:
         const bool xray=button.getButtonText()=="X-RAY";
         const bool deckSwitch=button.getButtonText()=="ON"||button.getButtonText()=="OFF";
         const bool actionSwitch=button.getButtonText()=="MONO"||button.getButtonText()=="SOLO"||
-            button.getButtonText()=="PHASE"||button.getButtonText()=="LIMIT";
+            button.getButtonText().startsWith("PHASE")||button.getButtonText()=="LIMIT";
         const bool depressed=active&&(deckSwitch||actionSwitch);
         const bool snow=button.getButtonText()=="FREEZE"||button.getButtonText()=="RESUME";
         const bool heat=button.getButtonText().startsWith("SONAR ")||button.getButtonText()=="HEAT MAP";
+        const auto text=button.getButtonText();
+        const bool pageTab=text=="BAND MODE"||text=="CARVE"||text=="COLOR"||text=="ANALYZE";
+        if(pageTab){
+            const bool selected=button.getToggleState();
+            g.setColour(juce::Colour(0xff493226).withAlpha(.90f));
+            g.fillRoundedRectangle(r.translated(0,2.0f).expanded(1.0f),5.0f);
+            juce::ColourGradient face(selected?juce::Colour(0xff24201d):juce::Colour(0xffffe2c3),
+                                      0,r.getY(),selected?juce::Colour(0xff0d0b0a):juce::Colour(0xffc99d7e),
+                                      0,r.getBottom(),false);
+            g.setGradientFill(face);g.fillRoundedRectangle(r,5.0f);
+            g.setColour(juce::Colour(selected?0xff8d6f59:0xffffeed8));
+            g.drawRoundedRectangle(r.reduced(.8f),4.4f,1.0f);
+            if(selected){
+                g.setColour(juce::Colour(0xffff7900).withAlpha(.23f));
+                g.fillRoundedRectangle({r.getX()+40,r.getBottom()-7,r.getWidth()-80,7},3.5f);
+                g.setColour(juce::Colour(0xffff7900));
+                g.fillRoundedRectangle({r.getX()+49,r.getBottom()-4,r.getWidth()-98,3},1.5f);
+            }
+            return;
+        }
         if(snow||heat){
-            static const auto snowImage=juce::ImageCache::getFromMemory(
+            static const auto snowImage=scalpel::loadSoftwareAsset(
                 BinaryData::scalpelfreeze_png,BinaryData::scalpelfreeze_pngSize);
-            static const auto heatImage=juce::ImageCache::getFromMemory(
+            static const auto heatImage=scalpel::loadSoftwareAsset(
                 BinaryData::scalpelheatmap_png,BinaryData::scalpelheatmap_pngSize);
             const auto& sprite=snow?snowImage:heatImage;
             if(!sprite.isNull()){
@@ -168,10 +179,18 @@ public:
     void drawButtonText(juce::Graphics& g,juce::TextButton& b,bool,bool) override {
         if(b.getButtonText()=="FREEZE"||b.getButtonText()=="RESUME"||b.getButtonText().startsWith("SONAR ")||b.getButtonText()=="HEAT MAP")return;
         const bool xray=b.getButtonText()=="X-RAY";
+        const auto tabText=b.getButtonText();
+        const bool pageTab=tabText=="BAND MODE"||tabText=="CARVE"||tabText=="COLOR"||tabText=="ANALYZE";
+        if(pageTab){
+            g.setColour(b.getToggleState()?juce::Colour(0xffffe8ce):juce::Colour(0xff17110d));
+            g.setFont(juce::Font(juce::FontOptions(15.0f,juce::Font::bold|juce::Font::italic)));
+            g.drawFittedText(tabText,b.getLocalBounds().reduced(7,3),juce::Justification::centred,1);
+            return;
+        }
         const bool depressedSwitch=b.getToggleState()&&
             (b.getButtonText()=="ON"||b.getButtonText()=="OFF"||
              b.getButtonText()=="MONO"||b.getButtonText()=="SOLO"||
-             b.getButtonText()=="PHASE"||b.getButtonText()=="LIMIT");
+             b.getButtonText().startsWith("PHASE")||b.getButtonText()=="LIMIT");
         g.setColour(b.isEnabled()?juce::Colour(xray?0xffff624b:
             depressedSwitch?0xffffeee0:0xff241a14):juce::Colour(0xff8d8177));
         g.setFont(juce::Font(juce::FontOptions(juce::jlimit(11.0f,13.0f,b.getHeight()*.43f),juce::Font::bold)));
