@@ -27,6 +27,35 @@ inline bool verifyUI106(PRISMVSTAudioProcessor&, juce::AudioProcessorEditor& edi
         std::cerr<<"UI106: rack transform leaves plugin-owned background around the face\n";return false;
     }
 
+    auto findButton=[&](const juce::String& text)->juce::TextButton*{
+        for(auto* child:editor.getChildren())
+            if(auto* button=dynamic_cast<juce::TextButton*>(child);
+               button&&(button->getButtonText()==text||
+                        (text=="FREEZE"&&button->getButtonText()=="RESUME")))return button;
+        return nullptr;
+    };
+    auto findLabel=[&](const juce::String& text)->juce::Label*{
+        for(auto* child:editor.getChildren())
+            if(auto* label=dynamic_cast<juce::Label*>(child);
+               label&&label->getText()==text)return label;
+        return nullptr;
+    };
+    if(auto* analyze=findButton("ANALYZE"))analyze->onClick();else return false;
+    auto* heat=findButton("HEAT MAP");
+    auto* freeze=findButton("FREEZE");
+    auto* heatLabel=findLabel("HEAT MAP");
+    auto* freezeLabel=findLabel("FREEZE");
+    auto* decayLabel=findLabel("VISUAL DECAY");
+    if(heat==nullptr||freeze==nullptr||heatLabel==nullptr||freezeLabel==nullptr||decayLabel==nullptr||
+       !heat->isVisible()||!freeze->isVisible()||
+       heat->getBounds()!=juce::Rectangle<int>(141,500,96,96)||
+       freeze->getBounds()!=juce::Rectangle<int>(510,500,96,96)||
+       heatLabel->getFont().getHeight()<16.0f||
+       freezeLabel->getFont().getHeight()<16.0f||
+       decayLabel->getFont().getHeight()<16.0f){
+        std::cerr<<"UI106: approved ANALYZE switch geometry or typography changed\n";return false;
+    }
+
     auto image=editor.createComponentSnapshot(editor.getLocalBounds());
     const std::array<juce::Point<int>,4> corners{{
         {0,0},{image.getWidth()-1,0},{0,image.getHeight()-1},
