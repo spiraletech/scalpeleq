@@ -30,21 +30,21 @@ inline void roundedPanel(juce::Graphics& g, juce::Rectangle<float> r, bool dark,
 
 inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
 {
-    // Cover every editor pixel. The rounded face may reveal this warm edge,
-    // never a black plugin-owned letterbox when a host presents the window.
-    g.fillAll(chassisEdge);
-    auto outer = juce::Rectangle<float>(1, 1, (float)width - 2, (float)height - 2);
+    // The chassis itself fills the complete rectangular editor surface.
+    // Rounded lines remain as internal industrial detailing, but there is no
+    // separate colour/background exposed outside the rack face.
+    const auto full = juce::Rectangle<float>(0, 0, (float)width, (float)height);
     juce::ColourGradient shell(juce::Colour(0xffffe0b7), 0, 0,
                                juce::Colour(0xffb77e52), 0, (float)height, false);
     shell.addColour(.16, juce::Colour(0xfff2c292));
     shell.addColour(.62, juce::Colour(0xffdca476));
     shell.addColour(.92, juce::Colour(0xffc78c60));
     g.setGradientFill(shell);
-    g.fillRoundedRectangle(outer, 25.0f);
+    g.fillRect(full);
     g.setColour(juce::Colour(0xffffead4).withAlpha(.90f));
-    g.drawRoundedRectangle(outer.reduced(2.0f), 23.0f, 1.3f);
+    g.drawRoundedRectangle(full.reduced(2.0f), 23.0f, 1.3f);
     g.setColour(juce::Colour(0xff694735).withAlpha(.85f));
-    g.drawRoundedRectangle(outer.reduced(5.0f), 20.0f, 1.0f);
+    g.drawRoundedRectangle(full.reduced(5.0f), 20.0f, 1.0f);
 
     // Sanyo-style ventilation: evenly machined, never decorative noise.
     for (int i = 0; i < 11; ++i)
