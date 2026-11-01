@@ -145,44 +145,58 @@ public:
 
             const auto centre=face.getCentre();
             if(heat){
+                // Two-tongue outline flame: broad at the base with an offset
+                // upper lick, matching the approved embossed hardware symbol.
                 juce::Path flame;
-                flame.startNewSubPath(centre.x+1.0f,face.getBottom()-11.0f);
-                flame.cubicTo(centre.x+15.0f,centre.y+7.0f,
-                              centre.x+11.0f,centre.y-7.0f,
-                              centre.x+2.0f,face.getY()+9.0f);
-                flame.cubicTo(centre.x+1.0f,centre.y-1.0f,
-                              centre.x-8.0f,centre.y-3.0f,
-                              centre.x-5.0f,face.getY()+18.0f);
-                flame.cubicTo(centre.x-18.0f,centre.y+2.0f,
-                              centre.x-14.0f,face.getBottom()-13.0f,
-                              centre.x+1.0f,face.getBottom()-11.0f);
+                flame.startNewSubPath(centre.x-2.0f,face.getBottom()-9.0f);
+                flame.cubicTo(centre.x-16.0f,face.getBottom()-15.0f,
+                              centre.x-17.0f,centre.y-8.0f,
+                              centre.x-7.0f,face.getY()+15.0f);
+                flame.cubicTo(centre.x-8.0f,centre.y-3.0f,
+                              centre.x-2.0f,centre.y-7.0f,
+                              centre.x+3.0f,centre.y-12.0f);
+                flame.cubicTo(centre.x+2.0f,centre.y-20.0f,
+                              centre.x+7.0f,face.getY()+10.0f,
+                              centre.x+10.0f,face.getY()+7.0f);
+                flame.cubicTo(centre.x+12.0f,centre.y-10.0f,
+                              centre.x+19.0f,centre.y-3.0f,
+                              centre.x+15.0f,centre.y+9.0f);
+                flame.cubicTo(centre.x+12.0f,face.getBottom()-12.0f,
+                              centre.x+5.0f,face.getBottom()-8.0f,
+                              centre.x-2.0f,face.getBottom()-9.0f);
                 juce::Path inner;
-                inner.startNewSubPath(centre.x,face.getBottom()-13.0f);
-                inner.cubicTo(centre.x+6.0f,centre.y+5.0f,
-                              centre.x+4.0f,centre.y-1.0f,
-                              centre.x+1.0f,centre.y-7.0f);
+                inner.startNewSubPath(centre.x-1.0f,face.getBottom()-12.0f);
+                inner.cubicTo(centre.x-7.0f,centre.y+8.0f,
+                              centre.x-4.0f,centre.y+1.0f,
+                              centre.x+1.0f,centre.y-5.0f);
+                inner.cubicTo(centre.x+1.0f,centre.y+1.0f,
+                              centre.x+8.0f,centre.y+4.0f,
+                              centre.x+6.0f,centre.y+10.0f);
+                inner.cubicTo(centre.x+5.0f,face.getBottom()-13.0f,
+                              centre.x+2.0f,face.getBottom()-11.0f,
+                              centre.x-1.0f,face.getBottom()-12.0f);
                 g.setColour(juce::Colour(heat&&active?0xffff9200:0xffc87932));
-                g.strokePath(flame,juce::PathStrokeType(3.6f,juce::PathStrokeType::curved,
+                g.strokePath(flame,juce::PathStrokeType(3.2f,juce::PathStrokeType::curved,
                                                         juce::PathStrokeType::rounded));
-                g.strokePath(inner,juce::PathStrokeType(2.8f,juce::PathStrokeType::curved,
+                g.strokePath(inner,juce::PathStrokeType(2.4f,juce::PathStrokeType::curved,
                                                         juce::PathStrokeType::rounded));
             }else{
                 g.setColour(juce::Colour(0xffffead1));
                 constexpr int arms=6;
-                const float length=face.getWidth()*.34f;
+                const float length=face.getWidth()*.38f;
                 for(int i=0;i<arms;++i){
                     const float angle=juce::MathConstants<float>::twoPi*i/arms;
                     const juce::Point<float> unit{std::cos(angle),std::sin(angle)};
                     const juce::Point<float> normal{-unit.y,unit.x};
                     const auto tip=centre+unit*length;
-                    g.drawLine({centre,tip},3.0f);
-                    const auto branchRoot=centre+unit*(length*.66f);
-                    const auto back=unit*(length*.18f);
-                    const auto side=normal*(length*.16f);
-                    g.drawLine({branchRoot,branchRoot-back+side},2.2f);
-                    g.drawLine({branchRoot,branchRoot-back-side},2.2f);
+                    g.drawLine({centre,tip},2.35f);
+                    const auto branchRoot=centre+unit*(length*.72f);
+                    const auto back=unit*(length*.13f);
+                    const auto side=normal*(length*.10f);
+                    g.drawLine({branchRoot,branchRoot-back+side},1.55f);
+                    g.drawLine({branchRoot,branchRoot-back-side},1.55f);
                 }
-                g.fillEllipse(centre.x-2.0f,centre.y-2.0f,4.0f,4.0f);
+                g.fillEllipse(centre.x-1.5f,centre.y-1.5f,3.0f,3.0f);
                 if(active){
                     g.setColour(juce::Colour(0xffffead1).withAlpha(.22f));
                     g.drawRoundedRectangle(tile.expanded(2.0f),8.5f,3.0f);
