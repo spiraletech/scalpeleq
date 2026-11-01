@@ -5,10 +5,10 @@
 #include <cmath>
 
 namespace scalpel::ui105 {
-inline constexpr juce::Colour champagne{0xffd8ad8d};
-inline constexpr juce::Colour ivory{0xffffe8cd};
-inline constexpr juce::Colour ink{0xff100f0e};
-inline constexpr juce::Colour amber{0xffff7900};
+inline const juce::Colour champagne{0xffd8ad8d};
+inline const juce::Colour ivory{0xffffe8cd};
+inline const juce::Colour ink{0xff100f0e};
+inline const juce::Colour amber{0xffff7900};
 
 inline void roundedPanel(juce::Graphics& g, juce::Rectangle<float> r, bool dark, float radius=8.0f)
 {
