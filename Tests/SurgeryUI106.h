@@ -18,6 +18,15 @@ inline bool verifyUI106(PRISMVSTAudioProcessor&, juce::AudioProcessorEditor& edi
 
     editor.setSize(1344,756);
     juce::Timer::callPendingTimersSynchronously();
+
+    const auto transform=surgery::rack::contentTransform(editor.getWidth(),editor.getHeight());
+    const auto topLeft=juce::Point<float>(0,0).transformedBy(transform);
+    const auto bottomRight=juce::Point<float>(1120,630).transformedBy(transform);
+    if(topLeft.getDistanceFrom({0,0})>.01f||
+       bottomRight.getDistanceFrom({(float)editor.getWidth(),(float)editor.getHeight()})>.01f){
+        std::cerr<<"UI106: rack transform leaves plugin-owned background around the face\n";return false;
+    }
+
     auto image=editor.createComponentSnapshot(editor.getLocalBounds());
     const std::array<juce::Point<int>,4> corners{{
         {0,0},{image.getWidth()-1,0},{0,image.getHeight()-1},
@@ -31,6 +40,6 @@ inline bool verifyUI106(PRISMVSTAudioProcessor&, juce::AudioProcessorEditor& edi
         }
     }
 
-    std::cout<<"SCALPEL UI 1.0.6: warm full-canvas face and 16:9 resize contract passed\n";
+    std::cout<<"SCALPEL UI 1.0.6: edge-to-edge face and 16:9 resize contract passed\n";
     return true;
 }
