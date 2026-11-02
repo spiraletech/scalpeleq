@@ -1452,8 +1452,10 @@ void RootsEditor::layoutRack(){
 
     graph_.setBounds(20,160,1080,246);
     for(int i=0;i<4;++i)modeButtons_[(size_t)i].setBounds(36+i*262,414,258,39);
-    xrayButton_.setBounds(879,177,102,37);
-    peakHold_.setBounds(881,349,100,40);
+    // Keep both analyzer actions on the same inset and width. Their left edge
+    // now clears the analyzer-panel bezel instead of straddling it.
+    xrayButton_.setBounds(893,177,100,37);
+    peakHold_.setBounds(893,349,100,40);
 
     // BAND MODE: approved two-knob, two-menu, six-button hierarchy.
     on_.setBounds(78,492,112,43);off_.setBounds(78,548,112,43);
@@ -1491,11 +1493,13 @@ void RootsEditor::layoutRack(){
     for(auto* label:{&analyzerDepthLabel_,&analyzerSlopeLabel_,&analyzerMemoryLabel_})
         label->setFont(juce::Font(juce::FontOptions("Segoe UI",16.5f,juce::Font::bold)));
     analyzerDepthLabel_.setBounds(79,468,220,24);
-    analyzerSlopeLabel_.setBounds(448,468,220,24);
-    analyzerMemoryLabel_.setBounds(819,468,220,24);
+    analyzerMemoryLabel_.setBounds(448,468,220,24);
+    analyzerSlopeLabel_.setBounds(819,468,220,24);
     heatToggle_.setBounds(141,500,96,96);
-    freezeButton_.setBounds(510,500,96,96);
-    analyzerMemory_.setBounds(858,484,142,110);
+    // Distribution layout: Visual Decay occupies the centre knob bay while
+    // Freeze moves to the right switch bay. Bindings and behavior are unchanged.
+    analyzerMemory_.setBounds(487,484,142,110);
+    freezeButton_.setBounds(881,500,96,96);
 
     jukeModeLabel_.setBounds(0,0,1,1);jukeMode_.setBounds(0,0,1,1);
     weatherMode_.setBounds(0,0,1,1);reducedMotion_.setBounds(0,0,1,1);
