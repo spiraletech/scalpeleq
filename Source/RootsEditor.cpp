@@ -964,6 +964,9 @@ void RootsGraph::popup(){
 }
 RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
 : juce::AudioProcessorEditor(&p),processor_(p),graph_(p) {
+    // The host-owned surround is a true black canvas.  The copper rack face
+    // is drawn by paintRack() and must never bleed into the plugin border.
+    setOpaque(true);
     setLookAndFeel(&lookAndFeel_);
 
     addAndMakeVisible(graph_);
@@ -1409,13 +1412,18 @@ thresholdLabel_.setText("COMP THRESHOLD",
     } else status_.setText(status,juce::dontSendNotification);
 }
 void RootsEditor::paint(juce::Graphics& g){
+    // Clear the host/window surround before compositing the fitted rack.  This
+    // keeps letterbox pixels and antialiased outer edges black at every size.
+    g.fillAll(juce::Colours::black);
     // Cache in physical pixels. Crossing a DPI boundary or changing host UI
     // scale rebuilds the surface even when logical editor dimensions match.
     const float dpi=juce::jlimit(.5f,4.f,g.getInternalContext().getPhysicalPixelScaleFactor());
     const int pw=juce::roundToInt(getWidth()*dpi),ph=juce::roundToInt(getHeight()*dpi);
     if(rackBackground_.getWidth()!=pw||rackBackground_.getHeight()!=ph||backgroundMode_!=mode_||backgroundScale_!=dpi){
         rackBackground_=juce::Image(juce::Image::RGB,pw,ph,false);
-        juce::Graphics background(rackBackground_);background.addTransform(juce::AffineTransform::scale(dpi));
+        juce::Graphics background(rackBackground_);
+        background.fillAll(juce::Colours::black);
+        background.addTransform(juce::AffineTransform::scale(dpi));
         paintRack(background);backgroundMode_=mode_;backgroundScale_=dpi;
     }
     g.setOpacity(1.f);g.drawImage(rackBackground_,getLocalBounds().toFloat());
@@ -1496,10 +1504,9 @@ void RootsEditor::layoutRack(){
     analyzerMemoryLabel_.setBounds(448,468,220,24);
     analyzerSlopeLabel_.setBounds(819,468,220,24);
     heatToggle_.setBounds(141,500,96,96);
-    // Distribution layout: Visual Decay occupies the centre knob bay at the
-    // same restrained visual scale as the standard tab rotaries. Freeze stays
-    // in the right switch bay; bindings and behavior are unchanged.
-    analyzerMemory_.setBounds(497,488,122,104);
+    // Distribution layout: Visual Decay occupies the centre knob bay while
+    // Freeze moves to the right switch bay. Bindings and behavior are unchanged.
+    analyzerMemory_.setBounds(487,484,142,110);
     freezeButton_.setBounds(881,500,96,96);
 
     jukeModeLabel_.setBounds(0,0,1,1);jukeMode_.setBounds(0,0,1,1);
