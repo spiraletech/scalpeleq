@@ -143,8 +143,9 @@ public:
         }
         if(snow||heat){
             // ANALYZE uses scalable console switches, not pale raster tiles.
-            // The reference hierarchy is a dark recessed face, machined ivory
-            // bezel and a restrained orange lamp only for an active HEAT MAP.
+            // The reference hierarchy is a dark recessed face and machined
+            // ivory bezel. Active HEAT MAP glows orange; active FREEZE uses
+            // the same restrained lamp geometry in ice blue.
             const float side=std::min(r.getWidth(),r.getHeight())-14.0f;
             const auto tile=juce::Rectangle<float>(r.getCentreX()-side*.5f,
                                                    r.getCentreY()-side*.5f,
@@ -155,6 +156,12 @@ public:
                 g.setColour(juce::Colour(0xffff7800).withAlpha(.16f));
                 g.drawRoundedRectangle(tile.expanded(5.0f),10.0f,7.0f);
                 g.setColour(juce::Colour(0xffff8500));
+                g.drawRoundedRectangle(tile.expanded(2.0f),8.5f,2.3f);
+            }
+            if(snow&&active){
+                g.setColour(juce::Colour(0xff56ddff).withAlpha(.16f));
+                g.drawRoundedRectangle(tile.expanded(5.0f),10.0f,7.0f);
+                g.setColour(juce::Colour(0xff79e7ff));
                 g.drawRoundedRectangle(tile.expanded(2.0f),8.5f,2.3f);
             }
             juce::ColourGradient bezel(juce::Colour(0xffffe7cb),tile.getX(),tile.getY(),
@@ -207,14 +214,19 @@ public:
                 g.strokePath(inner,juce::PathStrokeType(2.4f,juce::PathStrokeType::curved,
                                                         juce::PathStrokeType::rounded));
             }else{
-                g.setColour(juce::Colour(0xffffead1));
+                const auto snowflake=active?juce::Colour(0xffd9fbff)
+                                           :juce::Colour(0xffffead1);
+                const auto iceGlow=juce::Colour(0xff50dcff).withAlpha(.24f);
                 const float length=face.getWidth()*.36f;
                 // Three uninterrupted axes guarantee a readable crystalline
                 // centre. Six outward forks stay connected at native scale.
                 for(int axis=0;axis<3;++axis){
                     const float angle=juce::MathConstants<float>::pi*axis/3.0f;
                     const juce::Point<float> unit{std::cos(angle),std::sin(angle)};
-                    g.drawLine({centre-unit*length,centre+unit*length},2.7f);
+                    const auto axisLine=juce::Line<float>{centre-unit*length,
+                                                         centre+unit*length};
+                    if(active){g.setColour(iceGlow);g.drawLine(axisLine,6.0f);}
+                    g.setColour(snowflake);g.drawLine(axisLine,2.7f);
                 }
                 for(int arm=0;arm<6;++arm){
                     const float angle=juce::MathConstants<float>::twoPi*arm/6.0f;
@@ -223,14 +235,17 @@ public:
                     const auto root=centre+unit*(length*.50f);
                     const auto forward=unit*(length*.25f);
                     const auto side=normal*(length*.14f);
-                    g.drawLine({root,root+forward+side},1.9f);
-                    g.drawLine({root,root+forward-side},1.9f);
+                    const auto forkA=juce::Line<float>{root,root+forward+side};
+                    const auto forkB=juce::Line<float>{root,root+forward-side};
+                    if(active){
+                        g.setColour(iceGlow);
+                        g.drawLine(forkA,4.2f);g.drawLine(forkB,4.2f);
+                    }
+                    g.setColour(snowflake);
+                    g.drawLine(forkA,1.9f);g.drawLine(forkB,1.9f);
                 }
+                g.setColour(snowflake);
                 g.fillEllipse(centre.x-1.7f,centre.y-1.7f,3.4f,3.4f);
-                if(active){
-                    g.setColour(juce::Colour(0xffffead1).withAlpha(.22f));
-                    g.drawRoundedRectangle(tile.expanded(2.0f),8.5f,3.0f);
-                }
             }
             return;
         }
