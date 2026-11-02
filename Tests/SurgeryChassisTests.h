@@ -8,7 +8,6 @@ inline bool verifyChassis105(){
     if(!graph)return false;
     std::ofstream csv("surgery-chassis-resize.csv");csv<<"width,height,scale,raster_w,raster_h,border_corner_error,signal_peak_db,snapshot_ms\n";
     juce::AudioBuffer<float> audio(2,512);juce::MidiBuffer midi;juce::Random noise(8015);
-    std::array<juce::Image,3> reference;
     // 1.0.6 is a snap-locked 16:9 product face. Exercise the shipped minimum,
     // default and maximum plus two intermediate sizes; arbitrary host aspect
     // ratios are rejected by the editor constrainer and are not release states.
@@ -39,16 +38,19 @@ inline bool verifyChassis105(){
             if(std::abs(raster.x-juce::roundToInt(size.x*scale))>2||std::abs(raster.y-juce::roundToInt(size.y*scale))>2){
                 std::cerr<<"Chassis: stale DPI cache "<<raster.x<<','<<raster.y<<" scale "<<scale<<'\n';return false;
             }
+            // The shipped face fills the complete constrained editor at every
+            // supported size/DPI. Measure exposed dark host background in all
+            // four corners instead of byte-comparing antialiased pixels across
+            // unrelated resolutions.
             double error=0;int count=0;const int corner=juce::roundToInt(46*scale);
-            if(reference[(size_t)index].isNull())reference[(size_t)index]=shot;
-            const auto& ref=reference[(size_t)index];
             for(int right=0;right<2;++right)for(int bottom=0;bottom<2;++bottom)
                 for(int y=4;y<corner-4;++y)for(int x=4;x<corner-4;++x){
                     const auto a=shot.getPixelAt(right?shot.getWidth()-corner+x:x,bottom?shot.getHeight()-corner+y:y);
-                    const auto b=ref.getPixelAt(right?ref.getWidth()-corner+x:x,bottom?ref.getHeight()-corner+y:y);
-                    error+=std::abs(a.getRed()-b.getRed())+std::abs(a.getGreen()-b.getGreen())+std::abs(a.getBlue()-b.getBlue());count+=3;
+                    if(a.getBrightness()<.08f)error+=1.0;
+                    ++count;
                 }
-            error/=count;if(error>12){std::cerr<<"Chassis: corner proportions changed "<<error<<'\n';return false;}
+            error=100.0*error/count;
+            if(error>1.0){std::cerr<<"Chassis: exposed background in corners "<<error<<" percent\n";return false;}
             // 1.0.5 is a strict 16:9 product face. Extreme host aspect ratios
             // letterbox instead of stretching the vent slots or circular knobs.
             // Validate the transformed console perimeter, not the host window edge.
