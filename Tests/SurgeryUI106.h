@@ -46,8 +46,13 @@ inline bool verifyUI106(PRISMVSTAudioProcessor&, juce::AudioProcessorEditor& edi
     auto* heatLabel=findLabel("HEAT MAP");
     auto* freezeLabel=findLabel("FREEZE");
     auto* decayLabel=findLabel("VISUAL DECAY");
+    bool decayKnobFound=false;
+    for(auto* child:editor.getChildren())
+        if(auto* slider=dynamic_cast<juce::Slider*>(child);
+           slider&&slider->getBounds()==juce::Rectangle<int>(497,488,122,104))
+            decayKnobFound=true;
     if(heat==nullptr||freeze==nullptr||heatLabel==nullptr||freezeLabel==nullptr||decayLabel==nullptr||
-       !heat->isVisible()||!freeze->isVisible()||
+       !heat->isVisible()||!freeze->isVisible()||!decayKnobFound||
        heat->getBounds()!=juce::Rectangle<int>(141,500,96,96)||
        freeze->getBounds()!=juce::Rectangle<int>(881,500,96,96)||
        heatLabel->getBounds()!=juce::Rectangle<int>(79,468,220,24)||
@@ -57,6 +62,19 @@ inline bool verifyUI106(PRISMVSTAudioProcessor&, juce::AudioProcessorEditor& edi
        freezeLabel->getFont().getHeight()<16.0f||
        decayLabel->getFont().getHeight()<16.0f){
         std::cerr<<"UI106: approved ANALYZE switch geometry or typography changed\n";return false;
+    }
+
+    freeze->setToggleState(true,juce::sendNotificationSync);
+    const auto freezeImage=freeze->createComponentSnapshot(freeze->getLocalBounds());
+    int icePixels=0;
+    for(int y=0;y<freezeImage.getHeight();++y)for(int x=0;x<freezeImage.getWidth();++x){
+        const auto pixel=freezeImage.getPixelAt(x,y);
+        if(pixel.getBlue()>180&&pixel.getGreen()>145&&pixel.getBlue()>pixel.getRed()+35)
+            ++icePixels;
+    }
+    freeze->setToggleState(false,juce::sendNotificationSync);
+    if(icePixels<80){
+        std::cerr<<"UI106: active FREEZE lost its ice-blue lamp\n";return false;
     }
 
     auto image=editor.createComponentSnapshot(editor.getLocalBounds());
