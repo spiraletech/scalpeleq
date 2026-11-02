@@ -9,7 +9,7 @@ inline bool verifyChassis105(){
     std::ofstream csv("surgery-chassis-resize.csv");csv<<"width,height,scale,raster_w,raster_h,border_corner_error,signal_peak_db,snapshot_ms\n";
     juce::AudioBuffer<float> audio(2,512);juce::MidiBuffer midi;juce::Random noise(8015);
     std::array<juce::Image,3> reference;
-    const std::array<juce::Point<int>,5> sizes{{{1320,880},{840,610},{1800,1200},{840,1200},{1800,610}}};
+    // 1.0.6 is a snap-locked 16:9 product face. Exercise the shipped minimum,\n    // default and maximum plus two intermediate sizes; arbitrary host aspect\n    // ratios are rejected by the editor constrainer and are not release states.\n    const std::array<juce::Point<int>,5> sizes{{{1344,756},{896,504},{1792,1008},{1120,630},{1600,900}}};
     for(auto size:sizes){
         editor->setSize(size.x,size.y);
         for(auto* child:editor->getChildren())if(auto* grip=dynamic_cast<juce::ResizableCornerComponent*>(child)){
