@@ -1506,7 +1506,7 @@ void RootsEditor::layoutRack(){
     heatToggle_.setBounds(141,500,96,96);
     // Distribution layout: Visual Decay occupies the centre knob bay while
     // Freeze moves to the right switch bay. Bindings and behavior are unchanged.
-    analyzerMemory_.setBounds(487,484,142,110);
+    analyzerMemory_.setBounds(497,488,122,104);
     freezeButton_.setBounds(881,500,96,96);
 
     jukeModeLabel_.setBounds(0,0,1,1);jukeMode_.setBounds(0,0,1,1);
