@@ -49,7 +49,10 @@ inline bool verifyUI106(PRISMVSTAudioProcessor&, juce::AudioProcessorEditor& edi
     if(heat==nullptr||freeze==nullptr||heatLabel==nullptr||freezeLabel==nullptr||decayLabel==nullptr||
        !heat->isVisible()||!freeze->isVisible()||
        heat->getBounds()!=juce::Rectangle<int>(141,500,96,96)||
-       freeze->getBounds()!=juce::Rectangle<int>(510,500,96,96)||
+       freeze->getBounds()!=juce::Rectangle<int>(881,500,96,96)||
+       heatLabel->getBounds()!=juce::Rectangle<int>(79,468,220,24)||
+       decayLabel->getBounds()!=juce::Rectangle<int>(448,468,220,24)||
+       freezeLabel->getBounds()!=juce::Rectangle<int>(819,468,220,24)||
        heatLabel->getFont().getHeight()<16.0f||
        freezeLabel->getFont().getHeight()<16.0f||
        decayLabel->getFont().getHeight()<16.0f){
