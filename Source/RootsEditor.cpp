@@ -1496,9 +1496,10 @@ void RootsEditor::layoutRack(){
     analyzerMemoryLabel_.setBounds(448,468,220,24);
     analyzerSlopeLabel_.setBounds(819,468,220,24);
     heatToggle_.setBounds(141,500,96,96);
-    // Distribution layout: Visual Decay occupies the centre knob bay while
-    // Freeze moves to the right switch bay. Bindings and behavior are unchanged.
-    analyzerMemory_.setBounds(487,484,142,110);
+    // Distribution layout: Visual Decay occupies the centre knob bay at the
+    // same restrained visual scale as the standard tab rotaries. Freeze stays
+    // in the right switch bay; bindings and behavior are unchanged.
+    analyzerMemory_.setBounds(497,488,122,104);
     freezeButton_.setBounds(881,500,96,96);
 
     jukeModeLabel_.setBounds(0,0,1,1);jukeMode_.setBounds(0,0,1,1);
