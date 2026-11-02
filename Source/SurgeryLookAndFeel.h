@@ -89,6 +89,7 @@ public:
         const auto r=button.getLocalBounds().toFloat().reduced(1.5f);
         const bool active=button.getToggleState()||down;
         const bool xray=button.getButtonText()=="X-RAY";
+        const bool reset=button.getButtonText()=="RESET";
         const bool deckSwitch=button.getButtonText()=="ON"||button.getButtonText()=="OFF";
         const bool actionSwitch=button.getButtonText()=="MONO"||button.getButtonText()=="SOLO"||
             button.getButtonText().startsWith("PHASE")||button.getButtonText()=="LIMIT";
@@ -112,6 +113,31 @@ public:
                 g.fillRoundedRectangle({r.getX()+40,r.getBottom()-7,r.getWidth()-80,7},3.5f);
                 g.setColour(juce::Colour(0xffff7900));
                 g.fillRoundedRectangle({r.getX()+49,r.getBottom()-4,r.getWidth()-98,3},1.5f);
+            }
+            return;
+        }
+        if(reset){
+            // RESET belongs to the analyzer's carbon instrument bay. Keep the
+            // same copper/ivory machining language without a stray pale key.
+            g.setColour(juce::Colour(0xff2c1c14).withAlpha(.58f));
+            g.fillRoundedRectangle(r.translated(0,2.0f).expanded(1.0f),4.0f);
+            juce::ColourGradient carbon(juce::Colour(0xff2a2724),r.getX(),r.getY(),
+                                        juce::Colour(0xff070605),r.getRight(),r.getBottom(),false);
+            carbon.addColour(.48,juce::Colour(0xff171411));
+            g.setGradientFill(carbon);g.fillRoundedRectangle(r,3.5f);
+            g.saveState();
+            g.reduceClipRegion(r.reduced(1.0f).toNearestInt());
+            g.setColour(juce::Colours::white.withAlpha(.025f));
+            for(float x=r.getX()-r.getHeight();x<r.getRight();x+=7.0f)
+                g.drawLine(x,r.getBottom(),x+r.getHeight(),r.getY(),.65f);
+            g.restoreState();
+            g.setColour(juce::Colour(0xffa47b5d));
+            g.drawRoundedRectangle(r,3.5f,1.0f);
+            g.setColour(juce::Colour(0xffffead4).withAlpha(.16f));
+            g.drawLine(r.getX()+5.0f,r.getY()+2.0f,r.getRight()-5.0f,r.getY()+2.0f,.8f);
+            if(over){
+                g.setColour(juce::Colours::white.withAlpha(.055f));
+                g.fillRoundedRectangle(r.reduced(1.5f),2.5f);
             }
             return;
         }
@@ -261,6 +287,7 @@ public:
     void drawButtonText(juce::Graphics& g,juce::TextButton& b,bool,bool) override {
         if(b.getButtonText()=="FREEZE"||b.getButtonText()=="RESUME"||b.getButtonText().startsWith("SONAR ")||b.getButtonText()=="HEAT MAP")return;
         const bool xray=b.getButtonText()=="X-RAY";
+        const bool reset=b.getButtonText()=="RESET";
         const auto tabText=b.getButtonText();
         const bool pageTab=tabText=="BAND MODE"||tabText=="CARVE"||tabText=="COLOR"||tabText=="ANALYZE";
         if(pageTab){
@@ -274,7 +301,7 @@ public:
              b.getButtonText()=="MONO"||b.getButtonText()=="SOLO"||
              b.getButtonText().startsWith("PHASE")||b.getButtonText()=="LIMIT");
         g.setColour(b.isEnabled()?juce::Colour(xray?0xffff624b:
-            depressedSwitch?0xffffeee0:0xff241a14):juce::Colour(0xff8d8177));
+            reset?0xffffead4:depressedSwitch?0xffffeee0:0xff241a14):juce::Colour(0xff8d8177));
         g.setFont(juce::Font(juce::FontOptions("Segoe UI",juce::jlimit(11.0f,13.0f,b.getHeight()*.43f),juce::Font::bold)));
         g.drawFittedText(b.getButtonText(),xray?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2),
                          juce::Justification::centred,1);
