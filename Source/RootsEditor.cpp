@@ -1427,6 +1427,15 @@ void RootsEditor::paint(juce::Graphics& g){
         paintRack(background);backgroundMode_=mode_;backgroundScale_=dpi;
     }
     g.setOpacity(1.f);g.drawImage(rackBackground_,getLocalBounds().toFloat());
+    // Keep the approved black upper surround, but do not expose a second
+    // black strip beneath the chassis when a host supplies a slightly taller
+    // client rectangle than the authored 16:9 face.
+    const auto faceBottom=juce::Point<float>(0.0f,(float)630.0f)
+        .transformedBy(surgery::rack::contentTransform(getWidth(),getHeight())).y;
+    if(faceBottom < (float)getHeight()){
+        g.setColour(scalpel::ui105::chassisEdge);
+        g.fillRect(0.0f,faceBottom,(float)getWidth(),(float)getHeight()-faceBottom);
+    }
     // A visual separation from Surgery EQ is intentional: its external
     // cyan/purple JUKE rails are not part of Scalpel's 1980s hardware face.
 }
