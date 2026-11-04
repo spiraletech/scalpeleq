@@ -9,7 +9,7 @@ inline juce::AffineTransform contentTransform(int width,int height){
     // plugin-owned background border around the rack.
     const float s=std::min((float)width/1120.f,(float)height/630.f);
     return juce::AffineTransform::scale(s).translated(width*.5f-560.f*s,
-                                                       height*.5f-315.f*s);
+                                                       height-630.f*s);
 }
 inline juce::Path cut(juce::Rectangle<float> r,float c=4){
     juce::Path p;
