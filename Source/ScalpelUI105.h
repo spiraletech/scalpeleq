@@ -46,7 +46,9 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
     g.setGradientFill(shell);
     // Keep the exposed black corner radius tight so host letterboxing never
     // reads as a second border around the chassis.
-    g.fillRoundedRectangle(full, 10.0f);
+    // The chassis owns the full editor rectangle; do not leave a black
+    // rounded halo around the product face.
+    g.fillRect(full);
     g.setColour(juce::Colour(0xffffead4).withAlpha(.90f));
     g.drawRoundedRectangle(full.reduced(2.0f), 23.0f, 1.3f);
     g.setColour(juce::Colour(0xff694735).withAlpha(.85f));
