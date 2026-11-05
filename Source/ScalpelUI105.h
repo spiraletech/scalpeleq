@@ -90,30 +90,32 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
     roundedPanel(g, {18, 118, (float)width - 36, 38}, false, 7.0f);
     roundedPanel(g, {18, 160, (float)width - 36, 246}, true, 8.0f);
     roundedPanel(g, {32, 412, (float)width - 64, 43}, false, 8.0f);
-    // One substantial carbon-fiber utility backplate. The former second
-    // champagne shelf is removed; this is the only rear panel behind controls.
+    // One continuous carbon-fiber utility backplate. The material runs
+    // through the rounded edge; there is no separate blank black outline.
     const auto carbon = juce::Rectangle<float>(20, 461, (float)width - 40, 158);
-    g.setColour(juce::Colour(0xff050505));
-    g.fillRoundedRectangle(carbon.expanded(4.0f), 17.0f);
-    juce::ColourGradient carbonFace(juce::Colour(0xff292522), carbon.getX(), carbon.getY(),
-                                    juce::Colour(0xff0c0d0e), carbon.getX(), carbon.getBottom(), false);
+    const auto surface = carbon.expanded(2.0f);
+    juce::ColourGradient carbonFace(juce::Colour(0xff292522), surface.getX(), surface.getY(),
+                                    juce::Colour(0xff0e0f10), surface.getX(), surface.getBottom(), false);
+    carbonFace.addColour(.48, juce::Colour(0xff1a1918));
     g.setGradientFill(carbonFace);
-    g.fillRoundedRectangle(carbon, 13.0f);
+    g.fillRoundedRectangle(surface, 15.0f);
     g.saveState();
-    g.reduceClipRegion(carbon.toNearestInt());
-    g.setColour(juce::Colour(0xffb5a08f).withAlpha(.10f));
-    for (int y = -158; y < 320; y += 10)
-        g.drawLine(carbon.getX(), carbon.getY() + y,
-                   carbon.getRight(), carbon.getY() + y + carbon.getWidth(), 1.0f);
-    g.setColour(juce::Colour(0xff000000).withAlpha(.34f));
-    for (int y = -158; y < 320; y += 10)
-        g.drawLine(carbon.getX(), carbon.getY() + y + 2,
-                   carbon.getRight(), carbon.getY() + y + carbon.getWidth() + 2, 1.0f);
+    g.reduceClipRegion(surface.toNearestInt());
+    // Fine diagonal weave, matching the active carbon mode-menu treatment.
+    for (int y = -170; y < 330; y += 8) {
+        g.setColour(juce::Colour(0xffd4c0ad).withAlpha(.075f));
+        g.drawLine(surface.getX(), surface.getY() + y,
+                   surface.getRight(), surface.getY() + y + surface.getWidth(), .7f);
+        g.setColour(juce::Colour(0xff020202).withAlpha(.28f));
+        g.drawLine(surface.getX(), surface.getY() + y + 2,
+                   surface.getRight(), surface.getY() + y + surface.getWidth() + 2, .7f);
+    }
     g.restoreState();
-    g.setColour(juce::Colour(0xff050505));
-    g.drawRoundedRectangle(carbon, 13.0f, 3.0f);
-    g.setColour(juce::Colour(0xff8a7668).withAlpha(.72f));
-    g.drawRoundedRectangle(carbon.reduced(2.0f), 11.0f, 1.0f);
+    // A single inset edge defines the panel; it is part of the carbon skin.
+    g.setColour(juce::Colour(0xff78685e).withAlpha(.78f));
+    g.drawRoundedRectangle(surface.reduced(.8f), 14.0f, 2.0f);
+    g.setColour(juce::Colour(0xffc7af99).withAlpha(.18f));
+    g.drawRoundedRectangle(surface.reduced(2.7f), 12.0f, .8f);
 
     // Mechanical shelf dividers are page-specific and stay inside the
     // intentional gutters. BAND's first and third lines must clear the
