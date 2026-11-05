@@ -90,7 +90,9 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
     roundedPanel(g, {18, 118, (float)width - 36, 38}, false, 7.0f);
     roundedPanel(g, {18, 160, (float)width - 36, 246}, true, 8.0f);
     roundedPanel(g, {32, 412, (float)width - 64, 43}, false, 8.0f);
-    roundedPanel(g, {20, 461, (float)width - 40, 158}, false, 13.0f);
+    // One continuous carbon utility backplate: the analyzer and control
+    // shelf share the same black chassis instead of stacking two champagne panels.
+    roundedPanel(g, {20, 461, (float)width - 40, 158}, true, 13.0f);
 
     // Mechanical shelf dividers are page-specific and stay inside the
     // intentional gutters. BAND's first and third lines must clear the
