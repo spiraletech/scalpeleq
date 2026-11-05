@@ -5,7 +5,7 @@
 #include <cmath>
 
 namespace scalpel::ui105 {
-inline const juce::Colour champagne{0xffd8a273};
+inline const juce::Colour champagne{0xffe89245};
 inline const juce::Colour ivory{0xffffe8c5};
 inline const juce::Colour ink{0xff120e0a};
 inline const juce::Colour amber{0xffff8800};
@@ -15,11 +15,11 @@ inline void roundedPanel(juce::Graphics& g, juce::Rectangle<float> r, bool dark,
 {
     g.setColour(juce::Colour(0xff52392b).withAlpha(.90f));
     g.fillRoundedRectangle(r.expanded(2.0f).translated(0, 1.5f), radius + 1.0f);
-    juce::ColourGradient face(dark ? juce::Colour(0xff171513) : juce::Colour(0xffffe5c8),
+    juce::ColourGradient face(dark ? juce::Colour(0xff171513) : juce::Colour(0xffffd9ab),
                               r.getX(), r.getY(),
-                              dark ? juce::Colour(0xff050505) : juce::Colour(0xffc99b7b),
+                              dark ? juce::Colour(0xff050505) : juce::Colour(0xffb96a35),
                               r.getX(), r.getBottom(), false);
-    if (!dark) face.addColour(.35, juce::Colour(0xffefc8a8));
+    if (!dark) face.addColour(.35, juce::Colour(0xfff5b476));
     g.setGradientFill(face);
     g.fillRoundedRectangle(r, radius);
     g.setColour((dark ? juce::Colour(0xffb48f73) : juce::Colour(0xffffeed8)).withAlpha(.80f));
