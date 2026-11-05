@@ -90,9 +90,30 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
     roundedPanel(g, {18, 118, (float)width - 36, 38}, false, 7.0f);
     roundedPanel(g, {18, 160, (float)width - 36, 246}, true, 8.0f);
     roundedPanel(g, {32, 412, (float)width - 64, 43}, false, 8.0f);
-    // One continuous carbon utility backplate: the analyzer and control
-    // shelf share the same black chassis instead of stacking two champagne panels.
-    roundedPanel(g, {20, 461, (float)width - 40, 158}, true, 13.0f);
+    // One substantial carbon-fiber utility backplate. The former second
+    // champagne shelf is removed; this is the only rear panel behind controls.
+    const auto carbon = juce::Rectangle<float>(20, 461, (float)width - 40, 158);
+    g.setColour(juce::Colour(0xff050505));
+    g.fillRoundedRectangle(carbon.expanded(4.0f), 17.0f);
+    juce::ColourGradient carbonFace(juce::Colour(0xff292522), carbon.getX(), carbon.getY(),
+                                    juce::Colour(0xff0c0d0e), carbon.getX(), carbon.getBottom(), false);
+    g.setGradientFill(carbonFace);
+    g.fillRoundedRectangle(carbon, 13.0f);
+    g.saveState();
+    g.reduceClipRegion(carbon.toNearestInt());
+    g.setColour(juce::Colour(0xffb5a08f).withAlpha(.10f));
+    for (int y = -158; y < 320; y += 10)
+        g.drawLine(carbon.getX(), carbon.getY() + y,
+                   carbon.getRight(), carbon.getY() + y + carbon.getWidth(), 1.0f);
+    g.setColour(juce::Colour(0xff000000).withAlpha(.34f));
+    for (int y = -158; y < 320; y += 10)
+        g.drawLine(carbon.getX(), carbon.getY() + y + 2,
+                   carbon.getRight(), carbon.getY() + y + carbon.getWidth() + 2, 1.0f);
+    g.restoreState();
+    g.setColour(juce::Colour(0xff050505));
+    g.drawRoundedRectangle(carbon, 13.0f, 3.0f);
+    g.setColour(juce::Colour(0xff8a7668).withAlpha(.72f));
+    g.drawRoundedRectangle(carbon.reduced(2.0f), 11.0f, 1.0f);
 
     // Mechanical shelf dividers are page-specific and stay inside the
     // intentional gutters. BAND's first and third lines must clear the
