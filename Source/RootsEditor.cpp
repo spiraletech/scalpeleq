@@ -1353,7 +1353,7 @@ void RootsEditor::timerCallback(){
     juce::ignoreUnused(held);
     peakHold_.setButtonText("RESET");
     peakHold_.setToggleState(false,juce::dontSendNotification);
-    const auto labelColour=juce::Colour(0xff352820);
+    const auto labelColour=scalpel::ui105::ivory;
     for(auto* label:{&title_,&selection_,&status_,&gainLabel_,&thresholdLabel_,
                     &carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_,
                     &analyzerDepthLabel_,&analyzerSlopeLabel_,&analyzerMemoryLabel_,&analyzerLegend_,
