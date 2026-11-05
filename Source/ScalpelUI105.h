@@ -39,8 +39,12 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
     shell.addColour(.16, juce::Colour(0xfff2c292));
     shell.addColour(.62, juce::Colour(0xffdca476));
     shell.addColour(.92, juce::Colour(0xffc78c60));
-    g.setGradientFill(shell);
+    // Paint the chassis over a black surround so the four outer corners stay
+    // true black while the face itself still reaches every host edge.
+    g.setColour(juce::Colours::black);
     g.fillRect(full);
+    g.setGradientFill(shell);
+    g.fillRoundedRectangle(full, 23.0f);
     g.setColour(juce::Colour(0xffffead4).withAlpha(.90f));
     g.drawRoundedRectangle(full.reduced(2.0f), 23.0f, 1.3f);
     g.setColour(juce::Colour(0xff694735).withAlpha(.85f));
