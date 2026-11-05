@@ -44,7 +44,9 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
     g.setColour(juce::Colours::black);
     g.fillRect(full);
     g.setGradientFill(shell);
-    g.fillRoundedRectangle(full, 23.0f);
+    // Keep the exposed black corner radius tight so host letterboxing never
+    // reads as a second border around the chassis.
+    g.fillRoundedRectangle(full, 12.0f);
     g.setColour(juce::Colour(0xffffead4).withAlpha(.90f));
     g.drawRoundedRectangle(full.reduced(2.0f), 23.0f, 1.3f);
     g.setColour(juce::Colour(0xff694735).withAlpha(.85f));
