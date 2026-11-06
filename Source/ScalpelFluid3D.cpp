@@ -6,6 +6,7 @@
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
+#include <chrono>
 
 #if defined(_WIN32)
 #ifndef NOMINMAX
@@ -257,6 +258,8 @@ struct FluidVolume3D::Impl {
     ComPtr<ID3D11Texture2D> staging[3];
     unsigned frame=0;
     bool attempted=false, ready=false, imageReady=false;
+    FluidVolume3D::Diagnostics diagnostics{};
+    std::chrono::steady_clock::time_point previousReadback{};
     const char* status="GPU PENDING";
     double accumulator=0.0;
     float elapsedPhase=0.f;
@@ -409,7 +412,7 @@ struct FluidVolume3D::Impl {
         }
         D3D11_MAPPED_SUBRESOURCE data{};
         if(FAILED(context->Map(parameters.Get(),0,D3D11_MAP_WRITE_DISCARD,0,&data))){
-            status="GPU UPLOAD ERROR";return false;
+            status="GPU UPLOAD ERROR";++diagnostics.errors;return false;
         }
         std::memcpy(data.pData,&frameData,sizeof(frameData));
         context->Unmap(parameters.Get(),0);
@@ -424,16 +427,17 @@ struct FluidVolume3D::Impl {
         }
         dispatch(5,nullptr,phases[0].read.Get(),nullptr,nullptr,
                  nullptr,nullptr,nullptr,outputWrite.Get());
+        ++diagnostics.submitted;
         const unsigned written=frame%3;
         context->CopyResource(staging[written].Get(),output.Get());
         ++frame;
-        if(frame<2)return false;
+        if(frame<2){++diagnostics.pending;return false;}
         const unsigned readyIndex=(frame+1)%3;
         D3D11_MAPPED_SUBRESOURCE pixels{};
         const HRESULT mapped=context->Map(staging[readyIndex].Get(),0,
                                           D3D11_MAP_READ,D3D11_MAP_FLAG_DO_NOT_WAIT,&pixels);
-        if(mapped==DXGI_ERROR_WAS_STILL_DRAWING)return false;
-        if(FAILED(mapped)){status="GPU READBACK ERROR";return false;}
+        if(mapped==DXGI_ERROR_WAS_STILL_DRAWING){++diagnostics.pending;return false;}
+        if(FAILED(mapped)){status="GPU READBACK ERROR";++diagnostics.errors;return false;}
         if(target.getWidth()!=(int)IW||target.getHeight()!=(int)IH)
             target=juce::Image(juce::Image::RGB,(int)IW,(int)IH,true);
         {
@@ -447,8 +451,16 @@ struct FluidVolume3D::Impl {
             }
         }
         context->Unmap(staging[readyIndex].Get(),0);
+        const auto now=std::chrono::steady_clock::now();
+        if(diagnostics.readbacks>0){
+            const double seconds=std::chrono::duration<double>(now-previousReadback).count();
+            if(seconds>0.0)diagnostics.readbackHz=diagnostics.readbackHz==0.0?
+                1.0/seconds:diagnostics.readbackHz*.9+(.1/seconds);
+        }
+        previousReadback=now;
+        ++diagnostics.readbacks;
         imageReady=true;
-        status="GPU LIVE";
+        status="GPU READBACK READY";
         return true;
     }
 };
@@ -456,6 +468,7 @@ struct FluidVolume3D::Impl {
 struct FluidVolume3D::Impl {
     bool imageReady=false;
     const char* status="GPU UNSUPPORTED";
+    FluidVolume3D::Diagnostics diagnostics{};
     bool render(const std::array<FluidColumn,64>&,float,float,float,
                 double,bool,juce::Image&) {return false;}
 };
@@ -496,6 +509,9 @@ bool FluidVolume3D::hasFrame() const noexcept {
 }
 const char* FluidVolume3D::statusText() const noexcept {
     return impl_?impl_->status:"GPU PENDING";
+}
+FluidVolume3D::Diagnostics FluidVolume3D::diagnostics() const noexcept {
+    return impl_?impl_->diagnostics:Diagnostics{};
 }
 void FluidVolume3D::reset() noexcept {
     impl_.reset();

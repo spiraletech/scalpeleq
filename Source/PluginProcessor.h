@@ -5,6 +5,7 @@
 #include <atomic>
 #include <cstdint>
 #include "PrismLabAnalyzer.h"
+#include "ScalpelAnalyzerHealth.h"
 #include "RootsAudioEngine.h"
 #include "SurgeryCarveEngine.h"
 
@@ -56,6 +57,9 @@ public:
     float getInputPeakDb() const noexcept { return inputPeakDb.load(); }
     float getPeakDb() const noexcept { return peakDb.load(); }
     float getPeakHoldDb() const noexcept { return peakHoldDb.load(); }
+    float getChannelPeakDb(int channel) const noexcept {
+        return channelPeakDb[(size_t)juce::jlimit(0, 1, channel)].load();
+    }
     void resetPeakHold() noexcept { peakHoldDb.store(-144.0f); }
     float getGainReductionDb() const noexcept { return gainReductionDb.load(); }
     float getLufsShort() const noexcept { return lufsShort.load(); }
@@ -63,6 +67,10 @@ public:
     void copySpectrum(std::array<float, spectrumBins>& destination) const noexcept;
     void copyPrismLabBars(std::array<float, labBars>& db,
                           std::array<float, labBars>& peakDb) const noexcept;
+    // Read-only diagnostics for a Windows baseline harness; never used for DSP.
+    scalpel::analysis::AnalyzerHealthSnapshot getAnalyzerHealth() const noexcept {
+        return analyzerHealth_.snapshot();
+    }
     // UI-thread consumer; producer is the existing analysis worker.
     bool readWeather(surgery::weather::Snapshot& frame) noexcept {return weatherSnapshots_.latest(frame);}
     void beginWeatherConsumer() noexcept {if(weatherConsumers_.load()==0){surgery::weather::Snapshot discard;weatherSnapshots_.latest(discard);}weatherConsumers_.fetch_add(1);}
@@ -206,6 +214,7 @@ private:
     std::array<float, analyzerQueueSize> analyzerQueue {}, analyzerRightQueue {};
     juce::WaitableEvent analyzerEvent;
     AnalyzerWorker analyzerWorker { *this };
+    scalpel::analysis::AnalyzerHealth analyzerHealth_;
 
     std::array<float, fftSize> fftFifo {}, fftRightFifo {};
     std::array<float, fftSize / 2 + 1> leftSpectralPower {};
@@ -236,6 +245,7 @@ private:
     std::atomic<float> inputPeakDb { -144.0f };
     std::atomic<float> peakDb { -144.0f };
     std::atomic<float> peakHoldDb { -144.0f };
+    std::array<std::atomic<float>, 2> channelPeakDb {{ -144.0f, -144.0f }};
     std::atomic<float> gainReductionDb { 0.0f };
     std::atomic<float> lufsShort { -144.0f };
     std::atomic<float> lufsIntegrated { -144.0f };

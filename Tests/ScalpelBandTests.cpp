@@ -8,6 +8,41 @@
 
 namespace {
 struct Result {double energy=0,peak=-144;};
+struct PhaseResult {double error=0,rms=0,correlation=0;};
+PhaseResult phaseAlignment(bool correction){
+    constexpr int sr=48000,count=96000;
+    constexpr double frequency=350.0,offset=1.10;
+    prism::roots::v2::Engine engine(sr);
+    using namespace prism::roots::v2;
+    Config low=engine.get(6),high=engine.get(7);
+    low.hz=250;high.hz=500;low.phase=correction;low.enabled=true;
+    engine.config(6,low);engine.config(7,high);
+    std::vector<float> l(count),r(count);
+    for(int i=0;i<count;++i){
+        const double phase=2*std::numbers::pi*frequency*i/sr;
+        l[(size_t)i]=(float)(.4*std::sin(phase));
+        r[(size_t)i]=(float)(.4*std::sin(phase-offset));
+    }
+    engine.process(l.data(),r.data(),count);
+    double ls=0,lc=0,rs=0,rc=0,ll=0,rr=0,lr=0;
+    const int begin=count/2;
+    for(int i=begin;i<count;++i){
+        const double phase=2*std::numbers::pi*frequency*i/sr;
+        const double sn=std::sin(phase),cs=std::cos(phase);
+        ls+=l[(size_t)i]*sn;lc+=l[(size_t)i]*cs;
+        rs+=r[(size_t)i]*sn;rc+=r[(size_t)i]*cs;
+        ll+=l[(size_t)i]*l[(size_t)i];
+        rr+=r[(size_t)i]*r[(size_t)i];
+        lr+=l[(size_t)i]*r[(size_t)i];
+    }
+    const double phaseL=std::atan2(lc,ls);
+    const double phaseR=std::atan2(rc,rs);
+    const double error=std::abs(std::remainder(
+        phaseR-phaseL,2*std::numbers::pi));
+    const double n=(double)(count-begin);
+    return {error,std::sqrt((ll+rr)/(2*n)),
+            lr/std::sqrt(std::max(1.0e-20,ll*rr))};
+}
 Result run(bool phase,double limit,bool opposing,double amplitude){
     constexpr int sr=48000,count=48000;
     prism::roots::v2::Engine engine(sr);
@@ -96,11 +131,15 @@ double soloMonoResidual(){
 }
 }
 int main(){
-    // Coherence guard reduces negative SIDE contribution, with no polarity flip.
-    const auto oppositeDry=run(false,0,true,.5);
-    const auto oppositePhase=run(true,0,true,.5);
-    assert(oppositePhase.energy<oppositeDry.energy);
-    assert(oppositePhase.energy>0);
+    // PHASE CORRECTION must reduce a measured L/R phase offset without
+    // achieving the result by attenuating stereo energy.
+    const auto phaseDry=phaseAlignment(false);
+    const auto phaseCorrected=phaseAlignment(true);
+    assert(phaseDry.error>0.80);
+    assert(phaseCorrected.error<phaseDry.error*0.45);
+    assert(phaseCorrected.correlation>phaseDry.correlation+0.30);
+    assert(phaseCorrected.rms>phaseDry.rms*0.80);
+    assert(phaseCorrected.rms<phaseDry.rms*1.20);
     // Optical amount applies measurable reduction without brickwall claims.
     const auto loudDry=run(false,0,false,.95);
     const auto loudOpto=run(false,1,false,.95);
@@ -134,5 +173,5 @@ int main(){
     assert(soloMid.first>.01&&soloMid.second<1.0e-4);
     assert(soloSide.second>.01&&soloSide.first<1.0e-4);
     assert(soloMonoResidual()<1e-6);
-    std::cout<<"Scalpel bands: OFF spectral mute, MONO selected-side reduction, MID/SIDE EQ DOMAIN routing and SOLO audition, PHASE guard, LIMIT optical leveling PASS\n";
+    std::cout<<"Scalpel bands: OFF spectral mute, MONO selected-side reduction, MID/SIDE EQ DOMAIN routing and SOLO audition, PHASE CORRECTION, LIMIT optical leveling PASS\n";
 }
