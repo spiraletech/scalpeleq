@@ -34,15 +34,13 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
     // Rounded lines remain as internal industrial detailing, but there is no
     // separate colour/background exposed outside the rack face.
     const auto full = juce::Rectangle<float>(0, 0, (float)width, (float)height);
-    juce::ColourGradient shell(juce::Colour(0xff121212), 0, 0,
+    juce::ColourGradient shell(juce::Colour(0xff1c1c1c), 0, 0,
                                juce::Colour(0xff080808), 0, (float)height, false);
     shell.addColour(.16, juce::Colour(0xff1c1c1c));
     shell.addColour(.62, juce::Colour(0xff121212));
     shell.addColour(.92, juce::Colour(0xff080808));
-    // Paint the chassis over a black surround so the four outer corners stay
-    // true black while the face itself still reaches every host edge.
-    g.setColour(juce::Colours::black);
-    g.fillRect(full);
+    // The graphite shell owns the complete editor rectangle; no black halo
+    // is painted behind it.
     g.setGradientFill(shell);
     // Keep the exposed black corner radius tight so host letterboxing never
     // reads as a second border around the chassis.
