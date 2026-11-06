@@ -52,18 +52,7 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
     g.setColour(juce::Colour(0xff0d0d0d).withAlpha(.85f));
     g.drawRoundedRectangle(full.reduced(5.0f), 20.0f, 1.0f);
 
-    // Sanyo-style ventilation: evenly machined, never decorative noise.
-    for (int i = 0; i < 11; ++i)
-    {
-        const float y = 11.0f + i * 4.2f;
-        auto vent = juce::Rectangle<float>(38.0f, y, (float)width - 76.0f, 1.45f);
-        g.setColour(juce::Colour(0xff202020).withAlpha(.46f));
-        g.fillRoundedRectangle(vent, .72f);
-        g.setColour(juce::Colour(0xfff2f0ec).withAlpha(.38f));
-        g.fillRoundedRectangle(vent.translated(0, -1.0f), .72f);
-    }
-
-    roundedPanel(g, {24, 64, (float)width - 48, 48}, true, 11.0f);
+    // The approved Carbon Polymer face has a clean uninterrupted top shell.\n    roundedPanel(g, {24, 64, (float)width - 48, 48}, true, 11.0f);
     g.setColour(juce::Colour(0xfff2f0ec));
     g.setFont(juce::Font(juce::FontOptions("Segoe UI", 28.0f, juce::Font::bold | juce::Font::italic)));
     g.drawFittedText("SCALPEL EQ", 58, 69, 255, 37, juce::Justification::centredLeft, 1);
