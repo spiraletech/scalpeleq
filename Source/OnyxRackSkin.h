@@ -4,9 +4,12 @@
 #include "SurgeryChassisLayout.h"
 namespace surgery::rack {
 inline juce::AffineTransform contentTransform(int width,int height){
-    const auto area=instrumentArea(width,height);
-    const float s=std::min(area.getWidth()/1120.f,area.getHeight()/755.f);
-    return juce::AffineTransform::scale(s).translated(area.getCentreX()-560*s,area.getCentreY()-377.5f*s);
+    // Scalpel owns the complete 16:9 editor client area. Do not inherit
+    // Surgery's molded instrumentArea inset: in a DAW it becomes a visible
+    // plugin-owned background border around the rack.
+    const float s=std::min((float)width/1120.f,(float)height/630.f);
+    return juce::AffineTransform::scale(s).translated(width*.5f-560.f*s,
+                                                       height*.5f-315.f*s);
 }
 inline juce::Path cut(juce::Rectangle<float> r,float c=4){
     juce::Path p;

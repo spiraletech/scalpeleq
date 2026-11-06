@@ -24,8 +24,8 @@ inline bool verifyUI104(PRISMVSTAudioProcessor& processor,juce::AudioProcessorEd
     for(auto* c:editor.getChildren())if(auto* g=dynamic_cast<RootsGraph*>(c))graph=g;
     if(!graph)return false;
     graph->setFrozen(false);
-    // Exercise all six native JUCE popups, their anchors, selected states and
-    // transformed rendering at 100/125/150%; no platform pixel offsets.
+    // Scalpel exposes only the two musical BAND menus on its clean deck.
+    // Historical analyzer/engine choices remain accessible to host automation.
     int menus=0;
     editor.addToDesktop(0);editor.setTopLeftPosition(70,70);editor.setVisible(true);
     std::ofstream placements("surgery-ui-popup-placement.csv");
@@ -76,7 +76,7 @@ inline bool verifyUI104(PRISMVSTAudioProcessor& processor,juce::AudioProcessorEd
         }
     }
     editor.removeFromDesktop();
-    if(menus!=6){std::cerr<<"Expected six popups, found "<<menus<<"\n";return false;}
+    if(menus!=2){std::cerr<<"Expected two Scalpel popups, found "<<menus<<"\n";return false;}
     if(auto* parameter=processor.apvts.getParameter("sonar_weather_mode"))parameter->setValueNotifyingHost(0);
     if(auto* parameter=processor.apvts.getParameter("sonar_visual_style"))parameter->setValueNotifyingHost(0);
     if(auto* parameter=processor.apvts.getParameter("juke_mode"))parameter->setValueNotifyingHost(1);
@@ -130,6 +130,6 @@ inline bool verifyUI104(PRISMVSTAudioProcessor& processor,juce::AudioProcessorEd
             if(!save(capture,"surgery-ui-104-"+juce::String(mode)+"-"+juce::String((int)(scale*100))+".png"))return false;
         }
     }
-    std::cout<<"GUI104: five menu models/selection notifications, three render scales, all tabs and two instances passed; offscreen timings exclude host compositor\n";
+    std::cout<<"SCALPEL GUI: two vintage menus/selection notifications, three scales, four tabs and two instances passed; offscreen timings exclude host compositor\n";
     return true;
 }

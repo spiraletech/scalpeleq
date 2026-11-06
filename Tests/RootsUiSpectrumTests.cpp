@@ -3,6 +3,7 @@
 #include <array>
 #include <cmath>
 #include <iostream>
+#include <limits>
 namespace V=prism::roots::visual;
 using prism::roots::v2::Engine;
 int main(){
@@ -59,5 +60,35 @@ int main(){
             if(!std::isfinite(l[k])||!std::isfinite(r[k]))return 4;
     }
     std::cout<<"PROOF 4 PASS: overlap blending and bounded-filter numerical stability\n";
+    // PROOF 5: stationary heatmap columns are fixed logarithmic Hz addresses,
+    // not scrolling time pixels. All columns map monotonically across 20-20k.
+    constexpr int columns=256;
+    const double first=V::heatmapFrequencyAt(0,columns);
+    const double second=V::heatmapFrequencyAt(1,columns);
+    const double last=V::heatmapFrequencyAt(columns-1,columns);
+    if(!(first>=20.0&&second>first&&last<20000.0)||
+       std::abs(second/first-std::pow(1000.0,1.0/columns))>1e-9||
+       std::abs(V::graphUnit(V::heatmapFrequencyAt(127,columns))-127.5/columns)>1e-12||
+       V::heatmapFrequencyAt(-5,columns)!=first||
+       V::heatmapFrequencyAt(400,columns)!=last)return 5;
+    std::cout<<"PROOF 5 PASS: immovable log-frequency heat columns\n";
+    // PROOF 6: silence never draws false energy; actual measured intensity
+    // rises monotonically. No presentation tilt or time history is involved.
+    const float silent=V::heatmapStrength(-144.0f);
+    const float floor=V::heatmapStrength(-60.0f);
+    const float low=V::heatmapStrength(-40.0f);
+    const float loud=V::heatmapStrength(-12.0f);
+    const float full=V::heatmapStrength(0.0f);
+    if(silent!=0.f||floor!=0.f||!(low>0.f&&loud>low&&full>loud)||
+       V::heatmapStrength(12.f)!=1.f||
+       V::heatmapStrength(std::numeric_limits<float>::quiet_NaN())!=0.f)return 6;
+    std::cout<<"PROOF 6 PASS: metered heat intensity and silence gating\n";
+    // PROOF 7: glow is bounded within its stationary bottom band.
+    if(V::heatmapVerticalWeight(-1.f)!=0.f||
+       V::heatmapVerticalWeight(0.f)!=0.f||
+       std::abs(V::heatmapVerticalWeight(.5f)-1.f)>1e-6f||
+       V::heatmapVerticalWeight(1.f)!=0.f||
+       V::heatmapVerticalWeight(5.f)!=0.f)return 7;
+    std::cout<<"PROOF 7 PASS: non-scrolling bottom heat strip\n";
     return 0;
 }

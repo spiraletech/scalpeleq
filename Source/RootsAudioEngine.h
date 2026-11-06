@@ -1,6 +1,6 @@
 #pragma once
 // PRISM ROOTS realtime engine v2: 14 independent overlapping EQ bands, stereo
-// correlation guard, frequency-band audition and inspired compressor profiles.
+// phase correction, frequency-band audition and inspired compressor profiles.
 // Standalone C++20; no allocation, locks, logging or DAW calls in process().
 #include <algorithm>
 #include <array>
@@ -67,9 +67,42 @@ public:
         b1_=(highPass?-(1.0+co):(1.0-co))*norm;
         b2_=b0_;a1_=-2.0*co*norm;a2_=(1.0-alpha)*norm;
     }
+    // A band-stop, not a bypass: when BAND OFF is selected the measured
+    // interval is removed from the music. Two cascaded sections provide a
+    // deep notch with smooth skirts, and the engine crossfades the result.
+    void notch(double sr,double low,double high) noexcept {
+        const double f=std::clamp(std::sqrt(std::max(20.0,low)*
+            std::max(low+0.01,high)),20.0,std::min(20000.0,sr*0.45));
+        const double q=std::clamp(f/std::max(1.0,high-low),0.15,24.0);
+        const double w=2.0*std::numbers::pi*f/sr;
+        const double co=std::cos(w),a=std::sin(w)/(2.0*q);
+        const double norm=1.0/(1.0+a);
+        b0_=norm;b1_=-2.0*co*norm;b2_=norm;
+        a1_=b1_;a2_=(1.0-a)*norm;
+    }
     void reset() noexcept {z1_=z2_=0.0;}
 private:
     double b0_=1.0,b1_=0.0,b2_=0.0,a1_=0.0,a2_=0.0,z1_=0.0,z2_=0.0;
+};
+
+// First-order all-pass quadrature reference. At the selected band's geometric
+// center it is approximately 90 degrees from the direct band signal, allowing
+// an analytic L/R phase estimate without a look-ahead buffer or added latency.
+class Quadrature {
+public:
+    void set(double sr,double frequency) noexcept {
+        const double hz=std::clamp(frequency,20.0,std::min(20000.0,sr*0.45));
+        const double k=std::tan(std::numbers::pi*hz/sr);
+        coefficient_=(k-1.0)/(k+1.0);
+    }
+    double sample(double input) noexcept {
+        const double output=coefficient_*input+state_;
+        state_=input-coefficient_*output;
+        return output;
+    }
+    void reset() noexcept {state_=0.0;}
+private:
+    double coefficient_=0.0,state_=0.0;
 };
 
 class Engine {
@@ -97,6 +130,9 @@ public:
             node.midTap.reset();node.sideTap.reset();
             node.e1=node.e2=node.sideEnergy=node.midEnergy=0.0;
             node.optoEnvelope=0.0;node.phaseMix=0.0;node.limitAmount=0.0;
+            node.phaseLeft.reset();node.phaseRight.reset();
+            node.phaseReal=node.phaseImag=node.phaseLeftPower=
+                node.phaseRightPower=node.phaseAngle=0.0;
             node.onyxMid.prepare(sr_);node.onyxSide.prepare(sr_);
             node.fx={node.config.dynamic,node.config.sparkle,node.config.shine,node.config.smooth,node.config.tape};
             node.enableMix=node.config.enabled?1.0:0.0;
@@ -112,6 +148,7 @@ public:
             for(auto& f:taps.filters)f.reset();
             for(auto& f:rootGainBands_[(size_t)root].filters)f.reset();
             for(auto& f:rootFxBands_[(size_t)root].filters)f.reset();
+            for(auto& f:rootMuteBands_[(size_t)root].filters)f.reset();
             updateSoloBand(root);
         }
     }
@@ -202,8 +239,9 @@ public:
                 double fm=bandMid,fs=bandSide;
                 applyRootEffects(root,bandMid,bandSide,fm,fs,greatestGr);
                 processedM[(size_t)root]=fm;processedS[(size_t)root]=fs;
+                const double rootGain=std::pow(10.0,rootGainDb_[(size_t)root]/20.0);
                 blockRootPeak[(size_t)root]=std::max(blockRootPeak[(size_t)root],
-                    std::max(std::abs(fm+fs),std::abs(fm-fs)));
+                    node.enableMix*rootGain*std::max(std::abs(fm+fs),std::abs(fm-fs)));
                 m+=fm-bandMid;s+=fs-bandSide;
             }
             {
@@ -233,8 +271,13 @@ public:
                     const double delta=smoothedRootDelta_[(size_t)root]*node.enableMix;
                     const double bm=rootM[(size_t)root],bs=rootS[(size_t)root];
                     const auto domain=node.config.domain;
-                    const double auditionMid=processedM[(size_t)root]+(domain==Domain::side?0.0:delta*bm);
-                    const double auditionSide=processedS[(size_t)root]+(domain==Domain::mid?0.0:delta*bs*(1.0-node.monoMix));
+                    // EQ DOMAIN must also select the audible channel when
+                    // auditioning a BAND in SOLO. Previously the raw MID and
+                    // SIDE taps leaked through even in the opposite domain.
+                    const double auditionMid=domain==Domain::side?0.0:
+                        processedM[(size_t)root]+delta*bm;
+                    const double auditionSide=domain==Domain::mid?0.0:
+                        processedS[(size_t)root]+delta*bs;
                     return {auditionMid,auditionSide};
                 };
                 const auto next=audition(currentSolo_);
@@ -249,6 +292,30 @@ public:
             if(soloFadeLeft_>0){
                 --soloFadeLeft_;
                 if(soloFadeLeft_==0)previousSolo_=-1;
+            }
+            // BAND OFF removes its territory from BOTH channels. MONO uses
+            // that same independently filtered territory on SIDE only, so
+            // its audible width change extends throughout the actual root
+            // boundaries, not just the narrower colour/compressor tap.
+            // Continuous notch state + 10 ms wet smoothing prevent clicks.
+            for(int root=0;root<kTerritories;++root){
+                auto& filters=rootMuteBands_[(size_t)root].filters;
+                const double notchM=filters[1].sample(filters[0].sample(m));
+                const double notchS=filters[3].sample(filters[2].sample(s));
+                const auto& node=nodes_[(size_t)(root*2)];
+                const double muted=1.0-node.enableMix;
+                const double monoWet=node.monoMix*node.enableMix;
+                const double sideWet=1.0-(1.0-muted)*(1.0-monoWet);
+                m+=muted*(notchM-m);
+                s+=sideWet*(notchS-s);
+            }
+            // SOLO contains only the selected territory. Its MONO switch
+            // therefore means exact L==R on the audition output, not merely
+            // a deep spectral SIDE notch. Crossfade with the same smoothed
+            // SOLO and per-root MONO envelopes during live transitions.
+            if(solo&&currentSolo_>=0){
+                const double monoSolo=soloWet_*nodes_[(size_t)(currentSolo_*2)].monoMix;
+                s*=1.0-monoSolo;
             }
             globalMidPower_=correlationAlpha_*globalMidPower_+
                             (1.0-correlationAlpha_)*m*m;
@@ -282,8 +349,11 @@ private:
         Config config{};
         double attack=0.99,release=0.999;
         Filter midEq,sideEq,midTap,sideTap;
+        Quadrature phaseLeft,phaseRight;
         double e1=0.0,e2=0.0,midEnergy=0.0,sideEnergy=0.0;
         double optoEnvelope=0.0,phaseMix=0.0,limitAmount=0.0;
+        double phaseReal=0.0,phaseImag=0.0,phaseLeftPower=0.0,
+               phaseRightPower=0.0,phaseAngle=0.0;
         OnyxMemory onyxMid{},onyxSide{};
         std::array<double,5> fx{};
         double enableMix=1,monoMix=0,compMix=0,threshold=0;
@@ -312,15 +382,36 @@ private:
             // Only the SIDE content in this ROOT is changed.
             s+=(allowed-1.0)*bandSide;
         }
-        // PHASE: automatic, *conservative* stereo coherence recovery within
-        // this ROOT. When band side power exceeds mid power, trim the
-        // anti-correlated SIDE component; never flip polarity or invent a
-        // phase rotation. Gain transitions use the 10 ms engine smoother.
+        // PHASE CORRECTION: estimate the L/R phase offset from a quadrature
+        // pair at this band's center, then rotate R toward the L reference.
+        // This preserves band magnitude; it is not SIDE attenuation or a
+        // stereo-width/coherence control. Confidence gates incoherent noise.
+        const double bandL=bandMid+bandSide;
+        const double bandR=bandMid-bandSide;
+        const double quadL=node.phaseLeft.sample(bandL);
+        const double quadR=node.phaseRight.sample(bandR);
+        const double pe=1.0-correlationAlpha_;
+        node.phaseReal+=pe*(bandL*bandR+quadL*quadR-node.phaseReal);
+        node.phaseImag+=pe*(quadL*bandR-bandL*quadR-node.phaseImag);
+        node.phaseLeftPower+=pe*(bandL*bandL+quadL*quadL-node.phaseLeftPower);
+        node.phaseRightPower+=pe*(bandR*bandR+quadR*quadR-node.phaseRightPower);
+        const double phaseNorm=std::sqrt(std::max(0.0,
+            node.phaseLeftPower*node.phaseRightPower));
+        const double confidence=phaseNorm>1.0e-10?
+            std::clamp(std::hypot(node.phaseReal,node.phaseImag)/phaseNorm,0.0,1.0):0.0;
+        const double targetAngle=confidence>=0.35?
+            std::atan2(node.phaseImag,node.phaseReal):0.0;
+        node.phaseAngle+=pe*std::remainder(targetAngle-node.phaseAngle,
+                                           2.0*std::numbers::pi);
         node.phaseMix+=a*((c.phase?1.0:0.0)-node.phaseMix);
-        const double coherence=(node.midEnergy-node.sideEnergy)/
-            (node.midEnergy+node.sideEnergy+1.0e-12);
-        const double sideCorrection=std::clamp(-coherence*0.85,0.0,0.85);
-        s-=node.phaseMix*sideCorrection*tapS;
+        if(node.phaseMix>1.0e-8&&phaseNorm>1.0e-10){
+            const double correctedR=bandR*std::cos(node.phaseAngle)
+                                   -quadR*std::sin(node.phaseAngle);
+            const double correctedM=(bandL+correctedR)*0.5;
+            const double correctedS=(bandL-correctedR)*0.5;
+            m+=node.phaseMix*(correctedM-bandMid);
+            s+=node.phaseMix*(correctedS-bandSide);
+        }
         // Process spectral colour on the selected ROOT only, never master.
         {
             const double processedM=onyxSample(tapM,node.onyxMid,node);
@@ -369,7 +460,8 @@ private:
             s+=(gain-1.0)*tapS;
             greatestGr=std::max(greatestGr,reductionDb*node.enableMix);
         }
-        s-=node.monoMix*(bandSide+s-originalS);
+        // The final frequency-selective SIDE suppression is applied after
+        // root gain and all per-root colour effects in process().
         m=originalM+node.enableMix*(m-originalM);
         s=originalS+node.enableMix*(s-originalS);
     }
@@ -384,6 +476,10 @@ private:
         const double low=std::min(a,b),high=std::max(a,b);
         auto& colour=nodes_[(size_t)(2*root)];
         colour.onyxMid.setRootBand(low,high);colour.onyxSide.setRootBand(low,high);
+        const double phaseCenter=std::sqrt(std::max(20.0,low)*
+                                           std::max(low+0.01,high));
+        colour.phaseLeft.set(sr_,phaseCenter);
+        colour.phaseRight.set(sr_,phaseCenter);
         auto& tap=soloBands_[(size_t)root].filters;
         tap[0].setEdge(sr_,low,true); tap[1].setEdge(sr_,high,false);
         tap[2].setEdge(sr_,low,true); tap[3].setEdge(sr_,high,false);
@@ -393,6 +489,8 @@ private:
         auto& fxTap=rootFxBands_[(size_t)root].filters;
         fxTap[0].setEdge(sr_,low,true);fxTap[1].setEdge(sr_,high,false);
         fxTap[2].setEdge(sr_,low,true);fxTap[3].setEdge(sr_,high,false);
+        auto& mute=rootMuteBands_[(size_t)root].filters;
+        for(auto& filter:mute)filter.notch(sr_,low,high);
     }
     void updateFilters(int i) noexcept {
         auto& n=nodes_[(size_t)i];
@@ -435,6 +533,7 @@ private:
     std::array<RootBand,kTerritories> soloBands_{};
     std::array<RootBand,kTerritories> rootGainBands_{};
     std::array<RootBand,kTerritories> rootFxBands_{};
+    std::array<RootBand,kTerritories> rootMuteBands_{};
     std::array<double,kTerritories> rootGainDb_{};
     std::array<bool,kTerritories> rootMono_{};
     std::array<double,kTerritories> smoothedRootDelta_{};
