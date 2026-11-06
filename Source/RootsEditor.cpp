@@ -1465,59 +1465,59 @@ void RootsEditor::layoutRack(){
     for(int root=0;root<7;++root){
         auto& button=rootButtons_[(size_t)root];
         button.setVisible(true);
-        button.setBounds(27+root*152,122,146,30);
+        button.setBounds(27+root*152,92,146,30);
     }
 
-    graph_.setBounds(20,160,1080,246);
-    for(int i=0;i<4;++i)modeButtons_[(size_t)i].setBounds(36+i*262,414,258,39);
+    graph_.setBounds(20,140,1080,246);
+    for(int i=0;i<4;++i)modeButtons_[(size_t)i].setBounds(36+i*262,391,258,39);
     // Keep both analyzer actions on the same inset and width. Their left edge
     // now clears the analyzer-panel bezel instead of straddling it.
-    xrayButton_.setBounds(893,177,100,37);
-    peakHold_.setBounds(893,349,100,40);
+    xrayButton_.setBounds(893,157,100,37);
+    peakHold_.setBounds(893,329,100,40);
 
     // BAND MODE: approved two-knob, two-menu, six-button hierarchy.
-    on_.setBounds(78,492,112,43);off_.setBounds(78,548,112,43);
-    gainLabel_.setBounds(206,467,160,22);gain_.setBounds(216,484,142,110);
-    thresholdLabel_.setBounds(369,467,166,22);threshold_.setBounds(382,484,142,110);
-    compLabel_.setBounds(548,468,220,19);compressor_.setBounds(550,492,220,34);
-    domainLabel_.setBounds(548,531,220,19);domain_.setBounds(550,554,220,34);
+    on_.setBounds(78,480,112,43);off_.setBounds(78,536,112,43);
+    gainLabel_.setBounds(206,455,160,22);gain_.setBounds(216,472,142,110);
+    thresholdLabel_.setBounds(369,455,166,22);threshold_.setBounds(382,472,142,110);
+    compLabel_.setBounds(548,456,220,19);compressor_.setBounds(550,480,220,34);
+    domainLabel_.setBounds(548,519,220,19);domain_.setBounds(550,542,220,34);
     detectorLabel_.setBounds(0,0,1,1);detector_.setBounds(0,0,1,1);
     limitAmount_.setBounds(0,0,1,1);
-    mono_.setBounds(824,489,120,44);solo_.setBounds(965,489,120,44);
-    phase_.setBounds(824,548,120,44);limit_.setBounds(965,548,120,44);
+    mono_.setBounds(824,477,120,44);solo_.setBounds(965,477,120,44);
+    phase_.setBounds(824,536,120,44);limit_.setBounds(965,536,120,44);
 
     // CARVE: exact approved text, C1-C4 routing and three surgical controls.
-    selection_.setBounds(39,468,235,22);
-    carveOn_.setBounds(77,500,158,43);carveOff_.setBounds(77,554,158,43);
+    selection_.setBounds(39,456,235,22);
+    carveOn_.setBounds(77,488,158,43);carveOff_.setBounds(77,542,158,43);
     carveDynamic_.setBounds(0,0,1,1);
     const std::array<juce::Slider*,3> cs{&carveFrequency_,&carveDepth_,&carveQ_};
     const std::array<juce::Label*,3> cl{&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_};
     for(int i=0;i<3;++i){
-        cl[(size_t)i]->setBounds(286+i*190,468,174,22);
-        cs[(size_t)i]->setBounds(300+i*190,484,146,110);
+        cl[(size_t)i]->setBounds(286+i*190,456,174,22);
+        cs[(size_t)i]->setBounds(300+i*190,472,146,110);
     }
     for(int i=0;i<4;++i)
-        carveSlotButtons_[(size_t)i].setBounds(868+(i%2)*108,492+(i/2)*58,100,44);
+        carveSlotButtons_[(size_t)i].setBounds(868+(i%2)*108,480+(i/2)*58,100,44);
 
     // COLOR: five equal channels share the approved CARVE font and readout geometry.
     for(int i=0;i<5;++i){
-        onyxLabels_[(size_t)i].setBounds(18+i*210,468,194,22);
+        onyxLabels_[(size_t)i].setBounds(18+i*210,456,194,22);
         onyxLabels_[(size_t)i].setFont(juce::Font(juce::FontOptions("Segoe UI",12.5f,juce::Font::bold|juce::Font::italic)));
-        onyxSliders_[(size_t)i].setBounds(45+i*210,486,140,108);
+        onyxSliders_[(size_t)i].setBounds(45+i*210,474,140,108);
     }
 
     // ANALYZE: three optically balanced console columns matching the approved
     // HEAT MAP / FREEZE / VISUAL DECAY hardware reference.
     for(auto* label:{&analyzerDepthLabel_,&analyzerSlopeLabel_,&analyzerMemoryLabel_})
         label->setFont(juce::Font(juce::FontOptions("Segoe UI",16.5f,juce::Font::bold)));
-    analyzerDepthLabel_.setBounds(79,468,220,24);
-    analyzerMemoryLabel_.setBounds(448,468,220,24);
-    analyzerSlopeLabel_.setBounds(819,468,220,24);
-    heatToggle_.setBounds(141,500,96,96);
+    analyzerDepthLabel_.setBounds(79,456,220,24);
+    analyzerMemoryLabel_.setBounds(448,456,220,24);
+    analyzerSlopeLabel_.setBounds(819,456,220,24);
+    heatToggle_.setBounds(141,488,96,96);
     // Distribution layout: Visual Decay occupies the centre knob bay while
     // Freeze moves to the right switch bay. Bindings and behavior are unchanged.
-    analyzerMemory_.setBounds(497,488,122,104);
-    freezeButton_.setBounds(881,500,96,96);
+    analyzerMemory_.setBounds(497,476,122,104);
+    freezeButton_.setBounds(881,488,96,96);
 
     jukeModeLabel_.setBounds(0,0,1,1);jukeMode_.setBounds(0,0,1,1);
     weatherMode_.setBounds(0,0,1,1);reducedMotion_.setBounds(0,0,1,1);
