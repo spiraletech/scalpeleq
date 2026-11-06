@@ -298,8 +298,8 @@ void RootsGraph::paint(juce::Graphics& g){
     if(!xrayActive_){
         // Standard Scalpel graph is smoked graphite, never Surgery's bright
         // cyan/blue filled histogram. HEAT MAP adds frequency-locked spectral colour.
-        juce::ColourGradient graphite(juce::Colour(0xff35302b).withAlpha(.64f),
-            r.getX(),r.getY(),juce::Colour(0xff0b0a09).withAlpha(.9f),
+        juce::ColourGradient graphite(juce::Colour(0xff202020).withAlpha(.64f),
+            r.getX(),r.getY(),juce::Colour(0xff080808).withAlpha(.9f),
             r.getX(),r.getBottom(),false);
         g.setGradientFill(graphite);g.fillPath(filledPath);
     } else {
@@ -327,7 +327,7 @@ void RootsGraph::paint(juce::Graphics& g){
         // Material sheen is a reflection field, not an independent waveform.
         // Its apparent ridges are clipped to the actual FFT silhouette.
         juce::ColourGradient oblique(juce::Colour(0xffb2c8c5).withAlpha(.075f),
-            r.getX(),r.getBottom(),juce::Colour(0xffba916f).withAlpha(.10f),
+            r.getX(),r.getBottom(),juce::Colour(0xff343434).withAlpha(.10f),
             r.getRight(),r.getY(),false);
         oblique.addColour(.38,juce::Colour(0xff282026).withAlpha(.016f));
         oblique.addColour(.73,juce::Colour(0xffb9a5c2).withAlpha(.048f));
@@ -488,8 +488,8 @@ void RootsGraph::paint(juce::Graphics& g){
     // independent objects or fabricated motion is introduced during silence.
     const float luminous=surgery::spectrum::brightness(*std::max_element(bands_.begin(),bands_.end()));
     if(luminous>0){
-        juce::ColourGradient foil(juce::Colour(0xffd3ae8c).withAlpha(.10f*luminous),r.getX(),r.getY(),
-                                  juce::Colour(0xffa08d85).withAlpha(.12f*luminous),r.getRight(),r.getY(),false);
+        juce::ColourGradient foil(juce::Colour(0xffb8b8b8).withAlpha(.10f*luminous),r.getX(),r.getY(),
+                                  juce::Colour(0xff343434).withAlpha(.12f*luminous),r.getRight(),r.getY(),false);
         g.setGradientFill(foil);g.strokePath(spectrumPath,juce::PathStrokeType(4.2f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
         g.setColour(juce::Colour(0xffd9c6ae).withAlpha(.13f*luminous));
         g.strokePath(spectrumPath,juce::PathStrokeType(2.4f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
@@ -1260,7 +1260,7 @@ void RootsEditor::bindCarve(){
     for(int i=0;i<4;++i){
         carveSlotButtons_[(size_t)i].setToggleState(i==slot,juce::dontSendNotification);
         carveSlotButtons_[(size_t)i].setColour(juce::TextButton::buttonOnColourId,
-            juce::Colour(0xffc6a182));
+            juce::Colour(0xff343434));
     }
     graph_.setPresentation(mode_,carveSlot_);
 }
@@ -1269,10 +1269,10 @@ void RootsEditor::setMode(int next){
     for(int i=0;i<4;++i){
         auto& b=modeButtons_[(size_t)i];
         b.setToggleState(i==mode_,juce::dontSendNotification);
-        b.setColour(juce::TextButton::buttonColourId,juce::Colour(0xffe4cdb4));
-        b.setColour(juce::TextButton::buttonOnColourId,juce::Colour(0xffbba084));
-        b.setColour(juce::TextButton::textColourOffId,juce::Colour(0xff241812));
-        b.setColour(juce::TextButton::textColourOnId,juce::Colour(0xff241812));
+        b.setColour(juce::TextButton::buttonColourId,juce::Colour(0xffb8b8b8));
+        b.setColour(juce::TextButton::buttonOnColourId,juce::Colour(0xff343434));
+        b.setColour(juce::TextButton::textColourOffId,juce::Colour(0xff121212));
+        b.setColour(juce::TextButton::textColourOnId,juce::Colour(0xff121212));
     }
     const bool carve=mode_==1;
     for(auto* s:{&carveFrequency_,&carveDepth_,&carveQ_})s->setVisible(carve);
