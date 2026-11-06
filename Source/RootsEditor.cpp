@@ -1412,11 +1412,10 @@ thresholdLabel_.setText("COMP THRESHOLD",
     } else status_.setText(status,juce::dontSendNotification);
 }
 void RootsEditor::paint(juce::Graphics& g){
-    // Clear the host/window surround before compositing the fitted rack.  This
-    // keeps letterbox pixels and antialiased outer edges black at every size.
-    // The chassis fills the host editor edge-to-edge; do not paint a
-    // second black surround behind the rounded product face.
-    g.fillAll(scalpel::ui105::champagne);
+    // Carbon backdrop matches the product face at the editor edge.  It is
+    // deliberately graphite rather than pure black so antialiased corners do
+    // not reveal a second halo behind the chassis.
+    g.fillAll(juce::Colour(0xff1c1c1c));
     // Cache in physical pixels. Crossing a DPI boundary or changing host UI
     // scale rebuilds the surface even when logical editor dimensions match.
     const float dpi=juce::jlimit(.5f,4.f,g.getInternalContext().getPhysicalPixelScaleFactor());
