@@ -1423,7 +1423,7 @@ void RootsEditor::paint(juce::Graphics& g){
     if(rackBackground_.getWidth()!=pw||rackBackground_.getHeight()!=ph||backgroundMode_!=mode_||backgroundScale_!=dpi){
         rackBackground_=juce::Image(juce::Image::RGB,pw,ph,false);
         juce::Graphics background(rackBackground_);
-        background.fillAll(juce::Colours::black);
+        background.fillAll(juce::Colour(0xff1c1c1c));
         background.addTransform(juce::AffineTransform::scale(dpi));
         paintRack(background);backgroundMode_=mode_;backgroundScale_=dpi;
     }
