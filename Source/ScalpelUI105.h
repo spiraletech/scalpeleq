@@ -52,41 +52,41 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
     g.setColour(juce::Colour(0xff0d0d0d).withAlpha(.85f));
     g.drawRoundedRectangle(full.reduced(5.0f), 20.0f, 1.0f);
 
-    // The approved Carbon Polymer face has a clean uninterrupted top shell.\n    roundedPanel(g, {24, 64, (float)width - 48, 48}, true, 11.0f);
+    // The approved Carbon Polymer face has a clean uninterrupted top shell.\n    roundedPanel(g, {24, 20, (float)width - 48, 60}, true, 11.0f);
     g.setColour(juce::Colour(0xfff2f0ec));
     g.setFont(juce::Font(juce::FontOptions("Segoe UI", 28.0f, juce::Font::bold | juce::Font::italic)));
-    g.drawFittedText("SCALPEL EQ", 58, 69, 255, 37, juce::Justification::centredLeft, 1);
+    g.drawFittedText("SCALPEL EQ", 58, 25, 255, 45, juce::Justification::centredLeft, 1);
     g.setFont(juce::Font(juce::FontOptions("Segoe UI", 11.5f, juce::Font::plain)));
-    g.drawFittedText("P R E C I S I O N   E Q U A L I Z E R", 350, 75, 360, 26,
+    g.drawFittedText("P R E C I S I O N   E Q U A L I Z E R", 350, 31, 360, 26,
                      juce::Justification::centred, 1);
-    g.drawFittedText("A N A L O G   C O N S O L E   S E R I E S", width - 390, 75, 335, 26,
+    g.drawFittedText("A N A L O G   C O N S O L E   S E R I E S", width - 390, 31, 335, 26,
                      juce::Justification::centredRight, 1);
     g.setColour(amber);
     for (int i = 0; i < 3; ++i)
     {
         juce::Path slash;
         const float x = width * .63f + i * 22.0f;
-        slash.startNewSubPath(x + 10, 76);
-        slash.lineTo(x + 28, 76);
-        slash.lineTo(x + 16, 99);
-        slash.lineTo(x - 2, 99);
+        slash.startNewSubPath(x + 10, 32);
+        slash.lineTo(x + 28, 32);
+        slash.lineTo(x + 16, 55);
+        slash.lineTo(x - 2, 55);
         slash.closeSubPath();
         g.fillPath(slash);
     }
 
     // 1.0.4 canon: seven persistent, functional BAND selectors sit between
     // the identity plaque and analyzer. The graph remains the dominant field.
-    roundedPanel(g, {18, 118, (float)width - 36, 38}, false, 7.0f);
-    const auto analyzerFrame = juce::Rectangle<float>(18, 160, (float)width - 36, 246);
+    roundedPanel(g, {18, 88, (float)width - 36, 40}, false, 7.0f);
+    const auto analyzerFrame = juce::Rectangle<float>(18, 140, (float)width - 36, 246);
     roundedPanel(g, analyzerFrame, true, 8.0f);
     // The analyzer is the single orange-framed hero feature; the header and
     // lower deck remain restrained carbon polymer with no orange perimeter.
     g.setColour(juce::Colour(0xffff8300));
     g.drawRoundedRectangle(analyzerFrame.reduced(1.2f), 8.0f, 2.4f);
-    roundedPanel(g, {32, 412, (float)width - 64, 43}, false, 8.0f);
+    roundedPanel(g, {32, 389, (float)width - 64, 43}, false, 8.0f);
     // Recessed carbon-fiber control bay: a substantial champagne chassis lip
     // surrounds one continuous material surface, matching the approved reference.
-    const auto bay = juce::Rectangle<float>(20, 461, (float)width - 40, 158);
+    const auto bay = juce::Rectangle<float>(20, 449, (float)width - 40, 158};
     const auto lip = bay.expanded(5.0f);
     juce::ColourGradient lipFace(juce::Colour(0xff343434), lip.getX(), lip.getY(),
                                  juce::Colour(0xff080808), lip.getX(), lip.getBottom(), false);
