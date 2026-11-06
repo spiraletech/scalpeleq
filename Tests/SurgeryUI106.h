@@ -49,15 +49,15 @@ inline bool verifyUI106(PRISMVSTAudioProcessor&, juce::AudioProcessorEditor& edi
     bool decayKnobFound=false;
     for(auto* child:editor.getChildren())
         if(auto* slider=dynamic_cast<juce::Slider*>(child);
-           slider&&slider->getBounds()==juce::Rectangle<int>(497,488,122,104))
+           slider&&slider->getBounds()==juce::Rectangle<int>(497,476,122,104))
             decayKnobFound=true;
     if(heat==nullptr||freeze==nullptr||heatLabel==nullptr||freezeLabel==nullptr||decayLabel==nullptr||
        !heat->isVisible()||!freeze->isVisible()||!decayKnobFound||
-       heat->getBounds()!=juce::Rectangle<int>(141,500,96,96)||
-       freeze->getBounds()!=juce::Rectangle<int>(881,500,96,96)||
-       heatLabel->getBounds()!=juce::Rectangle<int>(79,468,220,24)||
-       decayLabel->getBounds()!=juce::Rectangle<int>(448,468,220,24)||
-       freezeLabel->getBounds()!=juce::Rectangle<int>(819,468,220,24)||
+       heat->getBounds()!=juce::Rectangle<int>(141,488,96,96)||
+       freeze->getBounds()!=juce::Rectangle<int>(881,488,96,96)||
+       heatLabel->getBounds()!=juce::Rectangle<int>(79,456,220,24)||
+       decayLabel->getBounds()!=juce::Rectangle<int>(448,456,220,24)||
+       freezeLabel->getBounds()!=juce::Rectangle<int>(819,456,220,24)||
        heatLabel->getFont().getHeight()<16.0f||
        freezeLabel->getFont().getHeight()<16.0f||
        decayLabel->getFont().getHeight()<16.0f){
