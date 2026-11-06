@@ -86,7 +86,7 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
     roundedPanel(g, {32, 389, (float)width - 64, 43}, false, 8.0f);
     // Recessed carbon-fiber control bay: a substantial champagne chassis lip
     // surrounds one continuous material surface, matching the approved reference.
-    const auto bay = juce::Rectangle<float>(20, 449, (float)width - 40, 158};
+    const auto bay = juce::Rectangle<float>(20, 449, (float)width - 40, 158);
     const auto lip = bay.expanded(5.0f);
     juce::ColourGradient lipFace(juce::Colour(0xff343434), lip.getX(), lip.getY(),
                                  juce::Colour(0xff080808), lip.getX(), lip.getBottom(), false);
