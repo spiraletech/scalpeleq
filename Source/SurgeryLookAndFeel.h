@@ -37,7 +37,7 @@ public:
                           bool highlighted,bool ticked,bool submenu,const juce::String& text,
                           const juce::String& shortcut,const juce::Drawable* icon,const juce::Colour* colour) override {
         juce::LookAndFeel_V4::drawPopupMenuItem(g,area,separator,active,highlighted||ticked,ticked,submenu,text,shortcut,icon,colour);
-        if(ticked&&!separator){g.setColour(juce::Colour(0xffdd745a));g.fillRect(area.getX()+2,area.getY()+4,2,area.getHeight()-8);}
+        if(ticked&&!separator){g.setColour(juce::Colour(0xffdb5e52));g.fillRect(area.getX()+2,area.getY()+4,2,area.getHeight()-8);}
     }
     void drawRotarySlider(juce::Graphics& g,int x,int y,int w,int h,float position,
                           float start,float end,juce::Slider& slider) override {
@@ -208,14 +208,14 @@ public:
                 inner.cubicTo(centre.x+5.0f,face.getBottom()-13.0f,
                               centre.x+2.0f,face.getBottom()-11.0f,
                               centre.x-1.0f,face.getBottom()-12.0f);
-                g.setColour(juce::Colour(heat&&active?0xffff9200:0xffc87932));
+                g.setColour(juce::Colour(heat&&active?0xffff9200:0xffff8800));
                 g.strokePath(flame,juce::PathStrokeType(3.2f,juce::PathStrokeType::curved,
                                                         juce::PathStrokeType::rounded));
                 g.strokePath(inner,juce::PathStrokeType(2.4f,juce::PathStrokeType::curved,
                                                         juce::PathStrokeType::rounded));
             }else{
                 const auto snowflake=active?juce::Colour(0xffd9fbff)
-                                           :juce::Colour(0xffffead1);
+                                           :juce::Colour(0xfff2f2f2);
                 const auto iceGlow=juce::Colour(0xff50dcff).withAlpha(.24f);
                 const float length=face.getWidth()*.36f;
                 // Three uninterrupted axes guarantee a readable crystalline
@@ -306,7 +306,7 @@ public:
         const auto tabText=b.getButtonText();
         const bool pageTab=tabText=="BAND MODE"||tabText=="CARVE"||tabText=="COLOR"||tabText=="ANALYZE";
         if(pageTab){
-            g.setColour(b.getToggleState()?juce::Colour(0xffffe8ce):juce::Colour(0xff080808));
+            g.setColour(b.getToggleState()?juce::Colour(0xfff2f2f2):juce::Colour(0xff080808));
             g.setFont(juce::Font(juce::FontOptions("Segoe UI",15.0f,juce::Font::bold|juce::Font::italic)));
             g.drawFittedText(tabText,b.getLocalBounds().reduced(7,3),juce::Justification::centred,1);
             return;
@@ -316,7 +316,7 @@ public:
              b.getButtonText()=="MONO"||b.getButtonText()=="SOLO"||
              b.getButtonText().startsWith("PHASE")||b.getButtonText()=="LIMIT");
         g.setColour(b.isEnabled()?juce::Colour(xray?0xffff624b:
-            reset?0xfff2f2f2:depressedSwitch?0xffffeee0:0xff121212):juce::Colour(0xff454545));
+            reset?0xfff2f2f2:depressedSwitch?0xfff2f2f2:0xff121212):juce::Colour(0xff454545));
         g.setFont(juce::Font(juce::FontOptions("Segoe UI",juce::jlimit(11.0f,13.0f,b.getHeight()*.43f),juce::Font::bold)));
         g.drawFittedText(b.getButtonText(),xray?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2),
                          juce::Justification::centred,1);
