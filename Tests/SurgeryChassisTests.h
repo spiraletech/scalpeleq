@@ -41,7 +41,8 @@ inline bool verifyChassis105(){
             // The shipped face fills the complete constrained editor at every
             // supported size/DPI. Measure exposed dark host background in all
             // four corners instead of byte-comparing antialiased pixels across
-            // unrelated resolutions.
+            // unrelated resolutions. Carbon Black legitimately uses #080808 shadows;
+            // only near-zero pixels indicate a leaked host surround.
             double error=0;int count=0;const int corner=juce::roundToInt(46*scale);
             for(int right=0;right<2;++right)for(int bottom=0;bottom<2;++bottom){
                 // The lower corners are now the intentional carbon utility
@@ -49,7 +50,7 @@ inline bool verifyChassis105(){
                 if(bottom==1)continue;
                 for(int y=4;y<corner-4;++y)for(int x=4;x<corner-4;++x){
                     const auto a=shot.getPixelAt(right?shot.getWidth()-corner+x:x,bottom?shot.getHeight()-corner+y:y);
-                    if(a.getBrightness()<.08f)error+=1.0;
+                    if(a.getBrightness()<.02f)error+=1.0;
                     ++count;
                 }
             }
