@@ -10,11 +10,11 @@
 class SurgeryLookAndFeel final : public juce::LookAndFeel_V4 {
 public:
     SurgeryLookAndFeel(){
-        setColour(juce::PopupMenu::backgroundColourId,juce::Colour(0xff261e1a));
-        setColour(juce::PopupMenu::textColourId,juce::Colour(0xfff1ddc3));
-        setColour(juce::PopupMenu::highlightedBackgroundColourId,juce::Colour(0xff7b5340));
-        setColour(juce::PopupMenu::highlightedTextColourId,juce::Colour(0xffffe8c7));
-        setColour(juce::ComboBox::textColourId,juce::Colour(0xfff9e2c5));
+        setColour(juce::PopupMenu::backgroundColourId,juce::Colour(0xff151515));
+        setColour(juce::PopupMenu::textColourId,juce::Colour(0xfff2f2f2));
+        setColour(juce::PopupMenu::highlightedBackgroundColourId,juce::Colour(0xff454545));
+        setColour(juce::PopupMenu::highlightedTextColourId,juce::Colour(0xfff2f2f2));
+        setColour(juce::ComboBox::textColourId,juce::Colour(0xfff2f2f2));
     }
     juce::Font getComboBoxFont(juce::ComboBox&) override {return juce::Font(juce::FontOptions("Segoe UI",13.0f,juce::Font::plain));}
     juce::Font getPopupMenuFont() override {return juce::Font(juce::FontOptions("Segoe UI",13.0f,juce::Font::plain));}
@@ -49,21 +49,21 @@ public:
         // One machined bezel, one dial face and one precise indicator. Keeping
         // the geometry vector-native removes the stacked/rasterized "AI knob"
         // look and remains sharp at every host DPI.
-        g.setColour(juce::Colour(0xff4a2f20).withAlpha(.26f));
+        g.setColour(juce::Colour(0xff080808).withAlpha(.26f));
         g.fillEllipse(face.translated(1.5f,3.0f).expanded(1.5f));
-        juce::ColourGradient bezel(juce::Colour(0xff9c7657),cx-radius,cy-radius,
-                                   juce::Colour(0xff241711),cx+radius,cy+radius,false);
+        juce::ColourGradient bezel(juce::Colour(0xff454545),cx-radius,cy-radius,
+                                   juce::Colour(0xff080808),cx+radius,cy+radius,false);
         g.setGradientFill(bezel);g.fillEllipse(face.expanded(1.4f));
-        g.setColour(juce::Colour(0xff0b0908));g.fillEllipse(face);
-        juce::ColourGradient dial(juce::Colour(0xff34302c),cx-radius*.45f,cy-radius,
-                                  juce::Colour(0xff171412),cx+radius*.55f,cy+radius,false);
+        g.setColour(juce::Colour(0xff080808));g.fillEllipse(face);
+        juce::ColourGradient dial(juce::Colour(0xff1c1c1c),cx-radius*.45f,cy-radius,
+                                  juce::Colour(0xff121212),cx+radius*.55f,cy+radius,false);
         g.setGradientFill(dial);g.fillEllipse(face.reduced(4.5f));
-        g.setColour(juce::Colour(0xff8d7968).withAlpha(.58f));
+        g.setColour(juce::Colour(0xff454545).withAlpha(.58f));
         g.drawEllipse(face.reduced(4.5f),.85f);
 
         juce::Path track;
         track.addCentredArc(cx,cy,radius+3.0f,radius+3.0f,0.0f,start,end,true);
-        g.setColour(juce::Colour(0xff5b4435).withAlpha(.64f));
+        g.setColour(juce::Colour(0xff313131).withAlpha(.64f));
         g.strokePath(track,juce::PathStrokeType(2.0f));
 
         const auto& range=slider.getNormalisableRange();
@@ -82,7 +82,7 @@ public:
         juce::Path pointer;
         pointer.addRoundedRectangle(cx-1.5f,cy-radius+10.0f,3.0f,radius*.43f,1.5f);
         pointer.applyTransform(juce::AffineTransform::rotation(angle,cx,cy));
-        g.setColour(juce::Colour(0xffffead0));g.fillPath(pointer);
+        g.setColour(juce::Colour(0xfff2f2f2));g.fillPath(pointer);
     }
     void drawButtonBackground(juce::Graphics& g,juce::Button& button,
                               const juce::Colour&,bool over,bool down) override {
@@ -100,13 +100,13 @@ public:
         const bool pageTab=text=="BAND MODE"||text=="CARVE"||text=="COLOR"||text=="ANALYZE";
         if(pageTab){
             const bool selected=button.getToggleState();
-            g.setColour(juce::Colour(0xff493226).withAlpha(.90f));
+            g.setColour(juce::Colour(0xff0d0d0d).withAlpha(.90f));
             g.fillRoundedRectangle(r.translated(0,2.0f).expanded(1.0f),5.0f);
-            juce::ColourGradient face(selected?juce::Colour(0xff24201d):juce::Colour(0xffffe2c3),
-                                      0,r.getY(),selected?juce::Colour(0xff0d0b0a):juce::Colour(0xffc99d7e),
+            juce::ColourGradient face(selected?juce::Colour(0xff121212):juce::Colour(0xff232323),
+                                      0,r.getY(),selected?juce::Colour(0xff080808):juce::Colour(0xff1c1c1c),
                                       0,r.getBottom(),false);
             g.setGradientFill(face);g.fillRoundedRectangle(r,5.0f);
-            g.setColour(juce::Colour(selected?0xff8d6f59:0xffffeed8));
+            g.setColour(juce::Colour(selected?0xff454545:0xfff2f2f2));
             g.drawRoundedRectangle(r.reduced(.8f),4.4f,1.0f);
             if(selected){
                 g.setColour(juce::Colour(0xffff7900).withAlpha(.23f));
@@ -119,11 +119,11 @@ public:
         if(reset){
             // RESET belongs to the analyzer's carbon instrument bay. Keep the
             // same copper/ivory machining language without a stray pale key.
-            g.setColour(juce::Colour(0xff2c1c14).withAlpha(.58f));
+            g.setColour(juce::Colour(0xff151515).withAlpha(.58f));
             g.fillRoundedRectangle(r.translated(0,2.0f).expanded(1.0f),4.0f);
-            juce::ColourGradient carbon(juce::Colour(0xff2a2724),r.getX(),r.getY(),
-                                        juce::Colour(0xff070605),r.getRight(),r.getBottom(),false);
-            carbon.addColour(.48,juce::Colour(0xff171411));
+            juce::ColourGradient carbon(juce::Colour(0xff1c1c1c),r.getX(),r.getY(),
+                                        juce::Colour(0xff080808),r.getRight(),r.getBottom(),false);
+            carbon.addColour(.48,juce::Colour(0xff121212));
             g.setGradientFill(carbon);g.fillRoundedRectangle(r,3.5f);
             g.saveState();
             g.reduceClipRegion(r.reduced(1.0f).toNearestInt());
@@ -131,9 +131,9 @@ public:
             for(float x=r.getX()-r.getHeight();x<r.getRight();x+=7.0f)
                 g.drawLine(x,r.getBottom(),x+r.getHeight(),r.getY(),.65f);
             g.restoreState();
-            g.setColour(juce::Colour(0xffa47b5d));
+            g.setColour(juce::Colour(0xff454545));
             g.drawRoundedRectangle(r,3.5f,1.0f);
-            g.setColour(juce::Colour(0xffffead4).withAlpha(.16f));
+            g.setColour(juce::Colour(0xfff2f2f2).withAlpha(.16f));
             g.drawLine(r.getX()+5.0f,r.getY()+2.0f,r.getRight()-5.0f,r.getY()+2.0f,.8f);
             if(over){
                 g.setColour(juce::Colours::white.withAlpha(.055f));
@@ -150,7 +150,7 @@ public:
             const auto tile=juce::Rectangle<float>(r.getCentreX()-side*.5f,
                                                    r.getCentreY()-side*.5f,
                                                    side,side);
-            g.setColour(juce::Colour(0xff3d281c).withAlpha(.42f));
+            g.setColour(juce::Colour(0xff151515).withAlpha(.42f));
             g.fillRoundedRectangle(tile.translated(2.0f,4.0f).expanded(2.0f),8.0f);
             if(heat&&active){
                 g.setColour(juce::Colour(0xffff7800).withAlpha(.16f));
@@ -164,16 +164,16 @@ public:
                 g.setColour(juce::Colour(0xff79e7ff));
                 g.drawRoundedRectangle(tile.expanded(2.0f),8.5f,2.3f);
             }
-            juce::ColourGradient bezel(juce::Colour(0xffffe7cb),tile.getX(),tile.getY(),
-                                       juce::Colour(0xff6d5140),tile.getRight(),tile.getBottom(),false);
+            juce::ColourGradient bezel(juce::Colour(0xff2a2a2a),tile.getX(),tile.getY(),
+                                       juce::Colour(0xff454545),tile.getRight(),tile.getBottom(),false);
             g.setGradientFill(bezel);g.fillRoundedRectangle(tile,7.0f);
             const auto face=tile.reduced(5.0f);
-            juce::ColourGradient darkFace(juce::Colour(0xff35302c),face.getX(),face.getY(),
-                                          juce::Colour(0xff0b0908),face.getRight(),face.getBottom(),false);
+            juce::ColourGradient darkFace(juce::Colour(0xff1c1c1c),face.getX(),face.getY(),
+                                          juce::Colour(0xff080808),face.getRight(),face.getBottom(),false);
             g.setGradientFill(darkFace);g.fillRoundedRectangle(face,5.0f);
-            g.setColour(juce::Colour(0xfffff0dc).withAlpha(.34f));
+            g.setColour(juce::Colour(0xfff2f2f2).withAlpha(.34f));
             g.drawRoundedRectangle(face.reduced(.7f),4.5f,1.0f);
-            g.setColour(juce::Colour(0xff080605));
+            g.setColour(juce::Colour(0xff080808));
             g.drawRoundedRectangle(tile,7.0f,1.2f);
 
             const auto centre=face.getCentre();
@@ -252,23 +252,23 @@ public:
         // Answering-machine ON/OFF switches really sink into a dark well when
         // selected. The red pilot illuminates ONLY that active switch; the
         // opposite switch stays the same raised powder-ivory as the mockup.
-        g.setColour(juce::Colour(0xff33231b).withAlpha(.93f));
+        g.setColour(juce::Colour(0xff111111).withAlpha(.93f));
         g.fillRoundedRectangle(r.translated(0,2.f).expanded(1.2f),3.f);
-        g.setColour(juce::Colour(0xff9b8066));
+        g.setColour(juce::Colour(0xff454545));
         g.drawRoundedRectangle(r.expanded(.5f),3.5f,1.2f);
         juce::ColourGradient plastic(
             xray?juce::Colour(active?0xff4b0908:0xff34100d):
-                juce::Colour(depressed?0xff29201d:active?0xffd5bca0:0xffffecd3),
+                juce::Colour(depressed?0xff121212:active?0xff454545:0xfff2f2f2),
             r.getX(),r.getY()+1.f,
             xray?juce::Colour(active?0xff150404:0xff581613):
-                juce::Colour(depressed?0xff100e0d:active?0xffb89e83:0xffd4bea5),
+                juce::Colour(depressed?0xff0d0d0d:active?0xff454545:0xff454545),
             r.getX(),r.getBottom(),false);
         plastic.addColour(.18,xray?juce::Colour(0xff681c15):
-            depressed?juce::Colour(0xff3a302b):juce::Colour(0xfff2ddc1));
+            depressed?juce::Colour(0xff1c1c1c):juce::Colour(0xfff2f2f2));
         g.setGradientFill(plastic);g.fillRoundedRectangle(r.reduced(1.f),2.5f);
-        g.setColour(juce::Colour(xray?0xffbd4d3c:0xfffff3df).withAlpha(active?.34f:.91f));
+        g.setColour(juce::Colour(xray?0xffbd4d3c:0xfff2f2f2).withAlpha(active?.34f:.91f));
         g.drawLine(r.getX()+4,r.getY()+2,r.getRight()-4,r.getY()+2,.9f);
-        g.setColour(juce::Colour(0xff513c2f).withAlpha(.5f));
+        g.setColour(juce::Colour(0xff313131).withAlpha(.5f));
         g.drawRoundedRectangle(r.reduced(1.f),2.5f,.7f);
         if(xray){
             const float lamp=r.getHeight()*.14f;
@@ -289,7 +289,7 @@ public:
         if(actionSwitch&&active){
             // A tiny pale pilot identifies engaged processing without ever
             // painting the band red; red is reserved for true peak warnings.
-            g.setColour(juce::Colour(0xffffeed8).withAlpha(.88f));
+            g.setColour(juce::Colour(0xfff2f2f2).withAlpha(.88f));
             g.fillEllipse(r.getRight()-10.f,r.getY()+6.f,3.5f,3.5f);
         }
         const auto warning=button.findColour(juce::TextButton::buttonColourId);
@@ -306,7 +306,7 @@ public:
         const auto tabText=b.getButtonText();
         const bool pageTab=tabText=="BAND MODE"||tabText=="CARVE"||tabText=="COLOR"||tabText=="ANALYZE";
         if(pageTab){
-            g.setColour(b.getToggleState()?juce::Colour(0xffffe8ce):juce::Colour(0xff17110d));
+            g.setColour(b.getToggleState()?juce::Colour(0xffffe8ce):juce::Colour(0xff080808));
             g.setFont(juce::Font(juce::FontOptions("Segoe UI",15.0f,juce::Font::bold|juce::Font::italic)));
             g.drawFittedText(tabText,b.getLocalBounds().reduced(7,3),juce::Justification::centred,1);
             return;
@@ -316,19 +316,19 @@ public:
              b.getButtonText()=="MONO"||b.getButtonText()=="SOLO"||
              b.getButtonText().startsWith("PHASE")||b.getButtonText()=="LIMIT");
         g.setColour(b.isEnabled()?juce::Colour(xray?0xffff624b:
-            reset?0xffffead4:depressedSwitch?0xffffeee0:0xff241a14):juce::Colour(0xff8d8177));
+            reset?0xfff2f2f2:depressedSwitch?0xffffeee0:0xff121212):juce::Colour(0xff454545));
         g.setFont(juce::Font(juce::FontOptions("Segoe UI",juce::jlimit(11.0f,13.0f,b.getHeight()*.43f),juce::Font::bold)));
         g.drawFittedText(b.getButtonText(),xray?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2),
                          juce::Justification::centred,1);
     }
     void drawComboBox(juce::Graphics& g,int w,int h,bool,int,int,int,int,juce::ComboBox& box) override {
         auto r=juce::Rectangle<float>(1,1,(float)w-2,(float)h-2);
-        g.setColour(juce::Colour(0xff38261e));g.fillRoundedRectangle(r.expanded(.8f),3.f);
-        juce::ColourGradient inset(juce::Colour(0xff241b16),0,0,
-                                  juce::Colour(0xff4b3930),0,(float)h,false);
+        g.setColour(juce::Colour(0xff151515));g.fillRoundedRectangle(r.expanded(.8f),3.f);
+        juce::ColourGradient inset(juce::Colour(0xff121212),0,0,
+                                  juce::Colour(0xff313131),0,(float)h,false);
         g.setGradientFill(inset);g.fillRoundedRectangle(r.reduced(1.f),2.f);
-        g.setColour(juce::Colour(0xffbca084));g.drawRoundedRectangle(r,3.f,.9f);
-        g.setColour(juce::Colour(0xffffe7cf));
+        g.setColour(juce::Colour(0xff454545));g.drawRoundedRectangle(r,3.f,.9f);
+        g.setColour(juce::Colour(0xfff2f2f2));
         juce::Path arrow;arrow.startNewSubPath((float)w-20,h*.42f);arrow.lineTo((float)w-15,h*.6f);arrow.lineTo((float)w-10,h*.42f);
         g.strokePath(arrow,juce::PathStrokeType(1.6f));
     }
@@ -353,12 +353,12 @@ public:
                           juce::Slider::SliderStyle style,juce::Slider& slider) override {
         if(style!=juce::Slider::LinearHorizontal){juce::LookAndFeel_V4::drawLinearSlider(g,x,y,width,height,pos,min,max,style,slider);return;}
         auto track=juce::Rectangle<float>((float)x,(float)y+height*.35f,(float)width,height*.3f);
-        g.setColour(juce::Colour(0xff281e19));g.fillRoundedRectangle(track.expanded(2),3);
-        g.setColour(juce::Colour(0xff4c3830));g.fillRoundedRectangle(track,2);
+        g.setColour(juce::Colour(0xff121212));g.fillRoundedRectangle(track.expanded(2),3);
+        g.setColour(juce::Colour(0xff313131));g.fillRoundedRectangle(track,2);
         auto fill=track.withWidth(juce::jlimit(0.f,(float)width,pos-x));
-        juce::ColourGradient light(juce::Colour(0xffe4ba89),fill.getX(),fill.getY(),juce::Colour(0xff92644b),fill.getRight(),fill.getY(),false);
+        juce::ColourGradient light(juce::Colour(0xff2a2a2a),fill.getX(),fill.getY(),juce::Colour(0xff454545),fill.getRight(),fill.getY(),false);
         g.setGradientFill(light);g.fillRoundedRectangle(fill,2);
-        g.setColour(juce::Colour(0xffdec4a3));g.fillEllipse(pos-6,track.getCentreY()-6,12,12);
-        g.setColour(juce::Colour(0xfffaf0dc));g.drawEllipse(pos-6,track.getCentreY()-6,12,12,.7f);
+        g.setColour(juce::Colour(0xfff2f2f2));g.fillEllipse(pos-6,track.getCentreY()-6,12,12);
+        g.setColour(juce::Colour(0xfff2f2f2));g.drawEllipse(pos-6,track.getCentreY()-6,12,12,.7f);
     }
 };
