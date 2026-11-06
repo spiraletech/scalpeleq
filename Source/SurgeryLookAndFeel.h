@@ -311,7 +311,7 @@ public:
         const auto tabText=b.getButtonText();
         const bool pageTab=tabText=="BAND MODE"||tabText=="CARVE"||tabText=="COLOR"||tabText=="ANALYZE";
         if(pageTab){
-            g.setColour(b.getToggleState()?juce::Colour(0xfff2f0ec):juce::Colour(0xff080808));
+            g.setColour(b.getToggleState()?juce::Colour(0xfff2f0ec):juce::Colour(0xffb8b8b8));
             g.setFont(juce::Font(juce::FontOptions("Segoe UI",15.0f,juce::Font::bold|juce::Font::italic)));
             g.drawFittedText(tabText,b.getLocalBounds().reduced(7,3),juce::Justification::centred,1);
             return;
