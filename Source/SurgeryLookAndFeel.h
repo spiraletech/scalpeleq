@@ -285,6 +285,11 @@ public:
             g.setColour(juce::Colour(0xffffeed8).withAlpha(.88f));
             g.fillEllipse(r.getRight()-10.f,r.getY()+6.f,3.5f,3.5f);
         }
+        if(deckSwitch&&active){
+            // Selection cue without restoring the removed horizontal bars.
+            g.setColour(juce::Colour(0xffbfe8ff).withAlpha(.92f));
+            g.drawRoundedRectangle(r.reduced(1.4f),2.4f,1.5f);
+        }
         const auto warning=button.findColour(juce::TextButton::buttonColourId);
         if(!xray&&warning.getRed()>180&&warning.getGreen()<65&&warning.getBlue()<65){
             g.setColour(juce::Colour(0xffed1919).withAlpha(.28f+warning.getFloatAlpha()*.62f));
