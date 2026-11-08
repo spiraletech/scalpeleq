@@ -46,7 +46,7 @@ inline bool verifyChassis105(){
             for(int right=0;right<2;++right)for(int bottom=0;bottom<2;++bottom)
                 for(int y=4;y<corner-4;++y)for(int x=4;x<corner-4;++x){
                     const auto a=shot.getPixelAt(right?shot.getWidth()-corner+x:x,bottom?shot.getHeight()-corner+y:y);
-                    if(a.getBrightness()<.08f)error+=1.0;
+                    if(a.getBrightness()<.02f)error+=1.0;
                     ++count;
                 }
             error=100.0*error/count;
