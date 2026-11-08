@@ -157,6 +157,14 @@ public:
                 g.setColour(juce::Colour(0xffff8500));
                 g.drawRoundedRectangle(tile.expanded(2.0f),8.5f,2.3f);
             }
+            if(!heat&&active){
+                // FREEZE uses the same restrained active-state treatment as
+                // the approved render: an ice-blue edge, never a warm lamp.
+                g.setColour(juce::Colour(0xff8fdcff).withAlpha(.18f));
+                g.drawRoundedRectangle(tile.expanded(5.0f),10.0f,7.0f);
+                g.setColour(juce::Colour(0xffbfeeff));
+                g.drawRoundedRectangle(tile.expanded(2.0f),8.5f,2.0f);
+            }
             juce::ColourGradient bezel(juce::Colour(0xffffe7cb),tile.getX(),tile.getY(),
                                        juce::Colour(0xff6d5140),tile.getRight(),tile.getBottom(),false);
             g.setGradientFill(bezel);g.fillRoundedRectangle(tile,7.0f);
@@ -166,6 +174,12 @@ public:
             g.setGradientFill(darkFace);g.fillRoundedRectangle(face,5.0f);
             g.setColour(juce::Colour(0xfffff0dc).withAlpha(.34f));
             g.drawRoundedRectangle(face.reduced(.7f),4.5f,1.0f);
+            if(!heat&&active){
+                // Keep enough continuous ice-blue surface for the active
+                // state to remain visible at native and downsampled sizes.
+                g.setColour(juce::Colour(0xff8fdcff).withAlpha(.95f));
+                g.drawRoundedRectangle(face.reduced(1.2f),4.5f,3.2f);
+            }
             g.setColour(juce::Colour(0xff080605));
             g.drawRoundedRectangle(tile,7.0f,1.2f);
 
@@ -207,7 +221,7 @@ public:
                 g.strokePath(inner,juce::PathStrokeType(2.4f,juce::PathStrokeType::curved,
                                                         juce::PathStrokeType::rounded));
             }else{
-                g.setColour(juce::Colour(0xffffead1));
+                g.setColour(active?juce::Colour(0xffbfeeff):juce::Colour(0xffffead1));
                 const float length=face.getWidth()*.36f;
                 // Three uninterrupted axes guarantee a readable crystalline
                 // centre. Six outward forks stay connected at native scale.
