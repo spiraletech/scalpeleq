@@ -1027,7 +1027,20 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         addAndMakeVisible(*b);
     }
     addAndMakeVisible(off_);
-    off_.onClick=[this]{change(processor_,PRISMVSTAudioProcessor::rootsRootControlId(node_/2,"on"),0.f);timerCallback();};
+    // Keep the visual pair responsive at click time. The attachments remain
+    // authoritative for automation; these handlers only mirror the paired
+    // control immediately and avoid forcing a full analyzer timer pass.
+    on_.onClick=[this]{
+        const bool enabled=on_.getToggleState();
+        off_.setToggleState(!enabled,juce::dontSendNotification);
+        repaint();
+    };
+    off_.onClick=[this]{
+        change(processor_,PRISMVSTAudioProcessor::rootsRootControlId(node_/2,"on"),0.f);
+        on_.setToggleState(false,juce::dontSendNotification);
+        off_.setToggleState(true,juce::dontSendNotification);
+        repaint();
+    };
     static constexpr const char* labels[]{"BAND MODE","CARVE","COLOR","ANALYZE"};
     for(int i=0;i<4;++i){
         auto& b=modeButtons_[(size_t)i];
@@ -1059,7 +1072,17 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         addAndMakeVisible(*b);
     }
     addAndMakeVisible(carveOff_);
-    carveOff_.onClick=[this]{change(processor_,PRISMVSTAudioProcessor::carveId(node_/2,carveSlot_,"on"),0.f);timerCallback();};
+    carveOn_.onClick=[this]{
+        const bool enabled=carveOn_.getToggleState();
+        carveOff_.setToggleState(!enabled,juce::dontSendNotification);
+        repaint();
+    };
+    carveOff_.onClick=[this]{
+        change(processor_,PRISMVSTAudioProcessor::carveId(node_/2,carveSlot_,"on"),0.f);
+        carveOn_.setToggleState(false,juce::dontSendNotification);
+        carveOff_.setToggleState(true,juce::dontSendNotification);
+        repaint();
+    };
     const std::array<const char*,5> names{"DYNAMIC","SPARKLE","SHINE","SMOOTHENING","VINTAGE TAPE"};
     for(int i=0;i<5;++i){
         auto& s=onyxSliders_[(size_t)i];
