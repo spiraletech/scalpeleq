@@ -48,7 +48,9 @@ inline void panel(juce::Graphics& g,juce::Rectangle<float> r){
     juce::Random grain(83017);
     for(int i=0;i<500;++i){
         float x=r.getX()+5+grain.nextFloat()*(r.getWidth()-10),y=r.getY()+5+grain.nextFloat()*(r.getHeight()-10);
-        g.setColour(juce::Colours::white.withAlpha(.009f+grain.nextFloat()*.018f));
+        // Keep the grain below the material threshold at normal scale; it
+        // should read as polymer roughness, not a visible diagonal overlay.
+        g.setColour(juce::Colours::white.withAlpha(.003f+grain.nextFloat()*.009f));
         g.drawLine(x,y,std::min(r.getRight()-5,x+2+grain.nextFloat()*9),y,.5f);
     }
     for(float x:{r.getX()+8,r.getRight()-8})for(float y:{r.getY()+8,r.getBottom()-8})screw(g,x,y,2.8f);
@@ -80,3 +82,4 @@ inline void knob(juce::Graphics& g,int x,int y,int w,int h,float position,float 
     g.setColour(juce::Colour(0xff00eaff));g.drawLine(cx+std::sin(theta)*r*.25f,cy-std::cos(theta)*r*.25f,cx+std::sin(theta)*r*.98f,cy-std::cos(theta)*r*.98f,2.5f);
 }
 }
+

@@ -1027,20 +1027,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         addAndMakeVisible(*b);
     }
     addAndMakeVisible(off_);
-    // Keep the visual pair responsive at click time. The attachments remain
-    // authoritative for automation; these handlers only mirror the paired
-    // control immediately and avoid forcing a full analyzer timer pass.
-    on_.onClick=[this]{
-        const bool enabled=on_.getToggleState();
-        off_.setToggleState(!enabled,juce::dontSendNotification);
-        repaint();
-    };
-    off_.onClick=[this]{
-        change(processor_,PRISMVSTAudioProcessor::rootsRootControlId(node_/2,"on"),0.f);
-        on_.setToggleState(false,juce::dontSendNotification);
-        off_.setToggleState(true,juce::dontSendNotification);
-        repaint();
-    };
+    off_.onClick=[this]{change(processor_,PRISMVSTAudioProcessor::rootsRootControlId(node_/2,"on"),0.f);timerCallback();};
     static constexpr const char* labels[]{"BAND MODE","CARVE","COLOR","ANALYZE"};
     for(int i=0;i<4;++i){
         auto& b=modeButtons_[(size_t)i];
@@ -1072,17 +1059,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         addAndMakeVisible(*b);
     }
     addAndMakeVisible(carveOff_);
-    carveOn_.onClick=[this]{
-        const bool enabled=carveOn_.getToggleState();
-        carveOff_.setToggleState(!enabled,juce::dontSendNotification);
-        repaint();
-    };
-    carveOff_.onClick=[this]{
-        change(processor_,PRISMVSTAudioProcessor::carveId(node_/2,carveSlot_,"on"),0.f);
-        carveOn_.setToggleState(false,juce::dontSendNotification);
-        carveOff_.setToggleState(true,juce::dontSendNotification);
-        repaint();
-    };
+    carveOff_.onClick=[this]{change(processor_,PRISMVSTAudioProcessor::carveId(node_/2,carveSlot_,"on"),0.f);timerCallback();};
     const std::array<const char*,5> names{"DYNAMIC","SPARKLE","SHINE","SMOOTHENING","VINTAGE TAPE"};
     for(int i=0;i<5;++i){
         auto& s=onyxSliders_[(size_t)i];
@@ -1396,15 +1373,10 @@ thresholdLabel_.setText("COMP THRESHOLD",
     carveOn_.setButtonText("ON");
     const bool bandOn=pval(processor_.apvts,
         PRISMVSTAudioProcessor::rootsRootControlId(node_/2,"on"))>=.5f;
-    const bool carveOn=pval(processor_.apvts,
-        PRISMVSTAudioProcessor::carveId(node_/2,carveSlot_,"on"))>=.5f;
-    // Keep both paired controls explicitly synchronized with their authoritative
-    // parameters. The attachments handle automation; this refresh handles
-    // band/carve selection changes and preset recall on the message thread.
-    on_.setToggleState(bandOn,juce::dontSendNotification);
     off_.setToggleState(!bandOn,juce::dontSendNotification);
-    carveOn_.setToggleState(carveOn,juce::dontSendNotification);
-    carveOff_.setToggleState(!carveOn,juce::dontSendNotification);
+    carveOff_.setToggleState(pval(processor_.apvts,
+        PRISMVSTAudioProcessor::carveId(node_/2,carveSlot_,"on"))<.5f,
+        juce::dontSendNotification);
     heatToggle_.setButtonText("HEAT MAP");
     graph_.setPresentation(mode_,carveSlot_);
     std::array<float,PRISMVSTAudioProcessor::labBars> bars{},peaks{};
