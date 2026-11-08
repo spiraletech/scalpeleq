@@ -38,10 +38,10 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
     // localized reflection, not the base material, so keep the chassis dark
     // enough for the analyzer and frosted hardware to carry the contrast.
     juce::ColourGradient shell(juce::Colour(0xff0f1b24), 0, 0,
-                               juce::Colour(0xff0a1218), 0, (float)height, false);
+                               juce::Colour(0xff0d171e), 0, (float)height, false);
     shell.addColour(.16, juce::Colour(0xff0b151d));
     shell.addColour(.62, juce::Colour(0xff09131b));
-    shell.addColour(.92, juce::Colour(0xff0a1218));
+    shell.addColour(.92, juce::Colour(0xff0d171e));
     g.setGradientFill(shell);
     g.fillRect(full);
     g.setColour(juce::Colour(0xff35566d).withAlpha(.72f));
