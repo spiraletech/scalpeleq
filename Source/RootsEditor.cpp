@@ -1373,10 +1373,15 @@ thresholdLabel_.setText("COMP THRESHOLD",
     carveOn_.setButtonText("ON");
     const bool bandOn=pval(processor_.apvts,
         PRISMVSTAudioProcessor::rootsRootControlId(node_/2,"on"))>=.5f;
+    const bool carveOn=pval(processor_.apvts,
+        PRISMVSTAudioProcessor::carveId(node_/2,carveSlot_,"on"))>=.5f;
+    // Keep both paired controls explicitly synchronized with their authoritative
+    // parameters. The attachments handle automation; this refresh handles
+    // band/carve selection changes and preset recall on the message thread.
+    on_.setToggleState(bandOn,juce::dontSendNotification);
     off_.setToggleState(!bandOn,juce::dontSendNotification);
-    carveOff_.setToggleState(pval(processor_.apvts,
-        PRISMVSTAudioProcessor::carveId(node_/2,carveSlot_,"on"))<.5f,
-        juce::dontSendNotification);
+    carveOn_.setToggleState(carveOn,juce::dontSendNotification);
+    carveOff_.setToggleState(!carveOn,juce::dontSendNotification);
     heatToggle_.setButtonText("HEAT MAP");
     graph_.setPresentation(mode_,carveSlot_);
     std::array<float,PRISMVSTAudioProcessor::labBars> bars{},peaks{};
