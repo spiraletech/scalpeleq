@@ -207,7 +207,7 @@ public:
                 g.strokePath(inner,juce::PathStrokeType(2.4f,juce::PathStrokeType::curved,
                                                         juce::PathStrokeType::rounded));
             }else{
-                g.setColour(juce::Colour(0xffffead1));
+                g.setColour(active?juce::Colour(0xffbfe8ff):juce::Colour(0xffffead1));
                 const float length=face.getWidth()*.36f;
                 // Three uninterrupted axes guarantee a readable crystalline
                 // centre. Six outward forks stay connected at native scale.
