@@ -1026,7 +1026,12 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         b->setColour(juce::TextButton::textColourOnId,juce::Colours::white);
         addAndMakeVisible(*b);
     }
+    // The two labels are commands, not independent toggle latches. Drive the
+    // shared APVTS state explicitly so BAND MODE cannot desynchronise ON/OFF.
+    on_.setClickingTogglesState(false);
+    on_.onClick=[this]{change(processor_,PRISMVSTAudioProcessor::rootsRootControlId(node_/2,"on"),1.f);timerCallback();};
     addAndMakeVisible(off_);
+    off_.setClickingTogglesState(false);
     off_.onClick=[this]{change(processor_,PRISMVSTAudioProcessor::rootsRootControlId(node_/2,"on"),0.f);timerCallback();};
     static constexpr const char* labels[]{"BAND MODE","CARVE","COLOR","ANALYZE"};
     for(int i=0;i<4;++i){
@@ -1058,7 +1063,10 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         b->setClickingTogglesState(true);
         addAndMakeVisible(*b);
     }
+    carveOn_.setClickingTogglesState(false);
+    carveOn_.onClick=[this]{change(processor_,PRISMVSTAudioProcessor::carveId(node_/2,carveSlot_,"on"),1.f);timerCallback();};
     addAndMakeVisible(carveOff_);
+    carveOff_.setClickingTogglesState(false);
     carveOff_.onClick=[this]{change(processor_,PRISMVSTAudioProcessor::carveId(node_/2,carveSlot_,"on"),0.f);timerCallback();};
     const std::array<const char*,5> names{"DYNAMIC","SPARKLE","SHINE","SMOOTHENING","VINTAGE TAPE"};
     for(int i=0;i<5;++i){
@@ -1373,10 +1381,12 @@ thresholdLabel_.setText("COMP THRESHOLD",
     carveOn_.setButtonText("ON");
     const bool bandOn=pval(processor_.apvts,
         PRISMVSTAudioProcessor::rootsRootControlId(node_/2,"on"))>=.5f;
+    on_.setToggleState(bandOn,juce::dontSendNotification);
     off_.setToggleState(!bandOn,juce::dontSendNotification);
-    carveOff_.setToggleState(pval(processor_.apvts,
-        PRISMVSTAudioProcessor::carveId(node_/2,carveSlot_,"on"))<.5f,
-        juce::dontSendNotification);
+    const bool carveOn=pval(processor_.apvts,
+        PRISMVSTAudioProcessor::carveId(node_/2,carveSlot_,"on"))>=.5f;
+    carveOn_.setToggleState(carveOn,juce::dontSendNotification);
+    carveOff_.setToggleState(!carveOn,juce::dontSendNotification);
     heatToggle_.setButtonText("HEAT MAP");
     graph_.setPresentation(mode_,carveSlot_);
     std::array<float,PRISMVSTAudioProcessor::labBars> bars{},peaks{};

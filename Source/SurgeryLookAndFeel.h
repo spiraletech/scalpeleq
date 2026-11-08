@@ -93,6 +93,8 @@ public:
         const bool deckSwitch=button.getButtonText()=="ON"||button.getButtonText()=="OFF";
         const bool actionSwitch=button.getButtonText()=="MONO"||button.getButtonText()=="SOLO"||
             button.getButtonText().startsWith("PHASE")||button.getButtonText()=="LIMIT";
+        const bool carveSelector=button.getButtonText()=="C1"||button.getButtonText()=="C2"||
+            button.getButtonText()=="C3"||button.getButtonText()=="C4";
         const bool depressed=active&&(deckSwitch||actionSwitch);
         const bool snow=button.getButtonText()=="FREEZE"||button.getButtonText()=="RESUME";
         const bool heat=button.getButtonText().startsWith("SONAR ")||button.getButtonText()=="HEAT MAP";
@@ -138,6 +140,23 @@ public:
             if(over){
                 g.setColour(juce::Colours::white.withAlpha(.055f));
                 g.fillRoundedRectangle(r.reduced(1.5f),2.5f);
+            }
+            return;
+        }
+        if(carveSelector){
+            g.setColour(juce::Colour(0xff02070b).withAlpha(.93f));
+            g.fillRoundedRectangle(r.translated(0,2.0f).expanded(1.1f),3.5f);
+            juce::ColourGradient silver(juce::Colour(0xffd8e4eb),r.getX(),r.getY(),
+                                        juce::Colour(0xff8ea2ae),r.getX(),r.getBottom(),false);
+            silver.addColour(.22,juce::Colour(0xffc3d1d9));
+            g.setGradientFill(silver);g.fillRoundedRectangle(r.reduced(1.0f),2.5f);
+            g.setColour(juce::Colour(0xff293b47));
+            g.drawRoundedRectangle(r.reduced(.8f),3.0f,1.0f);
+            g.setColour(juce::Colours::white.withAlpha(.35f));
+            g.drawLine(r.getX()+4,r.getY()+2,r.getRight()-4,r.getY()+2,.8f);
+            if(active){
+                g.setColour(juce::Colour(0xff8fdcff).withAlpha(.24f));
+                g.drawRoundedRectangle(r.reduced(1.5f),2.4f,1.4f);
             }
             return;
         }
@@ -261,15 +280,17 @@ public:
         g.fillRoundedRectangle(r.translated(0,2.f).expanded(1.2f),3.f);
         g.setColour(juce::Colour(0xff3c5668));
         g.drawRoundedRectangle(r.expanded(.5f),3.5f,1.2f);
+        // ON/OFF are the same dark graphite hardware in every state. State is
+        // carried by the text/edge treatment, never by swapping the body.
         juce::ColourGradient plastic(
             xray?juce::Colour(active?0xff4b0908:0xff18232d):
-                juce::Colour(depressed?0xff101a23:active?0xffb5c8d5:0xffcbd9e5),
+                juce::Colour(deckSwitch?0xff18242d:depressed?0xff101a23:active?0xff18242d:0xff202e38),
             r.getX(),r.getY()+1.f,
             xray?juce::Colour(active?0xff150404:0xff581613):
-                juce::Colour(depressed?0xff090d12:active?0xff899da9:0xffa5b7c2),
+                juce::Colour(deckSwitch?0xff080d12:depressed?0xff090d12:active?0xff101920:0xff0d151c),
             r.getX(),r.getBottom(),false);
         plastic.addColour(.18,xray?juce::Colour(0xff681c15):
-            depressed?juce::Colour(0xff16232d):juce::Colour(0xffe3edf4));
+            depressed?juce::Colour(0xff16232d):deckSwitch?juce::Colour(0xff1b2a34):juce::Colour(0xff263742));
         g.setGradientFill(plastic);g.fillRoundedRectangle(r.reduced(1.f),2.5f);
         g.setColour(juce::Colour(xray?0xffbd4d3c:0xffe6f5ff).withAlpha(active?.34f:.91f));
         g.drawLine(r.getX()+4,r.getY()+2,r.getRight()-4,r.getY()+2,.9f);
@@ -281,15 +302,6 @@ public:
             g.fillEllipse(r.getX()+8,r.getCentreY()-lamp,lamp*2,lamp*2);
             if(active){g.setColour(juce::Colour(0xffff4028).withAlpha(.26f));
                 g.fillEllipse(r.getX()+5,r.getCentreY()-lamp-3,2*lamp+6,2*lamp+6);}
-        }
-        if(deckSwitch){
-            const auto lamp=juce::Rectangle<float>(r.getCentreX()-12.f,r.getY()+5.f,24.f,4.f);
-            g.setColour(active?juce::Colour(0xff8fdcff):juce::Colour(0xff45515a));
-            g.fillRoundedRectangle(lamp,1.4f);
-            if(active){
-                g.setColour(juce::Colour(0xffff4c35).withAlpha(.23f));
-                g.fillRoundedRectangle(lamp.expanded(4.f,2.f),2.5f);
-            }
         }
         if(actionSwitch&&active){
             // A tiny pale pilot identifies engaged processing without ever
@@ -317,6 +329,8 @@ public:
             return;
         }
         const bool bandSelector=tabText.startsWith("BAND ");
+        const bool carveSelector=tabText=="C1"||tabText=="C2"||tabText=="C3"||tabText=="C4";
+        const bool deckSwitch=tabText=="ON"||tabText=="OFF";
         const bool lightHardware=b.getButtonText()=="OFF"||b.getButtonText()=="MONO"||
             b.getButtonText()=="SOLO"||b.getButtonText().startsWith("PHASE")||b.getButtonText()=="LIMIT";
         const bool depressedSwitch=b.getToggleState()&&
@@ -324,7 +338,8 @@ public:
              b.getButtonText()=="MONO"||b.getButtonText()=="SOLO"||
              b.getButtonText().startsWith("PHASE")||b.getButtonText()=="LIMIT");
         g.setColour(b.isEnabled()?juce::Colour(xray?0xffff624b:
-            reset?0xffe4f2ff:bandSelector?0xff080d12:lightHardware?0xff080d12:
+            reset?0xffe4f2ff:deckSwitch?(b.getToggleState()?0xfff2f6f8:0xffb8c8d2):
+            (bandSelector||carveSelector||lightHardware)?0xff080d12:
             depressedSwitch?0xffedf7ff:0xffd9e7f2):juce::Colour(0xff788b99));
         g.setFont(juce::Font(juce::FontOptions("Segoe UI",juce::jlimit(11.0f,13.0f,b.getHeight()*.43f),juce::Font::bold)));
         g.drawFittedText(b.getButtonText(),xray?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2),
