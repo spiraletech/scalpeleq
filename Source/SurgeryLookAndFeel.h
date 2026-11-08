@@ -184,6 +184,12 @@ public:
             g.drawRoundedRectangle(tile,7.0f,1.2f);
 
             const auto centre=face.getCentre();
+            if(!heat&&active){
+                // Compact active lamp retained inside the freeze tile so the
+                // state remains unambiguous at native-size rasterization.
+                g.setColour(juce::Colour(0xff8fdcff));
+                g.fillEllipse(centre.x-7.0f,centre.y-7.0f,14.0f,14.0f);
+            }
             if(heat){
                 // Two-tongue outline flame: broad at the base with an offset
                 // upper lick, matching the approved embossed hardware symbol.
