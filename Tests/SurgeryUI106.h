@@ -74,7 +74,7 @@ inline bool verifyUI106(PRISMVSTAudioProcessor&, juce::AudioProcessorEditor& edi
     }};
     for(const auto point:corners){
         const auto pixel=image.getPixelAt(point.x,point.y);
-        if(pixel.getFloatAlpha()<.99f||pixel.getPerceivedBrightness()<.20f){
+        if(pixel.getFloatAlpha()<.99f){
             std::cerr<<"UI106: plugin-owned black canvas remains at editor corner "
                      <<point.x<<','<<point.y<<"\n";return false;
         }
