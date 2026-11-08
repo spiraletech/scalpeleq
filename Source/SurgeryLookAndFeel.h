@@ -207,7 +207,7 @@ public:
                 g.strokePath(inner,juce::PathStrokeType(2.4f,juce::PathStrokeType::curved,
                                                         juce::PathStrokeType::rounded));
             }else{
-                g.setColour(juce::Colour(0xffffead1));
+                g.setColour(active?juce::Colour(0xffbfe8ff):juce::Colour(0xffdcebf6));
                 const float length=face.getWidth()*.36f;
                 // Three uninterrupted axes guarantee a readable crystalline
                 // centre. Six outward forks stay connected at native scale.
@@ -228,7 +228,7 @@ public:
                 }
                 g.fillEllipse(centre.x-1.7f,centre.y-1.7f,3.4f,3.4f);
                 if(active){
-                    g.setColour(juce::Colour(0xffffead1).withAlpha(.22f));
+                    g.setColour(juce::Colour(0xff8fdcff).withAlpha(.32f));
                     g.drawRoundedRectangle(tile.expanded(2.0f),8.5f,3.0f);
                 }
             }
