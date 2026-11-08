@@ -255,17 +255,17 @@ public:
         const bool fixedSilverHardware=actionSwitch||carvePreset;
         const auto topFace=xray?juce::Colour(active?0xff4b0908:0xff18232d):
             fixedDarkPair?juce::Colour(0xff14222d):
-            fixedSilverHardware?juce::Colour(0xffdce8f2):
-            depressed?juce::Colour(0xff14222d):active?juce::Colour(0xffcbd9e5):juce::Colour(0xffdce8f2);
+            fixedSilverHardware?juce::Colour(0xffdfeaf3):
+            depressed?juce::Colour(0xff14222d):active?juce::Colour(0xffd5e4ef):juce::Colour(0xffe3edf5);
         const auto bottomFace=xray?juce::Colour(active?0xff150404:0xff581613):
             fixedDarkPair?juce::Colour(0xff0b1015):
-            fixedSilverHardware?juce::Colour(0xffb89e83):
-            depressed?juce::Colour(0xff100e0d):active?juce::Colour(0xffb89e83):juce::Colour(0xffd4bea5);
+            fixedSilverHardware?juce::Colour(0xff71899d):
+            depressed?juce::Colour(0xff100e0d):active?juce::Colour(0xff8298aa):juce::Colour(0xff9eafbd);
         juce::ColourGradient plastic(topFace,r.getX(),r.getY()+1.f,bottomFace,
                                      r.getX(),r.getBottom(),false);
         plastic.addColour(.18,xray?juce::Colour(0xff681c15):
             fixedDarkPair?juce::Colour(0xff1d3342):
-            fixedSilverHardware?juce::Colour(0xffedf7ff):
+            fixedSilverHardware?juce::Colour(0xfff4faff):
             depressed?juce::Colour(0xff1d3342):juce::Colour(0xffedf7ff));
         g.setGradientFill(plastic);g.fillRoundedRectangle(r.reduced(1.f),2.5f);
         g.setColour(juce::Colour(xray?0xffbd4d3c:0xffe6f5ff).withAlpha(active?.34f:.91f));
