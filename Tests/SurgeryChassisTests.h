@@ -41,19 +41,14 @@ inline bool verifyChassis105(){
             // The shipped face fills the complete constrained editor at every
             // supported size/DPI. Measure exposed dark host background in all
             // four corners instead of byte-comparing antialiased pixels across
-            // unrelated resolutions. Carbon Black legitimately uses #080808 shadows;
-            // only near-zero pixels indicate a leaked host surround.
+            // unrelated resolutions.
             double error=0;int count=0;const int corner=juce::roundToInt(46*scale);
-            for(int right=0;right<2;++right)for(int bottom=0;bottom<2;++bottom){
-                // The lower corners are now the intentional carbon utility
-                // shelf; only the upper surround is checked for host leakage.
-                if(bottom==1)continue;
+            for(int right=0;right<2;++right)for(int bottom=0;bottom<2;++bottom)
                 for(int y=4;y<corner-4;++y)for(int x=4;x<corner-4;++x){
                     const auto a=shot.getPixelAt(right?shot.getWidth()-corner+x:x,bottom?shot.getHeight()-corner+y:y);
-                    if(a.getBrightness()<.02f)error+=1.0;
+                    if(a.getBrightness()<.08f)error+=1.0;
                     ++count;
                 }
-            }
             error=100.0*error/count;
             if(error>1.0){std::cerr<<"Chassis: exposed background in corners "<<error<<" percent\n";return false;}
             // 1.0.5 is a strict 16:9 product face. Extreme host aspect ratios
@@ -65,7 +60,7 @@ inline bool verifyChassis105(){
                 const auto point=logical.transformedBy(faceTransform);
                 const int px=juce::jlimit(0,shot.getWidth()-1,juce::roundToInt(point.x*scale));
                 const int py=juce::jlimit(0,shot.getHeight()-1,juce::roundToInt(point.y*scale));
-                if(shot.getPixelAt(px,py).getBrightness()<.02f){
+                if(shot.getPixelAt(px,py).getBrightness()<.08f){
                     std::cerr<<"Chassis: disconnected 1.0.5 console edge\n";return false;
                 }
             }
@@ -84,3 +79,4 @@ inline bool verifyChassis105(){
     std::cout<<"STORM CHASSIS: 15 size/DPI captures, fixed X-head corners, connected 16:9 console edges, centred chamber, control containment and cache dimensions passed\n";
     return true;
 }
+

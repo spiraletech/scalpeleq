@@ -36,8 +36,8 @@ void rotary(juce::Slider& s,juce::String suffix,double resetValue) {
     s.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     s.setTextBoxStyle(juce::Slider::TextBoxBelow,false,90,22);
     s.setColour(juce::Slider::textBoxTextColourId,scalpel::ui105::amber);
-    s.setColour(juce::Slider::textBoxBackgroundColourId,juce::Colour(0xff0b0908));
-    s.setColour(juce::Slider::textBoxOutlineColourId,juce::Colour(0xff5c4031));
+    s.setColour(juce::Slider::textBoxBackgroundColourId,juce::Colour(0xff071018));
+    s.setColour(juce::Slider::textBoxOutlineColourId,juce::Colour(0xff567b96));
     s.setTextValueSuffix(suffix);
     s.setDoubleClickReturnValue(true,resetValue);
 }
@@ -179,10 +179,10 @@ void RootsGraph::paint(juce::Graphics& g){
     const auto full=getLocalBounds().toFloat();
     const auto r=area();
 
-    const juce::Colour top(0xff22201e),bottom(0xff090909);
+    const juce::Colour top(0xff122432),bottom(0xff050a10);
     juce::ColourGradient bg(top,full.getX(),full.getY(),
                             bottom,full.getX(),full.getBottom(),false);
-    bg.addColour(.43,juce::Colour(0xff100f0f));
+    bg.addColour(.43,juce::Colour(0xff0a151f));
     g.setGradientFill(bg);g.fillRoundedRectangle(full.reduced(1.0f),7.0f);
     g.setColour(juce::Colour(0xff070605));
     g.drawRoundedRectangle(full.reduced(1.0f),7.0f,2.0f);
@@ -200,18 +200,18 @@ void RootsGraph::paint(juce::Graphics& g){
     };
     for(const float f:freqs){
         const float x=freqToX(f);
-        g.setColour(juce::Colour(0xff8a796b).withAlpha(.20f));
+        g.setColour(juce::Colour(0xff6f9bb9).withAlpha(.20f));
         g.drawVerticalLine(juce::roundToInt(x),r.getY(),r.getBottom());
-        g.setColour(juce::Colour(0xffc7b5a1));
+        g.setColour(juce::Colour(0xffd7e9f7));
         g.drawText(hzText(f),juce::roundToInt(x-19),juce::roundToInt(r.getBottom()+6),
                    38,17,juce::Justification::centred);
     }
     static constexpr std::array<int,11> dbTicks{0,-5,-10,-15,-20,-25,-30,-35,-40,-50,-60};
     for(const int db:dbTicks){
         const float y=r.getY()-r.getHeight()*db/60.0f;
-        g.setColour(juce::Colour(0xffa89986).withAlpha(db==-30?.34f:.19f));
+        g.setColour(juce::Colour(0xff8fb4cf).withAlpha(db==-30?.34f:.19f));
         g.drawHorizontalLine(juce::roundToInt(y),r.getX(),r.getRight());
-        g.setColour(juce::Colour(0xffc7b8a8));
+        g.setColour(juce::Colour(0xffd4e6f4));
         g.drawText(juce::String(db),juce::roundToInt(r.getRight()+5),
                    juce::roundToInt(y-8),34,16,juce::Justification::centredLeft);
     }
@@ -1269,10 +1269,10 @@ void RootsEditor::setMode(int next){
     for(int i=0;i<4;++i){
         auto& b=modeButtons_[(size_t)i];
         b.setToggleState(i==mode_,juce::dontSendNotification);
-        b.setColour(juce::TextButton::buttonColourId,juce::Colour(0xffe4cdb4));
-        b.setColour(juce::TextButton::buttonOnColourId,juce::Colour(0xffbba084));
-        b.setColour(juce::TextButton::textColourOffId,juce::Colour(0xff241812));
-        b.setColour(juce::TextButton::textColourOnId,juce::Colour(0xff241812));
+        b.setColour(juce::TextButton::buttonColourId,juce::Colour(0xff182a38));
+        b.setColour(juce::TextButton::buttonOnColourId,juce::Colour(0xff274960));
+        b.setColour(juce::TextButton::textColourOffId,juce::Colour(0xffb7c9d8));
+        b.setColour(juce::TextButton::textColourOnId,juce::Colour(0xffedf7ff));
     }
     const bool carve=mode_==1;
     for(auto* s:{&carveFrequency_,&carveDepth_,&carveQ_})s->setVisible(carve);
@@ -1353,7 +1353,7 @@ void RootsEditor::timerCallback(){
     juce::ignoreUnused(held);
     peakHold_.setButtonText("RESET");
     peakHold_.setToggleState(false,juce::dontSendNotification);
-    const auto labelColour=scalpel::ui105::ivory;
+    const auto labelColour=juce::Colour(0xff352820);
     for(auto* label:{&title_,&selection_,&status_,&gainLabel_,&thresholdLabel_,
                     &carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_,
                     &analyzerDepthLabel_,&analyzerSlopeLabel_,&analyzerMemoryLabel_,&analyzerLegend_,
@@ -1412,10 +1412,9 @@ thresholdLabel_.setText("COMP THRESHOLD",
     } else status_.setText(status,juce::dontSendNotification);
 }
 void RootsEditor::paint(juce::Graphics& g){
-    // Carbon backdrop matches the product face at the editor edge.  It is
-    // deliberately graphite rather than pure black so antialiased corners do
-    // not reveal a second halo behind the chassis.
-    g.fillAll(juce::Colour(0xff1c1c1c));
+    // Clear the host/window surround before compositing the fitted rack.  This
+    // keeps letterbox pixels and antialiased outer edges black at every size.
+    g.fillAll(juce::Colours::black);
     // Cache in physical pixels. Crossing a DPI boundary or changing host UI
     // scale rebuilds the surface even when logical editor dimensions match.
     const float dpi=juce::jlimit(.5f,4.f,g.getInternalContext().getPhysicalPixelScaleFactor());
@@ -1423,20 +1422,11 @@ void RootsEditor::paint(juce::Graphics& g){
     if(rackBackground_.getWidth()!=pw||rackBackground_.getHeight()!=ph||backgroundMode_!=mode_||backgroundScale_!=dpi){
         rackBackground_=juce::Image(juce::Image::RGB,pw,ph,false);
         juce::Graphics background(rackBackground_);
-        background.fillAll(juce::Colour(0xff1c1c1c));
+        background.fillAll(juce::Colours::black);
         background.addTransform(juce::AffineTransform::scale(dpi));
         paintRack(background);backgroundMode_=mode_;backgroundScale_=dpi;
     }
     g.setOpacity(1.f);g.drawImage(rackBackground_,getLocalBounds().toFloat());
-    // Keep the approved black upper surround, but do not expose a second
-    // black strip beneath the chassis when a host supplies a slightly taller
-    // client rectangle than the authored 16:9 face.
-    const auto faceBottom=juce::Point<float>(0.0f,(float)630.0f)
-        .transformedBy(surgery::rack::contentTransform(getWidth(),getHeight())).y;
-    if(faceBottom < (float)getHeight()){
-        g.setColour(scalpel::ui105::chassisEdge);
-        g.fillRect(0.0f,faceBottom,(float)getWidth(),(float)getHeight()-faceBottom);
-    }
     // A visual separation from Surgery EQ is intentional: its external
     // cyan/purple JUKE rails are not part of Scalpel's 1980s hardware face.
 }
@@ -1465,59 +1455,59 @@ void RootsEditor::layoutRack(){
     for(int root=0;root<7;++root){
         auto& button=rootButtons_[(size_t)root];
         button.setVisible(true);
-        button.setBounds(27+root*152,122,146,30);
+        button.setBounds(27+root*152,92,146,30);
     }
 
-    graph_.setBounds(20,160,1080,246);
-    for(int i=0;i<4;++i)modeButtons_[(size_t)i].setBounds(36+i*262,414,258,39);
+    graph_.setBounds(20,140,1080,246);
+    for(int i=0;i<4;++i)modeButtons_[(size_t)i].setBounds(36+i*262,391,258,39);
     // Keep both analyzer actions on the same inset and width. Their left edge
     // now clears the analyzer-panel bezel instead of straddling it.
-    xrayButton_.setBounds(893,177,100,37);
-    peakHold_.setBounds(893,349,100,40);
+    xrayButton_.setBounds(893,157,100,37);
+    peakHold_.setBounds(893,329,100,40);
 
     // BAND MODE: approved two-knob, two-menu, six-button hierarchy.
-    on_.setBounds(78,492,112,43);off_.setBounds(78,548,112,43);
-    gainLabel_.setBounds(206,467,160,22);gain_.setBounds(216,484,142,110);
-    thresholdLabel_.setBounds(369,467,166,22);threshold_.setBounds(382,484,142,110);
-    compLabel_.setBounds(548,468,220,19);compressor_.setBounds(550,492,220,34);
-    domainLabel_.setBounds(548,531,220,19);domain_.setBounds(550,554,220,34);
+    on_.setBounds(78,480,112,43);off_.setBounds(78,536,112,43);
+    gainLabel_.setBounds(206,455,160,22);gain_.setBounds(216,472,142,110);
+    thresholdLabel_.setBounds(369,455,166,22);threshold_.setBounds(382,472,142,110);
+    compLabel_.setBounds(548,456,220,19);compressor_.setBounds(550,480,220,34);
+    domainLabel_.setBounds(548,519,220,19);domain_.setBounds(550,542,220,34);
     detectorLabel_.setBounds(0,0,1,1);detector_.setBounds(0,0,1,1);
     limitAmount_.setBounds(0,0,1,1);
-    mono_.setBounds(824,489,120,44);solo_.setBounds(965,489,120,44);
-    phase_.setBounds(824,548,120,44);limit_.setBounds(965,548,120,44);
+    mono_.setBounds(824,477,120,44);solo_.setBounds(965,477,120,44);
+    phase_.setBounds(824,536,120,44);limit_.setBounds(965,536,120,44);
 
     // CARVE: exact approved text, C1-C4 routing and three surgical controls.
-    selection_.setBounds(39,468,235,22);
-    carveOn_.setBounds(77,500,158,43);carveOff_.setBounds(77,554,158,43);
+    selection_.setBounds(39,456,235,22);
+    carveOn_.setBounds(77,488,158,43);carveOff_.setBounds(77,542,158,43);
     carveDynamic_.setBounds(0,0,1,1);
     const std::array<juce::Slider*,3> cs{&carveFrequency_,&carveDepth_,&carveQ_};
     const std::array<juce::Label*,3> cl{&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_};
     for(int i=0;i<3;++i){
-        cl[(size_t)i]->setBounds(286+i*190,468,174,22);
-        cs[(size_t)i]->setBounds(300+i*190,484,146,110);
+        cl[(size_t)i]->setBounds(286+i*190,456,174,22);
+        cs[(size_t)i]->setBounds(300+i*190,472,146,110);
     }
     for(int i=0;i<4;++i)
-        carveSlotButtons_[(size_t)i].setBounds(868+(i%2)*108,492+(i/2)*58,100,44);
+        carveSlotButtons_[(size_t)i].setBounds(868+(i%2)*108,480+(i/2)*58,100,44);
 
     // COLOR: five equal channels share the approved CARVE font and readout geometry.
     for(int i=0;i<5;++i){
-        onyxLabels_[(size_t)i].setBounds(18+i*210,468,194,22);
+        onyxLabels_[(size_t)i].setBounds(18+i*210,456,194,22);
         onyxLabels_[(size_t)i].setFont(juce::Font(juce::FontOptions("Segoe UI",12.5f,juce::Font::bold|juce::Font::italic)));
-        onyxSliders_[(size_t)i].setBounds(45+i*210,486,140,108);
+        onyxSliders_[(size_t)i].setBounds(45+i*210,474,140,108);
     }
 
     // ANALYZE: three optically balanced console columns matching the approved
     // HEAT MAP / FREEZE / VISUAL DECAY hardware reference.
     for(auto* label:{&analyzerDepthLabel_,&analyzerSlopeLabel_,&analyzerMemoryLabel_})
         label->setFont(juce::Font(juce::FontOptions("Segoe UI",16.5f,juce::Font::bold)));
-    analyzerDepthLabel_.setBounds(79,468,220,24);
-    analyzerMemoryLabel_.setBounds(448,468,220,24);
-    analyzerSlopeLabel_.setBounds(819,468,220,24);
-    heatToggle_.setBounds(141,500,96,96);
+    analyzerDepthLabel_.setBounds(79,456,220,24);
+    analyzerMemoryLabel_.setBounds(448,456,220,24);
+    analyzerSlopeLabel_.setBounds(819,456,220,24);
+    heatToggle_.setBounds(141,488,96,96);
     // Distribution layout: Visual Decay occupies the centre knob bay while
     // Freeze moves to the right switch bay. Bindings and behavior are unchanged.
-    analyzerMemory_.setBounds(497,488,122,104);
-    freezeButton_.setBounds(881,500,96,96);
+    analyzerMemory_.setBounds(487,472,142,110);
+    freezeButton_.setBounds(881,488,96,96);
 
     jukeModeLabel_.setBounds(0,0,1,1);jukeMode_.setBounds(0,0,1,1);
     weatherMode_.setBounds(0,0,1,1);reducedMotion_.setBounds(0,0,1,1);
@@ -1527,3 +1517,4 @@ void RootsEditor::layoutRack(){
     save_.setBounds(0,0,1,1);load_.setBounds(0,0,1,1);
     outputLabel_.setBounds(0,0,1,1);output_.setBounds(0,0,1,1);
 }
+
