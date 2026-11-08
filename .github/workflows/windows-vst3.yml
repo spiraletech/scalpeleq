@@ -2,9 +2,9 @@ name: Scalpel EQ Windows VST3
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, polish/scalpel-1.0.6-night-shift-ui ]
   pull_request:
-    branches: [ main, design/scalpel-vintage-hardware, feature/xray-3d-fluid ]
+    branches: [ main, design/scalpel-vintage-hardware, feature/xray-3d-fluid, polish/scalpel-1.0.6-night-shift-ui ]
   workflow_dispatch:
 
 concurrency:
