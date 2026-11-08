@@ -102,11 +102,11 @@ public:
             const bool selected=button.getToggleState();
             g.setColour(juce::Colour(0xff02070b).withAlpha(.96f));
             g.fillRoundedRectangle(r.translated(0,2.0f).expanded(1.0f),5.0f);
-            juce::ColourGradient face(selected?juce::Colour(0xff1b2a36):juce::Colour(0xffbccbd8),
-                                      0,r.getY(),selected?juce::Colour(0xff070c11):juce::Colour(0xff61778a),
+            juce::ColourGradient face(selected?juce::Colour(0xff1b2a36):juce::Colour(0xff182936),
+                                      0,r.getY(),selected?juce::Colour(0xff070c11):juce::Colour(0xff0b141d),
                                       0,r.getBottom(),false);
             g.setGradientFill(face);g.fillRoundedRectangle(r,5.0f);
-            g.setColour(juce::Colour(selected?0xff5a89a8:0xffdcebf6));
+            g.setColour(juce::Colour(selected?0xff5a89a8:0xff3c5d73));
             g.drawRoundedRectangle(r.reduced(.8f),4.4f,1.0f);
             if(selected){
                 g.setColour(juce::Colour(0xff8fdcff).withAlpha(.23f));
@@ -207,7 +207,7 @@ public:
                 g.strokePath(inner,juce::PathStrokeType(2.4f,juce::PathStrokeType::curved,
                                                         juce::PathStrokeType::rounded));
             }else{
-                g.setColour(active?juce::Colour(0xffbfe8ff):juce::Colour(0xffdcebf6));
+                g.setColour(juce::Colour(0xffffead1));
                 const float length=face.getWidth()*.36f;
                 // Three uninterrupted axes guarantee a readable crystalline
                 // centre. Six outward forks stay connected at native scale.
@@ -228,7 +228,7 @@ public:
                 }
                 g.fillEllipse(centre.x-1.7f,centre.y-1.7f,3.4f,3.4f);
                 if(active){
-                    g.setColour(juce::Colour(0xff8fdcff).withAlpha(.32f));
+                    g.setColour(juce::Colour(0xffffead1).withAlpha(.22f));
                     g.drawRoundedRectangle(tile.expanded(2.0f),8.5f,3.0f);
                 }
             }
@@ -296,12 +296,16 @@ public:
             g.drawFittedText(tabText,b.getLocalBounds().reduced(7,3),juce::Justification::centred,1);
             return;
         }
+        const bool bandSelector=tabText.startsWith("BAND ");
+        const bool lightHardware=b.getButtonText()=="OFF"||b.getButtonText()=="MONO"||
+            b.getButtonText()=="SOLO"||b.getButtonText().startsWith("PHASE")||b.getButtonText()=="LIMIT";
         const bool depressedSwitch=b.getToggleState()&&
             (b.getButtonText()=="ON"||b.getButtonText()=="OFF"||
              b.getButtonText()=="MONO"||b.getButtonText()=="SOLO"||
              b.getButtonText().startsWith("PHASE")||b.getButtonText()=="LIMIT");
         g.setColour(b.isEnabled()?juce::Colour(xray?0xffff624b:
-            reset?0xffe4f2ff:depressedSwitch?0xffedf7ff:0xffd9e7f2):juce::Colour(0xff788b99));
+            reset?0xffe4f2ff:bandSelector?0xff080d12:lightHardware?0xff080d12:
+            depressedSwitch?0xffedf7ff:0xffd9e7f2):juce::Colour(0xff788b99));
         g.setFont(juce::Font(juce::FontOptions("Segoe UI",juce::jlimit(11.0f,13.0f,b.getHeight()*.43f),juce::Font::bold)));
         g.drawFittedText(b.getButtonText(),xray?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2),
                          juce::Justification::centred,1);
