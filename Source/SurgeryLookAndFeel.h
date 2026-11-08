@@ -371,4 +371,3 @@ public:
         g.setColour(juce::Colour(0xfffaf0dc));g.drawEllipse(pos-6,track.getCentreY()-6,12,12,.7f);
     }
 };
-

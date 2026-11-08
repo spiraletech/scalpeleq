@@ -82,4 +82,3 @@ inline void knob(juce::Graphics& g,int x,int y,int w,int h,float position,float 
     g.setColour(juce::Colour(0xff00eaff));g.drawLine(cx+std::sin(theta)*r*.25f,cy-std::cos(theta)*r*.25f,cx+std::sin(theta)*r*.98f,cy-std::cos(theta)*r*.98f,2.5f);
 }
 }
-

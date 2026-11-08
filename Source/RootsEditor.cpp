@@ -1517,4 +1517,3 @@ void RootsEditor::layoutRack(){
     save_.setBounds(0,0,1,1);load_.setBounds(0,0,1,1);
     outputLabel_.setBounds(0,0,1,1);output_.setBounds(0,0,1,1);
 }
-
