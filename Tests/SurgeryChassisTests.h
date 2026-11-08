@@ -60,7 +60,7 @@ inline bool verifyChassis105(){
                 const auto point=logical.transformedBy(faceTransform);
                 const int px=juce::jlimit(0,shot.getWidth()-1,juce::roundToInt(point.x*scale));
                 const int py=juce::jlimit(0,shot.getHeight()-1,juce::roundToInt(point.y*scale));
-                if(shot.getPixelAt(px,py).getBrightness()<.08f){
+                if(shot.getPixelAt(px,py).getFloatAlpha()<.99f){
                     std::cerr<<"Chassis: disconnected 1.0.5 console edge\n";return false;
                 }
             }
