@@ -279,15 +279,6 @@ public:
             if(active){g.setColour(juce::Colour(0xffff4028).withAlpha(.26f));
                 g.fillEllipse(r.getX()+5,r.getCentreY()-lamp-3,2*lamp+6,2*lamp+6);}
         }
-        if(deckSwitch){
-            const auto lamp=juce::Rectangle<float>(r.getCentreX()-12.f,r.getY()+5.f,24.f,4.f);
-            g.setColour(active?juce::Colour(0xff8fdcff):juce::Colour(0xff45515a));
-            g.fillRoundedRectangle(lamp,1.4f);
-            if(active){
-                g.setColour(juce::Colour(0xffff4c35).withAlpha(.23f));
-                g.fillRoundedRectangle(lamp.expanded(4.f,2.f),2.5f);
-            }
-        }
         if(actionSwitch&&active){
             // A tiny pale pilot identifies engaged processing without ever
             // painting the band red; red is reserved for true peak warnings.
