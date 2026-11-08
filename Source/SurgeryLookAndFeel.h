@@ -90,9 +90,14 @@ public:
         const bool active=button.getToggleState()||down;
         const bool xray=button.getButtonText()=="X-RAY";
         const bool reset=button.getButtonText()=="RESET";
-        const bool deckSwitch=button.getButtonText()=="ON"||button.getButtonText()=="OFF";
-        const bool actionSwitch=button.getButtonText()=="MONO"||button.getButtonText()=="SOLO"||
-            button.getButtonText().startsWith("PHASE")||button.getButtonText()=="LIMIT";
+        const auto buttonText=button.getButtonText();
+        const bool onSwitch=buttonText=="ON";
+        const bool offSwitch=buttonText=="OFF";
+        const bool deckSwitch=onSwitch||offSwitch;
+        const bool actionSwitch=buttonText=="MONO"||buttonText=="SOLO"||
+            buttonText.startsWith("PHASE")||buttonText=="LIMIT";
+        const bool carvePreset=buttonText=="C1"||buttonText=="C2"||
+            buttonText=="C3"||buttonText=="C4";
         const bool depressed=active&&(deckSwitch||actionSwitch);
         const bool snow=button.getButtonText()=="FREEZE"||button.getButtonText()=="RESUME";
         const bool heat=button.getButtonText().startsWith("SONAR ")||button.getButtonText()=="HEAT MAP";
@@ -241,14 +246,23 @@ public:
         g.fillRoundedRectangle(r.translated(0,2.f).expanded(1.2f),3.f);
         g.setColour(juce::Colour(0xff5c7890));
         g.drawRoundedRectangle(r.expanded(.5f),3.5f,1.2f);
-        juce::ColourGradient plastic(
-            xray?juce::Colour(active?0xff4b0908:0xff18232d):
-                juce::Colour(depressed?0xff14222d:active?0xffcbd9e5:0xffdce8f2),
-            r.getX(),r.getY()+1.f,
-            xray?juce::Colour(active?0xff150404:0xff581613):
-                juce::Colour(depressed?0xff100e0d:active?0xffb89e83:0xffd4bea5),
-            r.getX(),r.getBottom(),false);
+        // Material identity is tied to the control, never to its toggle state:
+        // ON is always the dark inset switch; OFF is always the raised silver
+        // switch. The pilot/indicator communicates selection without flipping
+        // the hardware face.
+        const auto topFace=xray?juce::Colour(active?0xff4b0908:0xff18232d):
+            onSwitch?juce::Colour(0xff14222d):
+            offSwitch?juce::Colour(0xffdce8f2):
+            depressed?juce::Colour(0xff14222d):active?juce::Colour(0xffcbd9e5):juce::Colour(0xffdce8f2);
+        const auto bottomFace=xray?juce::Colour(active?0xff150404:0xff581613):
+            onSwitch?juce::Colour(0xff0b1015):
+            offSwitch?juce::Colour(0xffb89e83):
+            depressed?juce::Colour(0xff100e0d):active?juce::Colour(0xffb89e83):juce::Colour(0xffd4bea5);
+        juce::ColourGradient plastic(topFace,r.getX(),r.getY()+1.f,bottomFace,
+                                     r.getX(),r.getBottom(),false);
         plastic.addColour(.18,xray?juce::Colour(0xff681c15):
+            onSwitch?juce::Colour(0xff1d3342):
+            offSwitch?juce::Colour(0xffedf7ff):
             depressed?juce::Colour(0xff1d3342):juce::Colour(0xffedf7ff));
         g.setGradientFill(plastic);g.fillRoundedRectangle(r.reduced(1.f),2.5f);
         g.setColour(juce::Colour(xray?0xffbd4d3c:0xffe6f5ff).withAlpha(active?.34f:.91f));
@@ -297,14 +311,17 @@ public:
             return;
         }
         const bool bandSelector=tabText.startsWith("BAND ");
-        const bool lightHardware=b.getButtonText()=="OFF"||b.getButtonText()=="MONO"||
+        const bool carvePreset=tabText=="C1"||tabText=="C2"||tabText=="C3"||tabText=="C4";
+        const bool onSwitch=tabText=="ON";
+        const bool lightHardware=tabText=="OFF"||tabText=="MONO"||
             b.getButtonText()=="SOLO"||b.getButtonText().startsWith("PHASE")||b.getButtonText()=="LIMIT";
         const bool depressedSwitch=b.getToggleState()&&
             (b.getButtonText()=="ON"||b.getButtonText()=="OFF"||
              b.getButtonText()=="MONO"||b.getButtonText()=="SOLO"||
              b.getButtonText().startsWith("PHASE")||b.getButtonText()=="LIMIT");
         g.setColour(b.isEnabled()?juce::Colour(xray?0xffff624b:
-            reset?0xffe4f2ff:bandSelector?0xff080d12:lightHardware?0xff080d12:
+            reset?0xffe4f2ff:bandSelector||carvePreset?0xff080d12:
+            onSwitch||lightHardware?0xffedf7ff:
             depressedSwitch?0xffedf7ff:0xffd9e7f2):juce::Colour(0xff788b99));
         g.setFont(juce::Font(juce::FontOptions("Segoe UI",juce::jlimit(11.0f,13.0f,b.getHeight()*.43f),juce::Font::bold)));
         g.drawFittedText(b.getButtonText(),xray?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2),
