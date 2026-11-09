@@ -4,10 +4,12 @@
 #include "SurgeryChassisLayout.h"
 namespace surgery::rack {
 inline juce::AffineTransform contentTransform(int width,int height){
-    const auto area=instrumentArea(width,height);
-    // Scalpel is a wide 16:9 instrument, not the tall Surgery rack.
-    const float s=std::min(area.getWidth()/1120.f,area.getHeight()/630.f);
-    return juce::AffineTransform::scale(s).translated(area.getCentreX()-560*s,area.getCentreY()-315.f*s);
+    // Scalpel owns the complete 16:9 editor client area. Do not inherit
+    // Surgery's molded instrumentArea inset: in a DAW it becomes a visible
+    // plugin-owned background border around the rack.
+    const float s=std::min((float)width/1120.f,(float)height/630.f);
+    return juce::AffineTransform::scale(s).translated(width*.5f-560.f*s,
+                                                       height*.5f-315.f*s);
 }
 inline juce::Path cut(juce::Rectangle<float> r,float c=4){
     juce::Path p;
@@ -46,7 +48,9 @@ inline void panel(juce::Graphics& g,juce::Rectangle<float> r){
     juce::Random grain(83017);
     for(int i=0;i<500;++i){
         float x=r.getX()+5+grain.nextFloat()*(r.getWidth()-10),y=r.getY()+5+grain.nextFloat()*(r.getHeight()-10);
-        g.setColour(juce::Colours::white.withAlpha(.009f+grain.nextFloat()*.018f));
+        // Keep the grain below the material threshold at normal scale; it
+        // should read as polymer roughness, not a visible diagonal overlay.
+        g.setColour(juce::Colours::white.withAlpha(.003f+grain.nextFloat()*.009f));
         g.drawLine(x,y,std::min(r.getRight()-5,x+2+grain.nextFloat()*9),y,.5f);
     }
     for(float x:{r.getX()+8,r.getRight()-8})for(float y:{r.getY()+8,r.getBottom()-8})screw(g,x,y,2.8f);

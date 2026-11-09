@@ -556,7 +556,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
             juce::ParameterID{rootsRootControlId(root,"color_dynamic"),1},label+"COLOR Dynamic",
             juce::NormalisableRange<float>(0.0f,100.0f,0.1f),0.0f));
         p.push_back(std::make_unique<juce::AudioParameterBool>(
-            juce::ParameterID{rootsRootControlId(root,"phase"),1},label+"PHASE Auto Coherence",false));
+            juce::ParameterID{rootsRootControlId(root,"phase"),1},
+            juce::String("BAND ")+juce::String(root+1)+" PHASE CORRECTION",false));
         p.push_back(std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID{rootsRootControlId(root,"limit_amount"),1},label+"LIMIT Optical Amount",
             juce::NormalisableRange<float>(0.0f,100.0f,0.1f),0.0f));
@@ -657,7 +658,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
     p.push_back(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID{"surgery_theme",1},"Surgery UI Theme",
         juce::StringArray{"ONYX","ETHER LAB","ALIEN GRID","CINEMA VOID"},0));
-    static constexpr unsigned colours[]{0x6BBDD4,0xDFA871,0xE6BD6A,0x8DCEA8,0x9DADEA,0xD2A2E5,0xE89EAD};
+    // Canonical SCALPEL seven-band identity: red, orange, green, cyan,
+    // dark blue, amethyst purple, pink.
+    static constexpr unsigned colours[]{
+        0xE05246,0xD99045,0x6EAA78,0x55BFCB,0x425D9B,0x9A63B8,0xD97A9C
+    };
     for(int root=0;root<7;++root)
         p.push_back(std::make_unique<juce::AudioParameterInt>(
             juce::ParameterID{"surgery_root"+juce::String(root+1)+"_rgb",1},
@@ -747,6 +752,7 @@ void PRISMVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     }
 
     analyzerFifo.reset();
+    analyzerHealth_.reset();
     analyzerQueue.fill(0.0f);analyzerRightQueue.fill(0.0f);
     fftWritePos = 0;
     fftHopCounter = 0;
@@ -966,6 +972,7 @@ void PRISMVSTAudioProcessor::pushAnalyzerSamples(const juce::AudioBuffer<float>&
 
     const int written = size1 + size2;
     analyzerFifo.finishedWrite(written);
+    analyzerHealth_.recordAudioBlock(requested, written);
     if (written > 0)
         analyzerEvent.signal();
 }
@@ -1078,6 +1085,7 @@ void PRISMVSTAudioProcessor::renderSpectrumFrame()
         spectrum[(size_t)i].store(toDb(peakMagnitude + 1.0e-12f));
     }
     publishWeatherAnalysis();
+    analyzerHealth_.recordFftFrame();
 }
 
 void PRISMVSTAudioProcessor::copySpectrum(std::array<float, spectrumBins>& destination) const noexcept
@@ -1101,6 +1109,7 @@ void PRISMVSTAudioProcessor::updateMeters(const juce::AudioBuffer<float>& buffer
 {
     const int n = buffer.getNumSamples();
     float peak = 0.0f;
+    std::array<float, 2> channelPeak {};
     double weightedEnergy = 0.0;
 
     for (int c = 0; c < juce::jmin(2, buffer.getNumChannels()); ++c)
@@ -1108,7 +1117,9 @@ void PRISMVSTAudioProcessor::updateMeters(const juce::AudioBuffer<float>& buffer
         const float* x = buffer.getReadPointer(c);
         for (int i = 0; i < n; ++i)
         {
-            peak = juce::jmax(peak, std::abs(x[i]));
+            const float magnitude = std::abs(x[i]);
+            peak = juce::jmax(peak, magnitude);
+            channelPeak[(size_t)c] = juce::jmax(channelPeak[(size_t)c], magnitude);
             float y = loudHp[(size_t)c].processSample(x[i]);
             y = loudShelf[(size_t)c].processSample(y);
             weightedEnergy += (double)y * (double)y;
@@ -1116,6 +1127,8 @@ void PRISMVSTAudioProcessor::updateMeters(const juce::AudioBuffer<float>& buffer
     }
 
     peakDb.store(toDb(peak + 1.0e-9f));
+    for (int channel = 0; channel < 2; ++channel)
+        channelPeakDb[(size_t)channel].store(toDb(channelPeak[(size_t)channel] + 1.0e-9f));
     auto held=peakHoldDb.load();
     const float measured=peakDb.load();
     while(measured>held&&!peakHoldDb.compare_exchange_weak(held,measured)) {}
