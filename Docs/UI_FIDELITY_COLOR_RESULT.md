@@ -1,5 +1,7 @@
 # COLOR structural correction: review result
 
+> Rejected on review: COLOR-only shared-chrome geometry caused a visible layout jump on page selection. The follow-up correction restores common baseline frame geometry on every page. The measurements below describe the rejected experiment and are retained as history, not the current accepted layout. Reference alignment must subsequently be introduced through one page-invariant frame.
+
 Source correction: `0261854216d8d570b200856541568e81b71f817d`.
 Built head: `b4b4021b01b5cfae74cb3c742e99904b4fd00e06`.
 Windows run: https://github.com/spiraletech/scalpeleq/actions/runs/42585232254

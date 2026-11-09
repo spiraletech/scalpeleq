@@ -589,9 +589,32 @@ bool runQualityTests(){
         const auto capture=review->createComponentSnapshot(review->getLocalBounds());
         juce::FileOutputStream out(juce::File::getCurrentWorkingDirectory().getChildFile("scalpel-ui-recovery-COLOR-1344x756.png"));
         if(!juce::PNGImageFormat().writeImageToStream(capture,out))return false;
-        const auto transform=surgery::rack::contentTransform(1344,756);
-        const auto deck=scalpel::reference::deck.transformedBy(transform);
-        if(std::abs(deck.getY()-494.375f)>4.f||std::abs(deck.getHeight()-227.5f)>4.f)return false;
+        // Switching a page must never change the editor or shared chrome.
+        // Check actual component bounds/transforms, not authored constants.
+        for(const auto size:std::array<juce::Point<int>,3>{{{896,504},{1344,756},{1792,1008}}}){
+            review->setSize(size.x,size.y);
+            if(!click(*review,"BAND MODE"))return false;
+            struct Frame {juce::Component* component;juce::Rectangle<int> bounds;juce::AffineTransform transform;};
+            std::vector<Frame> chrome;
+            for(auto* child:review->getChildren()){
+                bool shared=dynamic_cast<RootsGraph*>(child)!=nullptr;
+                if(auto* b=dynamic_cast<juce::TextButton*>(child)){
+                    const auto name=b->getButtonText();
+                    shared=name.startsWith("BAND ")||name=="CARVE"||name=="COLOR"||
+                        name=="ANALYZE"||name=="X-RAY"||name=="RESET";
+                }
+                if(shared)chrome.push_back({child,child->getBounds(),child->getTransform()});
+            }
+            for(const auto* tab:{"CARVE","COLOR","ANALYZE","COLOR","BAND MODE"}){
+                if(!click(*review,tab))return false;
+                if(review->getWidth()!=size.x||review->getHeight()!=size.y)return false;
+                for(const auto& frame:chrome)
+                    if(frame.component->getBounds()!=frame.bounds||frame.component->getTransform()!=frame.transform){
+                        std::cerr<<"Page switch moved shared UI chrome: "<<tab<<'\n';return false;
+                    }
+            }
+        }
+        std::cout<<"Page-switch geometry invariant passed at minimum, native and maximum sizes\n";
     }
     click(*editor,"COLOR");
     editor->setSize(1120,755);

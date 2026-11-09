@@ -4,7 +4,6 @@
 #include <array>
 #include <cmath>
 #include "ScalpelMaterials.h"
-#include "ScalpelReferenceLayout.h"
 
 namespace scalpel::ui105 {
 inline const juce::Colour champagne{0xff0d1720};
@@ -56,7 +55,7 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
     g.setColour(juce::Colour(0xff010305).withAlpha(.98f));
     g.drawRoundedRectangle(full.reduced(5.0f), 20.0f, 1.0f);
 
-    roundedPanel(g, mode==2?scalpel::reference::header:juce::Rectangle<float>(20,20,(float)width-40,60), true, 12.0f);
+    roundedPanel(g, {20,20,(float)width-40,60}, true, 12.0f);
     g.setColour(juce::Colour(0xffedf5ff));
     g.setFont(juce::Font(juce::FontOptions("Segoe UI", 34.0f, juce::Font::bold)));
     g.drawFittedText("SCALPEL EQ", 56, 30, 255, 37, juce::Justification::centredLeft, 1);
@@ -71,13 +70,13 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
 
     // 1.0.4 canon: seven persistent, functional BAND selectors sit between
     // the identity plaque and analyzer. The graph remains the dominant field.
-    roundedPanel(g, mode==2?scalpel::reference::selectorRail:juce::Rectangle<float>(18,88,(float)width-36,40), true, 7.0f);
-    const auto analyzerFrame = mode==2?scalpel::reference::analyzer:juce::Rectangle<float>(18,140,(float)width-36,246);
+    roundedPanel(g, {18,88,(float)width-36,40}, true, 7.0f);
+    const auto analyzerFrame = juce::Rectangle<float>(18,140,(float)width-36,246);
     roundedPanel(g, analyzerFrame, true, 8.0f);
     g.setColour(juce::Colour(0xff4d91b2).withAlpha(.78f));
     g.drawRoundedRectangle(analyzerFrame.reduced(1.2f), 8.0f, 2.0f);
-    roundedPanel(g, mode==2?scalpel::reference::navigation:juce::Rectangle<float>(32,389,(float)width-64,43), true, 8.0f);
-    const auto deck=mode==2?scalpel::reference::deck:juce::Rectangle<float>(20,449,(float)width-40,170);
+    roundedPanel(g, {32,389,(float)width-64,43}, true, 8.0f);
+    const auto deck=juce::Rectangle<float>(20,449,(float)width-40,170);
     roundedPanel(g,deck,true,13.0f);
     scalpel::materials::surface(g,deck.reduced(3),11.0f);
 
@@ -88,13 +87,13 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
     int count = 0;
     if (mode == 0) dividers = {198, 365, 536, 805, 0}, count = 4;
     else if (mode == 1) dividers = {279, 468, 658, 846, 0}, count = 4;
-    else if (mode == 2) dividers = {338*scalpel::reference::logicalPerReference,626*scalpel::reference::logicalPerReference,914*scalpel::reference::logicalPerReference,1205*scalpel::reference::logicalPerReference,0}, count=4;
+    else if (mode == 2) dividers = {224,432,640,848,0}, count=4;
     else dividers = {379, 738, 0, 0, 0}, count = 2;
     for (int i = 0; i < count; ++i)
     {
         g.setColour(juce::Colour(0xff5b7890).withAlpha(.64f));
-        const float top=mode==2?593*scalpel::reference::logicalPerReference:462;
-        const float bottom=mode==2?793*scalpel::reference::logicalPerReference:603;
+        const float top=462;
+        const float bottom=603;
         g.drawLine(dividers[(size_t)i],top,dividers[(size_t)i],bottom,1.0f);
         g.setColour(juce::Colour(0xffd9ecfb).withAlpha(.28f));
         g.drawLine(dividers[(size_t)i]+1,top,dividers[(size_t)i]+1,bottom,.8f);
