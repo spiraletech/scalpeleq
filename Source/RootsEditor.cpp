@@ -1224,7 +1224,8 @@ void RootsEditor::bindNode(int n){
     phaseA_=std::make_unique<ButtonA>(processor_.apvts,rid("phase"),phase_);
     limitA_=std::make_unique<ButtonA>(processor_.apvts,rid("limit_on"),limit_);
     monoA_=std::make_unique<ButtonA>(processor_.apvts,rid("mono"),mono_);
-    onA_=std::make_unique<ButtonA>(processor_.apvts,rid("on"),on_);
+    // ON/OFF issue explicit parameter commands; a ButtonAttachment would
+    // also write its toggle state on click and race that command.
     soloA_=std::make_unique<ButtonA>(processor_.apvts,
         PRISMVSTAudioProcessor::rootsRootSoloId(node_/2),solo_);
     selection_.setText("BAND "+juce::String(node_/2+1)+
@@ -1262,7 +1263,6 @@ void RootsEditor::bindCarve(){
     carveFrequencyA_=std::make_unique<SliderA>(processor_.apvts,id("hz"),carveFrequency_);
     carveDepthA_=std::make_unique<SliderA>(processor_.apvts,id("depth"),carveDepth_);
     carveQA_=std::make_unique<SliderA>(processor_.apvts,id("q"),carveQ_);
-    carveOnA_=std::make_unique<ButtonA>(processor_.apvts,id("on"),carveOn_);
     carveDynamicA_=std::make_unique<ButtonA>(processor_.apvts,id("dynamic"),carveDynamic_);
     carveOn_.setButtonText("ON");
     for(int i=0;i<4;++i){

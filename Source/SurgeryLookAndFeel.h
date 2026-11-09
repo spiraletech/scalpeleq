@@ -58,6 +58,10 @@ public:
         juce::ColourGradient dial(juce::Colour(0xff172832),cx-radius*.45f,cy-radius,
                                   juce::Colour(0xff05090e),cx+radius*.55f,cy+radius,false);
         g.setGradientFill(dial);g.fillEllipse(face.reduced(4.5f));
+        for(int ring=1;ring<18;++ring){
+            g.setColour(juce::Colours::white.withAlpha(.018f));
+            g.drawEllipse(face.reduced(5.0f+ring*1.5f),.35f);
+        }
         g.setColour(juce::Colour(0xff99b9cf).withAlpha(.58f));
         g.drawEllipse(face.reduced(4.5f),.85f);
 
@@ -82,7 +86,9 @@ public:
         juce::Path pointer;
         pointer.addRoundedRectangle(cx-1.5f,cy-radius+10.0f,3.0f,radius*.43f,1.5f);
         pointer.applyTransform(juce::AffineTransform::rotation(angle,cx,cy));
-        g.setColour(juce::Colour(0xffe7f5ff));g.fillPath(pointer);
+        g.setColour(juce::Colour(0xff8fdcff).withAlpha(.17f));
+        g.strokePath(pointer,juce::PathStrokeType(4.0f));
+        g.setColour(juce::Colour(0xffd2f5ff));g.fillPath(pointer);
     }
     void drawButtonBackground(juce::Graphics& g,juce::Button& button,
                               const juce::Colour&,bool over,bool down) override {
@@ -99,6 +105,7 @@ public:
         const bool snow=button.getButtonText()=="FREEZE"||button.getButtonText()=="RESUME";
         const bool heat=button.getButtonText().startsWith("SONAR ")||button.getButtonText()=="HEAT MAP";
         const auto text=button.getButtonText();
+        const bool bandSelector=text.startsWith("BAND ");
         const bool pageTab=text=="BAND MODE"||text=="CARVE"||text=="COLOR"||text=="ANALYZE";
         if(pageTab){
             const bool selected=button.getToggleState();
@@ -111,21 +118,21 @@ public:
             g.setColour(juce::Colour(selected?0xff4a7895:0xff2c4a5d));
             g.drawRoundedRectangle(r.reduced(.8f),4.4f,1.0f);
             if(selected){
-                g.setColour(juce::Colour(0xff8fdcff).withAlpha(.23f));
-                g.fillRoundedRectangle({r.getX()+40,r.getBottom()-7,r.getWidth()-80,7},3.5f);
-                g.setColour(juce::Colour(0xff8fdcff));
-                g.fillRoundedRectangle({r.getX()+49,r.getBottom()-4,r.getWidth()-98,3},1.5f);
+                g.setColour(juce::Colour(0xff8fdcff).withAlpha(.20f));
+                g.fillRoundedRectangle({r.getX()+23,r.getBottom()-9,r.getWidth()-46,9},4.5f);
+                g.setColour(juce::Colour(0xffbcefff));
+                g.fillRoundedRectangle({r.getX()+25,r.getBottom()-7,r.getWidth()-50,5},2.5f);
             }
             return;
         }
         if(reset){
             // RESET belongs to the analyzer's carbon instrument bay. Keep the
             // same copper/ivory machining language without a stray pale key.
-            g.setColour(juce::Colour(0xff2c1c14).withAlpha(.58f));
+            g.setColour(juce::Colour(0xff020405).withAlpha(.85f));
             g.fillRoundedRectangle(r.translated(0,2.0f).expanded(1.0f),4.0f);
-            juce::ColourGradient carbon(juce::Colour(0xff2a2724),r.getX(),r.getY(),
-                                        juce::Colour(0xff070605),r.getRight(),r.getBottom(),false);
-            carbon.addColour(.48,juce::Colour(0xff171411));
+            juce::ColourGradient carbon(juce::Colour(0xff30363b),r.getX(),r.getY(),
+                                        juce::Colour(0xff06090c),r.getRight(),r.getBottom(),false);
+            carbon.addColour(.48,juce::Colour(0xff141a1f));
             g.setGradientFill(carbon);g.fillRoundedRectangle(r,3.5f);
             g.saveState();
             g.reduceClipRegion(r.reduced(1.0f).toNearestInt());
@@ -133,13 +140,30 @@ public:
             for(float x=r.getX()-r.getHeight();x<r.getRight();x+=7.0f)
                 g.drawLine(x,r.getBottom(),x+r.getHeight(),r.getY(),.65f);
             g.restoreState();
-            g.setColour(juce::Colour(0xffa47b5d));
+            g.setColour(juce::Colour(0xff8a969e));
             g.drawRoundedRectangle(r,3.5f,1.0f);
             g.setColour(juce::Colour(0xffffead4).withAlpha(.16f));
             g.drawLine(r.getX()+5.0f,r.getY()+2.0f,r.getRight()-5.0f,r.getY()+2.0f,.8f);
             if(over){
                 g.setColour(juce::Colours::white.withAlpha(.055f));
                 g.fillRoundedRectangle(r.reduced(1.5f),2.5f);
+            }
+            return;
+        }
+        if(bandSelector||actionSwitch){
+            g.setColour(juce::Colour(0xff02070b).withAlpha(.95f));
+            g.fillRoundedRectangle(r.translated(0,2.0f).expanded(1.1f),3.5f);
+            juce::ColourGradient silver(juce::Colour(0xffd8e4eb),r.getX(),r.getY(),
+                                        juce::Colour(0xff8ea2ae),r.getX(),r.getBottom(),false);
+            silver.addColour(.2,juce::Colour(0xffc3d1d9));
+            g.setGradientFill(silver);g.fillRoundedRectangle(r.reduced(1.0f),2.5f);
+            g.setColour(juce::Colour(0xff293b47));
+            g.drawRoundedRectangle(r.reduced(.8f),3.0f,1.0f);
+            g.setColour(juce::Colours::white.withAlpha(.38f));
+            g.drawLine(r.getX()+4,r.getY()+2,r.getRight()-4,r.getY()+2,.8f);
+            if(active){
+                g.setColour(juce::Colour(0xff8fdcff).withAlpha(.60f));
+                g.drawRoundedRectangle(r.reduced(1.2f),2.6f,1.5f);
             }
             return;
         }
@@ -294,6 +318,16 @@ public:
         g.setGradientFill(plastic);g.fillRoundedRectangle(r.reduced(1.f),2.5f);
         g.setColour(juce::Colour(xray?0xffbd4d3c:0xffe6f5ff).withAlpha(active?.34f:.91f));
         g.drawLine(r.getX()+4,r.getY()+2,r.getRight()-4,r.getY()+2,.9f);
+        if(deckSwitch){
+            g.setColour(active?juce::Colour(0xff8fdcff):juce::Colour(0xff3c5668));
+            g.drawRoundedRectangle(r.reduced(1.1f),2.6f,active?1.35f:.8f);
+            if(button.getToggleState()){
+                const auto lamp=juce::Rectangle<float>(r.getCentreX()-17,r.getY()+5,34,4);
+                g.setColour(juce::Colour(0xff8fdcff).withAlpha(.20f));
+                g.fillRoundedRectangle(lamp.expanded(3,2),3);
+                g.setColour(juce::Colour(0xffccf5ff));g.fillRoundedRectangle(lamp,2);
+            }
+        }
         g.setColour(juce::Colour(0xff45657c).withAlpha(.5f));
         g.drawRoundedRectangle(r.reduced(1.f),2.5f,.7f);
         if(xray){
@@ -324,7 +358,7 @@ public:
         const bool pageTab=tabText=="BAND MODE"||tabText=="CARVE"||tabText=="COLOR"||tabText=="ANALYZE";
         if(pageTab){
             g.setColour(b.getToggleState()?juce::Colour(0xffedf7ff):juce::Colour(0xff9eb4c5));
-            g.setFont(juce::Font(juce::FontOptions("Segoe UI",15.0f,juce::Font::bold|juce::Font::italic)));
+            g.setFont(juce::Font(juce::FontOptions("Segoe UI",18.0f,juce::Font::bold)));
             g.drawFittedText(tabText,b.getLocalBounds().reduced(7,3),juce::Justification::centred,1);
             return;
         }
@@ -341,7 +375,7 @@ public:
             reset?0xffe4f2ff:deckSwitch?(b.getToggleState()?0xfff2f6f8:0xffb8c8d2):
             (bandSelector||carveSelector||lightHardware)?0xff080d12:
             depressedSwitch?0xffedf7ff:0xffd9e7f2):juce::Colour(0xff788b99));
-        g.setFont(juce::Font(juce::FontOptions("Segoe UI",juce::jlimit(11.0f,13.0f,b.getHeight()*.43f),juce::Font::bold)));
+        g.setFont(juce::Font(juce::FontOptions("Segoe UI",juce::jlimit(12.0f,17.0f,b.getHeight()*.43f),juce::Font::bold)));
         g.drawFittedText(b.getButtonText(),xray?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2),
                          juce::Justification::centred,1);
     }

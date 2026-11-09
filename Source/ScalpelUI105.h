@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include "ScalpelMaterials.h"
 
 namespace scalpel::ui105 {
 inline const juce::Colour champagne{0xff0d1720};
@@ -48,6 +49,7 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
     g.fillRect(full);
     g.setGradientFill(shell);
     g.fillRect(full.reduced(10.0f));
+    scalpel::materials::surface(g,full.reduced(6.0f),22.0f);
     g.setColour(juce::Colour(0xff35566d).withAlpha(.72f));
     g.drawRoundedRectangle(full.reduced(2.0f), 23.0f, 1.3f);
     g.setColour(juce::Colour(0xff010305).withAlpha(.98f));
@@ -55,25 +57,16 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
 
     roundedPanel(g, {20, 20, (float)width - 40, 60}, true, 12.0f);
     g.setColour(juce::Colour(0xffedf5ff));
-    g.setFont(juce::Font(juce::FontOptions("Segoe UI", 28.0f, juce::Font::bold | juce::Font::italic)));
+    g.setFont(juce::Font(juce::FontOptions("Segoe UI", 28.0f, juce::Font::bold)));
     g.drawFittedText("SCALPEL EQ", 56, 30, 255, 37, juce::Justification::centredLeft, 1);
     g.setFont(juce::Font(juce::FontOptions("Segoe UI", 11.5f, juce::Font::plain)));
     g.drawFittedText("P R E C I S I O N   E Q U A L I Z E R", 350, 38, 360, 26,
                      juce::Justification::centred, 1);
     g.drawFittedText("A N A L O G   C O N S O L E   S E R I E S", width - 390, 38, 335, 26,
                      juce::Justification::centredRight, 1);
-    g.setColour(amber);
-    for (int i = 0; i < 3; ++i)
-    {
-        juce::Path slash;
-        const float x = width * .63f + i * 22.0f;
-        slash.startNewSubPath(x + 10, 39);
-        slash.lineTo(x + 28, 39);
-        slash.lineTo(x + 16, 62);
-        slash.lineTo(x - 2, 62);
-        slash.closeSubPath();
-        g.fillPath(slash);
-    }
+    g.setColour(juce::Colour(0xffc5c9cc));
+    g.drawVerticalLine(318,35.0f,65.0f);
+    g.drawVerticalLine(803,35.0f,65.0f);
 
     // 1.0.4 canon: seven persistent, functional BAND selectors sit between
     // the identity plaque and analyzer. The graph remains the dominant field.
@@ -84,6 +77,7 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
     g.drawRoundedRectangle(analyzerFrame.reduced(1.2f), 8.0f, 2.0f);
     roundedPanel(g, {32, 389, (float)width - 64, 43}, true, 8.0f);
     roundedPanel(g, {20, 449, (float)width - 40, 170}, true, 13.0f);
+    scalpel::materials::surface(g,{23,452,(float)width-46,164},11.0f);
 
     // Mechanical shelf dividers are page-specific and stay inside the
     // intentional gutters. BAND's first and third lines must clear the
