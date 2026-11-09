@@ -205,10 +205,19 @@ bool runQualityTests(){
         if(visibleBandDials!=2){std::cerr<<"Scalpel Band panel has "<<visibleBandDials<<" visible knobs, expected 2\n";return false;}
         // Exercise both enable commands after every root/slot rebind. This
         // catches commands being overwritten by a second toggle attachment.
+        const auto clickVisible=[&](const juce::String& caption){
+            for(auto* child:ui->getChildren())
+                if(auto* button=dynamic_cast<juce::TextButton*>(child);
+                   button&&button->isVisible()&&button->getButtonText()==caption){
+                    if(button->onClick)button->onClick();
+                    return true;
+                }
+            return false;
+        };
         for(int root=0;root<7;++root){
             if(!click(*ui,"BAND "+juce::String(root+1))||!click(*ui,"BAND MODE"))return false;
             for(const auto* state:{"OFF","ON","ON","OFF","ON"}){
-                if(!click(*ui,state))return false;
+                if(!clickVisible(state))return false;
                 const bool expected=juce::String(state)=="ON";
                 if((fresh->apvts.getRawParameterValue(PRISMVSTAudioProcessor::rootsRootControlId(root,"on"))->load()>=.5f)!=expected)return false;
             }
@@ -216,7 +225,7 @@ bool runQualityTests(){
             for(int slot=0;slot<4;++slot){
                 if(!click(*ui,"C"+juce::String(slot+1)))return false;
                 for(const auto* state:{"OFF","ON","ON","OFF"}){
-                    if(!click(*ui,state))return false;
+                    if(!clickVisible(state))return false;
                     const bool expected=juce::String(state)=="ON";
                     if((fresh->apvts.getRawParameterValue(PRISMVSTAudioProcessor::carveId(root,slot,"on"))->load()>=.5f)!=expected)return false;
                 }
