@@ -142,6 +142,83 @@ bool verifyPluginRemovalLifecycle() {
     return true;
 }
 
+bool verifyCarveGraphSync(){
+    auto p=std::make_unique<PRISMVSTAudioProcessor>();
+    p->prepareToPlay(48000,512);
+    set(*p,"scalpel_xray",0);set(*p,"aura_color",0);
+    std::unique_ptr<juce::AudioProcessorEditor> editor(p->createEditor());
+    RootsGraph* graph=nullptr;
+    for(auto* child:editor->getChildren())if(auto* g=dynamic_cast<RootsGraph*>(child))graph=g;
+    if(!graph||!click(*editor,"CARVE"))return false;
+    // Freeze only the FFT. Parameter controls must still redraw. Do not
+    // feed audio or move the mouse, which previously hid the stale-marker bug.
+    graph->setFrozen(true);
+    editor->addToDesktop(0);editor->setTopLeftPosition(25,25);editor->setVisible(true);
+    const auto pump=[](int ms){juce::MessageManager::getInstance()->runDispatchLoopUntil(ms);};
+    const auto save=[](const juce::Image& image,const juce::String& name){
+        juce::FileOutputStream out(juce::File::getCurrentWorkingDirectory().getChildFile(name));
+        out.setPosition(0);out.truncate();return juce::PNGImageFormat().writeImageToStream(image,out);
+    };
+    std::ofstream measurements("surgery-carve-graph-sync.csv");
+    measurements<<"root,slot,hz,expected_x,painted_x\n";
+    pump(100);
+    for(int root:{0,3,6}){
+        if(!click(*editor,"BAND "+juce::String(root+1)))return false;
+        const auto bounds=surgery::precision::rootBounds(
+            p->apvts.getRawParameterValue(PRISMVSTAudioProcessor::rootsNodeId(root*2,"hz"))->load(),
+            p->apvts.getRawParameterValue(PRISMVSTAudioProcessor::rootsNodeId(root*2+1,"hz"))->load());
+        for(int slot=0;slot<4;++slot){
+            if(!click(*editor,"C"+juce::String(slot+1)))return false;
+            for(int other=0;other<4;++other)set(*p,PRISMVSTAudioProcessor::carveId(root,other,"on"),other==slot?1.f:0.f);
+            std::vector<juce::Slider*> sliders;
+            for(auto* child:editor->getChildren())if(auto* s=dynamic_cast<juce::Slider*>(child);s&&s->isVisible())sliders.push_back(s);
+            std::sort(sliders.begin(),sliders.end(),[](auto* a,auto* b){return a->getX()<b->getX();});
+            if(sliders.size()!=3)return false;
+            auto* frequency=sliders[0];
+            frequency->setValue(bounds.lo,juce::sendNotificationSync);pump(60);
+            for(double position:{.1,.5,.9}){
+                const auto before=graph->paintedFrames();
+                frequency->setValue(bounds.lo*std::pow(bounds.hi/bounds.lo,position),juce::sendNotificationSync);
+                pump(60);
+                // Check native redraw BEFORE taking a snapshot. Snapshots
+                // force paint and cannot by themselves detect invalidation bugs.
+                if(graph->paintedFrames()<=before){std::cerr<<"CARVE graph did not repaint on frequency edit\n";return false;}
+                const auto actual=p->apvts.getRawParameterValue(PRISMVSTAudioProcessor::carveId(root,slot,"hz"))->load();
+                if(std::abs(actual-frequency->getValue())>.02)return false;
+                const double expectedX=55.+(graph->getWidth()-302.)*std::log(actual/20.)/std::log(1000.);
+                const int y=juce::roundToInt(22.+(graph->getHeight()-56.)*.5+23.);
+                const auto image=graph->createComponentSnapshot(graph->getLocalBounds());
+                double sumX=0;int count=0;
+                for(int py=y-4;py<=y+4;++py)for(int x=juce::roundToInt(expectedX)-9;x<=juce::roundToInt(expectedX)+9;++x){
+                    const auto c=image.getPixelAt(x,py);
+                    if(c.getRed()>245&&c.getGreen()>245&&c.getBlue()>245){sumX+=x+.5;++count;}
+                }
+                if(count<12||std::abs(sumX/count-expectedX)>2.){
+                    std::cerr<<"CARVE marker does not match Hz: "<<actual<<" expected x "<<expectedX<<" white pixels "<<count<<"\n";return false;
+                }
+                measurements<<root<<','<<slot<<','<<actual<<','<<expectedX<<','<<sumX/count<<'\n';
+                if(root==0&&slot==0&&!save(editor->createComponentSnapshot(editor->getLocalBounds()),
+                    "surgery-ui-CARVE-frequency-"+juce::String(juce::roundToInt(position*100))+".png"))return false;
+            }
+            // Host-side changes arrive asynchronously on the message thread,
+            // without a slider gesture, fresh FFT frame, or mouse movement.
+            const auto before=graph->paintedFrames();
+            const float hz=std::sqrt(bounds.lo*bounds.hi);
+            std::thread automation([&]{set(*p,PRISMVSTAudioProcessor::carveId(root,slot,"hz"),hz);});automation.join();
+            pump(80);
+            if(graph->paintedFrames()<=before||std::abs(frequency->getValue()-hz)>.02)return false;
+            for(const auto& change:std::array<std::pair<const char*,float>,3>{{{"depth",12.f},{"q",24.f},{"on",0.f}}}){
+                const auto paints=graph->paintedFrames();
+                set(*p,PRISMVSTAudioProcessor::carveId(root,slot,change.first),change.second);pump(60);
+                if(graph->paintedFrames()<=paints)return false;
+            }
+        }
+    }
+    editor->setVisible(false);editor->removeFromDesktop();
+    std::cout<<"CARVE graph: native redraws during frozen silence; Hz marker alignment; 3 bands x 4 slots; host automation, depth/Q/ON updates passed\n";
+    return true;
+}
+
 bool runQualityTests(){
     if(!scalpel::xray::FluidVolume3D::validateShaderSource()){
         std::cerr<<"X-RAY: GPU shader compilation failed\\n";
@@ -186,7 +263,7 @@ bool runQualityTests(){
         if(surgery::precision::tightnessPercent(q->convertFrom0to1(q->getValue()))!=0)return false;
         std::cout<<"CARVE: band-local continuous Hz/Q travel, 0% default, and recall-safe attachments passed\n";
     }
-    if(!verifySonarRecovery()||!verifyChassis105()||!verifyWeatherUI())return false;
+    if(!verifyCarveGraphSync()||!verifySonarRecovery()||!verifyChassis105()||!verifyWeatherUI())return false;
     if(!verifyPluginRemovalLifecycle())return false;
     juce::MidiBuffer midi;
     {

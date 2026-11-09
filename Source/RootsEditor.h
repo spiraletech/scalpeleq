@@ -139,6 +139,10 @@ private:
     juce::Image responseOverlay_;
     std::array<double,32> responseOverlayKey_{};
     bool responseOverlayValid_=false;
+    // The graph observes the same host parameters as the controls. Carve
+    // edits must invalidate it even when FFT frames are silent or frozen.
+    std::array<std::unique_ptr<juce::ParameterAttachment>,18> carveRepaintAttachments_;
+    void bindCarveRepaints();
 
     juce::Rectangle<float> area() const;
     float freqToX(float f) const;

@@ -46,8 +46,10 @@ RootsGraph::RootsGraph(PRISMVSTAudioProcessor& owner):processor_(owner) {
     processor_.beginWeatherConsumer();
     bands_.fill(-144.0f);peaks_.fill(-144.0f);
     setMouseCursor(juce::MouseCursor::CrosshairCursor);
+    bindCarveRepaints();
 }
 RootsGraph::~RootsGraph(){
+    for(auto& attachment:carveRepaintAttachments_)attachment.reset();
     processor_.endWeatherConsumer();
     if(dragging_>=0)
         if(auto* parameter=processor_.apvts.getParameter(PRISMVSTAudioProcessor::rootsNodeId(dragging_,"hz")))
@@ -161,10 +163,27 @@ void RootsGraph::updateWeather(const surgery::weather::Snapshot* snapshot,double
     }
     repaint();
 }
+void RootsGraph::bindCarveRepaints(){
+    for(auto& attachment:carveRepaintAttachments_)attachment.reset();
+    size_t index=0;
+    const auto observe=[this,&index](const juce::String& id){
+        if(auto* parameter=processor_.apvts.getParameter(id))
+            carveRepaintAttachments_[index++]=std::make_unique<juce::ParameterAttachment>(
+                *parameter,[this](float){repaint();},nullptr);
+    };
+    const int root=selected_/2;
+    for(int slot=0;slot<surgery::kSlots;++slot)
+        for(const char* suffix:{"on","hz","depth","q"})
+            observe(PRISMVSTAudioProcessor::carveId(root,slot,suffix));
+    observe(PRISMVSTAudioProcessor::rootsNodeId(root*2,"hz"));
+    observe(PRISMVSTAudioProcessor::rootsNodeId(root*2+1,"hz"));
+}
 void RootsGraph::selectNode(int i){
     const int target=juce::jlimit(0,prism::roots::v2::kNodes-1,i);
     if(target==selected_)return;
+    const bool changedRoot=selected_/2!=target/2;
     selected_=target;
+    if(changedRoot)bindCarveRepaints();
     // Once solo audition is engaged it travels with the selected root.
     processor_.transferRootsSoloTo(selected_);
     if(onSelectNode)onSelectNode(selected_);
