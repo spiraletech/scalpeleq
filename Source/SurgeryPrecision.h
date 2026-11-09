@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 namespace surgery::precision {
+inline constexpr float defaultCarveQ=0.3f;
 struct Bounds {float lo,hi;};
 inline Bounds rootBounds(float left,float right) noexcept {
     return {std::clamp(std::min(left,right),20.0f,20000.0f),

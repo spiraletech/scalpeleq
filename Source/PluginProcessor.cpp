@@ -103,7 +103,7 @@ bool PRISMVSTAudioProcessor::resetCarveNode(int root,int slot)
     };
     assign("hz",frequency);
     assign("depth",0.0f);
-    assign("q",2.0f);
+    assign("q",surgery::precision::defaultCarveQ);
     assign("threshold",-24.0f);
     assign("dynamic",0.0f);
     assign("domain",0.0f);
@@ -645,7 +645,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
                 juce::NormalisableRange<float>(0.0f,36.0f,0.01f),0.0f));
             juce::NormalisableRange<float> q(0.3f,96.0f,0.001f);q.setSkewForCentre(4.0f);
             p.push_back(std::make_unique<juce::AudioParameterFloat>(
-                juce::ParameterID{id("q"),1},name+"Q",q,2.0f));
+                juce::ParameterID{id("q"),1},name+"Q",q,surgery::precision::defaultCarveQ));
             p.push_back(std::make_unique<juce::AudioParameterFloat>(
                 juce::ParameterID{id("threshold"),1},name+"Threshold",
                 juce::NormalisableRange<float>(-60.0f,0.0f,0.1f),-24.0f));

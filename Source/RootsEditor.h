@@ -9,6 +9,7 @@
 #include "SurgeryHeaderLayout.h"
 #include "SurgeryNodeFocus.h"
 #include "SurgeryPrecision.h"
+#include "SurgeryLogSliderAttachment.h"
 #include "SurgeryResponse.h"
 #include "SurgeryAnalysis.h"
 #include "ScalpelMercuryField.h"
@@ -115,6 +116,9 @@ private:
         bool valid=false;
     };
     std::array<ResponseCache,4> responseCache_;
+    struct ResponseProbe {float x=0;std::complex<double> z1;};
+    std::array<ResponseProbe,2049> responseProbes_;
+    std::array<double,3> responseProbeKey_{};
     juce::Image spectralHeat_{juce::Image::ARGB,PRISMVSTAudioProcessor::labBars,224,true};
     std::array<float,PRISMVSTAudioProcessor::labBars> heatLevels_{};
     bool heatValid_=false;
@@ -162,6 +166,7 @@ private:
     void paintRack(juce::Graphics&);
     void layoutRack();
     void setSelectedEnabled(bool carve,bool enabled);
+    void updateCarveTightness();
     using ButtonA=juce::AudioProcessorValueTreeState::ButtonAttachment;
     PRISMVSTAudioProcessor& processor_;
     RootsGraph graph_;
@@ -194,7 +199,8 @@ private:
     std::unique_ptr<ButtonA> xrayAttachment_;
     juce::TextButton carveOn_{"ON"},carveOff_{"OFF"},carveDynamic_{"DYNAMIC"};
     juce::Label carveFrequencyLabel_,carveDepthLabel_,carveQLabel_;
-    std::unique_ptr<SliderA> carveFrequencyA_,carveDepthA_,carveQA_;
+    std::unique_ptr<SurgeryLogSliderAttachment> carveFrequencyA_,carveQA_;
+    std::unique_ptr<SliderA> carveDepthA_;
     std::unique_ptr<ButtonA> carveOnA_,carveDynamicA_;
     juce::Label title_,selection_,status_,gainLabel_,thresholdLabel_,
         analyzerDepthLabel_,analyzerSlopeLabel_,analyzerMemoryLabel_,analyzerLegend_;

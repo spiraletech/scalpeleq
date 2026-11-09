@@ -6,6 +6,34 @@
 #include <complex>
 #include <numbers>
 namespace surgery {
+// Display-only prepared response: compute coefficients once per changed
+// CARVE, then evaluate the unchanged 2049-point contour with cached probes.
+class PreparedCarveResponse {
+public:
+    PreparedCarveResponse(double sampleRate,double centerHz,double q,double cutDb) noexcept {
+        const double sr=std::max(8000.0,sampleRate);
+        const double fc=std::clamp(centerHz,20.0,sr*.45);
+        const double gain=-std::clamp(cutDb,0.0,36.0);
+        bypass_=gain==0;
+        const double w=2.0*std::numbers::pi*fc/sr;
+        const double A=std::pow(10.0,gain/40.0);
+        const double alpha=std::sin(w)/(2.0*std::clamp(q,.3,96.0));
+        const double c=std::cos(w),norm=1.0/(1.0+alpha/A);
+        b0_=(1.0+alpha*A)*norm;b1_=-2.0*c*norm;b2_=(1.0-alpha*A)*norm;
+        a1_=-2.0*c*norm;a2_=(1.0-alpha/A)*norm;
+    }
+    double magnitudeDb(std::complex<double> z1) const noexcept {
+        if(bypass_)return 0;
+        const auto z2=z1*z1;
+        const auto numerator=b0_+b1_*z1+b2_*z2;
+        const auto denominator=1.0+a1_*z1+a2_*z2;
+        const double ratio=std::abs(numerator)/std::max(1.e-12,std::abs(denominator));
+        return std::clamp(20.0*std::log10(std::max(1.e-12,ratio)),-36.0,3.0);
+    }
+private:
+    double b0_=1,b1_=0,b2_=0,a1_=0,a2_=0;
+    bool bypass_=true;
+};
 inline double carveMagnitudeDb(double sampleRate,double centerHz,double q,
                                double cutDb,double probeHz) noexcept {
     const double sr=std::max(8000.0,sampleRate);

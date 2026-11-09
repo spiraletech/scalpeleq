@@ -4,6 +4,8 @@
 #include "../Source/ScalpelAssets.h"
 #include "../Source/ScalpelReferenceLayout.h"
 #include "../Source/ScalpelMaterials.h"
+#include "../Source/SurgeryLogSliderAttachment.h"
+#include "../Source/SurgeryPrecision.h"
 #include <BinaryData.h>
 #include <chrono>
 #include <fstream>
@@ -146,6 +148,44 @@ bool runQualityTests(){
         return false;
     }
     juce::ScopedJuceInitialiser_GUI gui;
+    {
+        PRISMVSTAudioProcessor p;
+        auto* parameter=p.apvts.getParameter(PRISMVSTAudioProcessor::carveId(0,0,"hz"));
+        // Binding a saved out-of-band value must not rewrite project audio.
+        parameter->setValueNotifyingHost(parameter->convertTo0to1(1000.f));
+        juce::Slider slider;
+        SurgeryLogSliderAttachment attached(*parameter,slider,20,60,.01);
+        if(std::abs(parameter->convertFrom0to1(parameter->getValue())-1000.f)>.1f)return false;
+        double previous=19;
+        for(int i=0;i<=100;++i){
+            const double hz=slider.proportionOfLengthToValue(i/100.0);
+            if(hz<=previous||hz<19.999||hz>60.001)return false;
+            previous=hz;
+        }
+        if(std::abs(slider.proportionOfLengthToValue(.5)-std::sqrt(1200.0))>.01)return false;
+        slider.setValue(40,juce::sendNotificationSync);
+        if(std::abs(parameter->convertFrom0to1(parameter->getValue())-40.f)>.02f)return false;
+        attached.setBounds(60,120);
+        if(std::abs(parameter->convertFrom0to1(parameter->getValue())-40.f)>.02f)return false;
+        attached.setBounds(60,60);
+        if(slider.isEnabled())return false;
+        attached.setBounds(20,60);
+        if(!slider.isEnabled()||std::abs(slider.getValue()-40)>.02)return false;
+        // Original global automation mapping remains intact.
+        if(parameter->getNormalisableRange().start!=20||parameter->getNormalisableRange().end!=20000)return false;
+        auto* q=p.apvts.getParameter(PRISMVSTAudioProcessor::carveId(0,0,"q"));
+        juce::Slider qSlider;
+        SurgeryLogSliderAttachment qAttached(*q,qSlider,.3,96,.001);
+        for(int i=0;i<=100;++i){
+            const auto value=qSlider.proportionOfLengthToValue(i/100.0);
+            if(std::abs(surgery::precision::tightnessPercent((float)value)-i)>.001)return false;
+        }
+        qSlider.setValue(96,juce::sendNotificationSync);
+        if(q->convertFrom0to1(q->getValue())<95.999f)return false;
+        qSlider.setValue(.3,juce::sendNotificationSync);
+        if(surgery::precision::tightnessPercent(q->convertFrom0to1(q->getValue()))!=0)return false;
+        std::cout<<"CARVE: band-local continuous Hz/Q travel, 0% default, and recall-safe attachments passed\n";
+    }
     if(!verifySonarRecovery()||!verifyChassis105()||!verifyWeatherUI())return false;
     if(!verifyPluginRemovalLifecycle())return false;
     juce::MidiBuffer midi;
@@ -235,6 +275,25 @@ bool runQualityTests(){
             if(!click(*ui,"CARVE"))return false;
             for(int slot=0;slot<4;++slot){
                 if(!click(*ui,"C"+juce::String(slot+1)))return false;
+                std::vector<juce::Slider*> dials;
+                juce::Label* tightness=nullptr;
+                for(auto* child:ui->getChildren()){
+                    if(auto* s=dynamic_cast<juce::Slider*>(child);s&&s->isVisible())dials.push_back(s);
+                    if(auto* label=dynamic_cast<juce::Label*>(child);label&&label->isVisible()&&label->getText().endsWith("% TIGHT"))tightness=label;
+                }
+                std::sort(dials.begin(),dials.end(),[](auto* a,auto* b){return a->getX()<b->getX();});
+                if(dials.size()!=3||!tightness||tightness->getText()!="Q / 0.0% TIGHT")return false;
+                // Verify the actual editor callback, without a timer tick.
+                dials[2]->setValue(96,juce::sendNotificationSync);
+                if(tightness->getText()!="Q / 100.0% TIGHT")return false;
+                dials[2]->setValue(.3,juce::sendNotificationSync);
+                if(tightness->getText()!="Q / 0.0% TIGHT")return false;
+                if(root==0&&slot==0){
+                    auto image=ui->createComponentSnapshot(ui->getLocalBounds());
+                    juce::FileOutputStream file(juce::File::getCurrentWorkingDirectory().getChildFile("surgery-ui-CARVE-Q-zero.png"));
+                    file.setPosition(0);file.truncate();
+                    if(!juce::PNGImageFormat().writeImageToStream(image,file))return false;
+                }
                 for(const auto* state:{"OFF","ON","ON","OFF"}){
                     if(!clickVisible(state))return false;
                     const bool expected=juce::String(state)=="ON";

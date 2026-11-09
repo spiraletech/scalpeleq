@@ -1,5 +1,6 @@
 #include <JuceHeader.h>
 #include "../Source/PluginProcessor.h"
+#include "../Source/SurgeryPrecision.h"
 #include <cmath>
 #include <iostream>
 #include <memory>
@@ -69,6 +70,19 @@ int main(int argc,char** argv)
     if(argc>1&&juce::String(argv[1])=="--weather-field")return runWeatherFieldTests()?0:72;
     if(argc>1&&juce::String(argv[1])=="--storm-chassis")return runStormChassisTests()?0:73;
     juce::ScopedJuceInitialiser_GUI gui;
+    // New/reset CARVEs start at 0% tightness without migrating existing Q.
+    {
+        PRISMVSTAudioProcessor p;
+        for(int root=0;root<7;++root)for(int slot=0;slot<4;++slot){
+            const auto id=PRISMVSTAudioProcessor::carveId(root,slot,"q");
+            if(surgery::precision::tightnessPercent(p.apvts.getRawParameterValue(id)->load())!=0.f)return 74;
+        }
+        const auto id=PRISMVSTAudioProcessor::carveId(0,0,"q");
+        setActual(p,id,2.f);
+        juce::MemoryBlock saved;p.getStateInformation(saved);
+        PRISMVSTAudioProcessor recalled;recalled.setStateInformation(saved.getData(),(int)saved.getSize());
+        if(std::abs(recalled.apvts.getRawParameterValue(id)->load()-2.f)>.001f)return 75;
+    }
     // Keep ROOTS distinct in FL Studio's plugin database / VST3 identity.
     {
         PRISMVSTAudioProcessor p;
@@ -485,7 +499,7 @@ int main(int argc,char** argv)
         if(!p.resetCarveNode(1,2)
             ||std::abs(value(id(1,2,"hz"))-midpoint)>0.1f
             ||std::abs(value(id(1,2,"depth")))>0.001f
-            ||std::abs(value(id(1,2,"q"))-2.0f)>0.02f
+            ||std::abs(value(id(1,2,"q"))-surgery::precision::defaultCarveQ)>0.001f
             ||std::abs(value(id(1,2,"threshold"))+24.0f)>0.11f
             ||value(id(1,2,"dynamic"))>0.5f
             ||value(id(1,2,"domain"))>0.5f

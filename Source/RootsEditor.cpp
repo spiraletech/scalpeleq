@@ -526,7 +526,20 @@ void RootsGraph::paint(juce::Graphics& g){
     const float overlayScale=juce::jlimit(.5f,4.f,g.getInternalContext().getPhysicalPixelScaleFactor());
     overlayKey[24]=overlayScale;
     if(!responseOverlayValid_||responseOverlayKey_!=overlayKey){
-        responseOverlay_=juce::Image(juce::Image::ARGB,juce::roundToInt(getWidth()*overlayScale),juce::roundToInt(getHeight()*overlayScale),true);
+        const int width=juce::jmax(1,juce::roundToInt(getWidth()*overlayScale));
+        const int height=juce::jmax(1,juce::roundToInt(getHeight()*overlayScale));
+        if(responseOverlay_.getWidth()!=width||responseOverlay_.getHeight()!=height)
+            responseOverlay_=juce::Image(juce::Image::ARGB,width,height,true);
+        else responseOverlay_.clear(responseOverlay_.getBounds());
+        const std::array<double,3> probeKey{sr,(double)getWidth(),(double)getHeight()};
+        if(responseProbeKey_!=probeKey){
+            for(size_t i=0;i<responseProbes_.size();++i){
+                const float f=20.0f*std::pow(1000.0f,(float)i/2048.0f);
+                responseProbes_[i]={freqToX(f),std::polar(1.0,
+                    -2.0*std::numbers::pi*std::clamp((double)f,10.0,sr*.49)/sr)};
+            }
+            responseProbeKey_=probeKey;
+        }
         juce::Graphics overlayGraphics(responseOverlay_);overlayGraphics.addTransform(juce::AffineTransform::scale(overlayScale));
     for(int slot=0;slot<surgery::kSlots;++slot){
         const auto id=[selectedRoot,slot](const char* suffix){
@@ -545,16 +558,17 @@ void RootsGraph::paint(juce::Graphics& g){
         contour.clear();footprint.clear();
         const float firstX=freqToX(20.0f);
         footprint.startNewSubPath(firstX,baseY);
+        const surgery::PreparedCarveResponse prepared(sr,fc,q,depth);
+        const double scale=surgery::CarveEngine::boundaryWeight(fc,
+            std::min(lowHz,highHz),std::max(lowHz,highHz));
         // High Q requires sub-pixel-aware sampling; old 256 samples across
         // 10 octaves could miss the entire ultra-narrow notch!
         for(int i=0;i<=2048;++i){
-            const float f=20.0f*std::pow(1000.0f,(float)i/2048.0f);
-            const float x=freqToX(f);
-            const double scale=surgery::CarveEngine::boundaryWeight(fc,
-                std::min(lowHz,highHz),std::max(lowHz,highHz));
+            const auto& probe=responseProbes_[(size_t)i];
+            const float x=probe.x;
             // Static-response preview: approximate dB interpolation for dry/wet
             // blend; exact RBJ biquad curve tested separately.
-            const double response=surgery::carveMagnitudeDb(sr,fc,q,depth,f)*scale;
+            const double response=prepared.magnitudeDb(probe.z1)*scale;
             const float y=baseY-(float)response*1.10f;
             if(i==0)contour.startNewSubPath(x,y);
             else contour.lineTo(x,y);
@@ -1052,9 +1066,10 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         rotary(*s,"",0.0);addAndMakeVisible(*s);
     }
     carveDepth_.setDoubleClickReturnValue(true,0.0);
-    carveQ_.setDoubleClickReturnValue(true,2.0);
-    carveFrequency_.setMouseDragSensitivity(2000);
-    carveQ_.setMouseDragSensitivity(2800);
+    carveQ_.setDoubleClickReturnValue(true,surgery::precision::defaultCarveQ);
+    carveFrequency_.setMouseDragSensitivity(400);
+    carveQ_.setMouseDragSensitivity(600);
+    carveQ_.onValueChange=[this]{updateCarveTightness();};
     carveQ_.setNumDecimalPlacesToDisplay(3);
     carveFrequency_.setTooltip("Exact Hz value: type in the field. CTRL+drag a CARVE node for fine frequency scrubbing.");
     carveQ_.setTooltip("Ultra-surgical Q 0.300 to 96.000. Higher = tighter notch; 0-100% tightness shown above knob. SHIFT+wheel = fine Q.");
@@ -1237,6 +1252,11 @@ void RootsEditor::bindNode(int n){
     bindCarve();
     updateRootButtons();
 }
+void RootsEditor::updateCarveTightness(){
+    const float tight=surgery::precision::tightnessPercent((float)carveQ_.getValue());
+    const auto text="Q / "+juce::String(tight,1)+"% TIGHT";
+    if(carveQLabel_.getText()!=text)carveQLabel_.setText(text,juce::dontSendNotification);
+}
 void RootsEditor::bindCarve(){
     carveFrequencyA_.reset();carveDepthA_.reset();
     carveQA_.reset();
@@ -1253,20 +1273,12 @@ void RootsEditor::bindCarve(){
     const auto id=[root,slot](const char* s){
         return PRISMVSTAudioProcessor::carveId(root,slot,s);
     };
-    carveFrequency_.onValueChange=[this]{
-        const int root=node_/2;
-        const auto a=pval(processor_.apvts,
-            PRISMVSTAudioProcessor::rootsNodeId(root*2,"hz"));
-        const auto b=pval(processor_.apvts,
-            PRISMVSTAudioProcessor::rootsNodeId(root*2+1,"hz"));
-        const double value=carveFrequency_.getValue();
-        const auto limited=surgery::precision::boundedFrequency((float)value,a,b);
-        if(std::abs(value-limited)>0.001)
-            carveFrequency_.setValue(limited,juce::sendNotificationSync);
-    };
-    carveFrequencyA_=std::make_unique<SliderA>(processor_.apvts,id("hz"),carveFrequency_);
+    carveFrequencyA_=std::make_unique<SurgeryLogSliderAttachment>(
+        *processor_.apvts.getParameter(id("hz")),carveFrequency_,low,high,.01);
     carveDepthA_=std::make_unique<SliderA>(processor_.apvts,id("depth"),carveDepth_);
-    carveQA_=std::make_unique<SliderA>(processor_.apvts,id("q"),carveQ_);
+    carveQA_=std::make_unique<SurgeryLogSliderAttachment>(
+        *processor_.apvts.getParameter(id("q")),carveQ_,.3,96.0,.001);
+    updateCarveTightness();
     carveDynamicA_=std::make_unique<ButtonA>(processor_.apvts,id("dynamic"),carveDynamic_);
     carveOn_.setButtonText("ON");
     for(int i=0;i<4;++i){
@@ -1397,11 +1409,13 @@ void RootsEditor::timerCallback(){
 thresholdLabel_.setText("COMP THRESHOLD",
                             juce::dontSendNotification);
     updateRootButtons();
-    const float factor=pval(processor_.apvts,
-        PRISMVSTAudioProcessor::carveId(node_/2,carveSlot_,"q"));
-    const float tight=surgery::precision::tightnessPercent(factor);
-    carveQLabel_.setText("Q / "+juce::String(tight,1)+"% TIGHT",
-                         juce::dontSendNotification);
+    updateCarveTightness();
+    if(carveFrequencyA_){
+        const auto bounds=surgery::precision::rootBounds(
+            pval(processor_.apvts,PRISMVSTAudioProcessor::rootsNodeId(node_/2*2,"hz")),
+            pval(processor_.apvts,PRISMVSTAudioProcessor::rootsNodeId(node_/2*2+1,"hz")));
+        carveFrequencyA_->setBounds(bounds.lo,bounds.hi);
+    }
     carveOn_.setButtonText("ON");
     const bool bandOn=pval(processor_.apvts,
         PRISMVSTAudioProcessor::rootsRootControlId(node_/2,"on"))>=.5f;
