@@ -1029,10 +1029,12 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     // The two labels are commands, not independent toggle latches. Drive the
     // shared APVTS state explicitly so BAND MODE cannot desynchronise ON/OFF.
     on_.setClickingTogglesState(false);
-    on_.onClick=[this]{change(processor_,PRISMVSTAudioProcessor::rootsRootControlId(node_/2,"on"),1.f);timerCallback();};
+    on_.setTriggeredOnMouseDown(true);
+    on_.onClick=[this]{setSelectedEnabled(false,true);};
     addAndMakeVisible(off_);
     off_.setClickingTogglesState(false);
-    off_.onClick=[this]{change(processor_,PRISMVSTAudioProcessor::rootsRootControlId(node_/2,"on"),0.f);timerCallback();};
+    off_.setTriggeredOnMouseDown(true);
+    off_.onClick=[this]{setSelectedEnabled(false,false);};
     static constexpr const char* labels[]{"BAND MODE","CARVE","COLOR","ANALYZE"};
     for(int i=0;i<4;++i){
         auto& b=modeButtons_[(size_t)i];
@@ -1064,10 +1066,12 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         addAndMakeVisible(*b);
     }
     carveOn_.setClickingTogglesState(false);
-    carveOn_.onClick=[this]{change(processor_,PRISMVSTAudioProcessor::carveId(node_/2,carveSlot_,"on"),1.f);timerCallback();};
+    carveOn_.setTriggeredOnMouseDown(true);
+    carveOn_.onClick=[this]{setSelectedEnabled(true,true);};
     addAndMakeVisible(carveOff_);
     carveOff_.setClickingTogglesState(false);
-    carveOff_.onClick=[this]{change(processor_,PRISMVSTAudioProcessor::carveId(node_/2,carveSlot_,"on"),0.f);timerCallback();};
+    carveOff_.setTriggeredOnMouseDown(true);
+    carveOff_.onClick=[this]{setSelectedEnabled(true,false);};
     const std::array<const char*,5> names{"DYNAMIC","SPARKLE","SHINE","SMOOTHENING","VINTAGE TAPE"};
     for(int i=0;i<5;++i){
         auto& s=onyxSliders_[(size_t)i];
@@ -1330,6 +1334,26 @@ void RootsEditor::setMode(int next){
     resized();
     timerCallback();
     repaint();
+}
+void RootsEditor::setSelectedEnabled(bool carve,bool enabled){
+    const auto id=carve?PRISMVSTAudioProcessor::carveId(node_/2,carveSlot_,"on"):
+                        PRISMVSTAudioProcessor::rootsRootControlId(node_/2,"on");
+    if(auto* parameter=processor_.apvts.getParameter(id)){
+        const float value=enabled?1.f:0.f;
+        if(parameter->convertFrom0to1(parameter->getValue())!=value){
+            parameter->beginChangeGesture();
+            parameter->setValueNotifyingHost(parameter->convertTo0to1(value));
+            parameter->endChangeGesture();
+        }
+    }
+    // Respond on this press, without a timer tick or another analyzer/weather
+    // update on the click path. Host automation is still reconciled by timer.
+    auto& on=carve?carveOn_:on_;
+    auto& off=carve?carveOff_:off_;
+    const bool actual=pval(processor_.apvts,id)>=.5f;
+    on.setToggleState(actual,juce::dontSendNotification);
+    off.setToggleState(!actual,juce::dontSendNotification);
+    on.repaint();off.repaint();graph_.repaint();
 }
 void RootsEditor::updateRootButtons(){
     const double nowMs=juce::Time::getMillisecondCounterHiRes();

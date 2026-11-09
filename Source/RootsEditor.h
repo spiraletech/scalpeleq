@@ -161,6 +161,7 @@ private:
     bool closing_=false;
     void paintRack(juce::Graphics&);
     void layoutRack();
+    void setSelectedEnabled(bool carve,bool enabled);
     using ButtonA=juce::AudioProcessorValueTreeState::ButtonAttachment;
     PRISMVSTAudioProcessor& processor_;
     RootsGraph graph_;

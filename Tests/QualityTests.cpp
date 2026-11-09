@@ -213,6 +213,14 @@ bool runQualityTests(){
                 if(auto* button=dynamic_cast<juce::TextButton*>(child);
                    button&&button->isVisible()&&button->getButtonText()==caption){
                     if(button->onClick)button->onClick();
+                    // No timer/message pumping before checking the paired
+                    // indicators: command and visual state must agree now.
+                    for(auto* peer:ui->getChildren())
+                        if(auto* state=dynamic_cast<juce::TextButton*>(peer);
+                           state&&state->isVisible()&&(state->getButtonText()=="ON"||state->getButtonText()=="OFF")){
+                            const bool selected=state->getButtonText()==caption;
+                            if(state->getToggleState()!=selected)return false;
+                        }
                     return true;
                 }
             return false;
