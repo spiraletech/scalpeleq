@@ -375,7 +375,7 @@ public:
             reset?0xffe4f2ff:deckSwitch?(b.getToggleState()?0xfff2f6f8:0xffb8c8d2):
             (bandSelector||carveSelector||lightHardware)?0xff080d12:
             depressedSwitch?0xffedf7ff:0xffd9e7f2):juce::Colour(0xff788b99));
-        g.setFont(juce::Font(juce::FontOptions("Segoe UI",juce::jlimit(12.0f,17.0f,b.getHeight()*.43f),juce::Font::bold)));
+        g.setFont(juce::Font(juce::FontOptions("Segoe UI",bandSelector?17.0f:juce::jlimit(12.0f,17.0f,b.getHeight()*.43f),juce::Font::bold)));
         g.drawFittedText(b.getButtonText(),xray?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2),
                          juce::Justification::centred,1);
     }

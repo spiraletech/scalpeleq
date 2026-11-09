@@ -57,7 +57,7 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
 
     roundedPanel(g, {20, 20, (float)width - 40, 60}, true, 12.0f);
     g.setColour(juce::Colour(0xffedf5ff));
-    g.setFont(juce::Font(juce::FontOptions("Segoe UI", 28.0f, juce::Font::bold)));
+    g.setFont(juce::Font(juce::FontOptions("Segoe UI", 34.0f, juce::Font::bold)));
     g.drawFittedText("SCALPEL EQ", 56, 30, 255, 37, juce::Justification::centredLeft, 1);
     g.setFont(juce::Font(juce::FontOptions("Segoe UI", 11.5f, juce::Font::plain)));
     g.drawFittedText("P R E C I S I O N   E Q U A L I Z E R", 350, 38, 360, 26,
@@ -70,7 +70,7 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
 
     // 1.0.4 canon: seven persistent, functional BAND selectors sit between
     // the identity plaque and analyzer. The graph remains the dominant field.
-    roundedPanel(g, {18, 88, (float)width - 36, 40}, false, 7.0f);
+    roundedPanel(g, {18, 88, (float)width - 36, 40}, true, 7.0f);
     const auto analyzerFrame = juce::Rectangle<float>(18, 140, (float)width - 36, 246);
     roundedPanel(g, analyzerFrame, true, 8.0f);
     g.setColour(juce::Colour(0xff4d91b2).withAlpha(.78f));

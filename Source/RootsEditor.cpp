@@ -187,7 +187,7 @@ void RootsGraph::paint(juce::Graphics& g){
     g.setColour(juce::Colour(0xff070605));
     g.drawRoundedRectangle(full.reduced(1.0f),7.0f,2.0f);
     {
-        g.setColour(juce::Colour(0xff6d5b4b));g.strokePath(surgery::rack::cut(full.reduced(1.5f),7),juce::PathStrokeType(1.15f));
+        g.setColour(juce::Colour(0xff9edfff));g.drawRoundedRectangle(full.reduced(1.5f),12.0f,2.4f);
         g.setColour(juce::Colour(0xff010101));g.strokePath(surgery::rack::cut(full.reduced(4),5),juce::PathStrokeType(2));
     }
     g.setFont(juce::Font(juce::FontOptions("Segoe UI",11.0f,juce::Font::bold)));

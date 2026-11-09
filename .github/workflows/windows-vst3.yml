@@ -2,9 +2,9 @@ name: Scalpel EQ Windows VST3
 
 on:
   push:
-    branches: [ main, polish/scalpel-1.0.6-night-shift-ui ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, design/scalpel-vintage-hardware, feature/xray-3d-fluid, polish/scalpel-1.0.6-night-shift-ui ]
+    branches: [ main, design/scalpel-vintage-hardware, feature/xray-3d-fluid ]
   workflow_dispatch:
 
 concurrency:
@@ -47,7 +47,7 @@ jobs:
       - name: Validate VST3
         shell: pwsh
         run: |
-          Invoke-WebRequest "https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_Windows.zip" -OutFile pluginval.zip
+          Invoke-WebRequest "https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_Windows.zip" -OutFile pluginval.zip -MaximumRetryCount 4 -RetryIntervalSec 5
           Expand-Archive pluginval.zip -DestinationPath pluginval
           $process = Start-Process -FilePath "$PWD\pluginval\pluginval.exe" -ArgumentList @('--strictness-level', '8', '--random-seed', '12345', '--skip-gui-tests', '--output-dir', "$PWD\validation", '--validate', "`"$PWD\dist\Scalpel EQ.vst3`"") -Wait -PassThru -WindowStyle Hidden
           if ($process.ExitCode -ne 0) { throw "pluginval failed" }
