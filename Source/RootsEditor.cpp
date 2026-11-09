@@ -1535,7 +1535,7 @@ void RootsEditor::layoutRack(){
     for(auto* label:{&analyzerDepthLabel_,&analyzerSlopeLabel_,&analyzerMemoryLabel_})
         label->setFont(juce::Font(juce::FontOptions("Segoe UI",16.5f,juce::Font::bold)));
     analyzerDepthLabel_.setBounds(79,456,220,24);
-    analyzerMemoryLabel_.setBounds(448,456,220,24);
+    analyzerMemoryLabel_.setBounds(448,450,220,18);
     analyzerSlopeLabel_.setBounds(819,456,220,24);
     heatToggle_.setBounds(141,488,96,96);
     // Distribution layout: Visual Decay occupies the centre knob bay while

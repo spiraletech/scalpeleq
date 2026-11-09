@@ -51,8 +51,18 @@ inline bool verifyUI106(PRISMVSTAudioProcessor&, juce::AudioProcessorEditor& edi
         if(auto* slider=dynamic_cast<juce::Slider*>(child);
            slider&&slider->getBounds()==juce::Rectangle<int>(497,472,142,110))
             decayKnobFound=true;
-    // ANALYZE geometry is host-transformed; the visual snapshot is the source of truth.
-    // Keep the functional freeze color assertion below.
+    if(heat==nullptr||freeze==nullptr||heatLabel==nullptr||freezeLabel==nullptr||decayLabel==nullptr||
+       !heat->isVisible()||!freeze->isVisible()||!decayKnobFound||
+       heat->getBounds()!=juce::Rectangle<int>(141,488,96,96)||
+       freeze->getBounds()!=juce::Rectangle<int>(881,488,96,96)||
+       heatLabel->getBounds()!=juce::Rectangle<int>(79,456,220,24)||
+       decayLabel->getBounds()!=juce::Rectangle<int>(448,450,220,18)||
+       freezeLabel->getBounds()!=juce::Rectangle<int>(819,456,220,24)||
+       heatLabel->getFont().getHeight()<16.0f||
+       freezeLabel->getFont().getHeight()<16.0f||
+       decayLabel->getFont().getHeight()<16.0f){
+        std::cerr<<"UI106: approved ANALYZE switch geometry or typography changed\n";return false;
+    }
 
     freeze->setToggleState(true,juce::sendNotificationSync);
     const auto freezeImage=freeze->createComponentSnapshot(freeze->getLocalBounds());
@@ -74,7 +84,7 @@ inline bool verifyUI106(PRISMVSTAudioProcessor&, juce::AudioProcessorEditor& edi
     }};
     for(const auto point:corners){
         const auto pixel=image.getPixelAt(point.x,point.y);
-        if(pixel.getFloatAlpha()<.99f){
+        if(pixel.getFloatAlpha()<.99f||pixel.getPerceivedBrightness()<.20f){
             std::cerr<<"UI106: plugin-owned black canvas remains at editor corner "
                      <<point.x<<','<<point.y<<"\n";return false;
         }
@@ -83,4 +93,3 @@ inline bool verifyUI106(PRISMVSTAudioProcessor&, juce::AudioProcessorEditor& edi
     std::cout<<"SCALPEL UI 1.0.6: edge-to-edge face and 16:9 resize contract passed\n";
     return true;
 }
-
