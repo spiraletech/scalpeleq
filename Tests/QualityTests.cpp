@@ -154,6 +154,10 @@ bool verifyCarveGraphSync(){
     // feed audio or move the mouse, which previously hid the stale-marker bug.
     graph->setFrozen(true);
     editor->addToDesktop(0);editor->setTopLeftPosition(25,25);editor->setVisible(true);
+    // Park the native cursor over the header once. An inherited desktop
+    // cursor over the lens can open a hover readout that hides test pixels.
+    juce::Desktop::getInstance().getMainMouseSource().setScreenPosition(
+        editor->localPointToGlobal(juce::Point<int>{100,40}).toFloat());
     const auto pump=[](int ms){juce::MessageManager::getInstance()->runDispatchLoopUntil(ms);};
     const auto save=[](const juce::Image& image,const juce::String& name){
         juce::FileOutputStream out(juce::File::getCurrentWorkingDirectory().getChildFile(name));
@@ -194,6 +198,7 @@ bool verifyCarveGraphSync(){
                     if(c.getRed()>245&&c.getGreen()>245&&c.getBlue()>245){sumX+=x+.5;++count;}
                 }
                 if(count<12||std::abs(sumX/count-expectedX)>2.){
+                    save(editor->createComponentSnapshot(editor->getLocalBounds()),"surgery-ui-CARVE-frequency-failure.png");
                     std::cerr<<"CARVE marker does not match Hz: "<<actual<<" expected x "<<expectedX<<" white pixels "<<count<<"\n";return false;
                 }
                 measurements<<root<<','<<slot<<','<<actual<<','<<expectedX<<','<<sumX/count<<'\n';
