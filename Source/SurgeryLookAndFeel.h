@@ -7,6 +7,7 @@
 #include "ScalpelAssets.h"
 #include <cmath>
 #include "OnyxRackSkin.h"
+#include "ScalpelMaterials.h"
 class SurgeryLookAndFeel final : public juce::LookAndFeel_V4 {
 public:
     SurgeryLookAndFeel(){
@@ -16,7 +17,7 @@ public:
         setColour(juce::PopupMenu::highlightedTextColourId,juce::Colour(0xfff5fbff));
         setColour(juce::ComboBox::textColourId,juce::Colour(0xffedf5ff));
     }
-    juce::Font getComboBoxFont(juce::ComboBox&) override {return juce::Font(juce::FontOptions("Segoe UI",13.0f,juce::Font::plain));}
+    juce::Font getComboBoxFont(juce::ComboBox&) override {return juce::Font(juce::FontOptions("Segoe UI",16.0f,juce::Font::bold));}
     juce::Font getPopupMenuFont() override {return juce::Font(juce::FontOptions("Segoe UI",13.0f,juce::Font::plain));}
     void positionComboBoxText(juce::ComboBox& box,juce::Label& label) override {
         label.setBounds(10,1,juce::jmax(0,box.getWidth()-36),box.getHeight()-2);
@@ -42,7 +43,7 @@ public:
     void drawRotarySlider(juce::Graphics& g,int x,int y,int w,int h,float position,
                           float start,float end,juce::Slider& slider) override {
         const float cx=x+w*.5f,cy=y+h*.46f;
-        const float radius=juce::jlimit(14.f,42.f,.43f*(float)std::min(w,h));
+        const float radius=juce::jlimit(14.f,44.f,.48f*(float)std::min(w,h));
         const float angle=start+position*(end-start);
         const auto face=juce::Rectangle<float>(cx-radius,cy-radius,2*radius,2*radius);
 
@@ -51,11 +52,11 @@ public:
         // look and remains sharp at every host DPI.
         g.setColour(juce::Colour(0xff02070b).withAlpha(.55f));
         g.fillEllipse(face.translated(1.5f,3.0f).expanded(1.5f));
-        juce::ColourGradient bezel(juce::Colour(0xff536c7d),cx-radius,cy-radius,
+        juce::ColourGradient bezel(juce::Colour(0xff858e96),cx-radius,cy-radius,
                                    juce::Colour(0xff050a0f),cx+radius,cy+radius,false);
         g.setGradientFill(bezel);g.fillEllipse(face.expanded(1.4f));
         g.setColour(juce::Colour(0xff0b0908));g.fillEllipse(face);
-        juce::ColourGradient dial(juce::Colour(0xff172832),cx-radius*.45f,cy-radius,
+        juce::ColourGradient dial(juce::Colour(0xff202328),cx-radius*.45f,cy-radius,
                                   juce::Colour(0xff05090e),cx+radius*.55f,cy+radius,false);
         g.setGradientFill(dial);g.fillEllipse(face.reduced(4.5f));
         for(int ring=1;ring<18;++ring){
@@ -150,38 +151,8 @@ public:
             }
             return;
         }
-        if(bandSelector||actionSwitch){
-            g.setColour(juce::Colour(0xff02070b).withAlpha(.95f));
-            g.fillRoundedRectangle(r.translated(0,2.0f).expanded(1.1f),3.5f);
-            juce::ColourGradient silver(juce::Colour(0xffd8e4eb),r.getX(),r.getY(),
-                                        juce::Colour(0xff8ea2ae),r.getX(),r.getBottom(),false);
-            silver.addColour(.2,juce::Colour(0xffc3d1d9));
-            g.setGradientFill(silver);g.fillRoundedRectangle(r.reduced(1.0f),2.5f);
-            g.setColour(juce::Colour(0xff293b47));
-            g.drawRoundedRectangle(r.reduced(.8f),3.0f,1.0f);
-            g.setColour(juce::Colours::white.withAlpha(.38f));
-            g.drawLine(r.getX()+4,r.getY()+2,r.getRight()-4,r.getY()+2,.8f);
-            if(active){
-                g.setColour(juce::Colour(0xff8fdcff).withAlpha(.60f));
-                g.drawRoundedRectangle(r.reduced(1.2f),2.6f,1.5f);
-            }
-            return;
-        }
-        if(carveSelector){
-            g.setColour(juce::Colour(0xff02070b).withAlpha(.93f));
-            g.fillRoundedRectangle(r.translated(0,2.0f).expanded(1.1f),3.5f);
-            juce::ColourGradient silver(juce::Colour(0xffd8e4eb),r.getX(),r.getY(),
-                                        juce::Colour(0xff8ea2ae),r.getX(),r.getBottom(),false);
-            silver.addColour(.22,juce::Colour(0xffc3d1d9));
-            g.setGradientFill(silver);g.fillRoundedRectangle(r.reduced(1.0f),2.5f);
-            g.setColour(juce::Colour(0xff293b47));
-            g.drawRoundedRectangle(r.reduced(.8f),3.0f,1.0f);
-            g.setColour(juce::Colours::white.withAlpha(.35f));
-            g.drawLine(r.getX()+4,r.getY()+2,r.getRight()-4,r.getY()+2,.8f);
-            if(active){
-                g.setColour(juce::Colour(0xff8fdcff).withAlpha(.24f));
-                g.drawRoundedRectangle(r.reduced(1.5f),2.4f,1.4f);
-            }
+        if(bandSelector||actionSwitch||carveSelector){
+            scalpel::materials::hardware(g,r,button.getToggleState());
             return;
         }
         if(snow||heat){
@@ -208,8 +179,8 @@ public:
                 g.setColour(juce::Colour(0xffbfeeff));
                 g.drawRoundedRectangle(tile.expanded(2.0f),8.5f,2.0f);
             }
-            juce::ColourGradient bezel(juce::Colour(0xffffe7cb),tile.getX(),tile.getY(),
-                                       juce::Colour(0xff6d5140),tile.getRight(),tile.getBottom(),false);
+            juce::ColourGradient bezel(juce::Colour(0xffe2e4e6),tile.getX(),tile.getY(),
+                                       juce::Colour(0xff51585f),tile.getRight(),tile.getBottom(),false);
             g.setGradientFill(bezel);g.fillRoundedRectangle(tile,7.0f);
             const auto face=tile.reduced(5.0f);
             juce::ColourGradient darkFace(juce::Colour(0xff35302c),face.getX(),face.getY(),
@@ -270,7 +241,7 @@ public:
                 g.strokePath(inner,juce::PathStrokeType(2.4f,juce::PathStrokeType::curved,
                                                         juce::PathStrokeType::rounded));
             }else{
-                g.setColour(active?juce::Colour(0xffbfeeff):juce::Colour(0xffffead1));
+                g.setColour(active?juce::Colour(0xffbfeeff):juce::Colour(0xffadc9d9));
                 const float length=face.getWidth()*.36f;
                 // Three uninterrupted axes guarantee a readable crystalline
                 // centre. Six outward forks stay connected at native scale.
@@ -382,10 +353,10 @@ public:
     void drawComboBox(juce::Graphics& g,int w,int h,bool,int,int,int,int,juce::ComboBox& box) override {
         auto r=juce::Rectangle<float>(1,1,(float)w-2,(float)h-2);
         g.setColour(juce::Colour(0xff02070b));g.fillRoundedRectangle(r.expanded(.8f),3.f);
-        juce::ColourGradient inset(juce::Colour(0xff0c1822),0,0,
-                                  juce::Colour(0xff1c2d3b),0,(float)h,false);
+        juce::ColourGradient inset(juce::Colour(0xff25292e),0,0,
+                                  juce::Colour(0xff080a0d),0,(float)h,false);
         g.setGradientFill(inset);g.fillRoundedRectangle(r.reduced(1.f),2.f);
-        g.setColour(juce::Colour(0xff5f829a));g.drawRoundedRectangle(r,3.f,.9f);
+        g.setColour(juce::Colour(0xff858e96));g.drawRoundedRectangle(r,3.f,1.1f);
         g.setColour(juce::Colour(0xffe8f6ff));
         juce::Path arrow;arrow.startNewSubPath((float)w-20,h*.42f);arrow.lineTo((float)w-15,h*.6f);arrow.lineTo((float)w-10,h*.42f);
         g.strokePath(arrow,juce::PathStrokeType(1.6f));
@@ -399,7 +370,7 @@ public:
             g.drawRoundedRectangle(r,3.f,.8f);
             if(!label.isBeingEdited()){
                 g.setColour(slider->findColour(juce::Slider::textBoxTextColourId));
-                g.setFont(juce::Font(juce::FontOptions("Segoe UI",13.0f,juce::Font::bold)));
+                g.setFont(juce::Font(juce::FontOptions("Segoe UI",18.0f,juce::Font::bold)));
                 g.drawFittedText(label.getText(),label.getLocalBounds().reduced(3,1),
                                  juce::Justification::centred,1);
             }

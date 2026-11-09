@@ -34,7 +34,7 @@ juce::Colour territory(int i){
 }
 void rotary(juce::Slider& s,juce::String suffix,double resetValue) {
     s.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    s.setTextBoxStyle(juce::Slider::TextBoxBelow,false,90,22);
+    s.setTextBoxStyle(juce::Slider::TextBoxBelow,false,100,25);
     s.setColour(juce::Slider::textBoxTextColourId,scalpel::ui105::amber);
     s.setColour(juce::Slider::textBoxBackgroundColourId,juce::Colour(0xff071018));
     s.setColour(juce::Slider::textBoxOutlineColourId,juce::Colour(0xff567b96));
@@ -179,7 +179,7 @@ void RootsGraph::paint(juce::Graphics& g){
     const auto full=getLocalBounds().toFloat();
     const auto r=area();
 
-    const juce::Colour top(0xff122432),bottom(0xff050a10);
+    const juce::Colour top(0xff030d19),bottom(0xff01070d);
     juce::ColourGradient bg(top,full.getX(),full.getY(),
                             bottom,full.getX(),full.getBottom(),false);
     bg.addColour(.43,juce::Colour(0xff0a151f));
@@ -1459,13 +1459,13 @@ void RootsEditor::layoutRack(){
     for(auto* label:{&gainLabel_,&thresholdLabel_,&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_,
                      &analyzerDepthLabel_,&analyzerSlopeLabel_,&analyzerMemoryLabel_}){
         label->setJustificationType(juce::Justification::centred);
-        label->setFont(juce::Font(juce::FontOptions("Segoe UI",12.5f,juce::Font::bold)));
+        label->setFont(juce::Font(juce::FontOptions("Segoe UI",14.0f,juce::Font::bold)));
     }
     title_.setVisible(false);
     for(int root=0;root<7;++root){
         auto& button=rootButtons_[(size_t)root];
         button.setVisible(true);
-        button.setBounds(27+root*152,92,146,30);
+        button.setBounds(27+root*152,91,146,34);
     }
 
     graph_.setBounds(20,140,1080,246);
@@ -1502,7 +1502,7 @@ void RootsEditor::layoutRack(){
     // COLOR: five equal channels share the approved CARVE font and readout geometry.
     for(int i=0;i<5;++i){
         onyxLabels_[(size_t)i].setBounds(18+i*210,456,194,22);
-        onyxLabels_[(size_t)i].setFont(juce::Font(juce::FontOptions("Segoe UI",12.5f,juce::Font::bold|juce::Font::italic)));
+        onyxLabels_[(size_t)i].setFont(juce::Font(juce::FontOptions("Segoe UI",14.0f,juce::Font::bold)));
         onyxSliders_[(size_t)i].setBounds(45+i*210,474,140,108);
     }
 

@@ -16,14 +16,14 @@ inline void roundedPanel(juce::Graphics& g, juce::Rectangle<float> r, bool dark,
 {
     g.setColour(juce::Colour(0xff02070b).withAlpha(.96f));
     g.fillRoundedRectangle(r.expanded(2.0f).translated(0, 1.5f), radius + 1.0f);
-    juce::ColourGradient face(dark ? juce::Colour(0xff0b151d) : juce::Colour(0xffb7c8d5),
+    juce::ColourGradient face(dark ? juce::Colour(0xff17191d) : juce::Colour(0xffc3c7cb),
                               r.getX(), r.getY(),
                               dark ? juce::Colour(0xff02060a) : juce::Colour(0xff526b7c),
                               r.getX(), r.getBottom(), false);
     if (!dark) face.addColour(.35, juce::Colour(0xffe6f1fb));
     g.setGradientFill(face);
     g.fillRoundedRectangle(r, radius);
-    g.setColour((dark ? juce::Colour(0xff2b4a60) : juce::Colour(0xffb7d0df)).withAlpha(.72f));
+    g.setColour((dark ? scalpel::materials::edge : scalpel::materials::silver).withAlpha(.62f));
     g.drawRoundedRectangle(r.reduced(.8f), radius - .6f, 1.0f);
     g.setColour(juce::Colour(0xff061019).withAlpha(.96f));
     g.drawRoundedRectangle(r, radius, 1.0f);
@@ -50,7 +50,7 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
     g.setGradientFill(shell);
     g.fillRect(full.reduced(10.0f));
     scalpel::materials::surface(g,full.reduced(6.0f),22.0f);
-    g.setColour(juce::Colour(0xff35566d).withAlpha(.72f));
+    g.setColour(scalpel::materials::edge.withAlpha(.72f));
     g.drawRoundedRectangle(full.reduced(2.0f), 23.0f, 1.3f);
     g.setColour(juce::Colour(0xff010305).withAlpha(.98f));
     g.drawRoundedRectangle(full.reduced(5.0f), 20.0f, 1.0f);
@@ -59,7 +59,7 @@ inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
     g.setColour(juce::Colour(0xffedf5ff));
     g.setFont(juce::Font(juce::FontOptions("Segoe UI", 34.0f, juce::Font::bold)));
     g.drawFittedText("SCALPEL EQ", 56, 30, 255, 37, juce::Justification::centredLeft, 1);
-    g.setFont(juce::Font(juce::FontOptions("Segoe UI", 11.5f, juce::Font::plain)));
+    g.setFont(juce::Font(juce::FontOptions("Segoe UI", 14.0f, juce::Font::plain)));
     g.drawFittedText("P R E C I S I O N   E Q U A L I Z E R", 350, 38, 360, 26,
                      juce::Justification::centred, 1);
     g.drawFittedText("A N A L O G   C O N S O L E   S E R I E S", width - 390, 38, 335, 26,
