@@ -2,7 +2,7 @@ name: Scalpel EQ Windows VST3
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, 'ui-fidelity/**' ]
   pull_request:
     branches: [ main, design/scalpel-vintage-hardware, feature/xray-3d-fluid ]
   workflow_dispatch:
