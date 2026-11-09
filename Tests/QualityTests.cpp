@@ -203,6 +203,26 @@ bool runQualityTests(){
             }
         }
         if(visibleBandDials!=2){std::cerr<<"Scalpel Band panel has "<<visibleBandDials<<" visible knobs, expected 2\n";return false;}
+        // Exercise both enable commands after every root/slot rebind. This
+        // catches commands being overwritten by a second toggle attachment.
+        for(int root=0;root<7;++root){
+            if(!click(*ui,"BAND "+juce::String(root+1))||!click(*ui,"BAND MODE"))return false;
+            for(const auto* state:{"OFF","ON","ON","OFF","ON"}){
+                if(!click(*ui,state))return false;
+                const bool expected=juce::String(state)=="ON";
+                if((fresh->apvts.getRawParameterValue(PRISMVSTAudioProcessor::rootsRootControlId(root,"on"))->load()>=.5f)!=expected)return false;
+            }
+            if(!click(*ui,"CARVE"))return false;
+            for(int slot=0;slot<4;++slot){
+                if(!click(*ui,"C"+juce::String(slot+1)))return false;
+                for(const auto* state:{"OFF","ON","ON","OFF"}){
+                    if(!click(*ui,state))return false;
+                    const bool expected=juce::String(state)=="ON";
+                    if((fresh->apvts.getRawParameterValue(PRISMVSTAudioProcessor::carveId(root,slot,"on"))->load()>=.5f)!=expected)return false;
+                }
+            }
+        }
+        if(!click(*ui,"BAND 1")||!click(*ui,"BAND MODE"))return false;
         for(const auto& item:std::array<std::pair<const char*,const char*>,3>{{
                 {"MONO","mono"},{"PHASE CORRECTION","phase"},{"LIMIT","limit_on"}}}){
             juce::TextButton* control=nullptr;
