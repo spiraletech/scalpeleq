@@ -24,7 +24,10 @@ inline void hardware(juce::Graphics& g,juce::Rectangle<float> r,bool selected)
 inline const juce::Image& carbon()
 {
     static const juce::Image tile=[] {
-        juce::Image image(juce::Image::RGB,128,128,true);
+        // This function-static cache outlives editors. Never retain a native
+        // Direct2D image until VST3 DLL teardown under the loader lock.
+        auto image=juce::SoftwareImageType{}.convert(
+            juce::Image(juce::Image::RGB,128,128,true));
         juce::Random random(1062026);
         for(int y=0;y<128;++y)for(int x=0;x<128;++x){
             const int weave=((x+y)%8<2)?3:0;

@@ -3,6 +3,7 @@
 #include "../Source/ScalpelFluid3D.h"
 #include "../Source/ScalpelAssets.h"
 #include "../Source/ScalpelReferenceLayout.h"
+#include "../Source/ScalpelMaterials.h"
 #include <BinaryData.h>
 #include <chrono>
 #include <fstream>
@@ -52,6 +53,7 @@ bool verifyPluginRemovalLifecycle() {
     // Static PNGs must remain software-backed so no Direct2D/NVIDIA resource
     // survives until Windows loader-lock teardown.
     for(const auto& image:{
+        scalpel::materials::carbon(),
         scalpel::loadSoftwareAsset(BinaryData::scalpelknob_png,BinaryData::scalpelknob_pngSize),
         scalpel::loadSoftwareAsset(BinaryData::scalpelfreeze_png,BinaryData::scalpelfreeze_pngSize),
         scalpel::loadSoftwareAsset(BinaryData::scalpelheatmap_png,BinaryData::scalpelheatmap_pngSize),
