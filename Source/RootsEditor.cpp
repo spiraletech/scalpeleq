@@ -61,6 +61,8 @@ juce::Rectangle<float> RootsGraph::area() const {
     // 1.0.5 reserves a true utility bay for PEAK and independent L/R meters.
     // The spectrum remains logarithmic and interactive inside the left lens.
     const auto b=getLocalBounds().toFloat();
+    if(mode_==2)return scalpel::reference::rect(98,187,1044,253)
+        .translated(-scalpel::reference::analyzer.getX(),-scalpel::reference::analyzer.getY());
     return {b.getX()+55.f,b.getY()+22.f,b.getWidth()-302.f,b.getHeight()-56.f};
 }
 float RootsGraph::freqToX(float f) const {
@@ -1518,6 +1520,25 @@ void RootsEditor::layoutRack(){
     // Freeze moves to the right switch bay. Bindings and behavior are unchanged.
     analyzerMemory_.setBounds(487,472,142,110);
     freezeButton_.setBounds(881,488,96,96);
+
+    // COLOR is the sole reference-validation page in this recovery pass.
+    // Every bound comes from the 1536x864 faceplate, then shares the existing
+    // uniform host/DPI transform. Other page geometry stays at its baseline.
+    if(mode_==2){
+        using namespace scalpel::reference;
+        for(int root=0;root<7;++root)
+            rootButtons_[(size_t)root].setBounds(bounds(31+root*212,111,199,42));
+        graph_.setBounds(analyzer.toNearestInt());
+        for(int page=0;page<4;++page)
+            modeButtons_[(size_t)page].setBounds(bounds(38+page*368,496,366,51));
+        xrayButton_.setBounds(bounds(1210,190,154,50));
+        peakHold_.setBounds(bounds(1215,411,154,50));
+        for(int i=0;i<5;++i){
+            const float centre=knobCentres[(size_t)i];
+            onyxLabels_[(size_t)i].setBounds(bounds(centre-130,584,260,25));
+            onyxSliders_[(size_t)i].setBounds(bounds(centre-100,615,200,168));
+        }
+    }
 
     jukeModeLabel_.setBounds(0,0,1,1);jukeMode_.setBounds(0,0,1,1);
     weatherMode_.setBounds(0,0,1,1);reducedMotion_.setBounds(0,0,1,1);

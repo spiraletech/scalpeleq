@@ -2,6 +2,7 @@
 #include "../Source/PluginProcessor.h"
 #include "../Source/ScalpelFluid3D.h"
 #include "../Source/ScalpelAssets.h"
+#include "../Source/ScalpelReferenceLayout.h"
 #include <BinaryData.h>
 #include <chrono>
 #include <fstream>
@@ -576,6 +577,21 @@ bool runQualityTests(){
             .getChildFile("scalpel-ui-default-1344x756-"+juce::String(tab)+".png");
         juce::FileOutputStream stream(out);stream.setPosition(0);stream.truncate();
         if(!juce::PNGImageFormat().writeImageToStream(native,stream))return false;
+    }
+    // Recovery comparison uses a fresh, silent instance, with no mutated
+    // CARVE or COLOR fixture parameters. The analyzer remains genuinely live.
+    {
+        std::unique_ptr<juce::AudioProcessor> fresh(createPluginFilter());
+        std::unique_ptr<juce::AudioProcessorEditor> review(fresh->createEditor());
+        review->setSize(1344,756);
+        if(!click(*review,"COLOR"))return false;
+        juce::Timer::callPendingTimersSynchronously();
+        const auto capture=review->createComponentSnapshot(review->getLocalBounds());
+        juce::FileOutputStream out(juce::File::getCurrentWorkingDirectory().getChildFile("scalpel-ui-recovery-COLOR-1344x756.png"));
+        if(!juce::PNGImageFormat().writeImageToStream(capture,out))return false;
+        const auto transform=surgery::rack::contentTransform(1344,756);
+        const auto deck=scalpel::reference::deck.transformedBy(transform);
+        if(std::abs(deck.getY()-494.375f)>4.f||std::abs(deck.getHeight()-227.5f)>4.f)return false;
     }
     click(*editor,"COLOR");
     editor->setSize(1120,755);
