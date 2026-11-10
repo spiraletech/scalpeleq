@@ -5,7 +5,7 @@
 
 // Rendering only. All dimensions come from existing component bounds.
 namespace scalpel::finish {
-inline constexpr bool validatedAllPages=false; // CARVE/COLOR verification gate.
+inline constexpr bool validatedAllPages=true; // CARVE/COLOR gate: ad56ed4, run 42925303416.
 inline bool enabledForMode(int mode) noexcept {return validatedAllPages||mode==1||mode==2;}
 inline const juce::Colour chassis{0xff121417},faceplate{0xff0b0e12},deck{0xff151719};
 inline const juce::Colour analyzer{0xff030d19},graphite{0xff10151a},titanium{0xff9ea8b1};
@@ -125,18 +125,18 @@ inline void knob(juce::Graphics& g,int x,int y,int w,int h,float position,float 
     g.setGradientFill(rim);g.fillEllipse(face.expanded(1.4f));
     g.setColour(juce::Colour(0xff03070a));g.fillEllipse(face);
     const auto inner=face.reduced(4.5f);
-    juce::ColourGradient radial(juce::Colour(0xff253039),cx-radius*.25f,cy-radius*.32f,
+    juce::ColourGradient radial(juce::Colour(0xff1e2831),cx-radius*.25f,cy-radius*.32f,
         juce::Colour(0xff070b10),cx+radius*.75f,cy+radius*.65f,true);
-    radial.addColour(.48,graphite);radial.addColour(.82,juce::Colour(0xff0d1217));
+    radial.addColour(.22,graphite);radial.addColour(.82,juce::Colour(0xff0d1217));
     g.setGradientFill(radial);g.fillEllipse(inner);
     {
         juce::Graphics::ScopedSaveState saved(g);juce::Path clip;clip.addEllipse(inner);g.reduceClipRegion(clip);
         // Very faint directional reflections across the concentric machining.
-        juce::ColourGradient reflection(silver.withAlpha(.065f),cx-radius*.7f,cy-radius,
+        juce::ColourGradient reflection(silver.withAlpha(.035f),cx-radius*.7f,cy-radius,
             juce::Colours::transparentWhite,cx+radius*.2f,cy+radius*.45f,false);
         g.setGradientFill(reflection);g.fillEllipse(inner);
         for(float inset=5.5f;inset<radius-2;inset+=1.15f){
-            g.setColour(silver.withAlpha(.025f));g.drawEllipse(face.reduced(inset),.30f);
+            g.setColour(silver.withAlpha(.035f));g.drawEllipse(face.reduced(inset),.30f);
         }
     }
     g.setColour(titanium.withAlpha(.60f));g.drawEllipse(inner,.85f);
@@ -156,7 +156,7 @@ inline void knob(juce::Graphics& g,int x,int y,int w,int h,float position,float 
     g.setColour(ice);g.fillPath(pointer);
 }
 // Explicit tabular digit advances, retaining the same font as the labels.
-inline void number(juce::Graphics& g,const juce::String& value,juce::Rectangle<float> r,float size=18){
+inline void number(juce::Graphics& g,const juce::String& value,juce::Rectangle<float> r,float size=20){
     auto f=font(size);const float cell=f.getStringWidthFloat("0");
     float width=0;for(auto c:value)width+=juce::CharacterFunctions::isDigit(c)?cell:f.getStringWidthFloat(juce::String::charToString(c));
     if(width>r.getWidth()){f=font(size*r.getWidth()/width);}

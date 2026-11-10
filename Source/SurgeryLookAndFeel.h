@@ -196,7 +196,7 @@ public:
             const auto tile=juce::Rectangle<float>(r.getCentreX()-side*.5f,
                                                    r.getCentreY()-side*.5f,
                                                    side,side);
-            g.setColour(juce::Colour(0xff3d281c).withAlpha(.42f));
+            g.setColour((finish_?juce::Colours::black:juce::Colour(0xff3d281c)).withAlpha(.42f));
             g.fillRoundedRectangle(tile.translated(2.0f,4.0f).expanded(2.0f),8.0f);
             if(heat&&active){
                 g.setColour(juce::Colour(0xffff7800).withAlpha(.16f));
@@ -212,14 +212,14 @@ public:
                 g.setColour(juce::Colour(0xffbfeeff));
                 g.drawRoundedRectangle(tile.expanded(2.0f),8.5f,2.0f);
             }
-            juce::ColourGradient bezel(juce::Colour(0xffe2e4e6),tile.getX(),tile.getY(),
-                                       juce::Colour(0xff51585f),tile.getRight(),tile.getBottom(),false);
+            juce::ColourGradient bezel(finish_?scalpel::finish::silver:juce::Colour(0xffe2e4e6),tile.getX(),tile.getY(),
+                                       finish_?scalpel::finish::titanium.darker(.4f):juce::Colour(0xff51585f),tile.getRight(),tile.getBottom(),false);
             g.setGradientFill(bezel);g.fillRoundedRectangle(tile,7.0f);
             const auto face=tile.reduced(5.0f);
-            juce::ColourGradient darkFace(juce::Colour(0xff35302c),face.getX(),face.getY(),
-                                          juce::Colour(0xff0b0908),face.getRight(),face.getBottom(),false);
+            juce::ColourGradient darkFace(finish_?scalpel::finish::graphite:juce::Colour(0xff35302c),face.getX(),face.getY(),
+                                          juce::Colour(finish_?0xff060a0e:0xff0b0908),face.getRight(),face.getBottom(),false);
             g.setGradientFill(darkFace);g.fillRoundedRectangle(face,5.0f);
-            g.setColour(juce::Colour(0xfffff0dc).withAlpha(.34f));
+            g.setColour((finish_?scalpel::finish::silver:juce::Colour(0xfffff0dc)).withAlpha(.34f));
             g.drawRoundedRectangle(face.reduced(.7f),4.5f,1.0f);
             if(!heat&&active){
                 // Keep enough continuous ice-blue surface for the active
@@ -295,7 +295,7 @@ public:
                 }
                 g.fillEllipse(centre.x-1.7f,centre.y-1.7f,3.4f,3.4f);
                 if(active){
-                    g.setColour(juce::Colour(0xffffead1).withAlpha(.22f));
+                    g.setColour((finish_?scalpel::finish::ice:juce::Colour(0xffffead1)).withAlpha(.22f));
                     g.drawRoundedRectangle(tile.expanded(2.0f),8.5f,3.0f);
                 }
             }
@@ -429,8 +429,15 @@ public:
             }
             if(!label.isBeingEdited()){
                 g.setColour(label.isEnabled()?scalpel::finish::text:scalpel::finish::secondary);
-                g.setFont(scalpel::finish::font(dynamic_cast<juce::ComboBox*>(label.getParentComponent())?16.f:14.f));
-                g.drawFittedText(label.getText(),label.getBorderSize().subtractedFrom(label.getLocalBounds()),label.getJustificationType(),1);
+                const auto r=label.getBorderSize().subtractedFrom(label.getLocalBounds());
+                auto f=scalpel::finish::font(16.f);g.setFont(f);
+                if(dynamic_cast<juce::ComboBox*>(label.getParentComponent()))
+                    g.drawFittedText(label.getText(),r,label.getJustificationType(),1);
+                else {
+                    const float width=f.getStringWidthFloat(label.getText());
+                    const float x=label.getJustificationType().testFlags(juce::Justification::horizontallyCentred)?r.getCentreX()-width*.5f:(float)r.getX();
+                    juce::GlyphArrangement glyphs;glyphs.addLineOfText(f,label.getText(),x,r.getY()+f.getAscent());glyphs.draw(g);
+                }
             }
             return;
         }
