@@ -20,6 +20,7 @@
 #include "SurgeryRecoveryTests.h"
 #include "SurgeryChassisTests.h"
 #include "SurgeryWeatherUITests.h"
+#include "ScalpelFinishTests.h"
 
 void startAllocationProbe() noexcept;
 std::size_t finishAllocationProbe() noexcept;
@@ -230,6 +231,7 @@ bool runQualityTests(){
         return false;
     }
     juce::ScopedJuceInitialiser_GUI gui;
+    if(!verifyScalpelFinish()){std::cerr<<"AAA finish validation failed\n";return false;}
     {
         PRISMVSTAudioProcessor p;
         auto* parameter=p.apvts.getParameter(PRISMVSTAudioProcessor::carveId(0,0,"hz"));

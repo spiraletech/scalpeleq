@@ -8,8 +8,17 @@
 #include <cmath>
 #include "OnyxRackSkin.h"
 #include "ScalpelMaterials.h"
+#include "ScalpelFinish.h"
 class SurgeryLookAndFeel final : public juce::LookAndFeel_V4 {
+    bool finish_=false;
 public:
+    void setFinishEnabled(bool enabled){
+        finish_=enabled;
+        setColour(juce::PopupMenu::backgroundColourId,enabled?scalpel::finish::faceplate:juce::Colour(0xff0b141d));
+        setColour(juce::PopupMenu::textColourId,enabled?scalpel::finish::text:juce::Colour(0xffedf5ff));
+        setColour(juce::PopupMenu::highlightedBackgroundColourId,enabled?juce::Colour(0xff202c34):juce::Colour(0xff244866));
+        setColour(juce::PopupMenu::highlightedTextColourId,enabled?scalpel::finish::ice:juce::Colour(0xfff5fbff));
+    }
     SurgeryLookAndFeel(){
         setColour(juce::PopupMenu::backgroundColourId,juce::Colour(0xff0b141d));
         setColour(juce::PopupMenu::textColourId,juce::Colour(0xffedf5ff));
@@ -38,10 +47,11 @@ public:
                           bool highlighted,bool ticked,bool submenu,const juce::String& text,
                           const juce::String& shortcut,const juce::Drawable* icon,const juce::Colour* colour) override {
         juce::LookAndFeel_V4::drawPopupMenuItem(g,area,separator,active,highlighted||ticked,ticked,submenu,text,shortcut,icon,colour);
-        if(ticked&&!separator){g.setColour(juce::Colour(0xffdd745a));g.fillRect(area.getX()+2,area.getY()+4,2,area.getHeight()-8);}
+        if(ticked&&!separator){g.setColour(finish_?scalpel::finish::ice:juce::Colour(0xffdd745a));g.fillRect(area.getX()+2,area.getY()+4,2,area.getHeight()-8);}
     }
     void drawRotarySlider(juce::Graphics& g,int x,int y,int w,int h,float position,
                           float start,float end,juce::Slider& slider) override {
+        if(finish_){scalpel::finish::knob(g,x,y,w,h,position,start,end,slider);return;}
         const float cx=x+w*.5f,cy=y+h*.46f;
         const float radius=juce::jlimit(14.f,44.f,.48f*(float)std::min(w,h));
         const float angle=start+position*(end-start);
@@ -108,6 +118,29 @@ public:
         const auto text=button.getButtonText();
         const bool bandSelector=text.startsWith("BAND ");
         const bool pageTab=text=="BAND MODE"||text=="CARVE"||text=="COLOR"||text=="ANALYZE";
+        if(finish_){
+            if(pageTab){scalpel::finish::tab(g,r,button.getToggleState(),over);return;}
+            if(bandSelector||actionSwitch||carveSelector){
+                scalpel::finish::hardware(g,r,button.getToggleState(),over,down);
+                const auto warning=button.findColour(juce::TextButton::buttonColourId);
+                if(bandSelector&&warning.getRed()>180&&warning.getGreen()<65&&warning.getBlue()<65){
+                    g.setColour(juce::Colour(0xffed1919).withAlpha(.28f+warning.getFloatAlpha()*.62f));
+                    g.fillRoundedRectangle(r.reduced(2),3);
+                }
+                return;
+            }
+            if(deckSwitch||reset){scalpel::finish::darkButton(g,r,deckSwitch&&button.getToggleState(),over,deckSwitch);return;}
+            if(xray){
+                scalpel::finish::darkButton(g,r,false,over);
+                const float lamp=r.getHeight()*.14f;
+                if(button.getToggleState()){
+                    g.setColour(juce::Colour(0xffff3927).withAlpha(.17f));g.fillEllipse(r.getX()+5,r.getCentreY()-lamp-3,2*lamp+6,2*lamp+6);
+                }
+                g.setColour(juce::Colour(button.getToggleState()?0xffff3927:0xff70221c));
+                g.fillEllipse(r.getX()+8,r.getCentreY()-lamp,lamp*2,lamp*2);
+                return;
+            }
+        }
         if(pageTab){
             const bool selected=button.getToggleState();
             g.setColour(juce::Colour(0xff02070b).withAlpha(.96f));
@@ -323,6 +356,20 @@ public:
     }
     void drawButtonText(juce::Graphics& g,juce::TextButton& b,bool,bool) override {
         if(b.getButtonText()=="FREEZE"||b.getButtonText()=="RESUME"||b.getButtonText().startsWith("SONAR ")||b.getButtonText()=="HEAT MAP")return;
+        if(finish_){
+            const auto label=b.getButtonText();
+            const bool tab=label=="BAND MODE"||label=="CARVE"||label=="COLOR"||label=="ANALYZE";
+            const bool hardware=label.startsWith("BAND ")&&!tab||label=="C1"||label=="C2"||label=="C3"||label=="C4"||
+                label=="MONO"||label=="SOLO"||label.startsWith("PHASE")||label=="LIMIT";
+            g.setColour(!b.isEnabled()?scalpel::finish::secondary:hardware?juce::Colour(0xff070b0f):
+                label=="X-RAY"?juce::Colour(0xffff624b):tab&&!b.getToggleState()?scalpel::finish::secondary:
+                ((label=="ON"||label=="OFF")&&!b.getToggleState())?scalpel::finish::secondary:scalpel::finish::text);
+            g.setFont(scalpel::finish::font(label.startsWith("PHASE")?12.5f:tab?18.f:17.f));
+            auto bounds=label=="X-RAY"?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2);
+            if(tab)bounds=bounds.withTrimmedBottom(4);
+            g.drawFittedText(label,bounds,juce::Justification::centred,1);
+            return;
+        }
         const bool xray=b.getButtonText()=="X-RAY";
         const bool reset=b.getButtonText()=="RESET";
         const auto tabText=b.getButtonText();
@@ -352,6 +399,12 @@ public:
     }
     void drawComboBox(juce::Graphics& g,int w,int h,bool,int,int,int,int,juce::ComboBox& box) override {
         auto r=juce::Rectangle<float>(1,1,(float)w-2,(float)h-2);
+        if(finish_){
+            scalpel::finish::darkButton(g,r,false,box.isMouseOver());
+            g.setColour(scalpel::finish::text);
+            juce::Path arrow;arrow.startNewSubPath((float)w-20,h*.42f);arrow.lineTo((float)w-15,h*.6f);arrow.lineTo((float)w-10,h*.42f);
+            g.strokePath(arrow,juce::PathStrokeType(1.6f));return;
+        }
         g.setColour(juce::Colour(0xff02070b));g.fillRoundedRectangle(r.expanded(.8f),3.f);
         juce::ColourGradient inset(juce::Colour(0xff25292e),0,0,
                                   juce::Colour(0xff080a0d),0,(float)h,false);
@@ -362,6 +415,25 @@ public:
         g.strokePath(arrow,juce::PathStrokeType(1.6f));
     }
     void drawLabel(juce::Graphics& g,juce::Label& label) override {
+        if(finish_){
+            if(dynamic_cast<juce::Slider*>(label.getParentComponent())){
+                const auto r=label.getLocalBounds().toFloat().reduced(.5f);
+                juce::ColourGradient glass(juce::Colour(0xff080d12),r.getX(),r.getY(),juce::Colour(0xff020507),r.getX(),r.getBottom(),false);
+                g.setGradientFill(glass);g.fillRoundedRectangle(r,3);
+                g.setColour(scalpel::finish::titanium.withAlpha(.65f));g.drawRoundedRectangle(r,3,.8f);
+                if(!label.isBeingEdited()){
+                    g.setColour(label.isEnabled()?scalpel::finish::ice:scalpel::finish::secondary);
+                    scalpel::finish::number(g,label.getText(),r.reduced(3,1));
+                }
+                return;
+            }
+            if(!label.isBeingEdited()){
+                g.setColour(label.isEnabled()?scalpel::finish::text:scalpel::finish::secondary);
+                g.setFont(scalpel::finish::font(dynamic_cast<juce::ComboBox*>(label.getParentComponent())?16.f:14.f));
+                g.drawFittedText(label.getText(),label.getBorderSize().subtractedFrom(label.getLocalBounds()),label.getJustificationType(),1);
+            }
+            return;
+        }
         if(auto* slider=dynamic_cast<juce::Slider*>(label.getParentComponent())){
             const auto r=label.getLocalBounds().toFloat().reduced(.5f);
             g.setColour(slider->findColour(juce::Slider::textBoxBackgroundColourId));

@@ -198,18 +198,19 @@ void RootsGraph::paint(juce::Graphics& g){
     const auto full=getLocalBounds().toFloat();
     const auto r=area();
 
+    const bool polished=scalpel::finish::enabledForMode(mode_);
     const juce::Colour top(0xff030d19),bottom(0xff01070d);
     juce::ColourGradient bg(top,full.getX(),full.getY(),
                             bottom,full.getX(),full.getBottom(),false);
-    bg.addColour(.43,juce::Colour(0xff0a151f));
+    bg.addColour(.43,juce::Colour(polished?0xff040d17:0xff0a151f));
     g.setGradientFill(bg);g.fillRoundedRectangle(full.reduced(1.0f),7.0f);
     g.setColour(juce::Colour(0xff070605));
     g.drawRoundedRectangle(full.reduced(1.0f),7.0f,2.0f);
     {
-        g.setColour(juce::Colour(0xff9edfff));g.drawRoundedRectangle(full.reduced(1.5f),12.0f,2.4f);
+        g.setColour(polished?scalpel::finish::ice:juce::Colour(0xff9edfff));g.drawRoundedRectangle(full.reduced(1.5f),12.0f,2.4f);
         g.setColour(juce::Colour(0xff010101));g.strokePath(surgery::rack::cut(full.reduced(4),5),juce::PathStrokeType(2));
     }
-    g.setFont(juce::Font(juce::FontOptions("Segoe UI",11.0f,juce::Font::bold)));
+    g.setFont(juce::Font(juce::FontOptions("Segoe UI",polished?12.0f:11.0f,juce::Font::bold)));
     g.setColour(juce::Colour(0xffb4aaa0));
     // No inherited cyan spectrum title, old SONAR weather image or C1-C4
     // badges: the graph is a continuous, smoked-glass Scalpel lens.
@@ -337,19 +338,19 @@ void RootsGraph::paint(juce::Graphics& g){
         // A charcoal base remains legible even when the measured crest is
         // far below 0 dBFS. Previously the brightest stop lived above the
         // audio silhouette, making the real Windows X-RAY render look flat.
-        juce::ColourGradient tar(juce::Colour(0xff101619).withAlpha(.96f),
-            r.getCentreX(),r.getY(),juce::Colour(0xff020304).withAlpha(.99f),
+        juce::ColourGradient tar(juce::Colour(polished?0xff030d19:0xff101619).withAlpha(.96f),
+            r.getCentreX(),r.getY(),juce::Colour(polished?0xff01060d:0xff020304).withAlpha(.99f),
             r.getCentreX(),r.getBottom(),false);
-        tar.addColour(.43,juce::Colour(0xff0b1418));
-        tar.addColour(.78,juce::Colour(0xff081018));
+        tar.addColour(.43,juce::Colour(polished?0xff050f1a:0xff0b1418));
+        tar.addColour(.78,juce::Colour(polished?0xff020a13:0xff081018));
         g.setGradientFill(tar);g.fillRect(r);
         // Material sheen is a reflection field, not an independent waveform.
         // Its apparent ridges are clipped to the actual FFT silhouette.
-        juce::ColourGradient oblique(juce::Colour(0xffb2c8c5).withAlpha(.075f),
-            r.getX(),r.getBottom(),juce::Colour(0xffba916f).withAlpha(.10f),
+        juce::ColourGradient oblique((polished?scalpel::finish::ice:juce::Colour(0xffb2c8c5)).withAlpha(polished?.018f:.075f),
+            r.getX(),r.getBottom(),(polished?scalpel::finish::silver:juce::Colour(0xffba916f)).withAlpha(polished?.020f:.10f),
             r.getRight(),r.getY(),false);
-        oblique.addColour(.38,juce::Colour(0xff282026).withAlpha(.016f));
-        oblique.addColour(.73,juce::Colour(0xffb9a5c2).withAlpha(.048f));
+        oblique.addColour(.38,juce::Colour(polished?0xff10151a:0xff282026).withAlpha(.016f));
+        oblique.addColour(.73,juce::Colour(polished?0xffa6eeff:0xffb9a5c2).withAlpha(polished?.012f:.048f));
         g.setGradientFill(oblique);g.fillRect(r);
         // Approximate an oily normal/thin-film field at 30 Hz; the 60 Hz
         // surface curves below interpolate the measured FFT at every frame.
@@ -544,6 +545,7 @@ void RootsGraph::paint(juce::Graphics& g){
     }
     const float overlayScale=juce::jlimit(.5f,4.f,g.getInternalContext().getPhysicalPixelScaleFactor());
     overlayKey[24]=overlayScale;
+    overlayKey[25]=polished?1.:0.;
     if(!responseOverlayValid_||responseOverlayKey_!=overlayKey){
         const int width=juce::jmax(1,juce::roundToInt(getWidth()*overlayScale));
         const int height=juce::jmax(1,juce::roundToInt(getHeight()*overlayScale));
@@ -597,7 +599,7 @@ void RootsGraph::paint(juce::Graphics& g){
         footprint.closeSubPath();
         cache.key=key;cache.valid=true;
         }
-        const auto tint=juce::Colour(0xffe79577).brighter(slot==slot_?.28f:0.f);
+        const auto tint=(polished?scalpel::finish::ice:juce::Colour(0xffe79577)).brighter(slot==slot_?.28f:0.f);
         overlayGraphics.setColour(tint.withAlpha(slot==slot_?0.20f:0.08f));
         overlayGraphics.fillPath(footprint);
         overlayGraphics.setColour(tint.withAlpha(slot==slot_?0.96f:0.58f));
@@ -623,7 +625,7 @@ void RootsGraph::paint(juce::Graphics& g){
         g.drawVerticalLine(juce::roundToInt(freqToX(param(selected_,"hz"))),r.getY(),r.getBottom());
     }
     // Both boundary handles always live on one horizontal rail.
-    g.setColour(juce::Colour(0xffa38d79).withAlpha(0.25f));
+    g.setColour((polished?scalpel::finish::titanium:juce::Colour(0xffa38d79)).withAlpha(0.25f));
     g.drawHorizontalLine(juce::roundToInt(r.getCentreY()),r.getX(),r.getRight());
     // Two-pass z-order keeps the selected ROOT boundary pair above neighbors.
     for(int pass=0;pass<2;++pass)
@@ -639,12 +641,12 @@ void RootsGraph::paint(juce::Graphics& g){
         const bool focused=i/2==selectedRoot;
         const auto col=focused&&peakWarnings_[(size_t)(i/2)]>0.f?
             juce::Colour(0xffff4f38):
-            colour(i/2).interpolatedWith(juce::Colour(0xffc1a997),.15f);
+            colour(i/2).interpolatedWith(polished?scalpel::finish::silver:juce::Colour(0xffc1a997),.15f);
         g.setColour(col.withAlpha(enabled?(focused?0.68f:0.18f):0.045f));
         g.drawVerticalLine(juce::roundToInt(x),r.getY(),r.getBottom());
         g.setColour(col.withAlpha(enabled?(focused?0.24f:0.045f):0.025f));
         g.fillEllipse(x-10,y-10,20,20);
-        g.setColour(enabled?col:juce::Colour(0xff6d6056));
+        g.setColour(enabled?col:juce::Colour(polished?0xff49545b:0xff6d6056));
         g.fillEllipse(x-5.5f,y-5.5f,11,11);
         if(i==selected_||solo||focused){
             g.setColour(solo?juce::Colours::white:col.brighter(0.65f));
@@ -687,7 +689,7 @@ void RootsGraph::paint(juce::Graphics& g){
         // the reference X-RAY lens has clean nodes, never black C1-C4 tabs.
     }
     scalpel::ui105::drawAnalyzerPanel(g,full,processor_.getPeakHoldDb(),
-        processor_.getChannelPeakDb(0),processor_.getChannelPeakDb(1));
+        processor_.getChannelPeakDb(0),processor_.getChannelPeakDb(1),polished);
     if(hover_&&r.contains(mouse_)){
         const int bar=prism::analysis::LabBands::indexForFrequency(xToFreq(mouse_.x));
         const float freq=xToFreq(mouse_.x);
@@ -1309,6 +1311,7 @@ void RootsEditor::bindCarve(){
 }
 void RootsEditor::setMode(int next){
     mode_=juce::jlimit(0,3,next);
+    lookAndFeel_.setFinishEnabled(scalpel::finish::enabledForMode(mode_));
     for(int i=0;i<4;++i){
         auto& b=modeButtons_[(size_t)i];
         b.setToggleState(i==mode_,juce::dontSendNotification);
