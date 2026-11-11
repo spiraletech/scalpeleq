@@ -16,7 +16,7 @@ public:
         finish_=enabled;
         setColour(juce::PopupMenu::backgroundColourId,enabled?scalpel::finish::faceplate:juce::Colour(0xff0b141d));
         setColour(juce::PopupMenu::textColourId,enabled?scalpel::finish::text:juce::Colour(0xffedf5ff));
-        setColour(juce::PopupMenu::highlightedBackgroundColourId,enabled?juce::Colour(0xff202c34):juce::Colour(0xff244866));
+        setColour(juce::PopupMenu::highlightedBackgroundColourId,enabled?juce::Colour(0xff4a4946):juce::Colour(0xff244866));
         setColour(juce::PopupMenu::highlightedTextColourId,enabled?scalpel::finish::ice:juce::Colour(0xfff5fbff));
     }
     SurgeryLookAndFeel(){

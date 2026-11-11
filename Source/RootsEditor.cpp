@@ -34,7 +34,7 @@ juce::Colour territory(int i){
 }
 void rotary(juce::Slider& s,juce::String suffix,double resetValue) {
     s.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    s.setTextBoxStyle(juce::Slider::TextBoxBelow,false,100,25);
+    s.setTextBoxStyle(juce::Slider::TextBoxBelow,false,106,30);
     s.setColour(juce::Slider::textBoxTextColourId,scalpel::ui105::amber);
     s.setColour(juce::Slider::textBoxBackgroundColourId,juce::Colour(0xff071018));
     s.setColour(juce::Slider::textBoxOutlineColourId,juce::Colour(0xff567b96));

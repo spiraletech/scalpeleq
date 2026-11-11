@@ -118,7 +118,7 @@ inline const juce::Image& knobMaterial(){
     }();return texture;
 }
 inline void knob(juce::Graphics& g,int x,int y,int w,int h,float position,float start,float end,const juce::Slider&){
-    const float cx=x+w*.5f,cy=y+h*.5f,radius=.46f*(float)std::min(w,h);
+    const float cx=x+w*.5f,cy=y+h*.5f,radius=.485f*(float)std::min(w,h);
     const auto r=juce::Rectangle<float>(cx-radius,cy-radius,2*radius,2*radius);
     g.setColour(juce::Colours::black.withAlpha(.7f));g.fillEllipse(r.expanded(2).translated(1,3));
     juce::ColourGradient rim(juce::Colour(0xffd8d9d5),cx-radius,cy-radius,juce::Colour(0xff242829),cx+radius,cy+radius,false);

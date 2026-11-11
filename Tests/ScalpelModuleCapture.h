@@ -100,7 +100,18 @@ inline bool captureScalpelModule(const juce::String& modulePath){
         // A native child that did not paint produces a blank capture.
         int lit=0;for(int y=0;y<height;y+=4)for(int x=0;x<width;x+=4)
             if(image.getPixelAt(x,y).getPerceivedBrightness()>.18f)++lit;
-        if(lit<1500||image.getPixelAt(1200,118).getPerceivedBrightness()<.30f){std::cerr<<"MODULE CAPTURE: blank/clipped native window\n";return false;}
+        // A single pixel at 1200,118 intersects the larger BAND7 glyphs.
+        // Require a substantial painted ivory key surface, independent of text.
+        int paintedKey=0;
+        for(int y=94;y<134;++y)for(int x=1145;x<1303;++x){
+            const auto c=image.getPixelAt(x,y);
+            if(c.getRed()>140&&c.getGreen()>120&&c.getBlue()>100&&c.getRed()>c.getBlue()+8)++paintedKey;
+        }
+        if(lit<1500||paintedKey<1600){
+            juce::FileOutputStream failure(juce::File::getCurrentWorkingDirectory().getChildFile("surgery-ui-VST3-capture-failure.png"));
+            juce::PNGImageFormat().writeImageToStream(image,failure);
+            std::cerr<<"MODULE CAPTURE: blank/clipped native window; lit="<<lit<<" ivory key="<<paintedKey<<'\n';return false;
+        }
         juce::FileOutputStream out(juce::File::getCurrentWorkingDirectory().getChildFile(name));out.setPosition(0);out.truncate();
         return juce::PNGImageFormat().writeImageToStream(image,out);
     };

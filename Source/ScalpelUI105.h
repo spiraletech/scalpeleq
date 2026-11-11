@@ -47,7 +47,8 @@ inline void drawRackFace(juce::Graphics& g,int width,int height,int mode)
     for(float x:{477.f,1175.f}){auto r=rect(x,63,2,45);g.fillRect(r);}
     // Contact shadows are painted on the parent plate, beyond control clips.
     const auto shadow=[&](juce::Rectangle<float> r,float radius){
-        for(int i=4;i>=1;--i){g.setColour(juce::Colours::black.withAlpha(.09f));g.fillRoundedRectangle(r.expanded(i*.4f).translated(0,2+i*.4f),radius);}
+        juce::Path path;path.addRoundedRectangle(r,radius);
+        juce::DropShadow(juce::Colours::black.withAlpha(.65f),4,{0,3}).drawForPath(g,path);
     };
     for(int i=0;i<7;++i)shadow(band(i).toFloat().reduced(1),6);
     for(int i=0;i<4;++i)shadow(tab(i).toFloat().reduced(1),5);
@@ -57,7 +58,7 @@ inline void drawRackFace(juce::Graphics& g,int width,int height,int mode)
         for(float y:{699.f,783.f})shadow(rect(111,y,173,64),5);
         for(float x:{1198.f,1403.f})for(float y:{688.f,779.f})shadow(rect(x,y,187,69),6);
         shadow(rect(814,705,322,50),5);shadow(rect(814,795,322,51),5);
-        shadow(rect(342,830,164,44),4);shadow(rect(579,830,166,44),4);
+        shadow(rect(346,833,156,44),4);shadow(rect(584,833,156,44),4);
     }else if(mode==1){
         for(float y:{699.f,783.f})shadow(rect(111,y,173,64),5);
         for(int i=0;i<4;++i)shadow(rect(1200+(i%2)*204,700+(i/2)*91,184,62),6);
