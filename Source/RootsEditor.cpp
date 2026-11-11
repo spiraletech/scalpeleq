@@ -194,12 +194,8 @@ void RootsGraph::showRootMenu(int root){
     selectNode(juce::jlimit(0,6,root)*2);
     popup();
 }
-void RootsGraph::paint(juce::Graphics& g){
-    ++paintedFrames_;
-    const auto full=getLocalBounds().toFloat();
-    const auto r=area();
-
-    const bool polished=scalpel::finish::enabledForMode(mode_);
+void RootsGraph::paintStaticFrame(juce::Graphics& g) const {
+    const auto full=getLocalBounds().toFloat(),r=area();
     scalpel::finish::analyzerHousing(g,full.reduced(.5f));
     // Four screws belong to the full display housing, beyond the meter bay.
     scalpel::finish::screws(g,full.reduced(.5f),32,28);
@@ -233,6 +229,22 @@ void RootsGraph::paint(juce::Graphics& g){
         g.drawText(juce::String(db),juce::roundToInt(r.getRight()+5),
                    juce::roundToInt(y-8),34,16,juce::Justification::centredLeft);
     }
+}
+void RootsGraph::paint(juce::Graphics& g){
+    ++paintedFrames_;
+    const auto full=getLocalBounds().toFloat();
+    const auto r=area();
+
+    const bool polished=scalpel::finish::enabledForMode(mode_);
+    const float frameScale=juce::jlimit(.5f,4.f,g.getInternalContext().getPhysicalPixelScaleFactor());
+    const int frameWidth=juce::jmax(1,juce::roundToInt(getWidth()*frameScale));
+    const int frameHeight=juce::jmax(1,juce::roundToInt(getHeight()*frameScale));
+    if(staticFrame_.getWidth()!=frameWidth||staticFrame_.getHeight()!=frameHeight||staticFrameScale_!=frameScale){
+        staticFrame_=juce::SoftwareImageType{}.convert(juce::Image(juce::Image::ARGB,frameWidth,frameHeight,true));
+        juce::Graphics frame(staticFrame_);frame.addTransform(juce::AffineTransform::scale(frameScale));
+        paintStaticFrame(frame);staticFrameScale_=frameScale;
+    }
+    g.setOpacity(1);g.drawImage(staticFrame_,full);
     // Numeric axis marks carry the scale; avoid redundant corner-unit badges.
     // ROOT handle height is constant and ROOT gain remains a separate control.
     std::array<prism::roots::visual::Node,prism::roots::visual::kNodes> zones{};

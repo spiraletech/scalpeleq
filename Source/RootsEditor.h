@@ -100,6 +100,9 @@ public:
     }
 private:
     std::uint64_t paintedFrames_=0;
+    void paintStaticFrame(juce::Graphics&) const;
+    juce::Image staticFrame_;
+    float staticFrameScale_=0;
     PRISMVSTAudioProcessor& processor_;
     std::array<float,PRISMVSTAudioProcessor::labBars> bands_{},peaks_{};
     std::array<float,7> peakWarnings_{};
