@@ -2,6 +2,7 @@
 #include "RootsSpectrumColours.h"
 #include "ScalpelXRayChroma.h"
 #include "ScalpelUI105.h"
+#include "ScalpelDbAxis.h"
 #include "SurgerySpectralColours.h"
 #include <BinaryData.h>
 #include <cmath>
@@ -219,16 +220,12 @@ void RootsGraph::paintStaticFrame(juce::Graphics& g) const {
         g.drawText(hzText(f),juce::roundToInt(x-25),juce::roundToInt(r.getBottom()+5),
                    50,20,juce::Justification::centred);
     }
-    static constexpr std::array<int,11> dbTicks{0,-5,-10,-15,-20,-25,-30,-35,-40,-50,-60};
-    for(const int db:dbTicks){
-        g.setFont(scalpel::finish::font(16,false));
-        const float y=r.getY()-r.getHeight()*db/60.0f;
+    for(const int db:scalpel::dbaxis::labels){
+        const float y=scalpel::dbaxis::toY((float)db,r.getY(),r.getHeight());
         g.setColour(juce::Colour(0xff8fb4cf).withAlpha(db==-30?.34f:.19f));
         g.drawHorizontalLine(juce::roundToInt(y),r.getX(),r.getRight());
-        g.setColour(scalpel::finish::text);
-        g.drawText(juce::String(db),juce::roundToInt(r.getRight()+5),
-                   juce::roundToInt(y-8),34,16,juce::Justification::centredLeft);
     }
+    scalpel::dbaxis::draw(g,r);
 }
 void RootsGraph::paint(juce::Graphics& g){
     ++paintedFrames_;
@@ -276,7 +273,7 @@ void RootsGraph::paint(juce::Graphics& g){
     // Display slope or spectral colouring never changes the audio path.
     // Measurement still extends below -144 dBFS. X-RAY uses the locked
     // 0..-60 dBFS presentation scale without modifying analyzer precision.
-    const float rangeDb=60.0f;
+    const float rangeDb=scalpel::dbaxis::rangeDb;
     const float slope=pval(processor_.apvts,"analyzer_slope");
     const bool heatOn=pval(processor_.apvts,"aura_color")>=0.5f&&(weatherStyle_<=2||weatherStyle_==7);
     juce::Path spectrumPath,filledPath,peakPath;
@@ -285,9 +282,9 @@ void RootsGraph::paint(juce::Graphics& g){
         const float frequency=prism::analysis::LabBands::centreFrequency(i);
         const float x=freqToX(frequency);
         const float db=surgery::displayDb(bands_[(size_t)i],frequency,slope,rangeDb);
-        const float y=r.getY()-db*r.getHeight()/rangeDb;
+        const float y=scalpel::dbaxis::toY(db,r.getY(),r.getHeight());
         const float peak=surgery::displayDb(peaks_[(size_t)i],frequency,slope,rangeDb);
-        const float py=r.getY()-peak*r.getHeight()/rangeDb;
+        const float py=scalpel::dbaxis::toY(peak,r.getY(),r.getHeight());
         if(i==0){
             spectrumPath.startNewSubPath(x,y);
             peakPath.startNewSubPath(x,py);
@@ -483,7 +480,7 @@ void RootsGraph::paint(juce::Graphics& g){
                 const float db=surgery::displayDb(bands_[(size_t)bin],
                     prism::analysis::LabBands::centreFrequency(bin),slope,rangeDb);
                 const float h=juce::jlimit(0.f,1.f,(bands_[(size_t)bin]+60.f)/56.f);
-                const float top=r.getY()-db*r.getHeight()/rangeDb;
+                const float top=scalpel::dbaxis::toY(db,r.getY(),r.getHeight());
                 if(h<.035f||top>=r.getBottom()-3.f){open=false;continue;}
                 const float uWave=mercurySurface_.at(u);
                 const float oscillation=std::sin((12.f+layer*4.1f)*u-mercuryPhase_*(.66f+layer*.16f)+uWave*9.f);

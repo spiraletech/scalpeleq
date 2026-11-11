@@ -106,6 +106,9 @@ target_link_libraries(PRISMVST PRIVATE
 
 option(PRISMVST_BUILD_TESTS "Build DSP smoke tests" ON)
 if(PRISMVST_BUILD_TESTS)
+  add_executable(scalpel_db_axis_tests Tests/ScalpelDbAxisTests.cpp Source/ScalpelDbScale.h)
+  target_compile_features(scalpel_db_axis_tests PRIVATE cxx_std_20)
+  add_test(NAME scalpel_db_axis_calibration COMMAND scalpel_db_axis_tests)
   add_executable(scalpel_analyzer_health_tests Tests/ScalpelAnalyzerHealthTests.cpp Source/ScalpelAnalyzerHealth.h)
   target_compile_features(scalpel_analyzer_health_tests PRIVATE cxx_std_20)
   add_test(NAME scalpel_floor01_analyzer_health COMMAND scalpel_analyzer_health_tests)
