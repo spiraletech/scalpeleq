@@ -216,8 +216,8 @@ void RootsGraph::paintStaticFrame(juce::Graphics& g) const {
         g.setColour(juce::Colour(0xff6f9bb9).withAlpha(.20f));
         g.drawVerticalLine(juce::roundToInt(x),r.getY(),r.getBottom());
         g.setColour(scalpel::finish::text);
-        g.drawText(hzText(f),juce::roundToInt(x-19),juce::roundToInt(r.getBottom()+6),
-                   38,17,juce::Justification::centred);
+        g.drawText(hzText(f),juce::roundToInt(x-25),juce::roundToInt(r.getBottom()+5),
+                   50,20,juce::Justification::centred);
     }
     static constexpr std::array<int,11> dbTicks{0,-5,-10,-15,-20,-25,-30,-35,-40,-50,-60};
     for(const int db:dbTicks){
@@ -236,7 +236,9 @@ void RootsGraph::paint(juce::Graphics& g){
     const auto r=area();
 
     const bool polished=scalpel::finish::enabledForMode(mode_);
-    const float frameScale=juce::jlimit(.5f,4.f,g.getInternalContext().getPhysicalPixelScaleFactor());
+    const auto transform=getTransform();
+    const float controlScale=std::sqrt(transform.mat00*transform.mat00+transform.mat10*transform.mat10);
+    const float frameScale=juce::jlimit(.5f,6.f,controlScale*g.getInternalContext().getPhysicalPixelScaleFactor());
     const int frameWidth=juce::jmax(1,juce::roundToInt(getWidth()*frameScale));
     const int frameHeight=juce::jmax(1,juce::roundToInt(getHeight()*frameScale));
     if(staticFrame_.getWidth()!=frameWidth||staticFrame_.getHeight()!=frameHeight||staticFrameScale_!=frameScale){
