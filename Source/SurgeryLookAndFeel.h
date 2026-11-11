@@ -129,7 +129,7 @@ public:
                 }
                 return;
             }
-            if(deckSwitch||reset){scalpel::finish::darkButton(g,r,deckSwitch&&button.getToggleState(),over,deckSwitch);return;}
+            if(deckSwitch||reset){scalpel::finish::darkButton(g,r,deckSwitch&&button.getToggleState(),over,deckSwitch,button.getButtonText()=="OFF"?scalpel::finish::offRed:scalpel::finish::onGreen);return;}
             if(xray){
                 scalpel::finish::darkButton(g,r,false,over);
                 const float lamp=r.getHeight()*.14f;
@@ -362,11 +362,12 @@ public:
             const bool hardware=label.startsWith("BAND ")&&!tab||label=="C1"||label=="C2"||label=="C3"||label=="C4"||
                 label=="MONO"||label=="SOLO"||label.startsWith("PHASE")||label=="LIMIT";
             g.setColour(!b.isEnabled()?scalpel::finish::secondary:hardware?juce::Colour(0xff070b0f):
-                label=="X-RAY"?juce::Colour(0xffff624b):tab&&!b.getToggleState()?scalpel::finish::secondary:
+                label=="X-RAY"?scalpel::finish::text:tab&&!b.getToggleState()?scalpel::finish::secondary:
                 ((label=="ON"||label=="OFF")&&!b.getToggleState())?scalpel::finish::secondary:scalpel::finish::text);
             g.setFont(scalpel::finish::font(label.startsWith("PHASE")?12.5f:tab?18.f:17.f));
             auto bounds=label=="X-RAY"?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2);
             if(tab)bounds=bounds.withTrimmedBottom(4);
+            if(label=="ON"||label=="OFF")bounds=bounds.withTrimmedTop(5);
             g.drawFittedText(label,bounds,juce::Justification::centred,1);
             return;
         }
@@ -418,7 +419,7 @@ public:
         if(finish_){
             if(dynamic_cast<juce::Slider*>(label.getParentComponent())){
                 const auto r=label.getLocalBounds().toFloat().reduced(.5f);
-                juce::ColourGradient glass(juce::Colour(0xff080d12),r.getX(),r.getY(),juce::Colour(0xff020507),r.getX(),r.getBottom(),false);
+                juce::ColourGradient glass(juce::Colour(0xff242725),r.getX(),r.getY(),juce::Colour(0xff070a0b),r.getX(),r.getBottom(),false);
                 g.setGradientFill(glass);g.fillRoundedRectangle(r,3);
                 g.setColour(scalpel::finish::titanium.withAlpha(.65f));g.drawRoundedRectangle(r,3,.8f);
                 if(!label.isBeingEdited()){
@@ -428,15 +429,15 @@ public:
                 return;
             }
             if(!label.isBeingEdited()){
-                g.setColour(label.isEnabled()?scalpel::finish::text:scalpel::finish::secondary);
+                g.setColour(dynamic_cast<juce::ComboBox*>(label.getParentComponent())?scalpel::finish::text:label.isEnabled()?scalpel::finish::ink:scalpel::finish::ink.withAlpha(.55f));
                 const auto r=label.getBorderSize().subtractedFrom(label.getLocalBounds());
-                auto f=scalpel::finish::font(16.f);g.setFont(f);
+                auto f=scalpel::finish::font(label.getText().startsWith("BAND ")&&label.getText().contains("CARVE")?13.f:16.f);g.setFont(f);
                 if(dynamic_cast<juce::ComboBox*>(label.getParentComponent()))
                     g.drawFittedText(label.getText(),r,label.getJustificationType(),1);
                 else {
                     const float width=f.getStringWidthFloat(label.getText());
                     const float x=label.getJustificationType().testFlags(juce::Justification::horizontallyCentred)?r.getCentreX()-width*.5f:(float)r.getX();
-                    juce::GlyphArrangement glyphs;glyphs.addLineOfText(f,label.getText(),x,r.getY()+f.getAscent());glyphs.draw(g);
+                    juce::GlyphArrangement glyphs;glyphs.addLineOfText(f,label.getText(),x,r.getCentreY()+(f.getAscent()-f.getDescent())*.5f);glyphs.draw(g);
                 }
             }
             return;

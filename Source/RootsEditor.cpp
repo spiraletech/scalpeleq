@@ -63,7 +63,8 @@ juce::Rectangle<float> RootsGraph::area() const {
     // 1.0.5 reserves a true utility bay for PEAK and independent L/R meters.
     // The spectrum remains logarithmic and interactive inside the left lens.
     const auto b=getLocalBounds().toFloat();
-    return {b.getX()+55.f,b.getY()+22.f,b.getWidth()-302.f,b.getHeight()-56.f};
+    (void)b;
+    return scalpel::reference::plotLocal();
 }
 float RootsGraph::freqToX(float f) const {
     const auto r=area();
@@ -199,19 +200,14 @@ void RootsGraph::paint(juce::Graphics& g){
     const auto r=area();
 
     const bool polished=scalpel::finish::enabledForMode(mode_);
-    const juce::Colour top(0xff030d19),bottom(0xff01070d);
-    juce::ColourGradient bg(top,full.getX(),full.getY(),
-                            bottom,full.getX(),full.getBottom(),false);
-    bg.addColour(.43,juce::Colour(polished?0xff040d17:0xff0a151f));
-    g.setGradientFill(bg);g.fillRoundedRectangle(full.reduced(1.0f),7.0f);
-    g.setColour(juce::Colour(0xff070605));
-    g.drawRoundedRectangle(full.reduced(1.0f),7.0f,2.0f);
-    {
-        g.setColour(polished?scalpel::finish::ice:juce::Colour(0xff9edfff));g.drawRoundedRectangle(full.reduced(1.5f),12.0f,2.4f);
-        g.setColour(juce::Colour(0xff010101));g.strokePath(surgery::rack::cut(full.reduced(4),5),juce::PathStrokeType(2));
-    }
-    g.setFont(juce::Font(juce::FontOptions("Segoe UI",polished?12.0f:11.0f,juce::Font::bold)));
-    g.setColour(juce::Colour(0xffb4aaa0));
+    scalpel::finish::analyzerHousing(g,full.reduced(.5f));
+    // Four screws belong to the full display housing, beyond the meter bay.
+    scalpel::finish::screws(g,full.reduced(.5f),32,28);
+    juce::ColourGradient glass(juce::Colour(0xff101719),r.getX(),r.getY(),
+                               scalpel::finish::analyzer,r.getRight(),r.getBottom(),false);
+    glass.addColour(.4,juce::Colour(0xff070e10));g.setGradientFill(glass);g.fillRect(r);
+    g.setFont(scalpel::finish::font(14,false));
+    g.setColour(scalpel::finish::text);
     // No inherited cyan spectrum title, old SONAR weather image or C1-C4
     // badges: the graph is a continuous, smoked-glass Scalpel lens.
     // Frequency and calibrated dBFS dimensions.
@@ -222,7 +218,7 @@ void RootsGraph::paint(juce::Graphics& g){
         const float x=freqToX(f);
         g.setColour(juce::Colour(0xff6f9bb9).withAlpha(.20f));
         g.drawVerticalLine(juce::roundToInt(x),r.getY(),r.getBottom());
-        g.setColour(juce::Colour(0xffd7e9f7));
+        g.setColour(scalpel::finish::text);
         g.drawText(hzText(f),juce::roundToInt(x-19),juce::roundToInt(r.getBottom()+6),
                    38,17,juce::Justification::centred);
     }
@@ -231,7 +227,7 @@ void RootsGraph::paint(juce::Graphics& g){
         const float y=r.getY()-r.getHeight()*db/60.0f;
         g.setColour(juce::Colour(0xff8fb4cf).withAlpha(db==-30?.34f:.19f));
         g.drawHorizontalLine(juce::roundToInt(y),r.getX(),r.getRight());
-        g.setColour(juce::Colour(0xffd4e6f4));
+        g.setColour(scalpel::finish::text);
         g.drawText(juce::String(db),juce::roundToInt(r.getRight()+5),
                    juce::roundToInt(y-8),34,16,juce::Justification::centredLeft);
     }
@@ -1522,62 +1518,41 @@ void RootsEditor::layoutRack(){
         label->setFont(juce::Font(juce::FontOptions("Segoe UI",14.0f,juce::Font::bold)));
     }
     title_.setVisible(false);
-    for(int root=0;root<7;++root){
-        auto& button=rootButtons_[(size_t)root];
-        button.setVisible(true);
-        button.setBounds(27+root*152,91,146,34);
-    }
+    using namespace scalpel::reference;
+    for(int root=0;root<7;++root){auto& button=rootButtons_[(size_t)root];button.setVisible(true);button.setBounds(band(root));}
+    graph_.setBounds(analyzer().toNearestInt());
+    for(int i=0;i<4;++i)modeButtons_[(size_t)i].setBounds(tab(i));
+    xrayButton_.setBounds(bounds(1297,245,165,55));
+    peakHold_.setBounds(bounds(1307,480,158,57));
 
-    graph_.setBounds(20,140,1080,246);
-    for(int i=0;i<4;++i)modeButtons_[(size_t)i].setBounds(36+i*262,391,258,39);
-    // Keep both analyzer actions on the same inset and width. Their left edge
-    // now clears the analyzer-panel bezel instead of straddling it.
-    xrayButton_.setBounds(893,157,100,37);
-    peakHold_.setBounds(893,329,100,40);
+    on_.setBounds(bounds(111,699,173,64));off_.setBounds(bounds(111,783,173,64));
+    gainLabel_.setBounds(bounds(324,659,190,29));gain_.setBounds(bounds(342,689,164,188));
+    thresholdLabel_.setBounds(bounds(556,659,200,29));threshold_.setBounds(bounds(579,689,166,188));
+    compLabel_.setBounds(bounds(817,666,320,29));compressor_.setBounds(bounds(814,705,322,50));
+    domainLabel_.setBounds(bounds(817,759,320,29));domain_.setBounds(bounds(814,795,322,51));
+    detectorLabel_.setBounds(0,0,1,1);detector_.setBounds(0,0,1,1);limitAmount_.setBounds(0,0,1,1);
+    mono_.setBounds(bounds(1198,688,187,69));solo_.setBounds(bounds(1403,688,185,69));
+    phase_.setBounds(bounds(1198,779,187,69));limit_.setBounds(bounds(1403,779,185,69));
 
-    // BAND MODE: approved two-knob, two-menu, six-button hierarchy.
-    on_.setBounds(78,480,112,43);off_.setBounds(78,536,112,43);
-    gainLabel_.setBounds(206,455,160,22);gain_.setBounds(216,472,142,110);
-    thresholdLabel_.setBounds(369,455,166,22);threshold_.setBounds(382,472,142,110);
-    compLabel_.setBounds(548,456,220,19);compressor_.setBounds(550,480,220,34);
-    domainLabel_.setBounds(548,519,220,19);domain_.setBounds(550,542,220,34);
-    detectorLabel_.setBounds(0,0,1,1);detector_.setBounds(0,0,1,1);
-    limitAmount_.setBounds(0,0,1,1);
-    mono_.setBounds(824,477,120,44);solo_.setBounds(965,477,120,44);
-    phase_.setBounds(824,536,120,44);limit_.setBounds(965,536,120,44);
-
-    // CARVE: exact approved text, C1-C4 routing and three surgical controls.
-    selection_.setBounds(39,456,235,22);
-    carveOn_.setBounds(77,488,158,43);carveOff_.setBounds(77,542,158,43);
+    selection_.setBounds(bounds(67,661,270,29));
+    carveOn_.setBounds(bounds(111,699,173,64));carveOff_.setBounds(bounds(111,783,173,64));
     carveDynamic_.setBounds(0,0,1,1);
     const std::array<juce::Slider*,3> cs{&carveFrequency_,&carveDepth_,&carveQ_};
     const std::array<juce::Label*,3> cl{&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_};
-    for(int i=0;i<3;++i){
-        cl[(size_t)i]->setBounds(286+i*190,456,174,22);
-        cs[(size_t)i]->setBounds(300+i*190,472,146,110);
-    }
-    for(int i=0;i<4;++i)
-        carveSlotButtons_[(size_t)i].setBounds(868+(i%2)*108,480+(i/2)*58,100,44);
+    for(int i=0;i<3;++i){cl[(size_t)i]->setBounds(bounds(351+i*235,659,226,29));cs[(size_t)i]->setBounds(carveDial(i));}
+    for(int i=0;i<4;++i)carveSlotButtons_[(size_t)i].setBounds(bounds(1200+(i%2)*204,700+(i/2)*91,184,62));
 
-    // COLOR: five equal channels share the approved CARVE font and readout geometry.
     for(int i=0;i<5;++i){
-        onyxLabels_[(size_t)i].setBounds(18+i*210,456,194,22);
-        onyxLabels_[(size_t)i].setFont(juce::Font(juce::FontOptions("Segoe UI",14.0f,juce::Font::bold)));
-        onyxSliders_[(size_t)i].setBounds(45+i*210,474,140,108);
+        onyxLabels_[(size_t)i].setBounds(bounds(52+i*298,659,270,29));
+        onyxLabels_[(size_t)i].setFont(scalpel::finish::font(16));
+        onyxSliders_[(size_t)i].setBounds(colorDial(i));
     }
-
-    // ANALYZE: three optically balanced console columns matching the approved
-    // HEAT MAP / FREEZE / VISUAL DECAY hardware reference.
-    for(auto* label:{&analyzerDepthLabel_,&analyzerSlopeLabel_,&analyzerMemoryLabel_})
-        label->setFont(juce::Font(juce::FontOptions("Segoe UI",16.5f,juce::Font::bold)));
-    analyzerDepthLabel_.setBounds(79,456,220,24);
-    analyzerMemoryLabel_.setBounds(448,450,220,18);
-    analyzerSlopeLabel_.setBounds(819,456,220,24);
-    heatToggle_.setBounds(141,488,96,96);
-    // Distribution layout: Visual Decay occupies the centre knob bay while
-    // Freeze moves to the right switch bay. Bindings and behavior are unchanged.
-    analyzerMemory_.setBounds(487,472,142,110);
-    freezeButton_.setBounds(881,488,96,96);
+    analyzerDepthLabel_.setBounds(bounds(135,660,280,29));
+    analyzerMemoryLabel_.setBounds(bounds(682,660,280,29));
+    analyzerSlopeLabel_.setBounds(bounds(1230,660,280,29));
+    heatToggle_.setBounds(bounds(215,703,120,120));
+    analyzerMemory_.setBounds(bounds(739,696,166,181));
+    freezeButton_.setBounds(bounds(1310,703,120,120));
 
     jukeModeLabel_.setBounds(0,0,1,1);jukeMode_.setBounds(0,0,1,1);
     weatherMode_.setBounds(0,0,1,1);reducedMotion_.setBounds(0,0,1,1);

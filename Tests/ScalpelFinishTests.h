@@ -37,7 +37,7 @@ inline bool verifyScalpelFinish(){
         }
         return count>20;
     };
-    std::ofstream geometry("surgery-aaa-geometry.csv");geometry<<"page,component,x,y,width,height\n";
+    std::ofstream geometry("surgery-ivory-geometry.csv");geometry<<"page,component,x,y,width,height\n";
     const auto record=[&](const char* page,juce::Component& component,const juce::String& name){
         const auto r=component.getBounds();geometry<<page<<','<<name<<','<<r.getX()<<','<<r.getY()<<','<<r.getWidth()<<','<<r.getHeight()<<'\n';
     };
@@ -50,17 +50,17 @@ inline bool verifyScalpelFinish(){
             if(auto* g=dynamic_cast<RootsGraph*>(child))graph=g;
             if(auto* s=dynamic_cast<juce::Slider*>(child);s&&s->isVisible())dials.push_back(s);
         }
-        if(!graph||graph->getBounds()!=juce::Rectangle<int>(20,140,1080,246)||graph->selectedNode()/2!=2)return false;
+        if(!graph||graph->getBounds()!=scalpel::reference::analyzer().toNearestInt()||graph->selectedNode()/2!=2)return false;
         record(page,*graph,"analyzer");
         for(int i=0;i<7;++i){
             auto* b=button("BAND "+juce::String(i+1));
-            if(!b||b->getBounds()!=juce::Rectangle<int>(27+i*152,91,146,34)||!contrast(*b,false))return false;
+            if(!b||b->getBounds()!=scalpel::reference::band(i)||!contrast(*b,false))return false;
             record(page,*b,b->getButtonText());
         }
         int active=0;const char* tabs[]{"BAND MODE","CARVE","COLOR","ANALYZE"};
         for(int i=0;i<4;++i){
             auto* b=button(tabs[i]);
-            if(!b||b->getBounds()!=juce::Rectangle<int>(36+i*262,391,258,39))return false;
+            if(!b||b->getBounds()!=scalpel::reference::tab(i))return false;
             active+=b->getToggleState()?1:0;record(page,*b,tabs[i]);
         }
         if(active!=1||!button(page)->getToggleState())return false;
@@ -68,7 +68,7 @@ inline bool verifyScalpelFinish(){
         if(juce::String(page)=="CARVE"){
             if(dials.size()!=3)return false;
             for(int i=0;i<3;++i){
-                if(dials[(size_t)i]->getBounds()!=juce::Rectangle<int>(300+i*190,472,146,110))return false;
+                if(dials[(size_t)i]->getBounds()!=scalpel::reference::carveDial(i))return false;
                 record(page,*dials[(size_t)i],"dial"+juce::String(i));
             }
             if(std::abs(dials[0]->getValue()-215.87)>.02||std::abs(dials[1]->getValue())>.001||std::abs(dials[2]->getValue()-.3)>.001)return false;
@@ -78,12 +78,12 @@ inline bool verifyScalpelFinish(){
         }else{
             if(dials.size()!=5)return false;
             for(int i=0;i<5;++i){
-                if(dials[(size_t)i]->getBounds()!=juce::Rectangle<int>(45+i*210,474,140,108))return false;
+                if(dials[(size_t)i]->getBounds()!=scalpel::reference::colorDial(i))return false;
                 record(page,*dials[(size_t)i],"dial"+juce::String(i));
             }
         }
-        if(!save("surgery-ui-AAA-"+juce::String(page)+"-1344x756.png"))return false;
-        editor->setSize(1792,1008);if(!save("surgery-ui-AAA-"+juce::String(page)+"-1792x1008.png"))return false;
+        if(!save("surgery-ui-IVORY-"+juce::String(page)+"-1344x756.png"))return false;
+        editor->setSize(1792,1008);if(!save("surgery-ui-IVORY-"+juce::String(page)+"-1792x1008.png"))return false;
         editor->setSize(1344,756);
     }
     size_t index=0;for(auto* p:processor->getParameters())if(p->getValue()!=values[index++])return false;
@@ -93,9 +93,36 @@ inline bool verifyScalpelFinish(){
     const auto body=[](juce::TextButton& b){return b.createComponentSnapshot(b.getLocalBounds()).getPixelAt(16,29);};
     const auto onBody=body(*on),offBody=body(*off);
     if(!click("OFF")||!contrast(*on,true)||!contrast(*off,true)||body(*on)!=onBody||body(*off)!=offBody)return false;
-    if(!save("surgery-ui-AAA-CARVE-OFF-1344x756.png")||!click("ON"))return false;
+    if(!save("surgery-ui-IVORY-CARVE-OFF-1344x756.png")||!click("ON"))return false;
+    // A dark body never trades material with its companion. Exactly one
+    // green/red strip must follow the selected parameter, including CARVE.
+    const auto lamps=[](juce::TextButton& b){
+        const auto image=b.createComponentSnapshot(b.getLocalBounds());
+        int green=0,red=0;
+        for(int y=4;y<12;++y)for(int x=8;x<image.getWidth()-8;++x){
+            const auto c=image.getPixelAt(x,y);
+            green+=c.getGreen()>155&&c.getGreen()>c.getRed()+25?1:0;
+            red+=c.getRed()>165&&c.getRed()>c.getGreen()*1.5f?1:0;
+        }
+        return std::pair<int,int>{green,red};
+    };
+    for(const auto* page:{"BAND MODE","CARVE"}){
+        if(!click(page)||!click("ON"))return false;
+        auto* on=button("ON");auto* off=button("OFF");
+        if(!on||!off||on->getWidth()!=off->getWidth()||on->getHeight()!=off->getHeight())return false;
+        if(lamps(*on).first<25||lamps(*off).second!=0)return false;
+        if(!save("surgery-ui-IVORY-"+juce::String(page).replaceCharacter(' ','-')+"-ON.png")||!click("OFF"))return false;
+        if(lamps(*on).first!=0||lamps(*off).second<25)return false;
+        if(!save("surgery-ui-IVORY-"+juce::String(page).replaceCharacter(' ','-')+"-OFF.png"))return false;
+    }
+    // Eight identical screw masters, attached to the two outer housings.
+    const auto a=scalpel::reference::analyzer(),d=scalpel::reference::deck();
+    const auto ac=scalpel::reference::screwCentres(a,32,28);
+    const auto dc=scalpel::reference::screwCentres(d,29,28);
+    for(auto p:ac)if(!a.contains(p)||p.x<=scalpel::reference::plot().getRight()&&p.x>a.getCentreX())return false;
+    for(auto p:dc)if(!d.contains(p))return false;
     // Immutable static texture must not own a Direct2D bitmap at DLL unload.
     if(scalpel::finish::grain().getPixelData()->createType()->getTypeID()!=juce::SoftwareImageType{}.getTypeID())return false;
-    std::cout<<"AAA FINISH: CARVE/COLOR native geometry, BAND3/C4 215.87Hz Q0.300 states, typography contrast, two scales, parameter invariance and stable ON/OFF materials passed\n";
+    std::cout<<"IVORY REVIEW: CARVE/COLOR native geometry, BAND3/C4 215.87Hz Q0.300 states, typography contrast, two scales, parameter invariance and stable ON/OFF materials passed\n";
     return true;
 }

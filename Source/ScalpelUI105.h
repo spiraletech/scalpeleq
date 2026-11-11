@@ -5,12 +5,13 @@
 #include <cmath>
 #include "ScalpelMaterials.h"
 #include "ScalpelFinish.h"
+#include "ScalpelEtherTechMark.h"
 
 namespace scalpel::ui105 {
 inline const juce::Colour champagne{0xff0d1720};
-inline const juce::Colour ivory{0xffedf5ff};
+inline const juce::Colour ivory{0xffece0d5};
 inline const juce::Colour ink{0xff070d13};
-inline const juce::Colour amber{0xff9edcff};
+inline const juce::Colour amber{0xff05dbe9};
 inline const juce::Colour chassisEdge{0xff4e83a5};
 
 inline void roundedPanel(juce::Graphics& g, juce::Rectangle<float> r, bool dark, float radius=8.0f)
@@ -30,83 +31,29 @@ inline void roundedPanel(juce::Graphics& g, juce::Rectangle<float> r, bool dark,
     g.drawRoundedRectangle(r, radius, 1.0f);
 }
 
-inline void drawRackFace(juce::Graphics& g, int width, int height, int mode)
+inline void drawRackFace(juce::Graphics& g,int width,int height,int mode)
 {
-    const bool polished=scalpel::finish::enabledForMode(mode);
-    // The chassis itself fills the complete rectangular editor surface.
-    // Rounded lines remain as internal industrial detailing, but there is no
-    // separate colour/background exposed outside the rack face.
-    const auto full = juce::Rectangle<float>(0, 0, (float)width, (float)height);
-    // The approved faceplate is near-black midnight titanium.  Blue is a
-    // localized reflection, not the base material, so keep the chassis dark
-    // enough for the analyzer and frosted hardware to carry the contrast.
-    juce::ColourGradient shell(juce::Colour(0xff0f1b24), 0, 0,
-                               juce::Colour(0xff0d171e), 0, (float)height, false);
-    shell.addColour(.16, juce::Colour(0xff0b151d));
-    shell.addColour(.62, juce::Colour(0xff09131b));
-    shell.addColour(.92, juce::Colour(0xff0d171e));
-    // A restrained edge floor keeps the rounded outer chassis readable at
-    // resize/DPI corners without lifting the faceplate midtones.
-    if(polished)scalpel::finish::shell(g,full);
-    else {
-    g.setColour(juce::Colour(0xff14222c));
-    g.fillRect(full);
-    g.setGradientFill(shell);
-    g.fillRect(full.reduced(10.0f));
-    scalpel::materials::surface(g,full.reduced(6.0f),22.0f);
-    g.setColour(scalpel::materials::edge.withAlpha(.72f));
-    g.drawRoundedRectangle(full.reduced(2.0f), 23.0f, 1.3f);
-    g.setColour(juce::Colour(0xff010305).withAlpha(.98f));
-    g.drawRoundedRectangle(full.reduced(5.0f), 20.0f, 1.0f);
-    }
-    const auto panel=[&](juce::Rectangle<float> r,float radius,bool carbon=false){
-        if(polished)scalpel::finish::panel(g,r,radius,carbon);
-        else roundedPanel(g,r,true,radius);
-    };
-
-    panel({20,20,(float)width-40,60},12.0f);
-    g.setColour(polished?scalpel::finish::text:juce::Colour(0xffedf5ff));
-    g.setFont(juce::Font(juce::FontOptions("Segoe UI", 34.0f, juce::Font::bold)));
-    g.drawFittedText("SCALPEL EQ", 56, 30, 255, 37, juce::Justification::centredLeft, 1);
-    g.setFont(juce::Font(juce::FontOptions("Segoe UI", 14.0f, juce::Font::plain)));
-    g.drawFittedText("P R E C I S I O N   E Q U A L I Z E R", 350, 38, 360, 26,
-                     juce::Justification::centred, 1);
-    g.drawFittedText("A N A L O G   C O N S O L E   S E R I E S", width - 390, 38, 335, 26,
-                     juce::Justification::centredRight, 1);
-    g.setColour(polished?scalpel::finish::titanium:juce::Colour(0xffc5c9cc));
-    g.drawVerticalLine(318,35.0f,65.0f);
-    g.drawVerticalLine(803,35.0f,65.0f);
-
-    // 1.0.4 canon: seven persistent, functional BAND selectors sit between
-    // the identity plaque and analyzer. The graph remains the dominant field.
-    panel({18,88,(float)width-36,40},7.0f);
-    const auto analyzerFrame = juce::Rectangle<float>(18,140,(float)width-36,246);
-    panel(analyzerFrame,8.0f);
-    g.setColour(polished?scalpel::finish::ice.withAlpha(.65f):juce::Colour(0xff4d91b2).withAlpha(.78f));
-    g.drawRoundedRectangle(analyzerFrame.reduced(1.2f), 8.0f, 2.0f);
-    panel({32,389,(float)width-64,43},8.0f);
-    const auto deck=juce::Rectangle<float>(20,449,(float)width-40,170);
-    panel(deck,13.0f,polished);
-    if(!polished)scalpel::materials::surface(g,deck.reduced(3),11.0f);
-
-    // Mechanical shelf dividers are page-specific and stay inside the
-    // intentional gutters. BAND's first and third lines must clear the
-    // ON/OFF switches and COMP THRESHOLD label/control respectively.
-    std::array<float, 5> dividers{};
-    int count = 0;
-    if (mode == 0) dividers = {198, 365, 536, 805, 0}, count = 4;
-    else if (mode == 1) dividers = {279, 468, 658, 846, 0}, count = 4;
-    else if (mode == 2) dividers = {224,432,640,848,0}, count=4;
-    else dividers = {379, 738, 0, 0, 0}, count = 2;
-    for (int i = 0; i < count; ++i)
-    {
-        g.setColour(polished?scalpel::finish::titanium.withAlpha(.60f):juce::Colour(0xff5b7890).withAlpha(.64f));
-        const float top=462;
-        const float bottom=603;
-        g.drawLine(dividers[(size_t)i],top,dividers[(size_t)i],bottom,1.0f);
-        g.setColour(polished?scalpel::finish::silver.withAlpha(.16f):juce::Colour(0xffd9ecfb).withAlpha(.28f));
-        g.drawLine(dividers[(size_t)i]+1,top,dividers[(size_t)i]+1,bottom,.8f);
-    }
+    using namespace scalpel::reference;
+    scalpel::finish::shell(g,{0,0,(float)width,(float)height});
+    scalpel::finish::panel(g,header(),14);
+    g.setColour(scalpel::finish::ink);
+    g.setFont(scalpel::finish::font(40));
+    g.drawText("SCALPEL EQ",bounds(84,57,340,58),juce::Justification::centredLeft);
+    g.setFont(scalpel::finish::font(18));
+    g.drawFittedText("S U R G I C A L   E Q U A L I Z E R",bounds(590,66,450,38),juce::Justification::centred,1);
+    g.drawFittedText("E T H E R T E C H",bounds(1385,67,199,36),juce::Justification::centredLeft,1);
+    etherTechMark(g);
+    for(float x:{477.f,1175.f}){auto r=rect(x,63,2,45);g.fillRect(r);}
+    // Band selectors are independent molded keys on the ivory chassis.
+    const auto lower=deck();scalpel::finish::panel(g,lower,16);
+    scalpel::finish::screws(g,lower,29,28);
+    std::array<float,4> dividers{};int count=4;
+    if(mode==0)dividers={307,535,783,1175};
+    else if(mode==1)dividers={345,580,815,1175};
+    else if(mode==2)dividers={330,628,926,1224};
+    else {dividers={548,1096,0,0};count=2;}
+    g.setColour(scalpel::finish::ink);
+    for(int i=0;i<count;++i){auto line=rect(dividers[(size_t)i],676,2,194);g.fillRect(line);}
 }
 
 inline void drawMeter(juce::Graphics& g, juce::Rectangle<float> r, float db, const juce::String& label,bool polished=false)
@@ -126,7 +73,7 @@ inline void drawMeter(juce::Graphics& g, juce::Rectangle<float> r, float db, con
             r.getWidth() - 8.0f, segmentH);
         const auto hot = i > 12 ? juce::Colour(0xfff3fbff)
                                 : i > 9 ? juce::Colour(0xffcceeff) : amber;
-        g.setColour(lit ? (polished?scalpel::finish::ice:hot) : juce::Colour(polished?0xff24282c:0xff292522));
+        g.setColour(lit ? (polished?juce::Colour(0xffc8d8dc):hot) : juce::Colour(polished?0xff353c3e:0xff292522));
         g.fillRect(cell);
     }
     g.setColour(ivory);
@@ -135,32 +82,21 @@ inline void drawMeter(juce::Graphics& g, juce::Rectangle<float> r, float db, con
                juce::Justification::centred);
 }
 
-inline void drawAnalyzerPanel(juce::Graphics& g, juce::Rectangle<float> full,
-                              float peakHold, float leftPeak, float rightPeak,bool polished=false)
+inline void drawAnalyzerPanel(juce::Graphics& g,juce::Rectangle<float> full,
+    float peakHold,float leftPeak,float rightPeak,bool polished=false)
 {
-    const auto panel = juce::Rectangle<float>(full.getRight() - 218.0f, full.getY() + 15.0f,
-                                               202.0f, full.getHeight() - 31.0f);
-    g.setColour((polished?scalpel::finish::faceplate:juce::Colour(0xff060b11)).withAlpha(.98f));
-    g.fillRoundedRectangle(panel, 6.0f);
-    g.setColour(polished?scalpel::finish::titanium.withAlpha(.50f):juce::Colour(0xff29465a));
-    g.drawRoundedRectangle(panel, 6.0f, 1.0f);
-
-    g.setColour((polished?scalpel::finish::text:ivory).withAlpha(.90f));
-    g.setFont(juce::Font(juce::FontOptions("Segoe UI", polished?11.0f:10.0f, juce::Font::bold)));
-    g.drawText("PEAK (dBFS)", (int)panel.getX() + 8, (int)panel.getY() + 56, 112, 16,
-               juce::Justification::centred);
-    auto display = juce::Rectangle<float>(panel.getX() + 11, panel.getY() + 73, 108, 38);
-    g.setColour(juce::Colour(polished?0xff030609:0xff050403));
-    g.fillRoundedRectangle(display, 4.0f);
-    g.setColour(polished?scalpel::finish::titanium.withAlpha(.6f):juce::Colour(0xff294457));
-    g.drawRoundedRectangle(display, 4.0f, .8f);
-    g.setColour(polished?scalpel::finish::ice:amber);
-    g.setFont(juce::Font(juce::FontOptions("Segoe UI", 20.0f, juce::Font::bold)));
-    const auto text = peakHold <= -143.0f ? juce::String("-inf") : juce::String(peakHold, 2);
-    if(polished)scalpel::finish::number(g,text,display,20.f);
-    else g.drawText(text, display.toNearestInt(), juce::Justification::centred);
-
-    drawMeter(g, {panel.getRight() - 70, panel.getY() + 18, 24, panel.getHeight() - 45}, leftPeak, "L",polished);
-    drawMeter(g, {panel.getRight() - 38, panel.getY() + 18, 24, panel.getHeight() - 45}, rightPeak, "R",polished);
+    // Absolute reference positions translated into the analyzer component.
+    const auto origin=scalpel::reference::analyzer().toNearestInt().getPosition().toFloat();
+    const auto local=[&](float x,float y,float w,float h){return scalpel::reference::rect(x,y,w,h).translated(-origin.x,-origin.y);};
+    const auto display=local(1306,343,159,53);
+    g.setColour(juce::Colour(0xff050808));g.fillRoundedRectangle(display,4);
+    g.setColour(juce::Colour(0xff8a8d86));g.drawRoundedRectangle(display,4,.6f);
+    g.setColour(scalpel::finish::text);g.setFont(scalpel::finish::font(13,false));
+    g.drawText("PEAK (dBFS)",local(1305,315,164,24).toNearestInt(),juce::Justification::centred);
+    g.setColour(juce::Colour(0xff05dbe9));
+    scalpel::finish::number(g,peakHold<=-143?juce::String("-inf"):juce::String(peakHold,2),display,25);
+    drawMeter(g,local(1486,265,34,239),leftPeak,"L",polished);
+    drawMeter(g,local(1537,265,34,239),rightPeak,"R",polished);
+    (void)full;
 }
 } // namespace scalpel::ui105

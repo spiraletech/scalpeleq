@@ -104,10 +104,14 @@ inline bool captureScalpelModule(const juce::String& modulePath){
         juce::FileOutputStream out(juce::File::getCurrentWorkingDirectory().getChildFile(name));out.setPosition(0);out.truncate();
         return juce::PNGImageFormat().writeImageToStream(image,out);
     };
-    bool ok=click(404,108)&&click(427,410)&&click(1026,560)&&capture("surgery-ui-VST3-CARVE-1344x756.png");
-    ok=ok&&click(689,410)&&capture("surgery-ui-VST3-COLOR-1344x756.png");
-    ok=ok&&click(165,410)&&capture("surgery-ui-VST3-BAND-1344x756.png");
-    ok=ok&&click(951,410)&&capture("surgery-ui-VST3-ANALYZE-1344x756.png");
+    bool ok=click(414,95)&&click(435,386)&&click(1018,537)&&capture("surgery-ui-VST3-CARVE-1344x756.png");
+    ok=ok&&click(134,474)&&capture("surgery-ui-VST3-CARVE-ON.png");
+    ok=ok&&click(134,533)&&capture("surgery-ui-VST3-CARVE-OFF.png");
+    ok=ok&&click(692,386)&&capture("surgery-ui-VST3-COLOR-1344x756.png");
+    ok=ok&&click(165,386)&&capture("surgery-ui-VST3-BAND-1344x756.png");
+    ok=ok&&click(134,474)&&capture("surgery-ui-VST3-BAND-ON.png");
+    ok=ok&&click(134,533)&&capture("surgery-ui-VST3-BAND-OFF.png");
+    ok=ok&&click(962,386)&&capture("surgery-ui-VST3-ANALYZE-1344x756.png");
     std::ofstream evidence("surgery-vst3-capture.csv");
     evidence<<"module,"<<modulePath<<"\neditor,1344x756\nfrequency,"<<parameter("CARVE 3/4 Frequency")->getCurrentValueAsText()<<"\nq,"<<parameter("CARVE 3/4 Q")->getCurrentValueAsText()<<"\n";
     editor->setVisible(false);editor->removeFromDesktop();editor.reset();plugin->releaseResources();

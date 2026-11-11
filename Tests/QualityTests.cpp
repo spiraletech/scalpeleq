@@ -190,7 +190,8 @@ bool verifyCarveGraphSync(){
                 if(graph->paintedFrames()<=before){std::cerr<<"CARVE graph did not repaint on frequency edit\n";return false;}
                 const auto actual=p->apvts.getRawParameterValue(PRISMVSTAudioProcessor::carveId(root,slot,"hz"))->load();
                 if(std::abs(actual-frequency->getValue())>.02)return false;
-                const double expectedX=55.+(graph->getWidth()-302.)*std::log(actual/20.)/std::log(1000.);
+                const auto plot=scalpel::reference::plotLocal();
+                const double expectedX=plot.getX()+plot.getWidth()*std::log(actual/20.)/std::log(1000.);
                 const int y=juce::roundToInt(22.+(graph->getHeight()-56.)*.5+23.);
                 const auto image=graph->createComponentSnapshot(graph->getLocalBounds());
                 double sumX=0;int count=0;
