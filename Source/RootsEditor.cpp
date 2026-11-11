@@ -216,6 +216,7 @@ void RootsGraph::paint(juce::Graphics& g){
     };
     for(const float f:freqs){
         const float x=freqToX(f);
+        g.setFont(scalpel::finish::font(20,false));
         g.setColour(juce::Colour(0xff6f9bb9).withAlpha(.20f));
         g.drawVerticalLine(juce::roundToInt(x),r.getY(),r.getBottom());
         g.setColour(scalpel::finish::text);
@@ -224,6 +225,7 @@ void RootsGraph::paint(juce::Graphics& g){
     }
     static constexpr std::array<int,11> dbTicks{0,-5,-10,-15,-20,-25,-30,-35,-40,-50,-60};
     for(const int db:dbTicks){
+        g.setFont(scalpel::finish::font(16,false));
         const float y=r.getY()-r.getHeight()*db/60.0f;
         g.setColour(juce::Colour(0xff8fb4cf).withAlpha(db==-30?.34f:.19f));
         g.drawHorizontalLine(juce::roundToInt(y),r.getX(),r.getRight());
@@ -339,7 +341,7 @@ void RootsGraph::paint(juce::Graphics& g){
             r.getCentreX(),r.getBottom(),false);
         tar.addColour(.43,juce::Colour(polished?0xff050f1a:0xff0b1418));
         tar.addColour(.78,juce::Colour(polished?0xff020a13:0xff081018));
-        g.setGradientFill(tar);g.fillRect(r);
+        g.setGradientFill(tar);g.fillPath(filledPath);
         // Material sheen is a reflection field, not an independent waveform.
         // Its apparent ridges are clipped to the actual FFT silhouette.
         juce::ColourGradient oblique((polished?scalpel::finish::ice:juce::Colour(0xffb2c8c5)).withAlpha(polished?.018f:.075f),
@@ -347,7 +349,7 @@ void RootsGraph::paint(juce::Graphics& g){
             r.getRight(),r.getY(),false);
         oblique.addColour(.38,juce::Colour(polished?0xff10151a:0xff282026).withAlpha(.016f));
         oblique.addColour(.73,juce::Colour(polished?0xffa6eeff:0xffb9a5c2).withAlpha(polished?.012f:.048f));
-        g.setGradientFill(oblique);g.fillRect(r);
+        g.setGradientFill(oblique);g.fillPath(filledPath);
         // Approximate an oily normal/thin-film field at 30 Hz; the 60 Hz
         // surface curves below interpolate the measured FFT at every frame.
         // Both the material and the secondary crests stay inside filledPath.
@@ -621,7 +623,7 @@ void RootsGraph::paint(juce::Graphics& g){
         g.drawVerticalLine(juce::roundToInt(freqToX(param(selected_,"hz"))),r.getY(),r.getBottom());
     }
     // Both boundary handles always live on one horizontal rail.
-    g.setColour((polished?scalpel::finish::titanium:juce::Colour(0xffa38d79)).withAlpha(0.25f));
+    g.setColour(scalpel::finish::text.withAlpha(.65f));
     g.drawHorizontalLine(juce::roundToInt(r.getCentreY()),r.getX(),r.getRight());
     // Two-pass z-order keeps the selected ROOT boundary pair above neighbors.
     for(int pass=0;pass<2;++pass)
@@ -637,14 +639,14 @@ void RootsGraph::paint(juce::Graphics& g){
         const bool focused=i/2==selectedRoot;
         const auto col=focused&&peakWarnings_[(size_t)(i/2)]>0.f?
             juce::Colour(0xffff4f38):
-            colour(i/2).interpolatedWith(polished?scalpel::finish::silver:juce::Colour(0xffc1a997),.15f);
-        g.setColour(col.withAlpha(enabled?(focused?0.68f:0.18f):0.045f));
+            colour(i/2);
+        g.setColour(col.withAlpha(enabled?(focused?0.85f:0.65f):0.045f));
         g.drawVerticalLine(juce::roundToInt(x),r.getY(),r.getBottom());
         g.setColour(col.withAlpha(enabled?(focused?0.24f:0.045f):0.025f));
         g.fillEllipse(x-10,y-10,20,20);
         g.setColour(enabled?col:juce::Colour(polished?0xff49545b:0xff6d6056));
-        g.fillEllipse(x-5.5f,y-5.5f,11,11);
-        if(i==selected_||solo||focused){
+        g.fillEllipse(x-6.5f,y-6.5f,13,13);
+        if(enabled||i==selected_||solo||focused){
             g.setColour(solo?juce::Colours::white:col.brighter(0.65f));
             g.drawEllipse(x-9,y-9,18,18,i==selected_?2.0f:1.2f);
         }
@@ -1539,11 +1541,14 @@ void RootsEditor::layoutRack(){
     carveDynamic_.setBounds(0,0,1,1);
     const std::array<juce::Slider*,3> cs{&carveFrequency_,&carveDepth_,&carveQ_};
     const std::array<juce::Label*,3> cl{&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_};
-    for(int i=0;i<3;++i){cl[(size_t)i]->setBounds(bounds(351+i*235,659,226,29));cs[(size_t)i]->setBounds(carveDial(i));}
+    for(int i=0;i<3;++i){
+        cs[(size_t)i]->setBounds(carveDial(i));
+        cl[(size_t)i]->setBounds(cs[(size_t)i]->getX()-20,bounds(0,659,1,29).getY(),cs[(size_t)i]->getWidth()+40,bounds(0,659,1,29).getHeight());
+    }
     for(int i=0;i<4;++i)carveSlotButtons_[(size_t)i].setBounds(bounds(1200+(i%2)*204,700+(i/2)*91,184,62));
 
     for(int i=0;i<5;++i){
-        onyxLabels_[(size_t)i].setBounds(bounds(52+i*298,659,270,29));
+        onyxLabels_[(size_t)i].setBounds(bounds(62+i*310,659,280,29));
         onyxLabels_[(size_t)i].setFont(scalpel::finish::font(16));
         onyxSliders_[(size_t)i].setBounds(colorDial(i));
     }

@@ -55,8 +55,9 @@ inline bool verifyChassis105(){
             // letterbox instead of stretching the vent slots or circular knobs.
             // Validate the transformed console perimeter, not the host window edge.
             const auto faceTransform=surgery::rack::contentTransform(size.x,size.y);
-            for(auto logical:{juce::Point<float>(2,315),juce::Point<float>(1117,315),
-                              juce::Point<float>(560,3),juce::Point<float>(560,626)}){
+            const auto enclosure=scalpel::reference::enclosure();
+            for(auto logical:{juce::Point<float>(2,enclosure.getCentreY()),juce::Point<float>(1117,enclosure.getCentreY()),
+                              juce::Point<float>(560,enclosure.getY()+3),juce::Point<float>(560,enclosure.getBottom()-3)}){
                 const auto point=logical.transformedBy(faceTransform);
                 const int px=juce::jlimit(0,shot.getWidth()-1,juce::roundToInt(point.x*scale));
                 const int py=juce::jlimit(0,shot.getHeight()-1,juce::roundToInt(point.y*scale));

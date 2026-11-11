@@ -111,6 +111,18 @@ inline bool captureScalpelModule(const juce::String& modulePath){
     ok=ok&&click(165,386)&&capture("surgery-ui-VST3-BAND-1344x756.png");
     ok=ok&&click(134,474)&&capture("surgery-ui-VST3-BAND-ON.png");
     ok=ok&&click(134,533)&&capture("surgery-ui-VST3-BAND-OFF.png");
+    // Reference BAND fixture: native client pixels, BAND1/ON, digital silence.
+    ok=ok&&click(108,95)&&click(134,474)&&capture("surgery-ui-VST3-IVORY-REFERENCE-BAND.png");
+    // An additional known input proves that FFT and meters remain audio-driven.
+    juce::Random noise(1071645);juce::AudioBuffer<float> block(2,512);juce::MidiBuffer midi;
+    float bass=0;
+    for(int n=0;n<80;++n){
+        for(int i=0;i<512;++i){bass+=.025f*((noise.nextFloat()*2-1)-bass);
+            const float sample=.65f*bass+.035f*std::sin((n*512+i)*juce::MathConstants<float>::twoPi*110.f/48000.f);
+            block.setSample(0,i,sample);block.setSample(1,i,sample*.85f);}
+        plugin->processBlock(block,midi);if(n%4==3)pump(12);
+    }
+    ok=ok&&capture("surgery-ui-VST3-IVORY-BAND-AUDIO.png");
     ok=ok&&click(962,386)&&capture("surgery-ui-VST3-ANALYZE-1344x756.png");
     std::ofstream evidence("surgery-vst3-capture.csv");
     evidence<<"module,"<<modulePath<<"\neditor,1344x756\nfrequency,"<<parameter("CARVE 3/4 Frequency")->getCurrentValueAsText()<<"\nq,"<<parameter("CARVE 3/4 Q")->getCurrentValueAsText()<<"\n";

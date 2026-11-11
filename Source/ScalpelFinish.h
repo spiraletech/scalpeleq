@@ -42,10 +42,13 @@ inline void panel(juce::Graphics& g,juce::Rectangle<float> r,float radius,bool=f
     g.setColour(juce::Colour(0xff7d756e));g.drawRoundedRectangle(r,radius,.8f);
 }
 inline void shell(juce::Graphics& g,juce::Rectangle<float> r){
-    juce::ColourGradient outer(juce::Colour(0xff4c4d4b),r.getX(),r.getY(),juce::Colour(0xff131719),r.getRight(),r.getBottom(),false);
-    outer.addColour(.12,juce::Colour(0xff242729));g.setGradientFill(outer);g.fillRect(r);panel(g,r.reduced(7),22);
-    g.setColour(juce::Colour(0xffe5e0d8));g.drawRoundedRectangle(r.reduced(3),25,1.2f);
-    g.setColour(juce::Colour(0xff0c0e0f));g.drawRoundedRectangle(r.reduced(5),23,1);
+    g.setColour(juce::Colour(0xff050708));g.fillRect(r);
+    const auto outerBounds=scalpel::reference::enclosure();
+    juce::ColourGradient outer(juce::Colour(0xff4c4d4b),outerBounds.getX(),outerBounds.getY(),juce::Colour(0xff131719),outerBounds.getRight(),outerBounds.getBottom(),false);
+    outer.addColour(.12,juce::Colour(0xff242729));g.setGradientFill(outer);g.fillRoundedRectangle(outerBounds,25);
+    panel(g,scalpel::reference::rect(19,41,1607,866),22);
+    g.setColour(juce::Colour(0xffe5e0d8));g.drawRoundedRectangle(outerBounds.reduced(3),25,1.2f);
+    g.setColour(juce::Colour(0xff0c0e0f));g.drawRoundedRectangle(outerBounds.reduced(5),23,1);
 }
 inline void hardware(juce::Graphics& g,juce::Rectangle<float> r,bool selected,bool hover,bool pressed){
     g.setColour(juce::Colours::black.withAlpha(.72f));g.fillRoundedRectangle(r.translated(0,3).expanded(.8f),6);
@@ -99,6 +102,21 @@ inline void analyzerHousing(juce::Graphics& g,juce::Rectangle<float> r){
     g.setColour(juce::Colour(0xffece9e4));g.drawRoundedRectangle(r.reduced(1.2f),14,1);
     g.setColour(juce::Colour(0xff414849));g.drawRoundedRectangle(inside,11,.7f);
 }
+inline const juce::Image& knobMaterial(){
+    static const juce::Image texture=[]{
+        auto image=juce::SoftwareImageType{}.convert(juce::Image(juce::Image::ARGB,512,512,true));
+        juce::Image::BitmapData pixels(image,juce::Image::BitmapData::writeOnly);juce::Random rng(107252627);
+        for(int y=0;y<512;++y)for(int x=0;x<512;++x){
+            const float dx=(x-255.5f)/255.5f,dy=(y-255.5f)/255.5f,r=std::sqrt(dx*dx+dy*dy);
+            if(r>1)continue;
+            const float theta=std::atan2(dy,dx),direction=.5f+.5f*std::cos(theta*2-.55f);
+            const float machining=.005f*std::sin(r*1300.f)+(rng.nextFloat()-.5f)*.007f;
+            const float shade=(.085f+.085f*direction*(.3f+.7f*r)+machining)*(1-.22f*std::pow(r,8.f));
+            pixels.setPixelColour(x,y,juce::Colour::fromFloatRGBA(shade,shade+.003f,shade+.005f,1));
+        }
+        return image;
+    }();return texture;
+}
 inline void knob(juce::Graphics& g,int x,int y,int w,int h,float position,float start,float end,const juce::Slider&){
     const float cx=x+w*.5f,cy=y+h*.5f,radius=.46f*(float)std::min(w,h);
     const auto r=juce::Rectangle<float>(cx-radius,cy-radius,2*radius,2*radius);
@@ -110,16 +128,14 @@ inline void knob(juce::Graphics& g,int x,int y,int w,int h,float position,float 
         g.setColour((i%2?juce::Colour(0xff0d1112):juce::Colour(0xffdde0dc)).withAlpha(.65f));
         g.drawLine(cx+std::sin(a)*(radius-3.5f),cy+std::cos(a)*(radius-3.5f),cx+std::sin(a)*(radius-.5f),cy+std::cos(a)*(radius-.5f),.55f);}
     g.setColour(juce::Colour(0xff090c0d));g.fillEllipse(r.reduced(4));const auto face=r.reduced(6);
-    juce::ColourGradient radial(juce::Colour(0xff404244),cx-radius*.3f,cy-radius*.45f,juce::Colour(0xff111516),cx+radius*.6f,cy+radius*.75f,true);
-    radial.addColour(.4,graphite);g.setGradientFill(radial);g.fillEllipse(face);
-    for(float inset=7;inset<radius-2;inset+=1.1f){g.setColour(juce::Colours::white.withAlpha(.035f));g.drawEllipse(r.reduced(inset),.28f);}
+    g.setColour(graphite);g.fillEllipse(face);g.drawImage(knobMaterial(),face);
     g.setColour(juce::Colour(0xff9c9f9d));g.drawEllipse(face,.7f);
     juce::Path pointer;pointer.addRectangle(cx-1.55f,cy-radius+7,3.1f,radius*.47f);
     pointer.applyTransform(juce::AffineTransform::rotation(start+position*(end-start),cx,cy));
     g.setColour(pointerWhite);g.fillPath(pointer); // Printed, non-emissive inlay; no arc.
 }
 // Explicit tabular digit advances, retaining the same font as the labels.
-inline void number(juce::Graphics& g,const juce::String& value,juce::Rectangle<float> r,float size=20){
+inline void number(juce::Graphics& g,const juce::String& value,juce::Rectangle<float> r,float size=24){
     auto f=font(size);const float cell=f.getStringWidthFloat("0");
     float width=0;for(auto c:value)width+=juce::CharacterFunctions::isDigit(c)?cell:f.getStringWidthFloat(juce::String::charToString(c));
     if(width>r.getWidth()){f=font(size*r.getWidth()/width);}

@@ -39,18 +39,33 @@ inline void drawRackFace(juce::Graphics& g,int width,int height,int mode)
     g.setColour(scalpel::finish::ink);
     g.setFont(scalpel::finish::font(40));
     g.drawText("SCALPEL EQ",bounds(84,57,340,58),juce::Justification::centredLeft);
-    g.setFont(scalpel::finish::font(18));
+    g.setFont(scalpel::finish::font(24));
     g.drawFittedText("S U R G I C A L   E Q U A L I Z E R",bounds(590,66,450,38),juce::Justification::centred,1);
+    g.setFont(scalpel::finish::font(21));
     g.drawFittedText("E T H E R T E C H",bounds(1385,67,199,36),juce::Justification::centredLeft,1);
     etherTechMark(g);
     for(float x:{477.f,1175.f}){auto r=rect(x,63,2,45);g.fillRect(r);}
-    // Band selectors are independent molded keys on the ivory chassis.
+    // Contact shadows are painted on the parent plate, beyond control clips.
+    const auto shadow=[&](juce::Rectangle<float> r,float radius){
+        for(int i=4;i>=1;--i){g.setColour(juce::Colours::black.withAlpha(.09f));g.fillRoundedRectangle(r.expanded(i*.4f).translated(0,2+i*.4f),radius);}
+    };
+    for(int i=0;i<7;++i)shadow(band(i).toFloat().reduced(1),6);
+    for(int i=0;i<4;++i)shadow(tab(i).toFloat().reduced(1),5);
     const auto lower=deck();scalpel::finish::panel(g,lower,16);
     scalpel::finish::screws(g,lower,29,28);
+    if(mode==0){
+        for(float y:{699.f,783.f})shadow(rect(111,y,173,64),5);
+        for(float x:{1198.f,1403.f})for(float y:{688.f,779.f})shadow(rect(x,y,187,69),6);
+        shadow(rect(814,705,322,50),5);shadow(rect(814,795,322,51),5);
+        shadow(rect(342,830,164,44),4);shadow(rect(579,830,166,44),4);
+    }else if(mode==1){
+        for(float y:{699.f,783.f})shadow(rect(111,y,173,64),5);
+        for(int i=0;i<4;++i)shadow(rect(1200+(i%2)*204,700+(i/2)*91,184,62),6);
+    }
     std::array<float,4> dividers{};int count=4;
     if(mode==0)dividers={307,535,783,1175};
     else if(mode==1)dividers={345,580,815,1175};
-    else if(mode==2)dividers={330,628,926,1224};
+    else if(mode==2)dividers={357,667,977,1287};
     else {dividers={548,1096,0,0};count=2;}
     g.setColour(scalpel::finish::ink);
     for(int i=0;i<count;++i){auto line=rect(dividers[(size_t)i],676,2,194);g.fillRect(line);}
@@ -73,11 +88,13 @@ inline void drawMeter(juce::Graphics& g, juce::Rectangle<float> r, float db, con
             r.getWidth() - 8.0f, segmentH);
         const auto hot = i > 12 ? juce::Colour(0xfff3fbff)
                                 : i > 9 ? juce::Colour(0xffcceeff) : amber;
-        g.setColour(lit ? (polished?juce::Colour(0xffc8d8dc):hot) : juce::Colour(polished?0xff353c3e:0xff292522));
+        juce::ColourGradient segment(lit?juce::Colour(0xffc8d8dc):juce::Colour(0xff465052),cell.getX(),cell.getY(),
+                                    lit?juce::Colour(0xff849a9e):juce::Colour(0xff222a2c),cell.getRight(),cell.getBottom(),false);
+        g.setGradientFill(segment);
         g.fillRect(cell);
     }
     g.setColour(ivory);
-    g.setFont(juce::Font(juce::FontOptions("Segoe UI", 10.5f, juce::Font::bold)));
+    g.setFont(juce::Font(juce::FontOptions("Segoe UI", 14.f, juce::Font::plain)));
     g.drawText(label, (int)r.getX(), (int)r.getBottom() + 2, (int)r.getWidth(), 14,
                juce::Justification::centred);
 }
@@ -91,10 +108,10 @@ inline void drawAnalyzerPanel(juce::Graphics& g,juce::Rectangle<float> full,
     const auto display=local(1306,343,159,53);
     g.setColour(juce::Colour(0xff050808));g.fillRoundedRectangle(display,4);
     g.setColour(juce::Colour(0xff8a8d86));g.drawRoundedRectangle(display,4,.6f);
-    g.setColour(scalpel::finish::text);g.setFont(scalpel::finish::font(13,false));
+    g.setColour(scalpel::finish::text);g.setFont(scalpel::finish::font(17,false));
     g.drawText("PEAK (dBFS)",local(1305,315,164,24).toNearestInt(),juce::Justification::centred);
     g.setColour(juce::Colour(0xff05dbe9));
-    scalpel::finish::number(g,peakHold<=-143?juce::String("-inf"):juce::String(peakHold,2),display,25);
+    scalpel::finish::number(g,peakHold<=-143?juce::String("-inf"):juce::String(peakHold,2),display,29);
     drawMeter(g,local(1486,265,34,239),leftPeak,"L",polished);
     drawMeter(g,local(1537,265,34,239),rightPeak,"R",polished);
     (void)full;

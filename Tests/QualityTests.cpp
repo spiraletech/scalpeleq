@@ -192,7 +192,7 @@ bool verifyCarveGraphSync(){
                 if(std::abs(actual-frequency->getValue())>.02)return false;
                 const auto plot=scalpel::reference::plotLocal();
                 const double expectedX=plot.getX()+plot.getWidth()*std::log(actual/20.)/std::log(1000.);
-                const int y=juce::roundToInt(22.+(graph->getHeight()-56.)*.5+23.);
+                const int y=juce::roundToInt(plot.getCentreY()+23.f);
                 const auto image=graph->createComponentSnapshot(graph->getLocalBounds());
                 double sumX=0;int count=0;
                 for(int py=y-4;py<=y+4;++py)for(int x=juce::roundToInt(expectedX)-9;x<=juce::roundToInt(expectedX)+9;++x){
