@@ -26,10 +26,10 @@ public:
         setColour(juce::PopupMenu::highlightedTextColourId,juce::Colour(0xfff5fbff));
         setColour(juce::ComboBox::textColourId,juce::Colour(0xffedf5ff));
     }
-    juce::Font getComboBoxFont(juce::ComboBox&) override {return juce::Font(juce::FontOptions("Segoe UI",22.0f,juce::Font::bold));}
+    juce::Font getComboBoxFont(juce::ComboBox&) override {return juce::Font(juce::FontOptions("Segoe UI",19.0f,juce::Font::bold));}
     juce::Font getPopupMenuFont() override {return juce::Font(juce::FontOptions("Segoe UI",13.0f,juce::Font::plain));}
     void positionComboBoxText(juce::ComboBox& box,juce::Label& label) override {
-        label.setBounds(10,1,juce::jmax(0,box.getWidth()-36),box.getHeight()-2);
+        label.setBounds(12,-2,juce::jmax(0,box.getWidth()-38),box.getHeight()-2);
         label.setFont(getComboBoxFont(box));
         label.setJustificationType(juce::Justification::centredLeft);
     }
@@ -364,10 +364,13 @@ public:
             g.setColour(!b.isEnabled()?scalpel::finish::secondary:hardware?juce::Colour(0xff070b0f):
                 label=="X-RAY"?scalpel::finish::text:tab&&!b.getToggleState()?scalpel::finish::secondary:
                 ((label=="ON"||label=="OFF")&&!b.getToggleState())?scalpel::finish::secondary:scalpel::finish::text);
-            g.setFont(scalpel::finish::font(label.startsWith("PHASE")?17.5f:tab?24.f:23.f));
+            auto buttonFont=scalpel::finish::font(hardware?(label.startsWith("PHASE")?16.f:20.5f):tab?22.5f:23.f);
+            if(hardware)buttonFont.setHorizontalScale(.955f);
+            g.setFont(buttonFont);
             auto bounds=label=="X-RAY"?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2);
-            if(tab)bounds=bounds.withTrimmedBottom(4);
-            if(label=="ON"||label=="OFF")bounds=bounds.withTrimmedTop(5);
+            if(tab)bounds=bounds.withTrimmedBottom(4).translated(juce::roundToInt(b.getWidth()*.022f),-1);
+            if(hardware)bounds=bounds.translated(0,label.startsWith("BAND ")?-2:-1);
+            if(label=="ON"||label=="OFF")bounds=bounds.translated(1,-1);
             g.drawFittedText(label,bounds,juce::Justification::centred,1);
             return;
         }
@@ -431,7 +434,10 @@ public:
             if(!label.isBeingEdited()){
                 g.setColour(dynamic_cast<juce::ComboBox*>(label.getParentComponent())?scalpel::finish::text:label.isEnabled()?scalpel::finish::ink:scalpel::finish::ink.withAlpha(.55f));
                 const auto r=label.getBorderSize().subtractedFrom(label.getLocalBounds());
-                auto f=scalpel::finish::font(label.getText().startsWith("BAND ")&&label.getText().contains("CARVE")?15.f:20.f);g.setFont(f);
+                const bool combo=dynamic_cast<juce::ComboBox*>(label.getParentComponent())!=nullptr;
+                auto f=scalpel::finish::font(label.getText().startsWith("BAND ")&&label.getText().contains("CARVE")?15.f:19.f);
+                if(!combo)f.setHorizontalScale(.865f);
+                g.setFont(f);
                 if(dynamic_cast<juce::ComboBox*>(label.getParentComponent()))
                     g.drawFittedText(label.getText(),r,label.getJustificationType(),1);
                 else {

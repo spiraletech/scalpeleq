@@ -1542,10 +1542,10 @@ void RootsEditor::layoutRack(){
     peakHold_.setBounds(bounds(1307,480,158,57));
 
     on_.setBounds(bounds(111,699,173,64));off_.setBounds(bounds(111,783,173,64));
-    gainLabel_.setBounds(bounds(324,659,190,29));gain_.setBounds(bounds(342,689,164,188));
-    thresholdLabel_.setBounds(bounds(556,659,200,29));threshold_.setBounds(bounds(579,689,166,188));
-    compLabel_.setBounds(bounds(817,666,320,29));compressor_.setBounds(bounds(814,705,322,50));
-    domainLabel_.setBounds(bounds(817,759,320,29));domain_.setBounds(bounds(814,795,322,51));
+    gainLabel_.setBounds(bounds(327,659,190,29));gain_.setBounds(bounds(342,689,164,188));
+    thresholdLabel_.setBounds(bounds(560,659,200,29));threshold_.setBounds(bounds(579,689,166,188));
+    compLabel_.setBounds(bounds(814,663,320,29));compressor_.setBounds(bounds(814,705,322,50));
+    domainLabel_.setBounds(bounds(814,756,320,29));domain_.setBounds(bounds(814,795,322,51));
     detectorLabel_.setBounds(0,0,1,1);detector_.setBounds(0,0,1,1);limitAmount_.setBounds(0,0,1,1);
     mono_.setBounds(bounds(1198,688,187,69));solo_.setBounds(bounds(1403,688,185,69));
     phase_.setBounds(bounds(1198,779,187,69));limit_.setBounds(bounds(1403,779,185,69));

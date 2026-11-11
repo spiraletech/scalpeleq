@@ -37,12 +37,12 @@ inline void drawRackFace(juce::Graphics& g,int width,int height,int mode)
     scalpel::finish::shell(g,{0,0,(float)width,(float)height});
     scalpel::finish::panel(g,header(),14);
     g.setColour(scalpel::finish::ink);
-    g.setFont(scalpel::finish::font(40));
-    g.drawText("SCALPEL EQ",bounds(84,57,340,58),juce::Justification::centredLeft);
-    g.setFont(scalpel::finish::font(24));
-    g.drawFittedText("S U R G I C A L   E Q U A L I Z E R",bounds(590,66,450,38),juce::Justification::centred,1);
-    g.setFont(scalpel::finish::font(21));
-    g.drawFittedText("E T H E R T E C H",bounds(1385,67,199,36),juce::Justification::centredLeft,1);
+    g.setFont(scalpel::finish::font(41.2f));
+    g.drawText("SCALPEL EQ",bounds(86.5f,55,340,58),juce::Justification::centredLeft);
+    auto subtitle=scalpel::finish::font(18);subtitle.setExtraKerningFactor(.095f);g.setFont(subtitle);
+    g.drawFittedText("S U R G I C A L   E Q U A L I Z E R",bounds(603,66,450,38),juce::Justification::centred,1);
+    auto brand=scalpel::finish::font(20.2f);brand.setExtraKerningFactor(.038f);g.setFont(brand);
+    g.drawFittedText("E T H E R T E C H",bounds(1387.5f,67,199,36),juce::Justification::centredLeft,1);
     etherTechMark(g);
     for(float x:{477.f,1175.f}){auto r=rect(x,63,2,45);g.fillRect(r);}
     // Contact shadows are painted on the parent plate, beyond control clips.
