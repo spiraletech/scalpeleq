@@ -12,6 +12,7 @@ inline constexpr float gutterWidth=40.f*logicalPerNativePixel;
 inline constexpr float labelRightOffset=28.f*logicalPerNativePixel;
 inline constexpr float unitElevation=17.f*logicalPerNativePixel;
 inline constexpr float labelFontHeight=11.f*logicalPerNativePixel;
+inline constexpr float labelInkHeight=8.f*logicalPerNativePixel;
 inline constexpr float unitFontHeight=9.f*logicalPerNativePixel;
 
 // Shared by spectrum, peak trace and calibrated grid/axis labels. Inputs are

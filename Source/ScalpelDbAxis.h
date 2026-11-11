@@ -11,13 +11,22 @@ inline void draw(juce::Graphics& g,juce::Rectangle<float> plot){
     g.setColour(juce::Colour(0xff040708));
     g.fillRect(plot.getRight()+gutterGap,plot.getY()-6.f*logicalPerNativePixel,
                gutterWidth,plot.getHeight()+11.f*logicalPerNativePixel);
-    const auto labelFont=juce::Font(juce::FontOptions("Arial",labelFontHeight,juce::Font::bold));
+    auto labelFont=juce::Font(juce::FontOptions("Arial",labelFontHeight,juce::Font::bold));
+    // CSS/SVG font-size is an em size; JUCE's legacy Windows font height
+    // includes different ascent/descent metrics. Match the measured 8px
+    // numeral cap in the 11px reference font, using its actual outline.
+    juce::GlyphArrangement probe;probe.addLineOfText(labelFont,"0",0,0);
+    juce::Path zeroOutline;probe.createPath(zeroOutline);
+    if(const float height=zeroOutline.getBounds().getHeight();height>0)
+        labelFont.setHeight(labelFont.getHeight()*labelInkHeight/height);
     auto unitFont=juce::Font(juce::FontOptions("Arial",unitFontHeight,juce::Font::bold));
     unitFont.setExtraKerningFactor(.4f/9.f);
     const auto text=[&](const juce::String& value,const juce::Font& font,float x,float y,bool centred){
         juce::GlyphArrangement glyphs;glyphs.addLineOfText(font,value,0,0);
-        const auto ink=glyphs.getBoundingBox(0,glyphs.getNumGlyphs(),false);
-        glyphs.draw(g,juce::AffineTransform::translation(x-(centred?ink.getCentreX():ink.getRight()),y-ink.getCentreY()));
+        const auto advance=glyphs.getBoundingBox(0,glyphs.getNumGlyphs(),false);
+        juce::Path outline;glyphs.createPath(outline);
+        const auto ink=outline.getBounds();
+        glyphs.draw(g,juce::AffineTransform::translation(x-(centred?advance.getCentreX():advance.getRight()),y-ink.getCentreY()));
     };
     g.setColour(juce::Colour(0xffc9bcaf));
     text("dB",unitFont,right,plot.getY()-unitElevation,true);
