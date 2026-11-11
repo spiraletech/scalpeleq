@@ -63,3 +63,10 @@ clicks its native controls, and captures the embedded native window from the
 Windows desktop. These are module-host captures, not editor-only snapshots.
 It preserves 1344 x 756 dimensions on all four pages and restores any CI-only
 display mode adjustment on exit. This host is JUCE, not FL Studio.
+
+The all-page native-module capture passed in run `42926779985`. That run
+also exposed an obsolete chassis assertion: pixels below 2% brightness were
+classified as missing coverage, including deliberately painted black trim.
+The corrected gate checks opaque coverage and the presence of the bezel at
+the locked physical edge, at every supported size/DPI. It does not brighten
+the approved black material to satisfy a palette-dependent threshold.

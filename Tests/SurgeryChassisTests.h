@@ -39,14 +39,14 @@ inline bool verifyChassis105(){
                 std::cerr<<"Chassis: stale DPI cache "<<raster.x<<','<<raster.y<<" scale "<<scale<<'\n';return false;
             }
             // The shipped face fills the complete constrained editor at every
-            // supported size/DPI. Measure exposed dark host background in all
-            // four corners instead of byte-comparing antialiased pixels across
-            // unrelated resolutions.
+            // supported size/DPI. Near-black recessed trim is a valid painted
+            // material, so luminance cannot identify exposed host background.
+            // Check opaque coverage plus the bezel's actual edge position.
             double error=0;int count=0;const int corner=juce::roundToInt(46*scale);
             for(int right=0;right<2;++right)for(int bottom=0;bottom<2;++bottom)
                 for(int y=4;y<corner-4;++y)for(int x=4;x<corner-4;++x){
                     const auto a=shot.getPixelAt(right?shot.getWidth()-corner+x:x,bottom?shot.getHeight()-corner+y:y);
-                    if(a.getBrightness()<.02f)error+=1.0;
+                    if(a.getFloatAlpha()<.99f)error+=1.0;
                     ++count;
                 }
             error=100.0*error/count;
@@ -63,6 +63,12 @@ inline bool verifyChassis105(){
                 if(shot.getPixelAt(px,py).getFloatAlpha()<.99f){
                     std::cerr<<"Chassis: disconnected 1.0.5 console edge\n";return false;
                 }
+                const int radius=juce::jmax(2,juce::roundToInt(2.0f*size.x/1120.0f*scale));
+                float bezel=0.f;
+                for(int dy=-radius;dy<=radius;++dy)for(int dx=-radius;dx<=radius;++dx)
+                    bezel=juce::jmax(bezel,shot.getPixelAt(juce::jlimit(0,shot.getWidth()-1,px+dx),
+                        juce::jlimit(0,shot.getHeight()-1,py+dy)).getBrightness());
+                if(bezel<.08f){std::cerr<<"Chassis: bezel displaced from locked edge\n";return false;}
             }
             const auto top=surgery::rack::StormChassis::top(size.x);
             if(top.getCentreX()!=size.x*.5f||top.getBottom()>40)return false;
@@ -79,4 +85,3 @@ inline bool verifyChassis105(){
     std::cout<<"STORM CHASSIS: 15 size/DPI captures, fixed X-head corners, connected 16:9 console edges, centred chamber, control containment and cache dimensions passed\n";
     return true;
 }
-
