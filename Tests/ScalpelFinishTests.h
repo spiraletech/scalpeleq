@@ -4,6 +4,7 @@
 #include <fstream>
 
 inline bool verifyScalpelFinish(){
+    const auto fail=[](int line){std::cerr<<"Formidable UI contract failed at ScalpelFinishTests.h:"<<line<<'\n';return false;};
     auto processor=std::make_unique<PRISMVSTAudioProcessor>();
     processor->prepareToPlay(48000,512);
     const auto set=[&](const juce::String& id,float value){
@@ -20,8 +21,8 @@ inline bool verifyScalpelFinish(){
         for(auto* child:editor->getChildren())if(auto* b=dynamic_cast<juce::TextButton*>(child);b&&b->isVisible()&&b->getButtonText()==text)return b;
         return nullptr;
     };
-    const auto click=[&](const juce::String& text){auto* b=button(text);if(!b||!b->onClick)return false;b->onClick();return true;};
-    if(!click("BAND 3")||!click("CARVE")||!click("C4"))return false;
+    const auto click=[&](const juce::String& text){auto* b=button(text);if(!b||!b->onClick)return fail(__LINE__);b->onClick();return true;};
+    if(!click("BAND 3")||!click("CARVE")||!click("C4"))return fail(__LINE__);
     juce::MessageManager::getInstance()->runDispatchLoopUntil(40);
     std::vector<float> values;for(auto* p:processor->getParameters())values.push_back(p->getValue());
     const auto save=[&](const juce::String& file){
@@ -42,58 +43,58 @@ inline bool verifyScalpelFinish(){
         const auto r=component.getBounds();geometry<<page<<','<<name<<','<<r.getX()<<','<<r.getY()<<','<<r.getWidth()<<','<<r.getHeight()<<'\n';
     };
     for(const char* page:{"CARVE","COLOR"}){
-        if(!click(page))return false;
+        if(!click(page))return fail(__LINE__);
         juce::MessageManager::getInstance()->runDispatchLoopUntil(25);
-        if(editor->getWidth()!=1344||editor->getHeight()!=756)return false;
+        if(editor->getWidth()!=1344||editor->getHeight()!=756)return fail(__LINE__);
         RootsGraph* graph=nullptr;std::vector<juce::Slider*> dials;
         for(auto* child:editor->getChildren()){
             if(auto* g=dynamic_cast<RootsGraph*>(child))graph=g;
             if(auto* s=dynamic_cast<juce::Slider*>(child);s&&s->isVisible())dials.push_back(s);
         }
-        if(!graph||graph->getBounds()!=scalpel::reference::analyzer().toNearestInt()||graph->selectedNode()/2!=2)return false;
+        if(!graph||graph->getBounds()!=scalpel::reference::analyzer().toNearestInt()||graph->selectedNode()/2!=2)return fail(__LINE__);
         record(page,*graph,"analyzer");
         for(int i=0;i<7;++i){
             auto* b=button("BAND "+juce::String(i+1));
-            if(!b||b->getBounds()!=scalpel::reference::band(i)||!contrast(*b,false))return false;
+            if(!b||b->getBounds()!=scalpel::reference::band(i)||!contrast(*b,false))return fail(__LINE__);
             record(page,*b,b->getButtonText());
         }
         int active=0;const char* tabs[]{"BAND MODE","CARVE","COLOR","ANALYZE"};
         for(int i=0;i<4;++i){
             auto* b=button(tabs[i]);
-            if(!b||b->getBounds()!=scalpel::reference::tab(i))return false;
+            if(!b||b->getBounds()!=scalpel::reference::tab(i))return fail(__LINE__);
             active+=b->getToggleState()?1:0;record(page,*b,tabs[i]);
         }
-        if(active!=1||!button(page)->getToggleState())return false;
+        if(active!=1||!button(page)->getToggleState())return fail(__LINE__);
         std::sort(dials.begin(),dials.end(),[](auto* a,auto* b){return a->getX()<b->getX();});
         if(juce::String(page)=="CARVE"){
-            if(dials.size()!=3)return false;
+            if(dials.size()!=3)return fail(__LINE__);
             for(int i=0;i<3;++i){
-                if(dials[(size_t)i]->getBounds()!=scalpel::reference::carveDial(i))return false;
+                if(dials[(size_t)i]->getBounds()!=scalpel::reference::carveDial(i))return fail(__LINE__);
                 record(page,*dials[(size_t)i],"dial"+juce::String(i));
             }
-            if(std::abs(dials[0]->getValue()-215.87)>.02||std::abs(dials[1]->getValue())>.001||std::abs(dials[2]->getValue()-.3)>.001)return false;
-            for(const auto* text:{"C1","C2","C3","C4"})if(!button(text)||!contrast(*button(text),false))return false;
-            if(!button("C4")->getToggleState()||!button("ON")->getToggleState()||button("OFF")->getToggleState())return false;
-            if(!contrast(*button("ON"),true)||!contrast(*button("OFF"),true))return false;
+            if(std::abs(dials[0]->getValue()-215.87)>.02||std::abs(dials[1]->getValue())>.001||std::abs(dials[2]->getValue()-.3)>.001)return fail(__LINE__);
+            for(const auto* text:{"C1","C2","C3","C4"})if(!button(text)||!contrast(*button(text),false))return fail(__LINE__);
+            if(!button("C4")->getToggleState()||!button("ON")->getToggleState()||button("OFF")->getToggleState())return fail(__LINE__);
+            if(!contrast(*button("ON"),true)||!contrast(*button("OFF"),true))return fail(__LINE__);
         }else{
-            if(dials.size()!=5)return false;
+            if(dials.size()!=5)return fail(__LINE__);
             for(int i=0;i<5;++i){
-                if(dials[(size_t)i]->getBounds()!=scalpel::reference::colorDial(i))return false;
+                if(dials[(size_t)i]->getBounds()!=scalpel::reference::colorDial(i))return fail(__LINE__);
                 record(page,*dials[(size_t)i],"dial"+juce::String(i));
             }
         }
-        if(!save("surgery-ui-IVORY-"+juce::String(page)+"-1344x756.png"))return false;
-        editor->setSize(1792,1008);if(!save("surgery-ui-IVORY-"+juce::String(page)+"-1792x1008.png"))return false;
+        if(!save("surgery-ui-IVORY-"+juce::String(page)+"-1344x756.png"))return fail(__LINE__);
+        editor->setSize(1792,1008);if(!save("surgery-ui-IVORY-"+juce::String(page)+"-1792x1008.png"))return fail(__LINE__);
         editor->setSize(1344,756);
     }
-    size_t index=0;for(auto* p:processor->getParameters())if(p->getValue()!=values[index++])return false;
-    if(!click("CARVE")||!button("C4")->getToggleState())return false;
+    size_t index=0;for(auto* p:processor->getParameters())if(p->getValue()!=values[index++])return fail(__LINE__);
+    if(!click("CARVE")||!button("C4")->getToggleState())return fail(__LINE__);
     // Both command buttons retain their material identity in both states.
     auto* on=button("ON");auto* off=button("OFF");
     const auto body=[](juce::TextButton& b){return b.createComponentSnapshot(b.getLocalBounds()).getPixelAt(16,29);};
     const auto onBody=body(*on),offBody=body(*off);
-    if(!click("OFF")||!contrast(*on,true)||!contrast(*off,true)||body(*on)!=onBody||body(*off)!=offBody)return false;
-    if(!save("surgery-ui-IVORY-CARVE-OFF-1344x756.png")||!click("ON"))return false;
+    if(!click("OFF")||!contrast(*on,true)||!contrast(*off,true)||body(*on)!=onBody||body(*off)!=offBody)return fail(__LINE__);
+    if(!save("surgery-ui-IVORY-CARVE-OFF-1344x756.png")||!click("ON"))return fail(__LINE__);
     // A dark body never trades material with its companion. Exactly one
     // green/red strip must follow the selected parameter, including CARVE.
     const auto lamps=[](juce::TextButton& b){
@@ -107,23 +108,23 @@ inline bool verifyScalpelFinish(){
         return std::pair<int,int>{green,red};
     };
     for(const auto* page:{"BAND MODE","CARVE"}){
-        if(!click(page)||!click("ON"))return false;
+        if(!click(page)||!click("ON"))return fail(__LINE__);
         auto* on=button("ON");auto* off=button("OFF");
-        if(!on||!off||on->getWidth()!=off->getWidth()||on->getHeight()!=off->getHeight())return false;
-        if(lamps(*on).first<25||lamps(*off).second!=0)return false;
-        if(!save("surgery-ui-IVORY-"+juce::String(page).replaceCharacter(' ','-')+"-ON.png")||!click("OFF"))return false;
-        if(lamps(*on).first!=0||lamps(*off).second<25)return false;
-        if(!save("surgery-ui-IVORY-"+juce::String(page).replaceCharacter(' ','-')+"-OFF.png"))return false;
+        if(!on||!off||on->getWidth()!=off->getWidth()||on->getHeight()!=off->getHeight())return fail(__LINE__);
+        if(lamps(*on).first<25||lamps(*off).second!=0)return fail(__LINE__);
+        if(!save("surgery-ui-IVORY-"+juce::String(page).replaceCharacter(' ','-')+"-ON.png")||!click("OFF"))return fail(__LINE__);
+        if(lamps(*on).first!=0||lamps(*off).second<25)return fail(__LINE__);
+        if(!save("surgery-ui-IVORY-"+juce::String(page).replaceCharacter(' ','-')+"-OFF.png"))return fail(__LINE__);
     }
     // Eight identical screw masters, attached to the two outer housings.
     const auto a=scalpel::reference::analyzer(),d=scalpel::reference::deck();
     auto ac=scalpel::reference::housingScrews(false);
     for(auto& c:ac)c+=a.toNearestInt().getPosition().toFloat();
     const auto dc=scalpel::reference::housingScrews(true);
-    for(auto p:ac)if(!a.contains(p)||p.x<=scalpel::reference::plot().getRight()&&p.x>a.getCentreX())return false;
-    for(auto p:dc)if(!d.contains(p))return false;
+    for(auto p:ac)if(!a.contains(p)||p.x<=scalpel::reference::plot().getRight()&&p.x>a.getCentreX())return fail(__LINE__);
+    for(auto p:dc)if(!d.contains(p))return fail(__LINE__);
     // Immutable static texture must not own a Direct2D bitmap at DLL unload.
-    if(scalpel::finish::grain().getPixelData()->createType()->getTypeID()!=juce::SoftwareImageType{}.getTypeID())return false;
+    if(scalpel::finish::grain().getPixelData()->createType()->getTypeID()!=juce::SoftwareImageType{}.getTypeID())return fail(__LINE__);
     std::cout<<"FORMIDABLE 1.0.7.1 REVIEW: CARVE/COLOR native geometry, BAND3/C4 215.87Hz Q0.300 states, typography contrast, two scales, parameter invariance and stable ON/OFF materials passed\n";
     return true;
 }

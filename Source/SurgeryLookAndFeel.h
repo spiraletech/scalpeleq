@@ -361,17 +361,17 @@ public:
             const bool tab=label=="BAND MODE"||label=="CARVE"||label=="COLOR"||label=="ANALYZE";
             const bool hardware=label.startsWith("BAND ")&&!tab||label=="C1"||label=="C2"||label=="C3"||label=="C4"||
                 label=="MONO"||label=="SOLO"||label.startsWith("PHASE")||label=="LIMIT";
-            g.setColour(!b.isEnabled()?scalpel::finish::secondary:hardware?juce::Colour(0xff070b0f):
+            g.setColour(!b.isEnabled()?scalpel::finish::secondary:hardware?scalpel::finish::ink:
                 label=="X-RAY"?scalpel::finish::text:tab&&!b.getToggleState()?scalpel::finish::secondary:
                 ((label=="ON"||label=="OFF")&&!b.getToggleState())?scalpel::finish::secondary:scalpel::finish::text);
-            auto buttonFont=scalpel::finish::font(hardware?(label.startsWith("PHASE")?13.5f:17.f):tab?18.f:18.f);
+            auto buttonFont=scalpel::finish::font(hardware?(label.startsWith("PHASE")?15.f:19.f):18.f,hardware||label=="ON"||label=="OFF");
             if(hardware)buttonFont.setHorizontalScale(.955f);
             g.setFont(buttonFont);
             auto bounds=label=="X-RAY"?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2);
             if(tab)bounds=bounds.withTrimmedBottom(4).translated(juce::roundToInt(b.getWidth()*.022f),-1);
             if(hardware)bounds=bounds.translated(0,label.startsWith("BAND ")?-2:-1);
             if(label=="ON"||label=="OFF")bounds=bounds.translated(1,-1);
-            g.drawFittedText(label,bounds,juce::Justification::centred,1);
+            g.drawFittedText(label.startsWith("PHASE")?juce::String("PHASE\nCORRECTION"):label,bounds,juce::Justification::centred,label.startsWith("PHASE")?2:1);
             return;
         }
         const bool xray=b.getButtonText()=="X-RAY";
@@ -435,7 +435,7 @@ public:
                 g.setColour(dynamic_cast<juce::ComboBox*>(label.getParentComponent())?scalpel::finish::text:label.isEnabled()?scalpel::finish::ink:scalpel::finish::ink.withAlpha(.55f));
                 const auto r=label.getBorderSize().subtractedFrom(label.getLocalBounds());
                 const bool combo=dynamic_cast<juce::ComboBox*>(label.getParentComponent())!=nullptr;
-                auto f=scalpel::finish::font(label.getText().startsWith("BAND ")&&label.getText().contains("CARVE")?11.5f:13.f);
+                auto f=scalpel::finish::font(label.getText().startsWith("BAND ")&&label.getText().contains("CARVE")?12.f:14.5f,true);
                 if(!combo)f.setHorizontalScale(.97f);
                 g.setFont(f);
                 if(dynamic_cast<juce::ComboBox*>(label.getParentComponent()))

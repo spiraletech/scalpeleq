@@ -1,29 +1,21 @@
-Scalpel EQ 0.1.0 - Windows x64 VST3
+Scalpel EQ 1.0.7.1 — Formidable skin review — Windows x64 VST3
 
-Close your DAW before copying plugin files. This is a separate plugin from
-Surgery EQ and must NOT overwrite a working Surgery installation.
-Copy the COMPLETE Scalpel EQ.vst3 folder into:
-C:\Program Files\Common Files\VST3
-Rescan and verify the separately named Scalpel EQ 0.1.0 instance.
-It has a distinct VST3 bundle and four-character plugin code.
-Legacy parameter IDs are retained within the new plugin for compatibility,
-but existing Surgery EQ tracks are NOT automatically converted to Scalpel EQ.
-Unsigned development build; test copies of production projects first.
+Close FL Studio and other DAWs before replacing the plugin.
+Extract this ZIP. Copy the COMPLETE “Scalpel EQ.vst3” folder to:
+  C:\Program Files\Common Files\VST3\
+Keep its Contents\x86_64-win\Scalpel EQ.vst3 binary inside that folder.
+Rescan plugins if your host requires it, then open Scalpel EQ.
 
-ANALYZE > SONAR 2.1 / VISUAL MODE now contains Standard+ ONLY.
-All earlier saved/automated SONAR choices render Standard+.
-SONAR ON/OFF independently gates its overlays; the accurate trace remains.
+This is a separate review candidate, not a promoted stable release.
+It uses the existing Scalpel plugin identity, parameter IDs and state format.
+Keep your previous working Scalpel EQ.vst3 bundle so you can restore it.
+The ZIP contains a Windows plugin, not source code or a mockup.
 
-ANALYZE > JUKE MODE independently selects Real Jukebox, Storm Tube,
-Symbiote Flow, Pulse Rail, Ambient Idle or Off. Real Jukebox is the fresh-instance
-default. JUKE Off hides all tube energy; the manufactured glass/carbon remains.
-SONAR OFF does not turn off JUKE; use JUKE MODE > Off for the border.
+New skin: Formidable warm titanium/polymer and graphite controls, shared live
+materials, green ON/red OFF indicators, white knob pointers, eight screws,
+and calibrated dB graph scale with separate PEAK(dBFS) display.
+The supplied kit's rejected sponsor plaque and footer vents are excluded.
 
-Freeze holds both visual simulations. Off controls override visibility while
-frozen. Reduced Motion defaults ON and preserves light response with less drift
-and turbulence. Silence leaves faint casing reflections after decay.
-
-Historical SONAR parameter IDs/ranges/values are retained for project and
-normalized automation compatibility. They cannot reactivate removed styles.
-JUKE choices, existing control positions, analyzer geometry and DSP are retained.
-See docs/SCALPEL_EQ_DSP_SPEC.md for the current scope and limitations.
+Actual Windows VST3 validation and screenshots are reported separately.
+FL Studio 25 verification must be performed in FL Studio; a generic test host
+is not a substitute for FL Studio project recall/playback/removal testing.

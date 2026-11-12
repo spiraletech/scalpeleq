@@ -77,3 +77,19 @@ comparison fixture. Other pages preserve BAND3/C4, 215.87Hz, 0 cut, Q0.300.
 Build and visual results are pending until evidence is collected. FL Studio 25
 is unavailable here; no FL playback/project/close/removal test may be claimed.
 No 1:1 visual match or release approval is implied by a successful compilation.
+
+## First compiled check and targeted correction
+
+Windows run 43138987377 compiled the VST3 successfully and captured all four
+actual native pages, but the aggregate UI test stopped on short-label contrast.
+C1–C4 had too few solid dark glyph pixels at their actual display size. The
+fix restores standard bold control lettering and larger numeric/control labels;
+it does not lower contrast thresholds. PHASE CORRECTION wraps on two native
+text lines, as in the kit. ON/OFF retain identical body and label styling.
+
+At 1344×756 the first header material median was 174/156/140 versus the source
+156/137/121; keys were 169/150/131 versus 157/132/108; tab upper faces were
+37/33/31 versus 71/61/52. The next correction changes the specific material
+light stops rather than applying a global overlay. Knobs gain visible fine
+concentric relief and the source's lower directional reflection. Reference
+values are diagnostic regional medians, not exact per-pixel acceptance.
