@@ -127,7 +127,11 @@ inline const juce::Image& knobMaterial(){
             const float dx=(x-255.5f)/255.5f,dy=(y-255.5f)/255.5f,r=std::sqrt(dx*dx+dy*dy);
             if(r>1)continue;
             const float theta=std::atan2(dy,dx),direction=.5f+.5f*std::cos(theta*2-2.5f);
-            const float machining=.025f*std::sin(r*440.f)+(rng.nextFloat()-.5f)*.009f;
+            // Keep radial machining below Nyquist at the minimum editor size.
+            // The 440-radian prototype produced visible moire when the 512px
+            // material was reduced to a real knob. This band-limited relief
+            // stays concentric at native size and fractional display scales.
+            const float machining=.012f*std::sin(r*110.f)+(rng.nextFloat()-.5f)*.007f;
             const float shade=(.065f+.31f*direction*(.15f+.85f*r)+machining)*(1-.24f*std::pow(r,8.f));
             pixels.setPixelColour(x,y,juce::Colour::fromFloatRGBA(shade*1.05f,shade,shade*.88f,1));
         }
