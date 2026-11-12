@@ -42,7 +42,7 @@ inline void drawRackFace(juce::Graphics& g,int width,int height,int mode)
         g.drawFittedText(text,box.translated(0,1),juce::Justification::centredLeft,1);
         g.setColour(scalpel::finish::ink);g.drawFittedText(text,box,juce::Justification::centredLeft,1);
     };
-    auto word=scalpel::finish::font(38,true);word.setExtraKerningFactor(.045f);
+    auto word=scalpel::finish::font(44,true);word.setExtraKerningFactor(.32f);
     engraved("SCALPEL EQ",bounds(110,26,590,68),word);
     auto subtitle=scalpel::finish::font(12);subtitle.setExtraKerningFactor(.20f);
     engraved("S U R G I C A L   E Q U A L I Z E R",bounds(1208,20,394,29),subtitle);
