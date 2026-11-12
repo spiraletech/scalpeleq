@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include "../Source/ScalpelReferenceLayout.h"
 #include <iostream>
 #include <fstream>
 #if JUCE_WINDOWS && JUCE_PLUGINHOST_VST3
@@ -103,7 +104,8 @@ inline bool captureScalpelModule(const juce::String& modulePath){
         // A single pixel at 1200,118 intersects the larger BAND7 glyphs.
         // Require a substantial painted ivory key surface, independent of text.
         int paintedKey=0;
-        for(int y=94;y<134;++y)for(int x=1145;x<1303;++x){
+        const auto key=scalpel::reference::band(6).toFloat().transformedBy(juce::AffineTransform::scale(1.2f)).toNearestInt().reduced(6);
+        for(int y=key.getY();y<key.getBottom();++y)for(int x=key.getX();x<key.getRight();++x){
             const auto c=image.getPixelAt(x,y);
             if(c.getRed()>140&&c.getGreen()>120&&c.getBlue()>100&&c.getRed()>c.getBlue()+8)++paintedKey;
         }
@@ -115,15 +117,17 @@ inline bool captureScalpelModule(const juce::String& modulePath){
         juce::FileOutputStream out(juce::File::getCurrentWorkingDirectory().getChildFile(name));out.setPosition(0);out.truncate();
         return juce::PNGImageFormat().writeImageToStream(image,out);
     };
-    bool ok=click(414,95)&&click(435,386)&&click(1018,537)&&capture("surgery-ui-VST3-CARVE-1344x756.png");
-    ok=ok&&click(134,474)&&capture("surgery-ui-VST3-CARVE-ON.png");
-    ok=ok&&click(134,533)&&capture("surgery-ui-VST3-CARVE-OFF.png");
-    ok=ok&&click(692,386)&&capture("surgery-ui-VST3-COLOR-1344x756.png");
-    ok=ok&&click(165,386)&&capture("surgery-ui-VST3-BAND-1344x756.png");
-    ok=ok&&click(134,474)&&capture("surgery-ui-VST3-BAND-ON.png");
-    ok=ok&&click(134,533)&&capture("surgery-ui-VST3-BAND-OFF.png");
+    const auto hit=[&](juce::Rectangle<int> box){return click(box.getCentreX(),box.getCentreY());};
+    using namespace scalpel::reference;
+    bool ok=hit(band(2))&&hit(tab(1))&&hit(carveSlot(3))&&capture("surgery-ui-VST3-CARVE-1344x756.png");
+    ok=ok&&hit(switchBounds(false))&&capture("surgery-ui-VST3-CARVE-ON.png");
+    ok=ok&&hit(switchBounds(true))&&capture("surgery-ui-VST3-CARVE-OFF.png");
+    ok=ok&&hit(tab(2))&&capture("surgery-ui-VST3-COLOR-1344x756.png");
+    ok=ok&&hit(tab(0))&&capture("surgery-ui-VST3-BAND-1344x756.png");
+    ok=ok&&hit(switchBounds(false))&&capture("surgery-ui-VST3-BAND-ON.png");
+    ok=ok&&hit(switchBounds(true))&&capture("surgery-ui-VST3-BAND-OFF.png");
     // Reference BAND fixture: native client pixels, BAND1/ON, digital silence.
-    ok=ok&&click(108,95)&&click(134,474)&&capture("surgery-ui-VST3-IVORY-REFERENCE-BAND.png");
+    ok=ok&&hit(band(0))&&hit(switchBounds(false))&&capture("surgery-ui-VST3-IVORY-REFERENCE-BAND.png");
     // An additional known input proves that FFT and meters remain audio-driven.
     juce::Random noise(1071645);juce::AudioBuffer<float> block(2,512);juce::MidiBuffer midi;
     float bass=0;
@@ -134,8 +138,9 @@ inline bool captureScalpelModule(const juce::String& modulePath){
         plugin->processBlock(block,midi);if(n%4==3)pump(12);
     }
     ok=ok&&capture("surgery-ui-VST3-IVORY-BAND-AUDIO.png");
-    ok=ok&&click(962,386)&&capture("surgery-ui-VST3-ANALYZE-1344x756.png");
+    ok=ok&&hit(tab(3))&&capture("surgery-ui-VST3-ANALYZE-1344x756.png");
     std::ofstream evidence("surgery-vst3-capture.csv");
+    evidence<<"version,"<<types[0]->version<<"\n";
     evidence<<"module,"<<modulePath<<"\neditor,1344x756\nfrequency,"<<parameter("CARVE 3/4 Frequency")->getCurrentValueAsText()<<"\nq,"<<parameter("CARVE 3/4 Q")->getCurrentValueAsText()<<"\n";
     editor->setVisible(false);editor->removeFromDesktop();editor.reset();plugin->releaseResources();
     if(ok)std::cout<<"MODULE CAPTURE: built VST3 loaded in JUCE host; native CARVE/COLOR/BAND/ANALYZE captured at 1344x756; fixture preserved\n";

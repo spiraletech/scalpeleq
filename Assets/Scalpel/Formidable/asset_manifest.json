@@ -1,0 +1,2072 @@
+{
+  "version": "1.0.7 visual research kit (unapproved, not a shipping release)",
+  "source_file": "image(20261112-012927).png",
+  "source_px": [
+    1670,
+    942
+  ],
+  "coordinate_system": "pixel top-left origin, right/bottom exclusive; multiply positions by runtime scale",
+  "scale_example": {
+    "target": [
+      1344,
+      756
+    ],
+    "scale_x": 0.80479,
+    "scale_y": 0.802548,
+    "warning": "Use content dimensions, not host title bar; preserve aspect unless intentional layout adjustment"
+  },
+  "source_warning": "The reference contains UAD sponsorship/award-like plaque explicitly rejected in conversation; source retained only for provenance, never use as an authorized co-brand.",
+  "canonical_constraints": [
+    "Exact outer-housing analyzer screw placement; no internal plot screws",
+    "Four screws on lower deck corners",
+    "No UAD/sponsor/award plaques",
+    "Only owned EtherTech/Scalpel EQ branding",
+    "No added air vent at top",
+    "White non-LED knob pointers",
+    "ON green/OFF red",
+    "Seven-band EQ functionality locked",
+    "No DSP changes from artwork"
+  ],
+  "screw_centers": {
+    "analyzer_top_left": [
+      72,
+      231
+    ],
+    "analyzer_top_right": [
+      1600,
+      232
+    ],
+    "analyzer_bottom_left": [
+      72,
+      478
+    ],
+    "analyzer_bottom_right": [
+      1598,
+      478
+    ],
+    "lower_top_left": [
+      69,
+      614
+    ],
+    "lower_top_right": [
+      1607,
+      618
+    ],
+    "lower_bottom_left": [
+      69,
+      810
+    ],
+    "lower_bottom_right": [
+      1605,
+      812
+    ]
+  },
+  "assets": [
+    {
+      "id": "PANEL_001",
+      "label": "Outer shell left body",
+      "group": "chassis",
+      "bbox_px": [
+        9,
+        3,
+        1613,
+        838
+      ],
+      "position_px": [
+        9,
+        3
+      ],
+      "size_px": [
+        1604,
+        835
+      ],
+      "bounds_norm": [
+        0.005389,
+        0.003185,
+        0.965868,
+        0.889597
+      ],
+      "reference_crop": "01_reference_crops/PANEL_001__outer_shell_left_body.png",
+      "implementation": "nine-slice/model; avoid copying bottom plaque",
+      "caveat": "Input render has unapproved third-party co-branding in footer; cropped shell must not be copied verbatim into shipping plugin"
+    },
+    {
+      "id": "PANEL_002",
+      "label": "Upper hardware header",
+      "group": "chassis",
+      "bbox_px": [
+        36,
+        8,
+        1606,
+        103
+      ],
+      "position_px": [
+        36,
+        8
+      ],
+      "size_px": [
+        1570,
+        95
+      ],
+      "bounds_norm": [
+        0.021557,
+        0.008493,
+        0.961677,
+        0.109342
+      ],
+      "reference_crop": "01_reference_crops/PANEL_002__upper_hardware_header.png",
+      "implementation": "nine-slice textured ABS/satin brushed trim",
+      "caveat": "Wordmark in render is italic, conflicting with approved upright wordmark; text must be redrawn"
+    },
+    {
+      "id": "PANEL_003",
+      "label": "Band recess rail",
+      "group": "chassis",
+      "bbox_px": [
+        45,
+        104,
+        1609,
+        196
+      ],
+      "position_px": [
+        45,
+        104
+      ],
+      "size_px": [
+        1564,
+        92
+      ],
+      "bounds_norm": [
+        0.026946,
+        0.110403,
+        0.963473,
+        0.208068
+      ],
+      "reference_crop": "01_reference_crops/PANEL_003__band_recess_rail.png",
+      "implementation": "native panel bevel and interior shadow",
+      "caveat": ""
+    },
+    {
+      "id": "PANEL_004",
+      "label": "Analyzer full housing",
+      "group": "chassis",
+      "bbox_px": [
+        41,
+        200,
+        1622,
+        498
+      ],
+      "position_px": [
+        41,
+        200
+      ],
+      "size_px": [
+        1581,
+        298
+      ],
+      "bounds_norm": [
+        0.024551,
+        0.212314,
+        0.971257,
+        0.528662
+      ],
+      "reference_crop": "01_reference_crops/PANEL_004__analyzer_full_housing.png",
+      "implementation": "nine-slice bezel; four outer corner screws only",
+      "caveat": "Dynamic graph data, labels and controls must be drawn separately"
+    },
+    {
+      "id": "PANEL_005",
+      "label": "Analyzer graph viewport",
+      "group": "chassis",
+      "bbox_px": [
+        106,
+        235,
+        1219,
+        475
+      ],
+      "position_px": [
+        106,
+        235
+      ],
+      "size_px": [
+        1113,
+        240
+      ],
+      "bounds_norm": [
+        0.063473,
+        0.249469,
+        0.72994,
+        0.504246
+      ],
+      "reference_crop": "01_reference_crops/PANEL_005__analyzer_graph_viewport.png",
+      "implementation": "native black surface + live logarithmic grid/curve",
+      "caveat": "Do not bake spectrum or band nodes into background"
+    },
+    {
+      "id": "PANEL_006",
+      "label": "Analyzer right instruments",
+      "group": "chassis",
+      "bbox_px": [
+        1216,
+        214,
+        1584,
+        491
+      ],
+      "position_px": [
+        1216,
+        214
+      ],
+      "size_px": [
+        368,
+        277
+      ],
+      "bounds_norm": [
+        0.728144,
+        0.227176,
+        0.948503,
+        0.521231
+      ],
+      "reference_crop": "01_reference_crops/PANEL_006__analyzer_right_instruments.png",
+      "implementation": "native layout with dB axis, peak, X-RAY, reset and L/R meters",
+      "caveat": "Screw positions are on full housing, not graph plot"
+    },
+    {
+      "id": "PANEL_007",
+      "label": "Mode tab rail",
+      "group": "chassis",
+      "bbox_px": [
+        40,
+        495,
+        1608,
+        573
+      ],
+      "position_px": [
+        40,
+        495
+      ],
+      "size_px": [
+        1568,
+        78
+      ],
+      "bounds_norm": [
+        0.023952,
+        0.525478,
+        0.962874,
+        0.60828
+      ],
+      "reference_crop": "01_reference_crops/PANEL_007__mode_tab_rail.png",
+      "implementation": "native rounded-rect rail + inset tabs",
+      "caveat": ""
+    },
+    {
+      "id": "PANEL_008",
+      "label": "Lower control deck",
+      "group": "chassis",
+      "bbox_px": [
+        34,
+        578,
+        1622,
+        836
+      ],
+      "position_px": [
+        34,
+        578
+      ],
+      "size_px": [
+        1588,
+        258
+      ],
+      "bounds_norm": [
+        0.020359,
+        0.613588,
+        0.971257,
+        0.887473
+      ],
+      "reference_crop": "01_reference_crops/PANEL_008__lower_control_deck.png",
+      "implementation": "native chassis texture and corner screws",
+      "caveat": "No footer plaque or bottom sponsor marking"
+    },
+    {
+      "id": "PANEL_009",
+      "label": "Lower left perforation",
+      "group": "excluded-artifact",
+      "bbox_px": [
+        66,
+        842,
+        334,
+        899
+      ],
+      "position_px": [
+        66,
+        842
+      ],
+      "size_px": [
+        268,
+        57
+      ],
+      "bounds_norm": [
+        0.039521,
+        0.893843,
+        0.2,
+        0.954352
+      ],
+      "reference_crop": "01_reference_crops/PANEL_009__lower_left_perforation.png",
+      "implementation": "EXCLUDE: noncanonical extra decoration",
+      "caveat": "Previous approval disallows additional vents/ornaments; do not implement"
+    },
+    {
+      "id": "PANEL_010",
+      "label": "Unapproved sponsor footer plaque",
+      "group": "excluded-artifact",
+      "bbox_px": [
+        455,
+        838,
+        1171,
+        902
+      ],
+      "position_px": [
+        455,
+        838
+      ],
+      "size_px": [
+        716,
+        64
+      ],
+      "bounds_norm": [
+        0.272455,
+        0.889597,
+        0.701198,
+        0.957537
+      ],
+      "reference_crop": "01_reference_crops/PANEL_010__unapproved_sponsor_footer_plaque.png",
+      "implementation": "EXCLUDE: not owned branding",
+      "caveat": "Explicitly rejected UAD/partnership/award plaque. DO NOT SHIP or include in UI"
+    },
+    {
+      "id": "PANEL_011",
+      "label": "Lower right perforation",
+      "group": "excluded-artifact",
+      "bbox_px": [
+        1332,
+        842,
+        1580,
+        903
+      ],
+      "position_px": [
+        1332,
+        842
+      ],
+      "size_px": [
+        248,
+        61
+      ],
+      "bounds_norm": [
+        0.797605,
+        0.893843,
+        0.946108,
+        0.958599
+      ],
+      "reference_crop": "01_reference_crops/PANEL_011__lower_right_perforation.png",
+      "implementation": "EXCLUDE: noncanonical extra decoration",
+      "caveat": "Do not implement unless separately approved"
+    },
+    {
+      "id": "TYPE_001",
+      "label": "Scalpel EQ wordmark study",
+      "group": "typography",
+      "bbox_px": [
+        104,
+        34,
+        619,
+        101
+      ],
+      "position_px": [
+        104,
+        34
+      ],
+      "size_px": [
+        515,
+        67
+      ],
+      "bounds_norm": [
+        0.062275,
+        0.036093,
+        0.370659,
+        0.107219
+      ],
+      "reference_crop": "01_reference_crops/TYPE_001__scalpel_eq_wordmark_study.png",
+      "implementation": "live text, engraved shading",
+      "caveat": "Artwork shows italic; approved direction was upright \u2014 use crop as material reference only"
+    },
+    {
+      "id": "TYPE_002",
+      "label": "Surgical Equalizer wording",
+      "group": "typography",
+      "bbox_px": [
+        1186,
+        18,
+        1558,
+        51
+      ],
+      "position_px": [
+        1186,
+        18
+      ],
+      "size_px": [
+        372,
+        33
+      ],
+      "bounds_norm": [
+        0.71018,
+        0.019108,
+        0.932934,
+        0.05414
+      ],
+      "reference_crop": "01_reference_crops/TYPE_002__surgical_equalizer_wording.png",
+      "implementation": "native precise letterspacing",
+      "caveat": "Keep top-right label only if approved; do not introduce new dividers"
+    },
+    {
+      "id": "TYPE_003",
+      "label": "EtherTech wordmark reference",
+      "group": "typography",
+      "bbox_px": [
+        1183,
+        45,
+        1600,
+        99
+      ],
+      "position_px": [
+        1183,
+        45
+      ],
+      "size_px": [
+        417,
+        54
+      ],
+      "bounds_norm": [
+        0.708383,
+        0.047771,
+        0.958084,
+        0.105096
+      ],
+      "reference_crop": "01_reference_crops/TYPE_003__ethertech_wordmark_reference.png",
+      "implementation": "live text; EtherTech-owned brand only",
+      "caveat": "No UAD or third-party brand art"
+    },
+    {
+      "id": "BAND_01",
+      "label": "Band 1 key",
+      "group": "buttons",
+      "bbox_px": [
+        65,
+        116,
+        296,
+        184
+      ],
+      "position_px": [
+        65,
+        116
+      ],
+      "size_px": [
+        231,
+        68
+      ],
+      "bounds_norm": [
+        0.038922,
+        0.123142,
+        0.177246,
+        0.195329
+      ],
+      "reference_crop": "01_reference_crops/BAND_01__band_1_key.png",
+      "implementation": "reusable gel/soft-touch key; renderer draws text and pressed state",
+      "caveat": "BAND 1 selected is warm ivory/amber, never black; all keys share dimensions and material",
+      "isolated_face_png": "02_transparent_controls/BAND_01__band_1_key__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "BAND_02",
+      "label": "Band 2 key",
+      "group": "buttons",
+      "bbox_px": [
+        302,
+        116,
+        511,
+        184
+      ],
+      "position_px": [
+        302,
+        116
+      ],
+      "size_px": [
+        209,
+        68
+      ],
+      "bounds_norm": [
+        0.180838,
+        0.123142,
+        0.305988,
+        0.195329
+      ],
+      "reference_crop": "01_reference_crops/BAND_02__band_2_key.png",
+      "implementation": "reusable gel/soft-touch key; renderer draws text and pressed state",
+      "caveat": "BAND 1 selected is warm ivory/amber, never black; all keys share dimensions and material",
+      "isolated_face_png": "02_transparent_controls/BAND_02__band_2_key__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "BAND_03",
+      "label": "Band 3 key",
+      "group": "buttons",
+      "bbox_px": [
+        519,
+        116,
+        730,
+        184
+      ],
+      "position_px": [
+        519,
+        116
+      ],
+      "size_px": [
+        211,
+        68
+      ],
+      "bounds_norm": [
+        0.310778,
+        0.123142,
+        0.437126,
+        0.195329
+      ],
+      "reference_crop": "01_reference_crops/BAND_03__band_3_key.png",
+      "implementation": "reusable gel/soft-touch key; renderer draws text and pressed state",
+      "caveat": "BAND 1 selected is warm ivory/amber, never black; all keys share dimensions and material",
+      "isolated_face_png": "02_transparent_controls/BAND_03__band_3_key__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "BAND_04",
+      "label": "Band 4 key",
+      "group": "buttons",
+      "bbox_px": [
+        732,
+        116,
+        944,
+        184
+      ],
+      "position_px": [
+        732,
+        116
+      ],
+      "size_px": [
+        212,
+        68
+      ],
+      "bounds_norm": [
+        0.438323,
+        0.123142,
+        0.565269,
+        0.195329
+      ],
+      "reference_crop": "01_reference_crops/BAND_04__band_4_key.png",
+      "implementation": "reusable gel/soft-touch key; renderer draws text and pressed state",
+      "caveat": "BAND 1 selected is warm ivory/amber, never black; all keys share dimensions and material",
+      "isolated_face_png": "02_transparent_controls/BAND_04__band_4_key__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "BAND_05",
+      "label": "Band 5 key",
+      "group": "buttons",
+      "bbox_px": [
+        948,
+        116,
+        1157,
+        184
+      ],
+      "position_px": [
+        948,
+        116
+      ],
+      "size_px": [
+        209,
+        68
+      ],
+      "bounds_norm": [
+        0.567665,
+        0.123142,
+        0.692814,
+        0.195329
+      ],
+      "reference_crop": "01_reference_crops/BAND_05__band_5_key.png",
+      "implementation": "reusable gel/soft-touch key; renderer draws text and pressed state",
+      "caveat": "BAND 1 selected is warm ivory/amber, never black; all keys share dimensions and material",
+      "isolated_face_png": "02_transparent_controls/BAND_05__band_5_key__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "BAND_06",
+      "label": "Band 6 key",
+      "group": "buttons",
+      "bbox_px": [
+        1157,
+        116,
+        1375,
+        184
+      ],
+      "position_px": [
+        1157,
+        116
+      ],
+      "size_px": [
+        218,
+        68
+      ],
+      "bounds_norm": [
+        0.692814,
+        0.123142,
+        0.823353,
+        0.195329
+      ],
+      "reference_crop": "01_reference_crops/BAND_06__band_6_key.png",
+      "implementation": "reusable gel/soft-touch key; renderer draws text and pressed state",
+      "caveat": "BAND 1 selected is warm ivory/amber, never black; all keys share dimensions and material",
+      "isolated_face_png": "02_transparent_controls/BAND_06__band_6_key__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "BAND_07",
+      "label": "Band 7 key",
+      "group": "buttons",
+      "bbox_px": [
+        1383,
+        116,
+        1590,
+        184
+      ],
+      "position_px": [
+        1383,
+        116
+      ],
+      "size_px": [
+        207,
+        68
+      ],
+      "bounds_norm": [
+        0.828144,
+        0.123142,
+        0.952096,
+        0.195329
+      ],
+      "reference_crop": "01_reference_crops/BAND_07__band_7_key.png",
+      "implementation": "reusable gel/soft-touch key; renderer draws text and pressed state",
+      "caveat": "BAND 1 selected is warm ivory/amber, never black; all keys share dimensions and material",
+      "isolated_face_png": "02_transparent_controls/BAND_07__band_7_key__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "TAB_01",
+      "label": "BAND mode tab",
+      "group": "navigation",
+      "bbox_px": [
+        42,
+        506,
+        467,
+        568
+      ],
+      "position_px": [
+        42,
+        506
+      ],
+      "size_px": [
+        425,
+        62
+      ],
+      "bounds_norm": [
+        0.02515,
+        0.537155,
+        0.279641,
+        0.602972
+      ],
+      "reference_crop": "01_reference_crops/TAB_01__band_mode_tab.png",
+      "implementation": "reusable graphite soft-touch tab; selected underline must be state-driven",
+      "caveat": "",
+      "isolated_face_png": "02_transparent_controls/TAB_01__band_mode_tab__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "TAB_02",
+      "label": "CARVE mode tab",
+      "group": "navigation",
+      "bbox_px": [
+        469,
+        506,
+        829,
+        568
+      ],
+      "position_px": [
+        469,
+        506
+      ],
+      "size_px": [
+        360,
+        62
+      ],
+      "bounds_norm": [
+        0.280838,
+        0.537155,
+        0.496407,
+        0.602972
+      ],
+      "reference_crop": "01_reference_crops/TAB_02__carve_mode_tab.png",
+      "implementation": "reusable graphite soft-touch tab; selected underline must be state-driven",
+      "caveat": "",
+      "isolated_face_png": "02_transparent_controls/TAB_02__carve_mode_tab__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "TAB_03",
+      "label": "COLOR mode tab",
+      "group": "navigation",
+      "bbox_px": [
+        841,
+        506,
+        1221,
+        568
+      ],
+      "position_px": [
+        841,
+        506
+      ],
+      "size_px": [
+        380,
+        62
+      ],
+      "bounds_norm": [
+        0.503593,
+        0.537155,
+        0.731138,
+        0.602972
+      ],
+      "reference_crop": "01_reference_crops/TAB_03__color_mode_tab.png",
+      "implementation": "reusable graphite soft-touch tab; selected underline must be state-driven",
+      "caveat": "",
+      "isolated_face_png": "02_transparent_controls/TAB_03__color_mode_tab__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "TAB_04",
+      "label": "ANALYZE mode tab",
+      "group": "navigation",
+      "bbox_px": [
+        1225,
+        506,
+        1609,
+        568
+      ],
+      "position_px": [
+        1225,
+        506
+      ],
+      "size_px": [
+        384,
+        62
+      ],
+      "bounds_norm": [
+        0.733533,
+        0.537155,
+        0.963473,
+        0.602972
+      ],
+      "reference_crop": "01_reference_crops/TAB_04__analyze_mode_tab.png",
+      "implementation": "reusable graphite soft-touch tab; selected underline must be state-driven",
+      "caveat": "",
+      "isolated_face_png": "02_transparent_controls/TAB_04__analyze_mode_tab__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "STATE_001",
+      "label": "ON key",
+      "group": "buttons",
+      "bbox_px": [
+        109,
+        623,
+        290,
+        697
+      ],
+      "position_px": [
+        109,
+        623
+      ],
+      "size_px": [
+        181,
+        74
+      ],
+      "bounds_norm": [
+        0.065269,
+        0.661359,
+        0.173653,
+        0.739915
+      ],
+      "reference_crop": "01_reference_crops/STATE_001__on_key.png",
+      "implementation": "reusable dark graphite with green state bar; live text/selection in renderer",
+      "caveat": "",
+      "isolated_face_png": "02_transparent_controls/STATE_001__on_key__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "STATE_002",
+      "label": "OFF key",
+      "group": "buttons",
+      "bbox_px": [
+        109,
+        709,
+        291,
+        785
+      ],
+      "position_px": [
+        109,
+        709
+      ],
+      "size_px": [
+        182,
+        76
+      ],
+      "bounds_norm": [
+        0.065269,
+        0.752654,
+        0.174251,
+        0.833333
+      ],
+      "reference_crop": "01_reference_crops/STATE_002__off_key.png",
+      "implementation": "reusable dark graphite with red state bar; live text/selection in renderer",
+      "caveat": "",
+      "isolated_face_png": "02_transparent_controls/STATE_002__off_key__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "UTILITY_001",
+      "label": "MONO key",
+      "group": "buttons",
+      "bbox_px": [
+        1170,
+        618,
+        1373,
+        691
+      ],
+      "position_px": [
+        1170,
+        618
+      ],
+      "size_px": [
+        203,
+        73
+      ],
+      "bounds_norm": [
+        0.700599,
+        0.656051,
+        0.822156,
+        0.733546
+      ],
+      "reference_crop": "01_reference_crops/UTILITY_001__mono_key.png",
+      "implementation": "reusable ivory touch key; live text/selection in renderer",
+      "caveat": "",
+      "isolated_face_png": "02_transparent_controls/UTILITY_001__mono_key__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "UTILITY_002",
+      "label": "SOLO key",
+      "group": "buttons",
+      "bbox_px": [
+        1395,
+        618,
+        1565,
+        691
+      ],
+      "position_px": [
+        1395,
+        618
+      ],
+      "size_px": [
+        170,
+        73
+      ],
+      "bounds_norm": [
+        0.835329,
+        0.656051,
+        0.937126,
+        0.733546
+      ],
+      "reference_crop": "01_reference_crops/UTILITY_002__solo_key.png",
+      "implementation": "reusable ivory touch key; live text/selection in renderer",
+      "caveat": "",
+      "isolated_face_png": "02_transparent_controls/UTILITY_002__solo_key__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "UTILITY_003",
+      "label": "PHASE CORRECTION key",
+      "group": "buttons",
+      "bbox_px": [
+        1170,
+        710,
+        1374,
+        782
+      ],
+      "position_px": [
+        1170,
+        710
+      ],
+      "size_px": [
+        204,
+        72
+      ],
+      "bounds_norm": [
+        0.700599,
+        0.753715,
+        0.822754,
+        0.830149
+      ],
+      "reference_crop": "01_reference_crops/UTILITY_003__phase_correction_key.png",
+      "implementation": "reusable ivory touch key; live text/selection in renderer",
+      "caveat": "",
+      "isolated_face_png": "02_transparent_controls/UTILITY_003__phase_correction_key__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "UTILITY_004",
+      "label": "LIMIT key",
+      "group": "buttons",
+      "bbox_px": [
+        1394,
+        707,
+        1564,
+        783
+      ],
+      "position_px": [
+        1394,
+        707
+      ],
+      "size_px": [
+        170,
+        76
+      ],
+      "bounds_norm": [
+        0.834731,
+        0.750531,
+        0.936527,
+        0.83121
+      ],
+      "reference_crop": "01_reference_crops/UTILITY_004__limit_key.png",
+      "implementation": "reusable ivory touch key; live text/selection in renderer",
+      "caveat": "",
+      "isolated_face_png": "02_transparent_controls/UTILITY_004__limit_key__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "ANALYZER_001",
+      "label": "X-RAY key",
+      "group": "buttons",
+      "bbox_px": [
+        1295,
+        227,
+        1471,
+        285
+      ],
+      "position_px": [
+        1295,
+        227
+      ],
+      "size_px": [
+        176,
+        58
+      ],
+      "bounds_norm": [
+        0.775449,
+        0.240977,
+        0.880838,
+        0.302548
+      ],
+      "reference_crop": "01_reference_crops/ANALYZER_001__x-ray_key.png",
+      "implementation": "reusable graphite key red LED; live text/selection in renderer",
+      "caveat": "",
+      "isolated_face_png": "02_transparent_controls/ANALYZER_001__x-ray_key__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "ANALYZER_002",
+      "label": "RESET key",
+      "group": "buttons",
+      "bbox_px": [
+        1299,
+        400,
+        1470,
+        463
+      ],
+      "position_px": [
+        1299,
+        400
+      ],
+      "size_px": [
+        171,
+        63
+      ],
+      "bounds_norm": [
+        0.777844,
+        0.424628,
+        0.88024,
+        0.491507
+      ],
+      "reference_crop": "01_reference_crops/ANALYZER_002__reset_key.png",
+      "implementation": "reusable graphite key; live text/selection in renderer",
+      "caveat": "",
+      "isolated_face_png": "02_transparent_controls/ANALYZER_002__reset_key__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "KNOB_001",
+      "label": "Band gain knob",
+      "group": "knobs",
+      "bbox_px": [
+        354,
+        624,
+        515,
+        773
+      ],
+      "position_px": [
+        354,
+        624
+      ],
+      "size_px": [
+        161,
+        149
+      ],
+      "bounds_norm": [
+        0.211976,
+        0.66242,
+        0.308383,
+        0.820594
+      ],
+      "reference_crop": "01_reference_crops/KNOB_001__band_gain_knob.png",
+      "implementation": "rotate pointer separately; fixed graphite concentric face and 3D rim; white nonemissive pointer",
+      "caveat": "Pointer must not illuminate and numeric values remain live",
+      "isolated_face_png": "02_transparent_controls/KNOB_001__band_gain_knob__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "KNOB_002",
+      "label": "Compressor threshold knob",
+      "group": "knobs",
+      "bbox_px": [
+        594,
+        621,
+        759,
+        776
+      ],
+      "position_px": [
+        594,
+        621
+      ],
+      "size_px": [
+        165,
+        155
+      ],
+      "bounds_norm": [
+        0.355689,
+        0.659236,
+        0.454491,
+        0.823779
+      ],
+      "reference_crop": "01_reference_crops/KNOB_002__compressor_threshold_knob.png",
+      "implementation": "rotate pointer separately; fixed graphite concentric face and 3D rim; white nonemissive pointer",
+      "caveat": "Pointer must not illuminate and numeric values remain live",
+      "isolated_face_png": "02_transparent_controls/KNOB_002__compressor_threshold_knob__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "VALUE_001",
+      "label": "Gain value display",
+      "group": "readouts",
+      "bbox_px": [
+        355,
+        767,
+        512,
+        830
+      ],
+      "position_px": [
+        355,
+        767
+      ],
+      "size_px": [
+        157,
+        63
+      ],
+      "bounds_norm": [
+        0.212575,
+        0.814225,
+        0.306587,
+        0.881104
+      ],
+      "reference_crop": "01_reference_crops/VALUE_001__gain_value_display.png",
+      "implementation": "dynamic data/text; crop is only a material reference",
+      "caveat": "Do not use a static raster for live data"
+    },
+    {
+      "id": "VALUE_002",
+      "label": "Compressor value display",
+      "group": "readouts",
+      "bbox_px": [
+        592,
+        766,
+        752,
+        828
+      ],
+      "position_px": [
+        592,
+        766
+      ],
+      "size_px": [
+        160,
+        62
+      ],
+      "bounds_norm": [
+        0.354491,
+        0.813163,
+        0.450299,
+        0.878981
+      ],
+      "reference_crop": "01_reference_crops/VALUE_002__compressor_value_display.png",
+      "implementation": "dynamic data/text; crop is only a material reference",
+      "caveat": "Do not use a static raster for live data"
+    },
+    {
+      "id": "SELECT_001",
+      "label": "Compression dropdown",
+      "group": "readouts",
+      "bbox_px": [
+        825,
+        624,
+        1121,
+        692
+      ],
+      "position_px": [
+        825,
+        624
+      ],
+      "size_px": [
+        296,
+        68
+      ],
+      "bounds_norm": [
+        0.494012,
+        0.66242,
+        0.671257,
+        0.734607
+      ],
+      "reference_crop": "01_reference_crops/SELECT_001__compression_dropdown.png",
+      "implementation": "dynamic data/text; crop is only a material reference",
+      "caveat": "Do not use a static raster for live data"
+    },
+    {
+      "id": "SELECT_002",
+      "label": "EQ domain dropdown",
+      "group": "readouts",
+      "bbox_px": [
+        823,
+        715,
+        1121,
+        783
+      ],
+      "position_px": [
+        823,
+        715
+      ],
+      "size_px": [
+        298,
+        68
+      ],
+      "bounds_norm": [
+        0.492814,
+        0.759023,
+        0.671257,
+        0.83121
+      ],
+      "reference_crop": "01_reference_crops/SELECT_002__eq_domain_dropdown.png",
+      "implementation": "dynamic data/text; crop is only a material reference",
+      "caveat": "Do not use a static raster for live data"
+    },
+    {
+      "id": "ANALYZER_003",
+      "label": "Peak dBFS display",
+      "group": "readouts",
+      "bbox_px": [
+        1293,
+        321,
+        1478,
+        386
+      ],
+      "position_px": [
+        1293,
+        321
+      ],
+      "size_px": [
+        185,
+        65
+      ],
+      "bounds_norm": [
+        0.774251,
+        0.340764,
+        0.88503,
+        0.409766
+      ],
+      "reference_crop": "01_reference_crops/ANALYZER_003__peak_dbfs_display.png",
+      "implementation": "dynamic data/text; crop is only a material reference",
+      "caveat": "Do not use a static raster for live data"
+    },
+    {
+      "id": "ANALYZER_004",
+      "label": "Left meter",
+      "group": "readouts",
+      "bbox_px": [
+        1490,
+        245,
+        1524,
+        445
+      ],
+      "position_px": [
+        1490,
+        245
+      ],
+      "size_px": [
+        34,
+        200
+      ],
+      "bounds_norm": [
+        0.892216,
+        0.260085,
+        0.912575,
+        0.472399
+      ],
+      "reference_crop": "01_reference_crops/ANALYZER_004__left_meter.png",
+      "implementation": "dynamic data/text; crop is only a material reference",
+      "caveat": "Do not use a static raster for live data"
+    },
+    {
+      "id": "ANALYZER_005",
+      "label": "Right meter",
+      "group": "readouts",
+      "bbox_px": [
+        1532,
+        245,
+        1567,
+        445
+      ],
+      "position_px": [
+        1532,
+        245
+      ],
+      "size_px": [
+        35,
+        200
+      ],
+      "bounds_norm": [
+        0.917365,
+        0.260085,
+        0.938323,
+        0.472399
+      ],
+      "reference_crop": "01_reference_crops/ANALYZER_005__right_meter.png",
+      "implementation": "dynamic data/text; crop is only a material reference",
+      "caveat": "Do not use a static raster for live data"
+    },
+    {
+      "id": "ANALYZER_006",
+      "label": "dB scale labels",
+      "group": "readouts",
+      "bbox_px": [
+        1226,
+        217,
+        1281,
+        460
+      ],
+      "position_px": [
+        1226,
+        217
+      ],
+      "size_px": [
+        55,
+        243
+      ],
+      "bounds_norm": [
+        0.734132,
+        0.230361,
+        0.767066,
+        0.488323
+      ],
+      "reference_crop": "01_reference_crops/ANALYZER_006__db_scale_labels.png",
+      "implementation": "dynamic data/text; crop is only a material reference",
+      "caveat": "Do not use a static raster for live data"
+    },
+    {
+      "id": "ANALYZER_007",
+      "label": "Frequency axis labels",
+      "group": "readouts",
+      "bbox_px": [
+        110,
+        438,
+        1224,
+        483
+      ],
+      "position_px": [
+        110,
+        438
+      ],
+      "size_px": [
+        1114,
+        45
+      ],
+      "bounds_norm": [
+        0.065868,
+        0.464968,
+        0.732934,
+        0.512739
+      ],
+      "reference_crop": "01_reference_crops/ANALYZER_007__frequency_axis_labels.png",
+      "implementation": "dynamic data/text; crop is only a material reference",
+      "caveat": "Do not use a static raster for live data"
+    },
+    {
+      "id": "SCREW_01",
+      "label": "Analyzer Top Left",
+      "group": "fasteners",
+      "bbox_px": [
+        53,
+        212,
+        91,
+        250
+      ],
+      "position_px": [
+        53,
+        212
+      ],
+      "size_px": [
+        38,
+        38
+      ],
+      "bounds_norm": [
+        0.031737,
+        0.225053,
+        0.054491,
+        0.265393
+      ],
+      "reference_crop": "01_reference_crops/SCREW_01__analyzer_top_left.png",
+      "implementation": "corner-anchored screw, consistent geometry and material",
+      "caveat": "Do not place a screw inside graph plot or near dB scale",
+      "isolated_face_png": "02_transparent_controls/SCREW_01__analyzer_top_left__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "SCREW_02",
+      "label": "Analyzer Top Right",
+      "group": "fasteners",
+      "bbox_px": [
+        1581,
+        213,
+        1619,
+        251
+      ],
+      "position_px": [
+        1581,
+        213
+      ],
+      "size_px": [
+        38,
+        38
+      ],
+      "bounds_norm": [
+        0.946707,
+        0.226115,
+        0.969461,
+        0.266454
+      ],
+      "reference_crop": "01_reference_crops/SCREW_02__analyzer_top_right.png",
+      "implementation": "corner-anchored screw, consistent geometry and material",
+      "caveat": "Do not place a screw inside graph plot or near dB scale",
+      "isolated_face_png": "02_transparent_controls/SCREW_02__analyzer_top_right__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "SCREW_03",
+      "label": "Analyzer Bottom Left",
+      "group": "fasteners",
+      "bbox_px": [
+        53,
+        459,
+        91,
+        497
+      ],
+      "position_px": [
+        53,
+        459
+      ],
+      "size_px": [
+        38,
+        38
+      ],
+      "bounds_norm": [
+        0.031737,
+        0.487261,
+        0.054491,
+        0.527601
+      ],
+      "reference_crop": "01_reference_crops/SCREW_03__analyzer_bottom_left.png",
+      "implementation": "corner-anchored screw, consistent geometry and material",
+      "caveat": "Do not place a screw inside graph plot or near dB scale",
+      "isolated_face_png": "02_transparent_controls/SCREW_03__analyzer_bottom_left__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "SCREW_04",
+      "label": "Analyzer Bottom Right",
+      "group": "fasteners",
+      "bbox_px": [
+        1579,
+        459,
+        1617,
+        497
+      ],
+      "position_px": [
+        1579,
+        459
+      ],
+      "size_px": [
+        38,
+        38
+      ],
+      "bounds_norm": [
+        0.945509,
+        0.487261,
+        0.968263,
+        0.527601
+      ],
+      "reference_crop": "01_reference_crops/SCREW_04__analyzer_bottom_right.png",
+      "implementation": "corner-anchored screw, consistent geometry and material",
+      "caveat": "Do not place a screw inside graph plot or near dB scale",
+      "isolated_face_png": "02_transparent_controls/SCREW_04__analyzer_bottom_right__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "SCREW_05",
+      "label": "Lower Top Left",
+      "group": "fasteners",
+      "bbox_px": [
+        50,
+        595,
+        88,
+        633
+      ],
+      "position_px": [
+        50,
+        595
+      ],
+      "size_px": [
+        38,
+        38
+      ],
+      "bounds_norm": [
+        0.02994,
+        0.631635,
+        0.052695,
+        0.671975
+      ],
+      "reference_crop": "01_reference_crops/SCREW_05__lower_top_left.png",
+      "implementation": "corner-anchored screw, consistent geometry and material",
+      "caveat": "Do not place a screw inside graph plot or near dB scale",
+      "isolated_face_png": "02_transparent_controls/SCREW_05__lower_top_left__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "SCREW_06",
+      "label": "Lower Top Right",
+      "group": "fasteners",
+      "bbox_px": [
+        1588,
+        599,
+        1626,
+        637
+      ],
+      "position_px": [
+        1588,
+        599
+      ],
+      "size_px": [
+        38,
+        38
+      ],
+      "bounds_norm": [
+        0.950898,
+        0.635881,
+        0.973653,
+        0.676221
+      ],
+      "reference_crop": "01_reference_crops/SCREW_06__lower_top_right.png",
+      "implementation": "corner-anchored screw, consistent geometry and material",
+      "caveat": "Do not place a screw inside graph plot or near dB scale",
+      "isolated_face_png": "02_transparent_controls/SCREW_06__lower_top_right__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "SCREW_07",
+      "label": "Lower Bottom Left",
+      "group": "fasteners",
+      "bbox_px": [
+        50,
+        791,
+        88,
+        829
+      ],
+      "position_px": [
+        50,
+        791
+      ],
+      "size_px": [
+        38,
+        38
+      ],
+      "bounds_norm": [
+        0.02994,
+        0.839703,
+        0.052695,
+        0.880042
+      ],
+      "reference_crop": "01_reference_crops/SCREW_07__lower_bottom_left.png",
+      "implementation": "corner-anchored screw, consistent geometry and material",
+      "caveat": "Do not place a screw inside graph plot or near dB scale",
+      "isolated_face_png": "02_transparent_controls/SCREW_07__lower_bottom_left__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "SCREW_08",
+      "label": "Lower Bottom Right",
+      "group": "fasteners",
+      "bbox_px": [
+        1586,
+        793,
+        1624,
+        831
+      ],
+      "position_px": [
+        1586,
+        793
+      ],
+      "size_px": [
+        38,
+        38
+      ],
+      "bounds_norm": [
+        0.949701,
+        0.841826,
+        0.972455,
+        0.882166
+      ],
+      "reference_crop": "01_reference_crops/SCREW_08__lower_bottom_right.png",
+      "implementation": "corner-anchored screw, consistent geometry and material",
+      "caveat": "Do not place a screw inside graph plot or near dB scale",
+      "isolated_face_png": "02_transparent_controls/SCREW_08__lower_bottom_right__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "NODE_01",
+      "label": "Graph marker red",
+      "group": "graph",
+      "bbox_px": [
+        117,
+        327,
+        151,
+        361
+      ],
+      "position_px": [
+        117,
+        327
+      ],
+      "size_px": [
+        34,
+        34
+      ],
+      "bounds_norm": [
+        0.07006,
+        0.347134,
+        0.090419,
+        0.383227
+      ],
+      "reference_crop": "01_reference_crops/NODE_01__graph_marker_red.png",
+      "implementation": "draw as parameter-driven vector circle",
+      "caveat": "Image depicts 8 visual nodes; verify actual 7-band DSP semantics, do not add an eighth band",
+      "isolated_face_png": "02_transparent_controls/NODE_01__graph_marker_red__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "NODE_02",
+      "label": "Graph marker orange",
+      "group": "graph",
+      "bbox_px": [
+        275,
+        326,
+        309,
+        360
+      ],
+      "position_px": [
+        275,
+        326
+      ],
+      "size_px": [
+        34,
+        34
+      ],
+      "bounds_norm": [
+        0.164671,
+        0.346072,
+        0.18503,
+        0.382166
+      ],
+      "reference_crop": "01_reference_crops/NODE_02__graph_marker_orange.png",
+      "implementation": "draw as parameter-driven vector circle",
+      "caveat": "Image depicts 8 visual nodes; verify actual 7-band DSP semantics, do not add an eighth band",
+      "isolated_face_png": "02_transparent_controls/NODE_02__graph_marker_orange__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "NODE_03",
+      "label": "Graph marker green",
+      "group": "graph",
+      "bbox_px": [
+        399,
+        326,
+        433,
+        360
+      ],
+      "position_px": [
+        399,
+        326
+      ],
+      "size_px": [
+        34,
+        34
+      ],
+      "bounds_norm": [
+        0.238922,
+        0.346072,
+        0.259281,
+        0.382166
+      ],
+      "reference_crop": "01_reference_crops/NODE_03__graph_marker_green.png",
+      "implementation": "draw as parameter-driven vector circle",
+      "caveat": "Image depicts 8 visual nodes; verify actual 7-band DSP semantics, do not add an eighth band",
+      "isolated_face_png": "02_transparent_controls/NODE_03__graph_marker_green__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "NODE_04",
+      "label": "Graph marker cyan",
+      "group": "graph",
+      "bbox_px": [
+        517,
+        326,
+        551,
+        360
+      ],
+      "position_px": [
+        517,
+        326
+      ],
+      "size_px": [
+        34,
+        34
+      ],
+      "bounds_norm": [
+        0.309581,
+        0.346072,
+        0.32994,
+        0.382166
+      ],
+      "reference_crop": "01_reference_crops/NODE_04__graph_marker_cyan.png",
+      "implementation": "draw as parameter-driven vector circle",
+      "caveat": "Image depicts 8 visual nodes; verify actual 7-band DSP semantics, do not add an eighth band",
+      "isolated_face_png": "02_transparent_controls/NODE_04__graph_marker_cyan__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "NODE_05",
+      "label": "Graph marker blue",
+      "group": "graph",
+      "bbox_px": [
+        638,
+        326,
+        672,
+        360
+      ],
+      "position_px": [
+        638,
+        326
+      ],
+      "size_px": [
+        34,
+        34
+      ],
+      "bounds_norm": [
+        0.382036,
+        0.346072,
+        0.402395,
+        0.382166
+      ],
+      "reference_crop": "01_reference_crops/NODE_05__graph_marker_blue.png",
+      "implementation": "draw as parameter-driven vector circle",
+      "caveat": "Image depicts 8 visual nodes; verify actual 7-band DSP semantics, do not add an eighth band",
+      "isolated_face_png": "02_transparent_controls/NODE_05__graph_marker_blue__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "NODE_06",
+      "label": "Graph marker purple",
+      "group": "graph",
+      "bbox_px": [
+        838,
+        326,
+        872,
+        360
+      ],
+      "position_px": [
+        838,
+        326
+      ],
+      "size_px": [
+        34,
+        34
+      ],
+      "bounds_norm": [
+        0.501796,
+        0.346072,
+        0.522156,
+        0.382166
+      ],
+      "reference_crop": "01_reference_crops/NODE_06__graph_marker_purple.png",
+      "implementation": "draw as parameter-driven vector circle",
+      "caveat": "Image depicts 8 visual nodes; verify actual 7-band DSP semantics, do not add an eighth band",
+      "isolated_face_png": "02_transparent_controls/NODE_06__graph_marker_purple__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "NODE_07",
+      "label": "Graph marker pink",
+      "group": "graph",
+      "bbox_px": [
+        1006,
+        326,
+        1040,
+        360
+      ],
+      "position_px": [
+        1006,
+        326
+      ],
+      "size_px": [
+        34,
+        34
+      ],
+      "bounds_norm": [
+        0.602395,
+        0.346072,
+        0.622754,
+        0.382166
+      ],
+      "reference_crop": "01_reference_crops/NODE_07__graph_marker_pink.png",
+      "implementation": "draw as parameter-driven vector circle",
+      "caveat": "Image depicts 8 visual nodes; verify actual 7-band DSP semantics, do not add an eighth band",
+      "isolated_face_png": "02_transparent_controls/NODE_07__graph_marker_pink__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "NODE_08",
+      "label": "Graph marker rose",
+      "group": "graph",
+      "bbox_px": [
+        1180,
+        326,
+        1214,
+        360
+      ],
+      "position_px": [
+        1180,
+        326
+      ],
+      "size_px": [
+        34,
+        34
+      ],
+      "bounds_norm": [
+        0.706587,
+        0.346072,
+        0.726946,
+        0.382166
+      ],
+      "reference_crop": "01_reference_crops/NODE_08__graph_marker_rose.png",
+      "implementation": "draw as parameter-driven vector circle",
+      "caveat": "Image depicts 8 visual nodes; verify actual 7-band DSP semantics, do not add an eighth band",
+      "isolated_face_png": "02_transparent_controls/NODE_08__graph_marker_rose__face_rgba.png",
+      "sprite_warning": "Mask-isolated image face is a visual prototype; redraw text and state visuals natively for production. No independent baked shadows."
+    },
+    {
+      "id": "LIGHT_001",
+      "label": "Selected band edge glow",
+      "group": "lights",
+      "bbox_px": [
+        61,
+        167,
+        297,
+        197
+      ],
+      "position_px": [
+        61,
+        167
+      ],
+      "size_px": [
+        236,
+        30
+      ],
+      "bounds_norm": [
+        0.036527,
+        0.177282,
+        0.177844,
+        0.20913
+      ],
+      "reference_crop": "01_reference_crops/LIGHT_001__selected_band_edge_glow.png",
+      "implementation": "glow strip on selected key, not orange emission elsewhere",
+      "caveat": "Apply only if desired; no neon"
+    },
+    {
+      "id": "LIGHT_002",
+      "label": "Green ON indicator",
+      "group": "lights",
+      "bbox_px": [
+        167,
+        628,
+        240,
+        656
+      ],
+      "position_px": [
+        167,
+        628
+      ],
+      "size_px": [
+        73,
+        28
+      ],
+      "bounds_norm": [
+        0.1,
+        0.666667,
+        0.143713,
+        0.696391
+      ],
+      "reference_crop": "01_reference_crops/LIGHT_002__green_on_indicator.png",
+      "implementation": "state-driven narrow green status strip",
+      "caveat": ""
+    },
+    {
+      "id": "LIGHT_003",
+      "label": "Red OFF indicator",
+      "group": "lights",
+      "bbox_px": [
+        166,
+        715,
+        242,
+        748
+      ],
+      "position_px": [
+        166,
+        715
+      ],
+      "size_px": [
+        76,
+        33
+      ],
+      "bounds_norm": [
+        0.099401,
+        0.759023,
+        0.14491,
+        0.794055
+      ],
+      "reference_crop": "01_reference_crops/LIGHT_003__red_off_indicator.png",
+      "implementation": "state-driven narrow red status strip",
+      "caveat": ""
+    },
+    {
+      "id": "LIGHT_004",
+      "label": "X-RAY red indicator",
+      "group": "lights",
+      "bbox_px": [
+        1304,
+        235,
+        1343,
+        276
+      ],
+      "position_px": [
+        1304,
+        235
+      ],
+      "size_px": [
+        39,
+        41
+      ],
+      "bounds_norm": [
+        0.780838,
+        0.249469,
+        0.804192,
+        0.292994
+      ],
+      "reference_crop": "01_reference_crops/LIGHT_004__x-ray_red_indicator.png",
+      "implementation": "state-driven red indicator light",
+      "caveat": ""
+    },
+    {
+      "id": "LIGHT_005",
+      "label": "White knob pointer",
+      "group": "lights",
+      "bbox_px": [
+        417,
+        633,
+        446,
+        705
+      ],
+      "position_px": [
+        417,
+        633
+      ],
+      "size_px": [
+        29,
+        72
+      ],
+      "bounds_norm": [
+        0.249701,
+        0.671975,
+        0.267066,
+        0.748408
+      ],
+      "reference_crop": "01_reference_crops/LIGHT_005__white_knob_pointer.png",
+      "implementation": "nonemissive pointer, NOT LED",
+      "caveat": ""
+    },
+    {
+      "id": "MATERIAL_001",
+      "label": "Warm shell microtexture",
+      "group": "materials",
+      "bbox_px": [
+        790,
+        14,
+        1065,
+        95
+      ],
+      "position_px": [
+        790,
+        14
+      ],
+      "size_px": [
+        275,
+        81
+      ],
+      "bounds_norm": [
+        0.473054,
+        0.014862,
+        0.637725,
+        0.100849
+      ],
+      "reference_crop": "01_reference_crops/MATERIAL_001__warm_shell_microtexture.png",
+      "implementation": "tile subtle color-adjusted noise; avoid repeating scratches",
+      "caveat": ""
+    },
+    {
+      "id": "MATERIAL_002",
+      "label": "Lower control satin",
+      "group": "materials",
+      "bbox_px": [
+        793,
+        587,
+        1138,
+        620
+      ],
+      "position_px": [
+        793,
+        587
+      ],
+      "size_px": [
+        345,
+        33
+      ],
+      "bounds_norm": [
+        0.47485,
+        0.623142,
+        0.681437,
+        0.658174
+      ],
+      "reference_crop": "01_reference_crops/MATERIAL_002__lower_control_satin.png",
+      "implementation": "subtle matte metallic-polymer gradient; no hard horizontal seam",
+      "caveat": ""
+    },
+    {
+      "id": "MATERIAL_003",
+      "label": "Black graph material",
+      "group": "materials",
+      "bbox_px": [
+        716,
+        276,
+        821,
+        325
+      ],
+      "position_px": [
+        716,
+        276
+      ],
+      "size_px": [
+        105,
+        49
+      ],
+      "bounds_norm": [
+        0.428743,
+        0.292994,
+        0.491617,
+        0.345011
+      ],
+      "reference_crop": "01_reference_crops/MATERIAL_003__black_graph_material.png",
+      "implementation": "matte near-black; dynamic data overlay",
+      "caveat": ""
+    },
+    {
+      "id": "MATERIAL_004",
+      "label": "Graphite tab material",
+      "group": "materials",
+      "bbox_px": [
+        875,
+        514,
+        1013,
+        547
+      ],
+      "position_px": [
+        875,
+        514
+      ],
+      "size_px": [
+        138,
+        33
+      ],
+      "bounds_norm": [
+        0.523952,
+        0.545648,
+        0.606587,
+        0.580679
+      ],
+      "reference_crop": "01_reference_crops/MATERIAL_004__graphite_tab_material.png",
+      "implementation": "subtle graphite soft-touch non-flat gradient",
+      "caveat": ""
+    }
+  ]
+}

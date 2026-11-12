@@ -26,7 +26,7 @@ public:
         setColour(juce::PopupMenu::highlightedTextColourId,juce::Colour(0xfff5fbff));
         setColour(juce::ComboBox::textColourId,juce::Colour(0xffedf5ff));
     }
-    juce::Font getComboBoxFont(juce::ComboBox&) override {return juce::Font(juce::FontOptions("Segoe UI",19.0f,juce::Font::bold));}
+    juce::Font getComboBoxFont(juce::ComboBox&) override {return juce::Font(juce::FontOptions("Segoe UI",16.0f,juce::Font::plain));}
     juce::Font getPopupMenuFont() override {return juce::Font(juce::FontOptions("Segoe UI",13.0f,juce::Font::plain));}
     void positionComboBoxText(juce::ComboBox& box,juce::Label& label) override {
         label.setBounds(12,-2,juce::jmax(0,box.getWidth()-38),box.getHeight()-2);
@@ -364,7 +364,7 @@ public:
             g.setColour(!b.isEnabled()?scalpel::finish::secondary:hardware?juce::Colour(0xff070b0f):
                 label=="X-RAY"?scalpel::finish::text:tab&&!b.getToggleState()?scalpel::finish::secondary:
                 ((label=="ON"||label=="OFF")&&!b.getToggleState())?scalpel::finish::secondary:scalpel::finish::text);
-            auto buttonFont=scalpel::finish::font(hardware?(label.startsWith("PHASE")?16.f:20.5f):tab?22.5f:23.f);
+            auto buttonFont=scalpel::finish::font(hardware?(label.startsWith("PHASE")?13.5f:17.f):tab?18.f:18.f);
             if(hardware)buttonFont.setHorizontalScale(.955f);
             g.setFont(buttonFont);
             auto bounds=label=="X-RAY"?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2);
@@ -422,7 +422,7 @@ public:
         if(finish_){
             if(dynamic_cast<juce::Slider*>(label.getParentComponent())){
                 const auto r=label.getLocalBounds().toFloat().reduced(.5f);
-                juce::ColourGradient glass(juce::Colour(0xff242725),r.getX(),r.getY(),juce::Colour(0xff070a0b),r.getX(),r.getBottom(),false);
+                juce::ColourGradient glass(juce::Colour(0xff24201a),r.getX(),r.getY(),juce::Colour(0xff0a0907),r.getX(),r.getBottom(),false);
                 g.setGradientFill(glass);g.fillRoundedRectangle(r,3);
                 g.setColour(scalpel::finish::titanium.withAlpha(.65f));g.drawRoundedRectangle(r,3,.8f);
                 if(!label.isBeingEdited()){
@@ -435,8 +435,8 @@ public:
                 g.setColour(dynamic_cast<juce::ComboBox*>(label.getParentComponent())?scalpel::finish::text:label.isEnabled()?scalpel::finish::ink:scalpel::finish::ink.withAlpha(.55f));
                 const auto r=label.getBorderSize().subtractedFrom(label.getLocalBounds());
                 const bool combo=dynamic_cast<juce::ComboBox*>(label.getParentComponent())!=nullptr;
-                auto f=scalpel::finish::font(label.getText().startsWith("BAND ")&&label.getText().contains("CARVE")?15.f:19.f);
-                if(!combo)f.setHorizontalScale(.865f);
+                auto f=scalpel::finish::font(label.getText().startsWith("BAND ")&&label.getText().contains("CARVE")?11.5f:13.f);
+                if(!combo)f.setHorizontalScale(.97f);
                 g.setFont(f);
                 if(dynamic_cast<juce::ComboBox*>(label.getParentComponent()))
                     g.drawFittedText(label.getText(),r,label.getJustificationType(),1);

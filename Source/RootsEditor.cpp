@@ -199,10 +199,10 @@ void RootsGraph::paintStaticFrame(juce::Graphics& g) const {
     const auto full=getLocalBounds().toFloat(),r=area();
     scalpel::finish::analyzerHousing(g,full.reduced(.5f));
     // Four screws belong to the full display housing, beyond the meter bay.
-    scalpel::finish::screws(g,full.reduced(.5f),32,28);
-    juce::ColourGradient glass(juce::Colour(0xff101719),r.getX(),r.getY(),
+    for(const auto c:scalpel::reference::housingScrews(false))scalpel::finish::screw(g,c);
+    juce::ColourGradient glass(juce::Colour(0xff11100e),r.getX(),r.getY(),
                                scalpel::finish::analyzer,r.getRight(),r.getBottom(),false);
-    glass.addColour(.4,juce::Colour(0xff070e10));g.setGradientFill(glass);g.fillRect(r);
+    glass.addColour(.4,juce::Colour(0xff090908));g.setGradientFill(glass);g.fillRect(r);
     g.setFont(scalpel::finish::font(14,false));
     g.setColour(scalpel::finish::text);
     // No inherited cyan spectrum title, old SONAR weather image or C1-C4
@@ -213,8 +213,8 @@ void RootsGraph::paintStaticFrame(juce::Graphics& g) const {
     };
     for(const float f:freqs){
         const float x=freqToX(f);
-        g.setFont(scalpel::finish::font(20,false));
-        g.setColour(juce::Colour(0xff6f9bb9).withAlpha(.20f));
+        g.setFont(scalpel::finish::font(13.5f,false));
+        g.setColour(juce::Colour(0xff958875).withAlpha(.20f));
         g.drawVerticalLine(juce::roundToInt(x),r.getY(),r.getBottom());
         g.setColour(scalpel::finish::text);
         g.drawText(hzText(f),juce::roundToInt(x-25),juce::roundToInt(r.getBottom()+5),
@@ -222,7 +222,7 @@ void RootsGraph::paintStaticFrame(juce::Graphics& g) const {
     }
     for(const int db:scalpel::dbaxis::labels){
         const float y=scalpel::dbaxis::toY((float)db,r.getY(),r.getHeight());
-        g.setColour(juce::Colour(0xff8fb4cf).withAlpha(db==-30?.34f:.19f));
+        g.setColour(juce::Colour(0xff9e8c75).withAlpha(db==-30?.34f:.19f));
         g.drawHorizontalLine(juce::roundToInt(y),r.getX(),r.getRight());
     }
     scalpel::dbaxis::draw(g,r);
@@ -1535,40 +1535,38 @@ void RootsEditor::layoutRack(){
     for(int root=0;root<7;++root){auto& button=rootButtons_[(size_t)root];button.setVisible(true);button.setBounds(band(root));}
     graph_.setBounds(analyzer().toNearestInt());
     for(int i=0;i<4;++i)modeButtons_[(size_t)i].setBounds(tab(i));
-    xrayButton_.setBounds(bounds(1297,245,165,55));
-    peakHold_.setBounds(bounds(1307,480,158,57));
+    xrayButton_.setBounds(bounds(1317,233,176,58));
+    peakHold_.setBounds(bounds(1328,412,165,54));
 
-    on_.setBounds(bounds(111,699,173,64));off_.setBounds(bounds(111,783,173,64));
-    gainLabel_.setBounds(bounds(327,659,190,29));gain_.setBounds(bounds(342,689,164,188));
-    thresholdLabel_.setBounds(bounds(560,659,200,29));threshold_.setBounds(bounds(579,689,166,188));
-    compLabel_.setBounds(bounds(814,663,320,29));compressor_.setBounds(bounds(814,705,322,50));
-    domainLabel_.setBounds(bounds(814,756,320,29));domain_.setBounds(bounds(814,795,322,51));
+    on_.setBounds(switchBounds(false));off_.setBounds(switchBounds(true));
+    gainLabel_.setBounds(bounds(344,595,180,28));gain_.setBounds(bounds(352,624,164,199));
+    thresholdLabel_.setBounds(bounds(580,595,190,28));threshold_.setBounds(bounds(592,624,166,199));
+    compLabel_.setBounds(bounds(843,601,270,28));compressor_.setBounds(bounds(837,636,296,55));
+    domainLabel_.setBounds(bounds(843,698,270,28));domain_.setBounds(bounds(837,732,296,55));
     detectorLabel_.setBounds(0,0,1,1);detector_.setBounds(0,0,1,1);limitAmount_.setBounds(0,0,1,1);
-    mono_.setBounds(bounds(1198,688,187,69));solo_.setBounds(bounds(1403,688,185,69));
-    phase_.setBounds(bounds(1198,779,187,69));limit_.setBounds(bounds(1403,779,185,69));
+    mono_.setBounds(bounds(1187,627,193,70));solo_.setBounds(bounds(1398,627,189,70));
+    phase_.setBounds(bounds(1187,716,193,70));limit_.setBounds(bounds(1398,716,189,70));
 
-    selection_.setBounds(bounds(67,661,270,29));
-    carveOn_.setBounds(bounds(111,699,173,64));carveOff_.setBounds(bounds(111,783,173,64));
+    selection_.setBounds(bounds(94,589,250,28));
+    carveOn_.setBounds(switchBounds(false));carveOff_.setBounds(switchBounds(true));
     carveDynamic_.setBounds(0,0,1,1);
     const std::array<juce::Slider*,3> cs{&carveFrequency_,&carveDepth_,&carveQ_};
     const std::array<juce::Label*,3> cl{&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_};
     for(int i=0;i<3;++i){
         cs[(size_t)i]->setBounds(carveDial(i));
-        cl[(size_t)i]->setBounds(cs[(size_t)i]->getX()-20,bounds(0,659,1,29).getY(),cs[(size_t)i]->getWidth()+40,bounds(0,659,1,29).getHeight());
+        cl[(size_t)i]->setBounds(cs[(size_t)i]->getX()-20,bounds(0,589,1,28).getY(),cs[(size_t)i]->getWidth()+40,bounds(0,589,1,28).getHeight());
     }
-    for(int i=0;i<4;++i)carveSlotButtons_[(size_t)i].setBounds(bounds(1200+(i%2)*204,700+(i/2)*91,184,62));
-
+    for(int i=0;i<4;++i)carveSlotButtons_[(size_t)i].setBounds(carveSlot(i));
     for(int i=0;i<5;++i){
-        onyxLabels_[(size_t)i].setBounds(bounds(62+i*310,659,280,29));
-        onyxLabels_[(size_t)i].setFont(scalpel::finish::font(16));
+        onyxLabels_[(size_t)i].setBounds(bounds(80+i*310,589,280,28));
         onyxSliders_[(size_t)i].setBounds(colorDial(i));
     }
-    analyzerDepthLabel_.setBounds(bounds(135,660,280,29));
-    analyzerMemoryLabel_.setBounds(bounds(682,660,280,29));
-    analyzerSlopeLabel_.setBounds(bounds(1230,660,280,29));
-    heatToggle_.setBounds(bounds(215,703,120,120));
-    analyzerMemory_.setBounds(bounds(739,696,166,181));
-    freezeButton_.setBounds(bounds(1310,703,120,120));
+    analyzerDepthLabel_.setBounds(bounds(150,589,280,28));
+    analyzerMemoryLabel_.setBounds(bounds(695,589,280,28));
+    analyzerSlopeLabel_.setBounds(bounds(1230,589,280,28));
+    heatToggle_.setBounds(bounds(230,648,120,120));
+    analyzerMemory_.setBounds(bounds(752,624,166,199));
+    freezeButton_.setBounds(bounds(1310,648,120,120));
 
     jukeModeLabel_.setBounds(0,0,1,1);jukeMode_.setBounds(0,0,1,1);
     weatherMode_.setBounds(0,0,1,1);reducedMotion_.setBounds(0,0,1,1);

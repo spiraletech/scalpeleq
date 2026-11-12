@@ -8,7 +8,7 @@ inline void draw(juce::Graphics& g,juce::Rectangle<float> plot){
     const float right=plot.getRight()+gutterGap+labelRightOffset;
     // Native production treatment of the old gutter; never blit a reference
     // composite or cover the plot. Nodes are painted afterwards, unchanged.
-    g.setColour(juce::Colour(0xff040708));
+    g.setColour(juce::Colour(0xff0b0b0a));
     g.fillRect(plot.getRight()+gutterGap,plot.getY()-6.f*logicalPerNativePixel,
                gutterWidth,plot.getHeight()+11.f*logicalPerNativePixel);
     auto labelFont=juce::Font(juce::FontOptions("Arial",labelFontHeight,juce::Font::bold));

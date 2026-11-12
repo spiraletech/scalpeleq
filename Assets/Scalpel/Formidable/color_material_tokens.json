@@ -1,0 +1,31 @@
+{
+  "palette": {
+    "shell_mid": "#B6A493",
+    "shell_high": "#CCB7A5",
+    "shell_shadow": "#786C60",
+    "ivory_key": "#BFAE9E",
+    "active_key": "#D5B18A",
+    "graphite_button": "#292522",
+    "graphite_light": "#52463E",
+    "graph_black": "#0B0B0A",
+    "recess_shadow": "#151311",
+    "metal_edge": "#A89A89",
+    "primary_text": "#151310",
+    "label_on_dark": "#E6D4BC",
+    "off_white_pointer": "#F0EBE1",
+    "on_status_green": "#88DB32",
+    "off_status_red": "#E94A45",
+    "xray_red": "#FA272A",
+    "red_band": "#EB2925",
+    "orange_band": "#FF921D",
+    "green_band": "#6CE820",
+    "cyan_band": "#0FD8EE",
+    "blue_band": "#2275ED",
+    "purple_band": "#A13CE4",
+    "pink_band": "#EB1CC8"
+  },
+  "method": "representative designer-selected colors approximating rendered finish; sample image if exact values required",
+  "finish": "brushed graphite/titanium instrument-shelf hardware, restrained wear; treat warm amber as local pressed accent only",
+  "knob_pointer": "opaque warm white without glow",
+  "ink_rules": "fine embossed/etched text, not italic/slanted or extra bold, consistent font sizes; redraw with licensed runtime font"
+}
