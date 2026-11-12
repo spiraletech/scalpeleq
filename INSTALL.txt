@@ -1,4 +1,4 @@
-Scalpel EQ 1.0.7.1 — Formidable skin review — Windows x64 VST3
+Scalpel EQ 1.0.7.2 — Formidable skin review — Windows x64 VST3
 
 Close FL Studio and other DAWs before replacing the plugin.
 Extract this ZIP. Copy the COMPLETE “Scalpel EQ.vst3” folder to:

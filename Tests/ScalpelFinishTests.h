@@ -125,6 +125,6 @@ inline bool verifyScalpelFinish(){
     for(auto p:dc)if(!d.contains(p))return fail(__LINE__);
     // Immutable static texture must not own a Direct2D bitmap at DLL unload.
     if(scalpel::finish::grain().getPixelData()->createType()->getTypeID()!=juce::SoftwareImageType{}.getTypeID())return fail(__LINE__);
-    std::cout<<"FORMIDABLE 1.0.7.1 REVIEW: CARVE/COLOR native geometry, BAND3/C4 215.87Hz Q0.300 states, typography contrast, two scales, parameter invariance and stable ON/OFF materials passed\n";
+    std::cout<<"FORMIDABLE 1.0.7.2 REVIEW: CARVE/COLOR native geometry, BAND3/C4 215.87Hz Q0.300 states, typography contrast, two scales, parameter invariance and stable ON/OFF materials passed\n";
     return true;
 }

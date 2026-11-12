@@ -196,8 +196,8 @@ public:
             const auto tile=juce::Rectangle<float>(r.getCentreX()-side*.5f,
                                                    r.getCentreY()-side*.5f,
                                                    side,side);
-            g.setColour((finish_?juce::Colours::black:juce::Colour(0xff3d281c)).withAlpha(.42f));
-            g.fillRoundedRectangle(tile.translated(2.0f,4.0f).expanded(2.0f),8.0f);
+            juce::Path tileShadow;tileShadow.addRoundedRectangle(tile,7.f);
+            juce::DropShadow(juce::Colours::black.withAlpha(.28f),3,{0,1}).drawForPath(g,tileShadow);
             if(heat&&active){
                 g.setColour(juce::Colour(0xffff7800).withAlpha(.16f));
                 g.drawRoundedRectangle(tile.expanded(5.0f),10.0f,7.0f);

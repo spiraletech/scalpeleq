@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include "ScalpelReferenceLayout.h"
-// Formidable 1.0.7.1 material masters. Rendering owns no processing state.
+// Formidable 1.0.7.2 material masters. Rendering owns no processing state.
 namespace scalpel::finish {
 inline constexpr bool validatedAllPages=true;
 inline bool enabledForMode(int) noexcept {return true;}
@@ -63,25 +63,27 @@ inline void shell(juce::Graphics& g,juce::Rectangle<float> r){
     // Rejected footer plaque and perforations are deliberately absent.
 }
 inline void hardware(juce::Graphics& g,juce::Rectangle<float> r,bool selected,bool hover,bool pressed){
-    g.setColour(juce::Colours::black.withAlpha(.85f));g.fillRoundedRectangle(r.translated(0,3).expanded(1),7);
+    // The cached parent owns the single, unclipped contact shadow.
     juce::ColourGradient rim(juce::Colour(0xffe1cbb4),r.getX(),r.getY(),juce::Colour(0xff514339),r.getRight(),r.getBottom(),false);
-    rim.addColour(.42,titanium);rim.addColour(.73,juce::Colour(0xffdcbea0));g.setGradientFill(rim);g.fillRoundedRectangle(r,7);
+    rim.addColour(.36,titanium);rim.addColour(.75,juce::Colour(0xff74604d));g.setGradientFill(rim);g.fillRoundedRectangle(r,7);
     const auto face=r.reduced(3).translated(0,pressed?1.f:0.f);
     juce::ColourGradient material(selected?juce::Colour(0xffe7c9a0):juce::Colour(0xffc7ae96),face.getX(),face.getY(),
-        selected?juce::Colour(0xffba8e5b):juce::Colour(0xff806852),face.getRight(),face.getBottom(),false);
-    material.addColour(.16,selected?juce::Colour(0xffd5b18a):juce::Colour(0xffb39c87));
-    material.addColour(.52,selected?juce::Colour(0xffba946a):juce::Colour(0xff9b826b));
-    material.addColour(.82,selected?juce::Colour(0xffd3ad7c):juce::Colour(0xffab8f74));
+        selected?juce::Colour(0xff9a7046):juce::Colour(0xff806852),face.getX(),face.getBottom(),false);
+    material.addColour(.12,selected?juce::Colour(0xffd5b18a):juce::Colour(0xffbda58e));
+    material.addColour(.55,selected?juce::Colour(0xffc19b72):juce::Colour(0xff9f846b));
+    material.addColour(.90,selected?juce::Colour(0xffae8457):juce::Colour(0xff92765c));
     g.setGradientFill(material);g.fillRoundedRectangle(face,4.8f);roughness(g,face,4.8f,.62f);
-    g.setColour(juce::Colour(0xfff3e3cf).withAlpha(pressed?.25f:.72f));g.drawRoundedRectangle(face.reduced(.5f),4.3f,.75f);
+    juce::ColourGradient bevel(juce::Colour(0xfff3e3cf).withAlpha(pressed?.25f:.62f),face.getX(),face.getY(),
+        juce::Colour(0xff463524).withAlpha(.70f),face.getX(),face.getBottom(),false);
+    g.setGradientFill(bevel);g.drawRoundedRectangle(face.reduced(.5f),4.3f,.75f);
     g.setColour(juce::Colour(0xff56483b));g.drawRoundedRectangle(r.reduced(1.5f),5.8f,.6f);
     if(pressed){g.setColour(ink.withAlpha(.12f));g.drawRoundedRectangle(face.reduced(1),4,1.5f);}
     if(hover){g.setColour(juce::Colours::white.withAlpha(.035f));g.fillRoundedRectangle(face,4.8f);}
 }
 inline void darkButton(juce::Graphics& g,juce::Rectangle<float> r,bool selected,bool hover,bool lamp=false,juce::Colour lampColour=onGreen,bool navigation=false){
-    g.setColour(juce::Colours::black.withAlpha(.75f));g.fillRoundedRectangle(r.translated(0,3).expanded(1),5);
+    // Recessed controls use their bevel; raised keys get a parent shadow.
     juce::ColourGradient face(juce::Colour(navigation?0xff554a3e:0xff52463e),r.getX(),r.getY(),juce::Colour(0xff171411),r.getX(),r.getBottom(),false);
-    face.addColour(.20,navigation?juce::Colour(0xff463c33):faceplate);face.addColour(.66,juce::Colour(navigation?0xff29231d:0xff211d19));g.setGradientFill(face);g.fillRoundedRectangle(r,5);
+    face.addColour(.25,navigation?juce::Colour(0xff463c33):faceplate);face.addColour(.66,juce::Colour(navigation?0xff29231d:0xff211d19));g.setGradientFill(face);g.fillRoundedRectangle(r,5);
     roughness(g,r.reduced(1),4,.52f);
     juce::ColourGradient edge(juce::Colour(0xffb9b7b1),r.getX(),r.getY(),juce::Colour(0xff3d4142),r.getRight(),r.getBottom(),false);
     g.setGradientFill(edge);g.drawRoundedRectangle(r,5,.9f);

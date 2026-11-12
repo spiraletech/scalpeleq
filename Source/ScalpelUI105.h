@@ -5,7 +5,6 @@
 #include <cmath>
 #include "ScalpelMaterials.h"
 #include "ScalpelFinish.h"
-#include "ScalpelEtherTechMark.h"
 
 namespace scalpel::ui105 {
 inline const juce::Colour champagne{0xff0d1720};
@@ -37,17 +36,15 @@ inline void drawRackFace(juce::Graphics& g,int width,int height,int mode)
     scalpel::finish::shell(g,{0,0,(float)width,(float)height});
     // Engraved native type on the shared shell; the kit's italic crop is not
     // a shipping wordmark and its rejected footer art is never loaded.
-    const auto engraved=[&](const juce::String& text,juce::Rectangle<int> box,juce::Font font){
+    const auto engraved=[&](const juce::String& text,juce::Rectangle<int> box,juce::Font font,juce::Justification align=juce::Justification::centredLeft){
         g.setFont(font);g.setColour(juce::Colour(0xffeee0cd).withAlpha(.8f));
-        g.drawFittedText(text,box.translated(0,1),juce::Justification::centredLeft,1);
-        g.setColour(scalpel::finish::ink);g.drawFittedText(text,box,juce::Justification::centredLeft,1);
+        g.drawFittedText(text,box.translated(0,1),align,1);
+        g.setColour(scalpel::finish::ink);g.drawFittedText(text,box,align,1);
     };
     auto word=scalpel::finish::font(44,true);word.setExtraKerningFactor(.32f);
     engraved("SCALPEL EQ",bounds(110,26,590,68),word);
-    auto subtitle=scalpel::finish::font(12);subtitle.setExtraKerningFactor(.20f);
-    engraved("S U R G I C A L   E Q U A L I Z E R",bounds(1208,20,394,29),subtitle);
-    auto brand=scalpel::finish::font(20);brand.setExtraKerningFactor(.18f);
-    engraved("E T H E R T E C H",bounds(1240,48,350,40),brand);
+    auto subtitle=word;subtitle.setHeight(20);subtitle.setExtraKerningFactor(.14f);
+    engraved("SURGICAL EQUALIZER",bounds(1000,26,590,68),subtitle,juce::Justification::centredRight);
     // Recesses are manufactured wells, not extra decorative outline layers.
     const auto well=[&](juce::Rectangle<float> area,float radius){
         g.setColour(juce::Colour(0xff55483c));g.fillRoundedRectangle(area.expanded(1),radius+1);
@@ -56,18 +53,23 @@ inline void drawRackFace(juce::Graphics& g,int width,int height,int mode)
     };
     well(rect(45,104,1564,92),14);well(rect(40,495,1568,78),10);
     const auto shadow=[&](juce::Rectangle<float> area,float radius){
-        juce::Path path;path.addRoundedRectangle(area,radius);
-        juce::DropShadow(juce::Colours::black.withAlpha(.70f),4,{0,3}).drawForPath(g,path);
+        juce::Path path;path.addRoundedRectangle(area.reduced(1.5f),radius);
+        juce::DropShadow(juce::Colours::black.withAlpha(.32f),3,{0,1}).drawForPath(g,path);
     };
-    for(int i=0;i<7;++i)shadow(band(i).toFloat().reduced(1),7);
-    for(int i=0;i<4;++i)shadow(tab(i).toFloat().reduced(1),5);
+    for(int i=0;i<7;++i)shadow(band(i).toFloat(),7);
+    for(int i=0;i<4;++i)shadow(tab(i).toFloat(),5);
     scalpel::finish::panel(g,deck(),19);
     for(const auto c:housingScrews(true))scalpel::finish::screw(g,c);
     if(mode==0||mode==1){
         shadow(switchBounds(false).toFloat(),5);shadow(switchBounds(true).toFloat(),5);
         if(mode==0){
-            for(float x:{1170.f,1395.f})for(float y:{618.f,710.f})shadow(rect(x,y,181,74),7);
-            shadow(rect(825,636,296,55),5);shadow(rect(825,727,296,55),5);
+            // Exact layoutRack bounds, including its unequal action widths.
+            for(float y:{627.f,716.f}){
+                shadow(bounds(1187,y,193,70).toFloat(),7);
+                shadow(bounds(1398,y,189,70).toFloat(),7);
+            }
+            shadow(bounds(837,636,296,55).toFloat(),5);
+            shadow(bounds(837,732,296,55).toFloat(),5);
         }else for(int i=0;i<4;++i)shadow(carveSlot(i).toFloat(),7);
     }
     std::array<float,4> dividers{};int count=4;
