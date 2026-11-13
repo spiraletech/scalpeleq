@@ -275,11 +275,22 @@ public:
                               iconCentre.x-1.0f,iconFace.getBottom()-12.0f);
                 const auto iconTransform=juce::AffineTransform::scale(iconScale).translated(face.getX(),face.getY());
                 flame.applyTransform(iconTransform);inner.applyTransform(iconTransform);
-                g.setColour(juce::Colour(heat&&active?0xffff9200:0xffc87932));
-                g.strokePath(flame,juce::PathStrokeType(2.6f*iconScale,juce::PathStrokeType::curved,
-                                                        juce::PathStrokeType::rounded));
-                g.strokePath(inner,juce::PathStrokeType(2.0f*iconScale,juce::PathStrokeType::curved,
-                                                        juce::PathStrokeType::rounded));
+                // A manufactured inlay keeps a constant cut width as the
+                // key grows; scaling its stroke made the first capture heavy.
+                const auto relief=juce::AffineTransform::translation(.6f,.8f);
+                g.setColour(juce::Colour(0xff090706));
+                g.strokePath(flame,juce::PathStrokeType(3.2f,juce::PathStrokeType::curved,
+                    juce::PathStrokeType::rounded),relief);
+                g.strokePath(inner,juce::PathStrokeType(2.7f,juce::PathStrokeType::curved,
+                    juce::PathStrokeType::rounded),relief);
+                juce::ColourGradient inlay(juce::Colour(active?0xffedbd6e:0xff9c784b),
+                    face.getX(),face.getY(),juce::Colour(active?0xffb8782d:0xff75512c),
+                    face.getX(),face.getBottom(),false);
+                g.setGradientFill(inlay);
+                g.strokePath(flame,juce::PathStrokeType(2.2f,juce::PathStrokeType::curved,
+                    juce::PathStrokeType::rounded));
+                g.strokePath(inner,juce::PathStrokeType(1.7f,juce::PathStrokeType::curved,
+                    juce::PathStrokeType::rounded));
             }else{
                 g.setColour(active?juce::Colour(0xffbfeeff):juce::Colour(0xffadc9d9));
                 const float length=face.getWidth()*.36f;
@@ -371,7 +382,7 @@ public:
             g.setColour(!b.isEnabled()?scalpel::finish::secondary:hardware?scalpel::finish::ink:
                 label=="X-RAY"?scalpel::finish::text:tab?(b.getToggleState()?juce::Colour(0xffedbb78):scalpel::finish::secondary):
                 ((label=="ON"||label=="OFF")&&!b.getToggleState())?scalpel::finish::secondary:scalpel::finish::text);
-            auto buttonFont=scalpel::finish::font(hardware?(label.startsWith("PHASE")?15.f:19.f):18.f,hardware||label=="ON"||label=="OFF");
+            auto buttonFont=scalpel::finish::font(hardware?(label.startsWith("PHASE")?15.f:19.f):tab?22.f:18.f,hardware||tab||label=="ON"||label=="OFF");
             if(hardware)buttonFont.setHorizontalScale(.955f);
             g.setFont(buttonFont);
             auto bounds=label=="X-RAY"?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2);
