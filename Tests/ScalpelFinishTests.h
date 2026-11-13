@@ -116,11 +116,13 @@ inline bool verifyScalpelFinish(){
         if(lamps(*on).first!=0||lamps(*off).second<25)return fail(__LINE__);
         if(!save("surgery-ui-IVORY-"+juce::String(page).replaceCharacter(' ','-')+"-OFF.png"))return fail(__LINE__);
     }
-    // The blueprint locks the deck and all eight screws. Improve visual fill
-    // INSIDE that footprint; do not resize the editor or alter parameter data.
+    // Kit correction: extend the actual faceplate downward, with eight corner
+    // screws retained. Never resize the editor or modify parameter values.
     if(!click("ANALYZE"))return fail(__LINE__);
     juce::MessageManager::getInstance()->runDispatchLoopUntil(25);
-    const auto lockedDeck=scalpel::reference::bounds(34,578,1588,258).toFloat();
+    const auto lockedDeck=scalpel::reference::deck();
+    const float nativeMargin=(630.f-lockedDeck.getBottom())*1.2f;
+    if(std::abs(nativeMargin-756.f*(1.f-917.f/961.f))>1.f||nativeMargin<30.f||nativeMargin>40.f)return fail(__LINE__);
     if(scalpel::reference::deck().toNearestInt()!=lockedDeck.toNearestInt()||
        editor->getWidth()!=1344||editor->getHeight()!=756)return fail(__LINE__);
     const auto opaqueBounds=[](juce::Component& component){
@@ -136,7 +138,7 @@ inline bool verifyScalpelFinish(){
         const auto visible=opaqueBounds(*b);
         const float gap=lockedDeck.getBottom()-visible.getBottom();
         fill<<name<<','<<visible.getHeight()<<','<<gap<<','<<editor->getWidth()<<','<<editor->getHeight()<<'\n';
-        if(visible.getHeight()<100||gap>26||gap<5)return fail(__LINE__);
+        if(visible.getHeight()<100||gap>55||gap<15)return fail(__LINE__);
     }
     juce::Slider* decay=nullptr;
     for(auto* child:editor->getChildren())if(auto* slider=dynamic_cast<juce::Slider*>(child);slider&&slider->isVisible())decay=slider;
@@ -154,6 +156,7 @@ inline bool verifyScalpelFinish(){
     for(auto p:dc)if(!d.contains(p))return fail(__LINE__);
     // Immutable static texture must not own a Direct2D bitmap at DLL unload.
     if(scalpel::finish::grain().getPixelData()->createType()->getTypeID()!=juce::SoftwareImageType{}.getTypeID())return fail(__LINE__);
-    std::cout<<"FORMIDABLE 1.0.7.3 REVIEW: CARVE/COLOR native geometry, BAND3/C4 215.87Hz Q0.300 states, typography contrast, two scales, parameter invariance stable ON/OFF materials and locked ANALYZE deck fill passed\n";
+    std::cout<<"FORMIDABLE 1.0.7.3 REVIEW: CARVE/COLOR native geometry, BAND3/C4 215.87Hz Q0.300 states, typography contrast, two scales, parameter invariance stable ON/OFF materials and extended ANALYZE faceplate, proportional kit glyphs and corner anchors passed\n";
     return true;
 }
+

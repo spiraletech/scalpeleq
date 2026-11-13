@@ -1561,9 +1561,9 @@ void RootsEditor::layoutRack(){
         onyxLabels_[(size_t)i].setBounds(bounds(80+i*310,589,280,28));
         onyxSliders_[(size_t)i].setBounds(colorDial(i));
     }
-    analyzerDepthLabel_.setBounds(bounds(150,589,280,28));
-    analyzerMemoryLabel_.setBounds(bounds(695,589,280,28));
-    analyzerSlopeLabel_.setBounds(bounds(1230,589,280,28));
+    analyzerDepthLabel_.setBounds(analyzeAsset(190,612,280,30));
+    analyzerMemoryLabel_.setBounds(analyzeAsset(676,604,280,30));
+    analyzerSlopeLabel_.setBounds(analyzeAsset(1164,612,280,30));
     heatToggle_.setBounds(analyzeButton(false));
     analyzerMemory_.setTextBoxStyle(juce::Slider::TextBoxBelow,false,decayReadoutWidth,decayReadoutHeight);
     analyzerMemory_.setBounds(decayDial());
@@ -1577,3 +1577,4 @@ void RootsEditor::layoutRack(){
     save_.setBounds(0,0,1,1);load_.setBounds(0,0,1,1);
     outputLabel_.setBounds(0,0,1,1);output_.setBounds(0,0,1,1);
 }
+

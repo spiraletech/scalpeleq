@@ -1,3 +1,4 @@
+#include "ScalpelAnalyzeGlyphs.h"
 #pragma once
 // SCALPEL EQ: blue-black carbon polymer hardware, NO exterior tick marks.
 // Vector components stay crisp at high DPI and every knob points to a real
@@ -230,93 +231,15 @@ public:
             g.setColour(juce::Colour(0xff080605));
             g.drawRoundedRectangle(tile,7.0f,1.2f);
 
-            const auto centre=face.getCentre();
-            if(!heat&&active){
-                // Compact active lamp retained inside the freeze tile so the
-                // state remains unambiguous at native-size rasterization.
-                g.setColour(juce::Colour(0xff8fdcff));
-                g.fillEllipse(centre.x-7.0f,centre.y-7.0f,14.0f,14.0f);
-            }
-            if(heat){
-                // Preserve the existing flame's aspect as the physical key
-                // grows. Its 53px master is vector geometry, never a sprite.
-                const auto iconFace=juce::Rectangle<float>(0,0,53,53);
-                const auto iconCentre=iconFace.getCentre();
-                const float iconScale=face.getWidth()/53.f;
-                // Two-tongue outline flame: broad at the base with an offset
-                // upper lick, matching the approved embossed hardware symbol.
-                juce::Path flame;
-                flame.startNewSubPath(iconCentre.x-2.0f,iconFace.getBottom()-9.0f);
-                flame.cubicTo(iconCentre.x-16.0f,iconFace.getBottom()-15.0f,
-                              iconCentre.x-17.0f,iconCentre.y-8.0f,
-                              iconCentre.x-7.0f,iconFace.getY()+15.0f);
-                flame.cubicTo(iconCentre.x-8.0f,iconCentre.y-3.0f,
-                              iconCentre.x-2.0f,iconCentre.y-7.0f,
-                              iconCentre.x+3.0f,iconCentre.y-12.0f);
-                flame.cubicTo(iconCentre.x+2.0f,iconCentre.y-20.0f,
-                              iconCentre.x+7.0f,iconFace.getY()+10.0f,
-                              iconCentre.x+10.0f,iconFace.getY()+7.0f);
-                flame.cubicTo(iconCentre.x+12.0f,iconCentre.y-10.0f,
-                              iconCentre.x+19.0f,iconCentre.y-3.0f,
-                              iconCentre.x+15.0f,iconCentre.y+9.0f);
-                flame.cubicTo(iconCentre.x+12.0f,iconFace.getBottom()-12.0f,
-                              iconCentre.x+5.0f,iconFace.getBottom()-8.0f,
-                              iconCentre.x-2.0f,iconFace.getBottom()-9.0f);
-                juce::Path inner;
-                inner.startNewSubPath(iconCentre.x-1.0f,iconFace.getBottom()-12.0f);
-                inner.cubicTo(iconCentre.x-7.0f,iconCentre.y+8.0f,
-                              iconCentre.x-4.0f,iconCentre.y+1.0f,
-                              iconCentre.x+1.0f,iconCentre.y-5.0f);
-                inner.cubicTo(iconCentre.x+1.0f,iconCentre.y+1.0f,
-                              iconCentre.x+8.0f,iconCentre.y+4.0f,
-                              iconCentre.x+6.0f,iconCentre.y+10.0f);
-                inner.cubicTo(iconCentre.x+5.0f,iconFace.getBottom()-13.0f,
-                              iconCentre.x+2.0f,iconFace.getBottom()-11.0f,
-                              iconCentre.x-1.0f,iconFace.getBottom()-12.0f);
-                const auto iconTransform=juce::AffineTransform::scale(iconScale).translated(face.getX(),face.getY());
-                flame.applyTransform(iconTransform);inner.applyTransform(iconTransform);
-                // A manufactured inlay keeps a constant cut width as the
-                // key grows; scaling its stroke made the first capture heavy.
-                const auto relief=juce::AffineTransform::translation(.6f,.8f);
-                g.setColour(juce::Colour(0xff090706));
-                g.strokePath(flame,juce::PathStrokeType(3.2f,juce::PathStrokeType::curved,
-                    juce::PathStrokeType::rounded),relief);
-                g.strokePath(inner,juce::PathStrokeType(2.7f,juce::PathStrokeType::curved,
-                    juce::PathStrokeType::rounded),relief);
-                juce::ColourGradient inlay(juce::Colour(active?0xffedbd6e:0xff9c784b),
-                    face.getX(),face.getY(),juce::Colour(active?0xffb8782d:0xff75512c),
-                    face.getX(),face.getBottom(),false);
-                g.setGradientFill(inlay);
-                g.strokePath(flame,juce::PathStrokeType(2.2f,juce::PathStrokeType::curved,
-                    juce::PathStrokeType::rounded));
-                g.strokePath(inner,juce::PathStrokeType(1.7f,juce::PathStrokeType::curved,
-                    juce::PathStrokeType::rounded));
-            }else{
-                g.setColour(active?juce::Colour(0xffbfeeff):juce::Colour(0xffadc9d9));
-                const float length=face.getWidth()*.36f;
-                // Three uninterrupted axes guarantee a readable crystalline
-                // centre. Six outward forks stay connected at native scale.
-                for(int axis=0;axis<3;++axis){
-                    const float angle=juce::MathConstants<float>::pi*axis/3.0f;
-                    const juce::Point<float> unit{std::cos(angle),std::sin(angle)};
-                    g.drawLine({centre-unit*length,centre+unit*length},2.7f);
-                }
-                for(int arm=0;arm<6;++arm){
-                    const float angle=juce::MathConstants<float>::twoPi*arm/6.0f;
-                    const juce::Point<float> unit{std::cos(angle),std::sin(angle)};
-                    const juce::Point<float> normal{-unit.y,unit.x};
-                    const auto root=centre+unit*(length*.50f);
-                    const auto forward=unit*(length*.25f);
-                    const auto side=normal*(length*.14f);
-                    g.drawLine({root,root+forward+side},1.9f);
-                    g.drawLine({root,root+forward-side},1.9f);
-                }
-                g.fillEllipse(centre.x-1.7f,centre.y-1.7f,3.4f,3.4f);
-                if(active){
-                    g.setColour((finish_?scalpel::finish::ice:juce::Colour(0xffffead1)).withAlpha(.22f));
-                    g.drawRoundedRectangle(tile.expanded(2.0f),8.5f,3.0f);
-                }
-            }
+            // Exact supplied flame/snowflake contours, cached once and fitted
+            // proportionally inside the shared mechanical switch shell.
+            const auto& glyph=heat?scalpel::analyzeGlyphs::flame():scalpel::analyzeGlyphs::snowflake();
+            const auto glyphArea=face.reduced(face.getWidth()*.20f,face.getHeight()*.18f);
+            const auto transform=glyph.getTransformToScaleToFit(glyphArea,true);
+            g.setColour(juce::Colour(0xff090706));
+            g.fillPath(glyph,transform.followedBy(juce::AffineTransform::translation(.6f,.8f)));
+            g.setColour(heat?juce::Colour(active?0xffd78e46:0xff987049):juce::Colour(active?0xffbfeeff:0xffa6cada));
+            g.fillPath(glyph,transform);
             return;
         }
         // Answering-machine ON/OFF switches really sink into a dark well when
@@ -495,3 +418,4 @@ public:
         g.setColour(juce::Colour(0xfffaf0dc));g.drawEllipse(pos-6,track.getCentreY()-6,12,12,.7f);
     }
 };
+
