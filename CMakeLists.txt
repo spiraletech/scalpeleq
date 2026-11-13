@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(SCALPELEQ VERSION 1.0.7.4 LANGUAGES C CXX)
+project(SCALPELEQ VERSION 1.0.7.5 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -222,6 +222,9 @@ if(PRISMVST_BUILD_TESTS)
   add_executable(surgery_precision_tests Tests/SurgeryPrecisionTests.cpp Source/SurgeryPrecision.h)
   target_compile_features(surgery_precision_tests PRIVATE cxx_std_20)
   add_test(NAME surgery_precision_controls COMMAND surgery_precision_tests)
+  add_executable(surgery_dual_knob_tests Tests/SurgeryDualKnobDSPTests.cpp)
+  target_compile_features(surgery_dual_knob_tests PRIVATE cxx_std_20)
+  add_test(NAME surgery_dual_knob_calibration COMMAND surgery_dual_knob_tests)
   add_executable(surgery_spectrogram_tests Tests/SurgerySpectrogramTests.cpp Source/SurgerySpectrogram.h)
   target_compile_features(surgery_spectrogram_tests PRIVATE cxx_std_20)
   add_test(NAME surgery_spectrogram_spsc COMMAND surgery_spectrogram_tests)
@@ -232,4 +235,5 @@ if(PRISMVST_BUILD_TESTS)
   target_compile_features(surgery_spectral_colour_tests PRIVATE cxx_std_20)
   add_test(NAME surgery_spectral_colour_mapping COMMAND surgery_spectral_colour_tests)
 endif()
+
 

@@ -139,6 +139,20 @@ inline bool captureScalpelModule(const juce::String& modulePath){
     }
     ok=ok&&capture("surgery-ui-VST3-IVORY-BAND-AUDIO.png");
     ok=ok&&hit(tab(3))&&capture("surgery-ui-VST3-ANALYZE-1344x756.png");
+    // Actual compiled pointer/readout calibration. These are live host values,
+    // not artwork or replacement waveforms. Restore the capture fixture below.
+    ok=ok&&hit(band(2))&&hit(tab(0));
+    for(int p=0;p<=2;++p){
+        ok=ok&&setText("ROOT 3 Compression Threshold",juce::String(-30*p));pump(80);
+        ok=ok&&capture("surgery-ui-VST3-CALIBRATION-THRESHOLD-"+juce::String(p*50)+".png");
+    }
+    ok=ok&&setText("ROOT 3 Compression Threshold","0")&&hit(tab(1))&&hit(carveSlot(3));
+    for(int p=0;p<=2;++p){
+        const double q=.3*std::pow(96./.3,p*.5);
+        ok=ok&&setText("CARVE 3/4 Q",juce::String(q,6));pump(80);
+        ok=ok&&capture("surgery-ui-VST3-CALIBRATION-TIGHTNESS-"+juce::String(p*50)+".png");
+    }
+    ok=ok&&setText("CARVE 3/4 Q","0.300");
     std::ofstream evidence("surgery-vst3-capture.csv");
     evidence<<"version,"<<types[0]->version<<"\n";
     evidence<<"module,"<<modulePath<<"\neditor,1344x756\nfrequency,"<<parameter("CARVE 3/4 Frequency")->getCurrentValueAsText()<<"\nq,"<<parameter("CARVE 3/4 Q")->getCurrentValueAsText()<<"\n";
@@ -147,3 +161,4 @@ inline bool captureScalpelModule(const juce::String& modulePath){
     return ok;
 }
 #endif
+

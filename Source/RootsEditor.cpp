@@ -1046,7 +1046,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     selection_.setFont(juce::Font(juce::FontOptions("Segoe UI",12.0f,juce::Font::bold)));
     status_.setFont(juce::Font(juce::FontOptions("Segoe UI",11.5f,juce::Font::plain)));
     status_.setJustificationType(juce::Justification::centredRight);
-    for(auto* s:{&gain_,&threshold_,&limitAmount_}){
+    for(auto* s:{&gain_,static_cast<juce::Slider*>(&threshold_),&limitAmount_}){
         addAndMakeVisible(*s);rotary(*s,"",0.0);
         s->setColour(juce::Slider::rotarySliderFillColourId,juce::Colour::fromRGB(143,192,204));
         s->setColour(juce::Slider::rotarySliderOutlineColourId,juce::Colour::fromRGB(38,55,65));
@@ -1058,7 +1058,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     gain_.setTooltip("Selected BAND frequency range gain: -60 to +60 dB");
 
     thresholdLabel_.setText("COMP THRESHOLD",juce::dontSendNotification);
-    threshold_.setTooltip("Compression stays OFF until you choose a COMPRESSION profile. Double-click resets to 0 dBFS.");
+    threshold_.setTooltip("Clockwise lowers threshold: 0.0 to -60.0 dBFS. COMP OFF bypasses compression and preserves threshold. Double-click resets to 0.0 dBFS.");
     limitAmount_.setTextValueSuffix(" %");
     limitAmount_.setDoubleClickReturnValue(true,0.0);
     limitAmount_.setTooltip("LA-2A-inspired optical leveling depth. Program-dependent attack/release; not brickwall limiting.");
@@ -1092,7 +1092,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         b.onClick=[this,i]{carveSlot_=i;bindCarve();graph_.setPresentation(mode_,carveSlot_);};
         addAndMakeVisible(b);
     }
-    for(auto* s:{&carveFrequency_,&carveDepth_,&carveQ_}){
+    for(auto* s:{&carveFrequency_,&carveDepth_,static_cast<juce::Slider*>(&carveQ_)}){
         rotary(*s,"",0.0);addAndMakeVisible(*s);
     }
     carveDepth_.setDoubleClickReturnValue(true,0.0);
@@ -1100,9 +1100,12 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     carveFrequency_.setMouseDragSensitivity(400);
     carveQ_.setMouseDragSensitivity(600);
     carveQ_.onValueChange=[this]{updateCarveTightness();};
-    carveQ_.setNumDecimalPlacesToDisplay(3);
+    // The slider/host still hold raw Q; only editable UI text is tightness.
+    carveQ_.textFromValueFunction=[](double q){return juce::String(surgery::calibration::qPosition(q)*100.0,1);};
+    carveQ_.valueFromTextFunction=[](const juce::String& text){return surgery::calibration::qFromPosition(text.getDoubleValue()/100.0);};
+    carveQ_.setNumDecimalPlacesToDisplay(1);
     carveFrequency_.setTooltip("Exact Hz value: type in the field. CTRL+drag a CARVE node for fine frequency scrubbing.");
-    carveQ_.setTooltip("Ultra-surgical Q 0.300 to 96.000. Higher = tighter notch; 0-100% tightness shown above knob. SHIFT+wheel = fine Q.");
+    carveQ_.setTooltip("Tightness 0-100% (type a percentage). Raw DSP/automation Q remains 0.300-96.000 on a logarithmic curve. Clockwise narrows the filter. SHIFT+wheel = fine adjustment.");
     carveFrequencyLabel_.setText("FREQUENCY Hz",juce::dontSendNotification);
     carveDepthLabel_.setText("CUT DEPTH dB",juce::dontSendNotification);
     carveQLabel_.setText("Q / TIGHTNESS",juce::dontSendNotification);
@@ -1269,6 +1272,11 @@ void RootsEditor::bindNode(int n){
        PRISMVSTAudioProcessor::rootsRootGainId(node_/2),gain_);
 
     thresholdA_=std::make_unique<SliderA>(processor_.apvts,rid("threshold"),threshold_);
+    // SliderAttachment keeps the existing ascending host range [-60,0]. The
+    // subclass reverses local rotary travel without remapping automation.
+    threshold_.textFromValueFunction=[](double db){const auto v=surgery::calibration::thresholdFromPosition(surgery::calibration::thresholdPosition(db));return juce::String(std::abs(v)<.00001?0.0:v,1);};
+    threshold_.valueFromTextFunction=[](const juce::String& text){const double db=text.replaceCharacter(0x2212,'-').getDoubleValue();return surgery::calibration::thresholdFromPosition(surgery::calibration::thresholdPosition(db));};
+    threshold_.setTextValueSuffix(" dBFS");threshold_.updateText();
     limitAmountA_=std::make_unique<SliderA>(processor_.apvts,rid("limit_amount"),limitAmount_);
     phaseA_=std::make_unique<ButtonA>(processor_.apvts,rid("phase"),phase_);
     limitA_=std::make_unique<ButtonA>(processor_.apvts,rid("limit_on"),limit_);
@@ -1308,6 +1316,7 @@ void RootsEditor::bindCarve(){
     carveDepthA_=std::make_unique<SliderA>(processor_.apvts,id("depth"),carveDepth_);
     carveQA_=std::make_unique<SurgeryLogSliderAttachment>(
         *processor_.apvts.getParameter(id("q")),carveQ_,.3,96.0,.001);
+    carveQ_.updateText();
     updateCarveTightness();
     carveDynamicA_=std::make_unique<ButtonA>(processor_.apvts,id("dynamic"),carveDynamic_);
     carveOn_.setButtonText("ON");
@@ -1330,7 +1339,7 @@ void RootsEditor::setMode(int next){
         b.setColour(juce::TextButton::textColourOnId,juce::Colour(0xffedf7ff));
     }
     const bool carve=mode_==1;
-    for(auto* s:{&carveFrequency_,&carveDepth_,&carveQ_})s->setVisible(carve);
+    for(auto* s:{&carveFrequency_,&carveDepth_,static_cast<juce::Slider*>(&carveQ_)})s->setVisible(carve);
     for(auto* l:{&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_})l->setVisible(carve);
     for(auto& b:carveSlotButtons_)b.setVisible(carve);
     carveOn_.setVisible(carve);carveOff_.setVisible(carve);
@@ -1550,7 +1559,7 @@ void RootsEditor::layoutRack(){
     selection_.setBounds(bounds(94,589,250,28));
     carveOn_.setBounds(switchBounds(false));carveOff_.setBounds(switchBounds(true));
     carveDynamic_.setBounds(0,0,1,1);
-    const std::array<juce::Slider*,3> cs{&carveFrequency_,&carveDepth_,&carveQ_};
+    const std::array<juce::Slider*,3> cs{&carveFrequency_,&carveDepth_,static_cast<juce::Slider*>(&carveQ_)};
     const std::array<juce::Label*,3> cl{&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_};
     for(int i=0;i<3;++i){
         cs[(size_t)i]->setBounds(carveDial(i));
@@ -1582,5 +1591,6 @@ void RootsEditor::layoutRack(){
     save_.setBounds(0,0,1,1);load_.setBounds(0,0,1,1);
     outputLabel_.setBounds(0,0,1,1);output_.setBounds(0,0,1,1);
 }
+
 
 

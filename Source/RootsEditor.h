@@ -10,6 +10,7 @@
 #include "SurgeryNodeFocus.h"
 #include "SurgeryPrecision.h"
 #include "SurgeryLogSliderAttachment.h"
+#include "SurgeryCalibratedSliders.h"
 #include "SurgeryResponse.h"
 #include "SurgeryAnalysis.h"
 #include "ScalpelMercuryField.h"
@@ -184,7 +185,8 @@ private:
     std::array<RootSelectorButton,7> rootButtons_;
     std::array<double,7> peakWarningUntilMs_{};
     std::uint64_t lastPeakRevision_=0;
-    juce::Slider gain_,threshold_,limitAmount_,analyzerSlope_,analyzerMemory_;
+    juce::Slider gain_,limitAmount_,analyzerSlope_,analyzerMemory_;
+    SurgeryThresholdSlider threshold_;
     juce::ComboBox analyzerDepth_,weatherMode_,jukeMode_;
     juce::Label jukeModeLabel_;
     juce::TextButton reducedMotion_{"REDUCED MOTION"};
@@ -198,7 +200,8 @@ private:
     int mode_=0,carveSlot_=0;
     std::array<juce::TextButton,4> modeButtons_;
     std::array<juce::TextButton,4> carveSlotButtons_;
-    juce::Slider carveFrequency_,carveDepth_,carveQ_;
+    juce::Slider carveFrequency_,carveDepth_;
+    SurgeryFineWheelSlider carveQ_;
     std::array<juce::Slider,5> onyxSliders_;
     std::array<juce::Label,5> onyxLabels_;
     std::array<std::unique_ptr<SliderA>,5> onyxAttachments_;
@@ -235,3 +238,4 @@ private:
     void updateRootButtons();
     void timerCallback() override;
 };
+

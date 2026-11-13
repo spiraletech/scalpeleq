@@ -1,3 +1,4 @@
+#include "SurgeryDualKnobUITests.h"
 #include <JuceHeader.h>
 #include "../Source/PluginProcessor.h"
 #include "../Source/ScalpelFluid3D.h"
@@ -232,6 +233,7 @@ bool runQualityTests(){
         return false;
     }
     juce::ScopedJuceInitialiser_GUI gui;
+    if(!verifyDualKnobCalibration())return false;
     if(!verifyScalpelFinish()){std::cerr<<"AAA finish validation failed\n";return false;}
     {
         PRISMVSTAudioProcessor p;
@@ -806,3 +808,4 @@ bool runQualityTests(){
     std::cout<<"QUALITY: all four modes rendered; legacy theme values preserve Scalpel COLOR UI\n";
     return true;
 }
+
