@@ -144,8 +144,16 @@ inline bool verifyScalpelFinish(){
     for(auto* child:editor->getChildren())if(auto* slider=dynamic_cast<juce::Slider*>(child);slider&&slider->isVisible())decay=slider;
     if(!decay||decay->getBounds()!=scalpel::reference::decayDial()||
        decay->getTextBoxHeight()!=scalpel::reference::decayReadoutHeight)return fail(__LINE__);
-    for(auto* child:editor->getChildren())if(auto* label=dynamic_cast<juce::Label*>(child);label&&label->isVisible()&&label->getText()=="VISUAL DECAY")
-        if(label->getBottom()>=decay->getY())return fail(__LINE__);
+    for(auto* child:editor->getChildren())if(auto* label=dynamic_cast<juce::Label*>(child);label&&label->isVisible()){
+        const auto text=label->getText();
+        if(text=="VISUAL DECAY"&&label->getBottom()>=decay->getY())return fail(__LINE__);
+        if(text=="HEAT MAP"||text=="VISUAL DECAY"||text=="FREEZE"){
+            // Verify actual painted glyphs, not a Font property that a shared
+            // LookAndFeel could silently override with smaller typography.
+            const auto ink=opaqueBounds(*label);
+            if(ink.getHeight()<13||ink.getHeight()>19||!label->getBounds().contains(ink))return fail(__LINE__);
+        }
+    }
     if(!save("surgery-ui-ANALYZE-FILL-1344x756.png"))return fail(__LINE__);
     // Eight identical screw masters, attached to the two outer housings.
     const auto a=scalpel::reference::analyzer(),d=scalpel::reference::deck();

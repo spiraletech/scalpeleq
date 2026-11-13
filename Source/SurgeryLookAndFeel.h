@@ -376,7 +376,8 @@ public:
                 g.setColour(dynamic_cast<juce::ComboBox*>(label.getParentComponent())?scalpel::finish::text:label.isEnabled()?scalpel::finish::ink:scalpel::finish::ink.withAlpha(.55f));
                 const auto r=label.getBorderSize().subtractedFrom(label.getLocalBounds());
                 const bool combo=dynamic_cast<juce::ComboBox*>(label.getParentComponent())!=nullptr;
-                auto f=scalpel::finish::font(label.getText().startsWith("BAND ")&&label.getText().contains("CARVE")?12.f:14.5f,true);
+                const bool analyzeHeading=label.getText()=="HEAT MAP"||label.getText()=="VISUAL DECAY"||label.getText()=="FREEZE";
+                auto f=scalpel::finish::font(analyzeHeading?20.f:label.getText().startsWith("BAND ")&&label.getText().contains("CARVE")?12.f:14.5f,true);
                 if(!combo)f.setHorizontalScale(.97f);
                 g.setFont(f);
                 if(dynamic_cast<juce::ComboBox*>(label.getParentComponent()))
