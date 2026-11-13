@@ -1564,9 +1564,10 @@ void RootsEditor::layoutRack(){
     analyzerDepthLabel_.setBounds(bounds(150,589,280,28));
     analyzerMemoryLabel_.setBounds(bounds(695,589,280,28));
     analyzerSlopeLabel_.setBounds(bounds(1230,589,280,28));
-    heatToggle_.setBounds(bounds(230,648,120,120));
-    analyzerMemory_.setBounds(bounds(752,624,166,199));
-    freezeButton_.setBounds(bounds(1310,648,120,120));
+    heatToggle_.setBounds(analyzeButton(false));
+    analyzerMemory_.setTextBoxStyle(juce::Slider::TextBoxBelow,false,decayReadoutWidth,decayReadoutHeight);
+    analyzerMemory_.setBounds(decayDial());
+    freezeButton_.setBounds(analyzeButton(true));
 
     jukeModeLabel_.setBounds(0,0,1,1);jukeMode_.setBounds(0,0,1,1);
     weatherMode_.setBounds(0,0,1,1);reducedMotion_.setBounds(0,0,1,1);

@@ -31,6 +31,10 @@ inline juce::Rectangle<int> carveDial(int i){
     return bounds(centres[(size_t)i]-83,624,166,199);
 }
 inline juce::Rectangle<int> colorDial(int i){return bounds(137+i*310,624,166,199);}
+// ANALYZE fills the existing deck; housing and screw coordinates stay locked.
+inline juce::Rectangle<int> analyzeButton(bool freeze){return bounds(freeze?1272.f:192.f,626,196,196);}
+inline juce::Rectangle<int> decayDial(){return bounds(733,622,204,207);}
+inline constexpr int decayReadoutWidth=124,decayReadoutHeight=26;
 inline juce::Rectangle<float> plotLocal(){return plot().translated(-analyzer().toNearestInt().getX(),-analyzer().toNearestInt().getY());}
 inline std::array<juce::Point<float>,4> screwCentres(juce::Rectangle<float> panel,float xInset,float yInset){
     const auto r=panel.reduced(xInset*scale,yInset*scale);

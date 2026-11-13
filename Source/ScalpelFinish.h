@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include "ScalpelReferenceLayout.h"
-// Formidable 1.0.7.2 material masters. Rendering owns no processing state.
+// Formidable 1.0.7.3 material masters. Rendering owns no processing state.
 namespace scalpel::finish {
 inline constexpr bool validatedAllPages=true;
 inline bool enabledForMode(int) noexcept {return true;}
@@ -97,7 +97,7 @@ inline void darkButton(juce::Graphics& g,juce::Rectangle<float> r,bool selected,
 inline void tab(juce::Graphics& g,juce::Rectangle<float> r,bool selected,bool hover){
     darkButton(g,r,false,hover,false,onGreen,true);
     if(selected){const auto light=juce::Rectangle<float>(r.getX()+r.getWidth()*.20f,r.getBottom()-5,r.getWidth()*.63f,2.7f);
-        g.setColour(accent.withAlpha(.16f));g.fillRoundedRectangle(light.expanded(1.5f,1),2);g.setColour(juce::Colour(0xffffe0a4));g.fillRoundedRectangle(light,1.35f);}
+        g.setColour(accent.withAlpha(.16f));g.fillRoundedRectangle(light.expanded(1.5f,1),2);g.setColour(juce::Colour(0xffffbd6b));g.fillRoundedRectangle(light,1.35f);}
 }
 inline void screw(juce::Graphics& g,juce::Point<float> c){
     const float radius=7.1f;const auto r=juce::Rectangle<float>(c.x-radius,c.y-radius,2*radius,2*radius);

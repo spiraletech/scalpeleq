@@ -199,9 +199,9 @@ public:
             juce::Path tileShadow;tileShadow.addRoundedRectangle(tile,7.f);
             juce::DropShadow(juce::Colours::black.withAlpha(.28f),3,{0,1}).drawForPath(g,tileShadow);
             if(heat&&active){
-                g.setColour(juce::Colour(0xffff7800).withAlpha(.16f));
-                g.drawRoundedRectangle(tile.expanded(5.0f),10.0f,7.0f);
-                g.setColour(juce::Colour(0xffff8500));
+                g.setColour(juce::Colour(0xffffa34a).withAlpha(.06f));
+                g.drawRoundedRectangle(tile.expanded(4.0f),9.0f,2.0f);
+                g.setColour(finish_?scalpel::finish::accent:juce::Colour(0xffff8500));
                 g.drawRoundedRectangle(tile.expanded(2.0f),8.5f,2.3f);
             }
             if(!heat&&active){
@@ -238,40 +238,47 @@ public:
                 g.fillEllipse(centre.x-7.0f,centre.y-7.0f,14.0f,14.0f);
             }
             if(heat){
+                // Preserve the existing flame's aspect as the physical key
+                // grows. Its 53px master is vector geometry, never a sprite.
+                const auto iconFace=juce::Rectangle<float>(0,0,53,53);
+                const auto iconCentre=iconFace.getCentre();
+                const float iconScale=face.getWidth()/53.f;
                 // Two-tongue outline flame: broad at the base with an offset
                 // upper lick, matching the approved embossed hardware symbol.
                 juce::Path flame;
-                flame.startNewSubPath(centre.x-2.0f,face.getBottom()-9.0f);
-                flame.cubicTo(centre.x-16.0f,face.getBottom()-15.0f,
-                              centre.x-17.0f,centre.y-8.0f,
-                              centre.x-7.0f,face.getY()+15.0f);
-                flame.cubicTo(centre.x-8.0f,centre.y-3.0f,
-                              centre.x-2.0f,centre.y-7.0f,
-                              centre.x+3.0f,centre.y-12.0f);
-                flame.cubicTo(centre.x+2.0f,centre.y-20.0f,
-                              centre.x+7.0f,face.getY()+10.0f,
-                              centre.x+10.0f,face.getY()+7.0f);
-                flame.cubicTo(centre.x+12.0f,centre.y-10.0f,
-                              centre.x+19.0f,centre.y-3.0f,
-                              centre.x+15.0f,centre.y+9.0f);
-                flame.cubicTo(centre.x+12.0f,face.getBottom()-12.0f,
-                              centre.x+5.0f,face.getBottom()-8.0f,
-                              centre.x-2.0f,face.getBottom()-9.0f);
+                flame.startNewSubPath(iconCentre.x-2.0f,iconFace.getBottom()-9.0f);
+                flame.cubicTo(iconCentre.x-16.0f,iconFace.getBottom()-15.0f,
+                              iconCentre.x-17.0f,iconCentre.y-8.0f,
+                              iconCentre.x-7.0f,iconFace.getY()+15.0f);
+                flame.cubicTo(iconCentre.x-8.0f,iconCentre.y-3.0f,
+                              iconCentre.x-2.0f,iconCentre.y-7.0f,
+                              iconCentre.x+3.0f,iconCentre.y-12.0f);
+                flame.cubicTo(iconCentre.x+2.0f,iconCentre.y-20.0f,
+                              iconCentre.x+7.0f,iconFace.getY()+10.0f,
+                              iconCentre.x+10.0f,iconFace.getY()+7.0f);
+                flame.cubicTo(iconCentre.x+12.0f,iconCentre.y-10.0f,
+                              iconCentre.x+19.0f,iconCentre.y-3.0f,
+                              iconCentre.x+15.0f,iconCentre.y+9.0f);
+                flame.cubicTo(iconCentre.x+12.0f,iconFace.getBottom()-12.0f,
+                              iconCentre.x+5.0f,iconFace.getBottom()-8.0f,
+                              iconCentre.x-2.0f,iconFace.getBottom()-9.0f);
                 juce::Path inner;
-                inner.startNewSubPath(centre.x-1.0f,face.getBottom()-12.0f);
-                inner.cubicTo(centre.x-7.0f,centre.y+8.0f,
-                              centre.x-4.0f,centre.y+1.0f,
-                              centre.x+1.0f,centre.y-5.0f);
-                inner.cubicTo(centre.x+1.0f,centre.y+1.0f,
-                              centre.x+8.0f,centre.y+4.0f,
-                              centre.x+6.0f,centre.y+10.0f);
-                inner.cubicTo(centre.x+5.0f,face.getBottom()-13.0f,
-                              centre.x+2.0f,face.getBottom()-11.0f,
-                              centre.x-1.0f,face.getBottom()-12.0f);
+                inner.startNewSubPath(iconCentre.x-1.0f,iconFace.getBottom()-12.0f);
+                inner.cubicTo(iconCentre.x-7.0f,iconCentre.y+8.0f,
+                              iconCentre.x-4.0f,iconCentre.y+1.0f,
+                              iconCentre.x+1.0f,iconCentre.y-5.0f);
+                inner.cubicTo(iconCentre.x+1.0f,iconCentre.y+1.0f,
+                              iconCentre.x+8.0f,iconCentre.y+4.0f,
+                              iconCentre.x+6.0f,iconCentre.y+10.0f);
+                inner.cubicTo(iconCentre.x+5.0f,iconFace.getBottom()-13.0f,
+                              iconCentre.x+2.0f,iconFace.getBottom()-11.0f,
+                              iconCentre.x-1.0f,iconFace.getBottom()-12.0f);
+                const auto iconTransform=juce::AffineTransform::scale(iconScale).translated(face.getX(),face.getY());
+                flame.applyTransform(iconTransform);inner.applyTransform(iconTransform);
                 g.setColour(juce::Colour(heat&&active?0xffff9200:0xffc87932));
-                g.strokePath(flame,juce::PathStrokeType(3.2f,juce::PathStrokeType::curved,
+                g.strokePath(flame,juce::PathStrokeType(2.6f*iconScale,juce::PathStrokeType::curved,
                                                         juce::PathStrokeType::rounded));
-                g.strokePath(inner,juce::PathStrokeType(2.4f,juce::PathStrokeType::curved,
+                g.strokePath(inner,juce::PathStrokeType(2.0f*iconScale,juce::PathStrokeType::curved,
                                                         juce::PathStrokeType::rounded));
             }else{
                 g.setColour(active?juce::Colour(0xffbfeeff):juce::Colour(0xffadc9d9));
@@ -362,7 +369,7 @@ public:
             const bool hardware=label.startsWith("BAND ")&&!tab||label=="C1"||label=="C2"||label=="C3"||label=="C4"||
                 label=="MONO"||label=="SOLO"||label.startsWith("PHASE")||label=="LIMIT";
             g.setColour(!b.isEnabled()?scalpel::finish::secondary:hardware?scalpel::finish::ink:
-                label=="X-RAY"?scalpel::finish::text:tab&&!b.getToggleState()?scalpel::finish::secondary:
+                label=="X-RAY"?scalpel::finish::text:tab?(b.getToggleState()?juce::Colour(0xffedbb78):scalpel::finish::secondary):
                 ((label=="ON"||label=="OFF")&&!b.getToggleState())?scalpel::finish::secondary:scalpel::finish::text);
             auto buttonFont=scalpel::finish::font(hardware?(label.startsWith("PHASE")?15.f:19.f):18.f,hardware||label=="ON"||label=="OFF");
             if(hardware)buttonFont.setHorizontalScale(.955f);

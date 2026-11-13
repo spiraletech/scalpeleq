@@ -116,6 +116,35 @@ inline bool verifyScalpelFinish(){
         if(lamps(*on).first!=0||lamps(*off).second<25)return fail(__LINE__);
         if(!save("surgery-ui-IVORY-"+juce::String(page).replaceCharacter(' ','-')+"-OFF.png"))return fail(__LINE__);
     }
+    // The blueprint locks the deck and all eight screws. Improve visual fill
+    // INSIDE that footprint; do not resize the editor or alter parameter data.
+    if(!click("ANALYZE"))return fail(__LINE__);
+    juce::MessageManager::getInstance()->runDispatchLoopUntil(25);
+    const auto lockedDeck=scalpel::reference::bounds(34,578,1588,258).toFloat();
+    if(scalpel::reference::deck().toNearestInt()!=lockedDeck.toNearestInt()||
+       editor->getWidth()!=1344||editor->getHeight()!=756)return fail(__LINE__);
+    const auto opaqueBounds=[](juce::Component& component){
+        const auto image=component.createComponentSnapshot(component.getLocalBounds());
+        juce::Rectangle<int> ink;
+        for(int y=0;y<image.getHeight();++y)for(int x=0;x<image.getWidth();++x)
+            if(image.getPixelAt(x,y).getAlpha()>245)ink=ink.getUnion({x,y,1,1});
+        return ink.translated(component.getX(),component.getY());
+    };
+    std::ofstream fill("surgery-analyze-fill.csv");fill<<"control,opaque_height_logical,bottom_gap_logical,editor_width,editor_height\n";
+    for(const auto* name:{"HEAT MAP","FREEZE"}){
+        auto* b=button(name);if(!b||!lockedDeck.contains(b->getBounds().toFloat()))return fail(__LINE__);
+        const auto visible=opaqueBounds(*b);
+        const float gap=lockedDeck.getBottom()-visible.getBottom();
+        fill<<name<<\',\'<<visible.getHeight()<<\',\'<<gap<<\',\'<<editor->getWidth()<<\',\'<<editor->getHeight()<<\'\\n\';
+        if(visible.getHeight()<100||gap>26||gap<5)return fail(__LINE__);
+    }
+    juce::Slider* decay=nullptr;
+    for(auto* child:editor->getChildren())if(auto* slider=dynamic_cast<juce::Slider*>(child);slider&&slider->isVisible())decay=slider;
+    if(!decay||decay->getBounds()!=scalpel::reference::decayDial()||
+       decay->getTextBoxHeight()!=scalpel::reference::decayReadoutHeight)return fail(__LINE__);
+    for(auto* child:editor->getChildren())if(auto* label=dynamic_cast<juce::Label*>(child);label&&label->isVisible()&&label->getText()=="VISUAL DECAY")
+        if(label->getBottom()>=decay->getY())return fail(__LINE__);
+    if(!save("surgery-ui-ANALYZE-FILL-1344x756.png"))return fail(__LINE__);
     // Eight identical screw masters, attached to the two outer housings.
     const auto a=scalpel::reference::analyzer(),d=scalpel::reference::deck();
     auto ac=scalpel::reference::housingScrews(false);
@@ -125,6 +154,6 @@ inline bool verifyScalpelFinish(){
     for(auto p:dc)if(!d.contains(p))return fail(__LINE__);
     // Immutable static texture must not own a Direct2D bitmap at DLL unload.
     if(scalpel::finish::grain().getPixelData()->createType()->getTypeID()!=juce::SoftwareImageType{}.getTypeID())return fail(__LINE__);
-    std::cout<<"FORMIDABLE 1.0.7.2 REVIEW: CARVE/COLOR native geometry, BAND3/C4 215.87Hz Q0.300 states, typography contrast, two scales, parameter invariance and stable ON/OFF materials passed\n";
+    std::cout<<"FORMIDABLE 1.0.7.3 REVIEW: CARVE/COLOR native geometry, BAND3/C4 215.87Hz Q0.300 states, typography contrast, two scales, parameter invariance stable ON/OFF materials and locked ANALYZE deck fill passed\n";
     return true;
 }
