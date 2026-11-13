@@ -1,0 +1,12 @@
+{
+  "version": "1.0.7.7",
+  "authority": "BAND_MODE_1076_GEOMETRY_MASTER_1351x785.png",
+  "kit": "Scalpel_EQ_1077_Band_Anchored_Formidable_Assets(1).zip",
+  "locked_panel_screen_rect": [31, 486, 1276, 265],
+  "shared_toggle_rects_screen": [[89, 536, 151, 55], [89, 607, 151, 55]],
+  "shared_action_rects_screen": [[959, 538, 149, 53], [1129, 538, 149, 53], [959, 613, 149, 53], [1129, 613, 149, 53]],
+  "carve_knob_centres_screen": [[371, 588], [598, 588], [826, 588]],
+  "carve_dividers_screen_x": [256, 484, 712, 940],
+  "scope": "CARVE lower-panel geometry only",
+  "preserved": ["BAND geometry", "materials", "eight screw anchors", "analyzer", "DSP", "parameter IDs", "automation", "preset serialization", "editor size"]
+}

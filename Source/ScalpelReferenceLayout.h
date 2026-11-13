@@ -35,12 +35,23 @@ inline juce::Rectangle<int> tab(int i){
 // or scale the whole editor to reconcile differing screenshot/host chrome.
 inline float flushScale(){return deck().getWidth()/1574.f;}
 inline juce::Rectangle<int> flushRect(float x,float y,float w,float h){const auto d=deck();const float s=flushScale();return juce::Rectangle<float>{d.getX()+(x-32.f)*s,d.getY()+(y-567.f)*s,w*s,h*s}.toNearestInt();}
-inline juce::Rectangle<int> switchBounds(bool off,bool carve=false){return flushRect((carve?214.f:196.f)-95.f,(off?749.f:660.f)-36.f,190,72);}
+inline juce::Rectangle<int> switchBounds(bool off,bool carve=false){
+    juce::ignoreUnused(carve); // 1.0.7.7: BAND is the shared lower-panel anchor.
+    return flushRect(196.f-95.f,(off?749.f:660.f)-36.f,190,72);
+}
 inline juce::Rectangle<int> bandAction(int i){return flushRect((i%2?1480.f:1270.f)-94.f,(i/2?753.f:662.f)-33.f,188,66);}
-inline juce::Rectangle<int> carveSlot(int i){return flushRect((i%2?1447.f:1239.f)-94.f,(i/2?753.f:662.f)-33.f,188,66);}
+inline juce::Rectangle<int> carveSlot(int i){return bandAction(i);}
 inline juce::Rectangle<int> carveDial(int i){
-    constexpr std::array<float,3> centres{473.3333f,740,1006.6667f};
-    return bounds(centres[(size_t)i]-83,624,166,199);
+    // Locked 1.0.7.7 screenshot centres, registered to the BAND lower-panel
+    // substrate (31,486,1276,265). Host chrome is deliberately excluded.
+    constexpr std::array<float,3> screenCentres{371.f,598.f,826.f};
+    const auto d=deck();
+    const float centre=d.getX()+(screenCentres[(size_t)i]-31.f)*d.getWidth()/1276.f;
+    auto r=bounds(0,624,166,199);r.setCentre(juce::roundToInt(centre),r.getCentreY());return r;
+}
+inline float carveDividerX(int i){
+    constexpr std::array<float,4> screenX{256.f,484.f,712.f,940.f};
+    const auto d=deck();return d.getX()+(screenX[(size_t)i]-31.f)*d.getWidth()/1276.f;
 }
 inline float columnCentre(int i,int count){const auto d=deck();return d.getX()+d.getWidth()*(i+.5f)/count;}
 inline juce::Rectangle<int> colorDial(int i){auto r=rect(0,624,166,199);return r.withCentre({columnCentre(i,5),r.getCentreY()}).toNearestInt();}

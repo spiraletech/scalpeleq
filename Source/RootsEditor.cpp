@@ -1557,7 +1557,7 @@ void RootsEditor::layoutRack(){
     phase_.setBounds(bandAction(2));limit_.setBounds(bandAction(3));
 
     selection_.setBounds(bounds(94,589,250,28));
-    carveOn_.setBounds(switchBounds(false,true));carveOff_.setBounds(switchBounds(true,true));
+    carveOn_.setBounds(switchBounds(false));carveOff_.setBounds(switchBounds(true));
     carveDynamic_.setBounds(0,0,1,1);
     const std::array<juce::Slider*,3> cs{&carveFrequency_,&carveDepth_,static_cast<juce::Slider*>(&carveQ_)};
     const std::array<juce::Label*,3> cl{&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_};

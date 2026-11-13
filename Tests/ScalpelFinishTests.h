@@ -116,8 +116,10 @@ inline bool verifyScalpelFinish(){
         if(lamps(*on).first!=0||lamps(*off).second<25)return fail(__LINE__);
         if(!save("surgery-ui-IVORY-"+juce::String(page).replaceCharacter(' ','-')+"-OFF.png"))return fail(__LINE__);
     }
-    // Flush is one physical cap family across different functional sections.
-    std::ofstream flushGeometry("surgery-flush-controls.csv");
+    // 1.0.7.7: CARVE inherits the BAND substrate, including the exact shared
+    // button rectangles. Dial centres remain CARVE-specific and are registered
+    // to the supplied 1351x785 screenshot through the locked lower panel.
+    std::ofstream flushGeometry("surgery-flush-controls-1077.csv");
     flushGeometry<<"page,control,x,y,width,height,reference_center_x,reference_center_y\n";
     const auto background=[](juce::TextButton& b){
         auto image=juce::SoftwareImageType{}.convert(juce::Image(juce::Image::ARGB,b.getWidth(),b.getHeight(),true));
@@ -142,16 +144,36 @@ inline bool verifyScalpelFinish(){
             return actual==expected&&d.contains(actual.toFloat());
         };
         auto* on=button("ON");auto* off=button("OFF");
-        if(!on||!off||!check(*on,carve?214.f:196.f,660,190,72)||!check(*off,carve?214.f:196.f,749,190,72))return fail(__LINE__);
+        if(!on||!off||!check(*on,196.f,660,190,72)||!check(*off,196.f,749,190,72))return fail(__LINE__);
         if(!carve){bandOnCap=background(*on);bandOffCap=background(*off);toggleShape=on->getLocalBounds();}
         else if(on->getLocalBounds()!=toggleShape||!identical(bandOnCap,background(*on))||!identical(bandOffCap,background(*off)))return fail(__LINE__);
-        for(int i=0;i<4;++i){auto* b=button(names[(size_t)i]);const float x=carve?(i%2?1447.f:1239.f):(i%2?1480.f:1270.f);
+        for(int i=0;i<4;++i){auto* b=button(names[(size_t)i]);const float x=i%2?1480.f:1270.f;
             if(!b||!check(*b,x,i/2?753.f:662.f,188,66)||!contrast(*b,false))return fail(__LINE__);
             if(!carve&&i==0){bandActionCap=background(*b);actionShape=b->getLocalBounds();}
             if(b->getLocalBounds()!=actionShape)return fail(__LINE__);
             if(carve&&i==0&&!identical(bandActionCap,background(*b)))return fail(__LINE__);
         }
         if(!save("surgery-ui-FLUSH-"+juce::String(carve?"CARVE":"BAND")+"-1344x756.png"))return fail(__LINE__);
+    }
+    if(!click("CARVE"))return fail(__LINE__);
+    std::vector<juce::Slider*> carveDials;
+    for(auto* child:editor->getChildren())if(auto* slider=dynamic_cast<juce::Slider*>(child);slider&&slider->isVisible())carveDials.push_back(slider);
+    std::sort(carveDials.begin(),carveDials.end(),[](auto* a,auto* b){return a->getX()<b->getX();});
+    if(carveDials.size()!=3)return fail(__LINE__);
+    std::ofstream target("surgery-carve-1077-target.csv");
+    target<<"control,logical_x,logical_y,logical_width,logical_height,target_screen_center_x\n";
+    constexpr std::array<float,3> targetCentres{371.f,598.f,826.f};
+    for(int i=0;i<3;++i){
+        const auto actual=carveDials[(size_t)i]->getBounds();
+        if(actual!=scalpel::reference::carveDial(i))return fail(__LINE__);
+        target<<"dial"<<i+1<<','<<actual.getX()<<','<<actual.getY()<<','<<actual.getWidth()<<','<<actual.getHeight()<<','<<targetCentres[(size_t)i]<<'\n';
+    }
+    if(button("ON")->getBounds()!=scalpel::reference::switchBounds(false)||
+       button("OFF")->getBounds()!=scalpel::reference::switchBounds(true))return fail(__LINE__);
+    for(int i=0;i<4;++i){
+        auto* carveButton=button("C"+juce::String(i+1));
+        if(!carveButton||carveButton->getBounds()!=scalpel::reference::bandAction(i))return fail(__LINE__);
+        target<<"divider"<<i+1<<','<<scalpel::reference::carveDividerX(i)<<",0,0,0,"<<(256+i*228)<<'\n';
     }
     // Kit correction: extend the actual faceplate downward, with eight corner
     // screws retained. Never resize the editor or modify parameter values.
@@ -226,7 +248,7 @@ inline bool verifyScalpelFinish(){
     }
     // Immutable static texture must not own a Direct2D bitmap at DLL unload.
     if(scalpel::finish::grain().getPixelData()->createType()->getTypeID()!=juce::SoftwareImageType{}.getTypeID())return fail(__LINE__);
-    std::cout<<"FORMIDABLE 1.0.7.6 REVIEW: CARVE/COLOR native geometry, BAND3/C4 215.87Hz Q0.300 states, typography contrast, two scales, parameter invariance stable ON/OFF materials and extended ANALYZE faceplate, proportional kit glyphs and corner anchors passed\n";
+    std::cout<<"FORMIDABLE 1.0.7.7 REVIEW: BAND-anchored CARVE toggles, three-dial centres, C1-C4 grid and separators passed with calibration, material, parameter and chassis invariants\n";
     return true;
 }
 

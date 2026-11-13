@@ -61,7 +61,7 @@ inline void drawRackFace(juce::Graphics& g,int width,int height,int mode)
     scalpel::finish::panel(g,deck(),19);
     for(const auto c:housingScrews(true))scalpel::finish::screw(g,c);
     if(mode==0||mode==1){
-        shadow(switchBounds(false,mode==1).toFloat(),12.f*flushScale());shadow(switchBounds(true,mode==1).toFloat(),12.f*flushScale());
+        shadow(switchBounds(false).toFloat(),12.f*flushScale());shadow(switchBounds(true).toFloat(),12.f*flushScale());
         if(mode==0){
             for(int i=0;i<4;++i)shadow(bandAction(i).toFloat(),12.f*flushScale());
             shadow(bounds(837,636,296,55).toFloat(),5);
@@ -70,10 +70,10 @@ inline void drawRackFace(juce::Graphics& g,int width,int height,int mode)
     }
     std::array<float,4> dividers{};int count=4;
     if(mode==0)dividers={313,560,805,1164};
-    else if(mode==1)dividers={340,607,873,1140};
+    else if(mode==1)for(int i=0;i<4;++i)dividers[(size_t)i]=carveDividerX(i);
     else if(mode==2)dividers={375,685,995,1305};
     else {dividers={570,1100,0,0};count=2;}
-    for(int i=0;i<count;++i){auto line=rect(dividers[(size_t)i],622,2,187).withBottom(deck().getBottom()-28.f*scale);
+    for(int i=0;i<count;++i){auto line=(mode==1?juce::Rectangle<float>{dividers[(size_t)i],rect(0,622,1,187).getY(),2.f*scale,rect(0,622,1,187).getHeight()}:rect(dividers[(size_t)i],622,2,187)).withBottom(deck().getBottom()-28.f*scale);
         if(mode==2||mode==3){const int columns=mode==2?5:3;line.setX(deck().getX()+deck().getWidth()*(i+1)/columns);}
         g.setColour(scalpel::finish::silver);g.fillRect(line.translated(1,0));
         g.setColour(juce::Colour(0xff55463a));g.fillRect(line);}
