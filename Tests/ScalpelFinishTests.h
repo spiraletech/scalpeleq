@@ -151,7 +151,18 @@ inline bool verifyScalpelFinish(){
             // Verify actual painted glyphs, not a Font property that a shared
             // LookAndFeel could silently override with smaller typography.
             const auto ink=opaqueBounds(*label);
-            if(ink.getHeight()<13||ink.getHeight()>19||!label->getBounds().contains(ink))return fail(__LINE__);
+            // Compare cap ink in the same Windows font/backend. A nominal
+            // 20px font does not imply a 13px logical cap height.
+            juce::Label regular;
+            regular.setLookAndFeel(&label->getLookAndFeel());
+            regular.setBounds(label->getBounds());
+            regular.setJustificationType(label->getJustificationType());
+            regular.setText(text+" ",juce::dontSendNotification);
+            const auto regularInk=opaqueBounds(regular);
+            regular.setLookAndFeel(nullptr);
+            fill<<text<<','<<ink.getHeight()<<','<<regularInk.getHeight()<<','<<editor->getWidth()<<','<<editor->getHeight()<<'\n';
+            if(regularInk.isEmpty()||ink.getHeight()<regularInk.getHeight()*1.2f||
+               !label->getBounds().contains(ink))return fail(__LINE__);
         }
     }
     if(!save("surgery-ui-ANALYZE-FILL-1344x756.png"))return fail(__LINE__);
