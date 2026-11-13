@@ -74,10 +74,11 @@ inline void drawRackFace(juce::Graphics& g,int width,int height,int mode)
     }
     std::array<float,4> dividers{};int count=4;
     if(mode==0)dividers={313,560,805,1164};
-    else if(mode==1)dividers={340,583,830,1140};
+    else if(mode==1)dividers={340,607,873,1140};
     else if(mode==2)dividers={375,685,995,1305};
     else {dividers={570,1100,0,0};count=2;}
-    for(int i=0;i<count;++i){const auto line=rect(dividers[(size_t)i],622,2,187).withBottom(deck().getBottom()-28.f*scale);
+    for(int i=0;i<count;++i){auto line=rect(dividers[(size_t)i],622,2,187).withBottom(deck().getBottom()-28.f*scale);
+        if(mode==2||mode==3){const int columns=mode==2?5:3;line.setX(deck().getX()+deck().getWidth()*(i+1)/columns);}
         g.setColour(scalpel::finish::silver);g.fillRect(line.translated(1,0));
         g.setColour(juce::Colour(0xff55463a));g.fillRect(line);}
 }
@@ -128,4 +129,5 @@ inline void drawAnalyzerPanel(juce::Graphics& g,juce::Rectangle<float> full,
     (void)full;
 }
 } // namespace scalpel::ui105
+
 

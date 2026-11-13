@@ -33,14 +33,16 @@ inline juce::Rectangle<int> tab(int i){
 inline juce::Rectangle<int> switchBounds(bool off){return bounds(109,off?709.f:623.f,181,74);}
 inline juce::Rectangle<int> carveSlot(int i){return bounds(1170+(i%2)*225,623+(i/2)*91,181,74);}
 inline juce::Rectangle<int> carveDial(int i){
-    constexpr std::array<float,3> centres{460,705,995};
+    constexpr std::array<float,3> centres{473.3333f,740,1006.6667f};
     return bounds(centres[(size_t)i]-83,624,166,199);
 }
-inline juce::Rectangle<int> colorDial(int i){return bounds(137+i*310,624,166,199);}
+inline float columnCentre(int i,int count){const auto d=deck();return d.getX()+d.getWidth()*(i+.5f)/count;}
+inline juce::Rectangle<int> colorDial(int i){auto r=rect(0,624,166,199);return r.withCentre({columnCentre(i,5),r.getCentreY()}).toNearestInt();}
 // ANALYZE control proportions measured from the supplied kit, relative to its deck.
-inline juce::Rectangle<int> analyzeButton(bool freeze){return analyzeAsset(freeze?1204.f:234.f,674,200,184);}
-inline juce::Rectangle<int> decayDial(){return analyzeAsset(709,652,215,245);}
-inline constexpr int decayReadoutWidth=136,decayReadoutHeight=30;
+inline juce::Rectangle<int> analyzeButton(bool freeze){const float side=190.f*scale;return juce::Rectangle<float>{columnCentre(freeze?2:0,3)-side*.5f,deck().getY()+47.f,side,side}.toNearestInt();}
+inline juce::Rectangle<int> decayDial(){return juce::Rectangle<float>{columnCentre(1,3)-83.f*scale,deck().getY()+43.f,166.f*scale,199.f*scale}.toNearestInt();}
+inline juce::Rectangle<int> analyzeCaption(int i){return juce::Rectangle<float>{columnCentre(i,3)-140.f*scale,deck().getY()+14.f,280.f*scale,36.f*scale}.toNearestInt();}
+inline constexpr int decayReadoutWidth=106,decayReadoutHeight=30;
 inline juce::Rectangle<float> plotLocal(){return plot().translated(-analyzer().toNearestInt().getX(),-analyzer().toNearestInt().getY());}
 inline std::array<juce::Point<float>,4> screwCentres(juce::Rectangle<float> panel,float xInset,float yInset){
     const auto r=panel.reduced(xInset*scale,yInset*scale);
@@ -62,4 +64,5 @@ inline std::array<juce::Point<float>,4> housingScrews(bool lower){
     return result;
 }
 }
+
 

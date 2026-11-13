@@ -173,9 +173,24 @@ inline bool verifyScalpelFinish(){
     const auto dc=scalpel::reference::housingScrews(true);
     for(auto p:ac)if(!a.contains(p)||p.x<=scalpel::reference::plot().getRight()&&p.x>a.getCentreX())return fail(__LINE__);
     for(auto p:dc)if(!d.contains(p))return fail(__LINE__);
+    // Render the master in different available canvases: visible rotary size
+    // must stay constant rather than growing with COLOR/ANALYZE slot width.
+    int masterWidth=0;
+    for(const int size:{160,240}){
+        auto image=juce::SoftwareImageType{}.convert(juce::Image(juce::Image::ARGB,size,size,true));
+        juce::Graphics graphics(image);juce::Slider dummy;
+        scalpel::finish::knob(graphics,0,0,size,size,.5f,0.f,6.f,dummy);
+        juce::Rectangle<int> painted;
+        for(int y=0;y<size;++y)for(int x=0;x<size;++x)
+            if(image.getPixelAt(x,y).getAlpha()>245)painted=painted.getUnion({x,y,1,1});
+        if(painted.getWidth()<100||painted.getWidth()>108||
+           (masterWidth&&std::abs(masterWidth-painted.getWidth())>1))return fail(__LINE__);
+        masterWidth=painted.getWidth();
+    }
     // Immutable static texture must not own a Direct2D bitmap at DLL unload.
     if(scalpel::finish::grain().getPixelData()->createType()->getTypeID()!=juce::SoftwareImageType{}.getTypeID())return fail(__LINE__);
-    std::cout<<"FORMIDABLE 1.0.7.3 REVIEW: CARVE/COLOR native geometry, BAND3/C4 215.87Hz Q0.300 states, typography contrast, two scales, parameter invariance stable ON/OFF materials and extended ANALYZE faceplate, proportional kit glyphs and corner anchors passed\n";
+    std::cout<<"FORMIDABLE 1.0.7.4 REVIEW: CARVE/COLOR native geometry, BAND3/C4 215.87Hz Q0.300 states, typography contrast, two scales, parameter invariance stable ON/OFF materials and extended ANALYZE faceplate, proportional kit glyphs and corner anchors passed\n";
     return true;
 }
+
 

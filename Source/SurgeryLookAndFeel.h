@@ -378,7 +378,7 @@ public:
                 const bool combo=dynamic_cast<juce::ComboBox*>(label.getParentComponent())!=nullptr;
                 const bool analyzeHeading=label.getText()=="HEAT MAP"||label.getText()=="VISUAL DECAY"||label.getText()=="FREEZE";
                 auto f=scalpel::finish::font(analyzeHeading?20.f:label.getText().startsWith("BAND ")&&label.getText().contains("CARVE")?12.f:14.5f,true);
-                if(!combo)f.setHorizontalScale(.97f);
+                if(!combo)f.setHorizontalScale(1.f);
                 g.setFont(f);
                 if(dynamic_cast<juce::ComboBox*>(label.getParentComponent()))
                     g.drawFittedText(label.getText(),r,label.getJustificationType(),1);
@@ -419,4 +419,5 @@ public:
         g.setColour(juce::Colour(0xfffaf0dc));g.drawEllipse(pos-6,track.getCentreY()-6,12,12,.7f);
     }
 };
+
 

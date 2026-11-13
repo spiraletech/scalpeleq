@@ -4,29 +4,29 @@
 #include <algorithm>
 #include <cmath>
 #include "ScalpelReferenceLayout.h"
-// Formidable 1.0.7.3 material masters. Rendering owns no processing state.
+// Formidable 1.0.7.4 unified material masters. Rendering owns no processing state.
 namespace scalpel::finish {
 inline constexpr bool validatedAllPages=true;
 inline bool enabledForMode(int) noexcept {return true;}
-inline const juce::Colour chassis{0xffb6a493},faceplate{0xff292522},deck{0xffb6a493};
-inline const juce::Colour analyzer{0xff0b0b0a},graphite{0xff292522},titanium{0xffa89a89};
-inline const juce::Colour silver{0xffccb7a5},text{0xffe6d4bc},secondary{0xffb8a794};
-inline const juce::Colour ice{0xfff0ebe1},accent{0xffd5b18a},ink{0xff151310};
-inline const juce::Colour onGreen{0xff88db32},offRed{0xffe94a45},pointerWhite{0xfff0ebe1};
+inline const juce::Colour chassis{0xffbea894},faceplate{0xff24211f},deck{0xffc4ad98};
+inline const juce::Colour analyzer{0xff0d0d0c},graphite{0xff24211f},titanium{0xffa78d78};
+inline const juce::Colour silver{0xffe1cfbb},text{0xffede4d7},secondary{0xffb8a794};
+inline const juce::Colour ice{0xfff6f3eb},accent{0xffeda958},ink{0xff181717};
+inline const juce::Colour onGreen{0xff8fdb51},offRed{0xffe64e49},pointerWhite{0xfff6f3eb};
 inline juce::Font font(float size,bool bold=false){return juce::Font(juce::FontOptions("Segoe UI",size,bold?juce::Font::bold:juce::Font::plain));}
 // Software-backed immutable microtexture, created once, safe at DLL unload.
 inline const juce::Image& grain(){
-    // The kit's MATERIAL_001 is texture only, with no lettering or controls.
+    // Unified ANALYZE material sample, high-pass relief only: no baked lighting, text or controls.
     // Mirror its edges once to remove hard seams; derive neutral relief so the
     // same owned asset can shade warm polymer and graphite without an overlay.
     static const juce::Image tile=[]{
-        const auto source=juce::ImageFileFormat::loadFrom(BinaryData::FormidableShell_png,BinaryData::FormidableShell_pngSize);
+        const auto source=juce::ImageFileFormat::loadFrom(BinaryData::UnifiedIvoryRelief_png,BinaryData::UnifiedIvoryRelief_pngSize);
         const int w=source.getWidth(),h=source.getHeight();
         auto image=juce::SoftwareImageType{}.convert(juce::Image(juce::Image::ARGB,w*2,h*2,true));
         juce::Image::BitmapData pixels(image,juce::Image::BitmapData::writeOnly);
         for(int y=0;y<h*2;++y)for(int x=0;x<w*2;++x){
             const auto c=source.getPixelAt(x<w?x:2*w-1-x,y<h?y:2*h-1-y);
-            const float relief=c.getPerceivedBrightness()-.523f;
+            const float relief=c.getPerceivedBrightness()-.5f;
             pixels.setPixelColour(x,y,(relief>0?juce::Colours::white:juce::Colours::black).withAlpha(juce::jmin(.38f,std::abs(relief)*1.25f)));
         }
         return image;
@@ -44,10 +44,10 @@ inline void scratches(juce::Graphics& g,juce::Rectangle<float> r,float radius){
 }
 inline void panel(juce::Graphics& g,juce::Rectangle<float> r,float radius,bool outer=false){
     g.setColour(juce::Colours::black.withAlpha(.70f));g.fillRoundedRectangle(r.expanded(1.5f).translated(0,3),radius+1);
-    juce::ColourGradient base(juce::Colour(outer?0xff9f8c75:0xffc8ae98),r.getX(),r.getY(),
-        juce::Colour(outer?0xff76604b:0xff746353),r.getRight(),r.getBottom(),false);
-    if(outer){base.addColour(.15,juce::Colour(0xff96816c));base.addColour(.55,juce::Colour(0xff9c8978));base.addColour(.72,juce::Colour(0xffad967f));}
-    else {base.addColour(.23,juce::Colour(0xffb29b86));base.addColour(.56,juce::Colour(0xffa38c77));base.addColour(.78,juce::Colour(0xffbea58f));}
+    juce::ColourGradient base(juce::Colour(outer?0xffc4af9b:0xffd0baa5),r.getX(),r.getY(),
+        juce::Colour(outer?0xff9b826c:0xffa78d78),r.getRight(),r.getBottom(),false);
+    if(outer){base.addColour(.15,juce::Colour(0xffb09a84));base.addColour(.55,juce::Colour(0xffbea894));base.addColour(.72,juce::Colour(0xffc3ac96));}
+    else {base.addColour(.23,juce::Colour(0xffc4ad98));base.addColour(.56,juce::Colour(0xffb8a08b));base.addColour(.78,juce::Colour(0xffcab39e));}
     g.setGradientFill(base);g.fillRoundedRectangle(r,radius);
     roughness(g,r.reduced(1),radius-1,.72f);
     g.setColour(juce::Colour(0xffeadaca));g.drawRoundedRectangle(r.reduced(1),radius-1,.8f);
@@ -69,7 +69,7 @@ inline void hardware(juce::Graphics& g,juce::Rectangle<float> r,bool selected,bo
     const auto face=r.reduced(3).translated(0,pressed?1.f:0.f);
     juce::ColourGradient material(selected?juce::Colour(0xffe7c9a0):juce::Colour(0xffc7ae96),face.getX(),face.getY(),
         selected?juce::Colour(0xff9a7046):juce::Colour(0xff806852),face.getX(),face.getBottom(),false);
-    material.addColour(.12,selected?juce::Colour(0xffd5b18a):juce::Colour(0xffbda58e));
+    material.addColour(.12,selected?juce::Colour(0xffeda958):juce::Colour(0xffbda58e));
     material.addColour(.55,selected?juce::Colour(0xffc19b72):juce::Colour(0xff9f846b));
     material.addColour(.90,selected?juce::Colour(0xffae8457):juce::Colour(0xff92765c));
     g.setGradientFill(material);g.fillRoundedRectangle(face,4.8f);roughness(g,face,4.8f,.62f);
@@ -133,23 +133,25 @@ inline const juce::Image& knobMaterial(){
             // The 440-radian prototype produced visible moire when the 512px
             // material was reduced to a real knob. This band-limited relief
             // stays concentric at native size and fractional display scales.
-            const float machining=.012f*std::sin(r*110.f)+(rng.nextFloat()-.5f)*.007f;
-            const float shade=(.065f+.31f*direction*(.15f+.85f*r)+machining)*(1-.24f*std::pow(r,8.f));
+            const float machining=.004f*std::sin(r*65.f)+(rng.nextFloat()-.5f)*.004f;
+            const float shade=(.075f+.22f*direction*(.2f+.8f*r)+machining)*(1-.24f*std::pow(r,8.f));
             pixels.setPixelColour(x,y,juce::Colour::fromFloatRGBA(shade*1.05f,shade,shade*.88f,1));
         }
         return image;
     }();return texture;
 }
+// 154px diameter on the master canvas, uniformly scaled with the editor.
+inline constexpr float knobDiameter=154.f*scalpel::reference::scale;
 inline void knob(juce::Graphics& g,int x,int y,int w,int h,float position,float start,float end,const juce::Slider&){
-    const float cx=x+w*.5f,cy=y+h*.5f,radius=.485f*(float)std::min(w,h);
+    const float cx=x+w*.5f,cy=y+h*.5f,radius=juce::jmin(knobDiameter*.5f,.485f*(float)std::min(w,h));
     const auto r=juce::Rectangle<float>(cx-radius,cy-radius,2*radius,2*radius);
     g.setColour(juce::Colours::black.withAlpha(.7f));g.fillEllipse(r.expanded(2).translated(1,3));
     juce::ColourGradient rim(juce::Colour(0xffe7d5b7),cx-radius,cy-radius,juce::Colour(0xff2b241c),cx+radius,cy+radius,false);
     rim.addColour(.38,juce::Colour(0xff88745d));rim.addColour(.58,juce::Colour(0xffbca487));rim.addColour(.78,juce::Colour(0xff61523f));
     g.setGradientFill(rim);g.fillEllipse(r);
-    for(int i=0;i<128;++i){const float a=i*juce::MathConstants<float>::twoPi/128;
-        g.setColour((i%2?juce::Colour(0xff0d1112):juce::Colour(0xfff0dfc5)).withAlpha(.65f));
-        g.drawLine(cx+std::sin(a)*(radius-3.5f),cy+std::cos(a)*(radius-3.5f),cx+std::sin(a)*(radius-.5f),cy+std::cos(a)*(radius-.5f),.55f);}
+    // Smooth continuous satin bezel. No scale ticks, notches or knurled accents.
+    g.setColour(silver.withAlpha(.36f));g.drawEllipse(r.reduced(1.1f),.65f);
+    g.setColour(juce::Colour(0xff312a23));g.drawEllipse(r.reduced(3),.7f);
     g.setColour(juce::Colour(0xff090c0d));g.fillEllipse(r.reduced(4));const auto face=r.reduced(6);
     g.setColour(graphite);g.fillEllipse(face);g.drawImage(knobMaterial(),face);
     g.setColour(juce::Colour(0xffa08c72));g.drawEllipse(face,.7f);
@@ -173,3 +175,4 @@ inline void number(juce::Graphics& g,const juce::String& value,juce::Rectangle<f
     }
 }
 }
+

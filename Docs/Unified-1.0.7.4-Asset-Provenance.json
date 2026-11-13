@@ -1,0 +1,11 @@
+{
+  "version": "1.0.7.4",
+  "base_commit": "7b20f920e891412b96a32d8b9dcc724c473ce1be",
+  "master": "01_ORIGINALS/ANALYZE_SOURCE_1672x941.png",
+  "material_sample_sha256": "f6e8d91abc0c10b94a140718443562188ef9f8b97e6f5e7e14540546ec34b511",
+  "derived_asset": "Assets/Scalpel/Formidable/UnifiedIvoryRelief.png",
+  "derivation": "Grayscale source minus Gaussian radius 10 illumination, x1.7 around 128 neutral, mirrored at load and cached in software memory. No control text or baked lighting.",
+  "canonical_diameter_at_master_px": 154,
+  "preserved": "1.0.7.3 fixed editor dimensions, deck footprint, all eight fastener anchors, DSP, IDs, automation and live values",
+  "on_off": "Identical graphite materials retained from established control convention; green ON/red OFF lamps follow parameters."
+}

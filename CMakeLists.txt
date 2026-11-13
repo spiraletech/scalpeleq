@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(SCALPELEQ VERSION 1.0.7.3 LANGUAGES C CXX)
+project(SCALPELEQ VERSION 1.0.7.4 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -64,6 +64,7 @@ juce_add_binary_data(SurgeryRackAssets SOURCES
   "${SCALPEL_ART_DIR}/chassis-1.0.3.png"
   "${SCALPEL_ART_DIR}/approved-reference.png"
   Assets/Scalpel/Formidable/FormidableShell.png
+  Assets/Scalpel/Formidable/UnifiedIvoryRelief.png
   Assets/Scalpel/scalpel-knob.png
   Assets/Scalpel/scalpel-freeze.png
   Assets/Scalpel/scalpel-heatmap.png)
@@ -231,3 +232,4 @@ if(PRISMVST_BUILD_TESTS)
   target_compile_features(surgery_spectral_colour_tests PRIVATE cxx_std_20)
   add_test(NAME surgery_spectral_colour_mapping COMMAND surgery_spectral_colour_tests)
 endif()
+
