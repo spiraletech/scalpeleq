@@ -1561,9 +1561,13 @@ void RootsEditor::layoutRack(){
         onyxLabels_[(size_t)i].setBounds(bounds(80+i*310,589,280,28));
         onyxSliders_[(size_t)i].setBounds(colorDial(i));
     }
-    analyzerDepthLabel_.setBounds(analyzeAsset(190,612,280,30));
-    analyzerMemoryLabel_.setBounds(analyzeAsset(676,604,280,30));
-    analyzerSlopeLabel_.setBounds(analyzeAsset(1164,612,280,30));
+    // ANALYZE headings use measured reference hierarchy and remain clear of
+    // the knob canvas; do not alter typography on unrelated pages.
+    for(auto* label:{&analyzerDepthLabel_,&analyzerMemoryLabel_,&analyzerSlopeLabel_})
+        label->setFont(juce::Font(juce::FontOptions("Segoe UI",20.f,juce::Font::bold)));
+    analyzerDepthLabel_.setBounds(analyzeAsset(190,625,280,36));
+    analyzerMemoryLabel_.setBounds(analyzeAsset(676,610,280,36));
+    analyzerSlopeLabel_.setBounds(analyzeAsset(1164,625,280,36));
     heatToggle_.setBounds(analyzeButton(false));
     analyzerMemory_.setTextBoxStyle(juce::Slider::TextBoxBelow,false,decayReadoutWidth,decayReadoutHeight);
     analyzerMemory_.setBounds(decayDial());
