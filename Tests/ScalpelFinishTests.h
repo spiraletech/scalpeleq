@@ -135,7 +135,7 @@ inline bool verifyScalpelFinish(){
         auto* b=button(name);if(!b||!lockedDeck.contains(b->getBounds().toFloat()))return fail(__LINE__);
         const auto visible=opaqueBounds(*b);
         const float gap=lockedDeck.getBottom()-visible.getBottom();
-        fill<<name<<\',\'<<visible.getHeight()<<\',\'<<gap<<\',\'<<editor->getWidth()<<\',\'<<editor->getHeight()<<\'\\n\';
+        fill<<name<<','<<visible.getHeight()<<','<<gap<<','<<editor->getWidth()<<','<<editor->getHeight()<<'\n';
         if(visible.getHeight()<100||gap>26||gap<5)return fail(__LINE__);
     }
     juce::Slider* decay=nullptr;
