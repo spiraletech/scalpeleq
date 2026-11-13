@@ -121,7 +121,11 @@ public:
         const bool pageTab=text=="BAND MODE"||text=="CARVE"||text=="COLOR"||text=="ANALYZE";
         if(finish_){
             if(pageTab){scalpel::finish::tab(g,r,button.getToggleState(),over);return;}
-            if(bandSelector||actionSwitch||carveSelector){
+            if(deckSwitch||actionSwitch||carveSelector){
+                scalpel::finish::flushCap(g,button.getLocalBounds().toFloat().reduced(.5f),deckSwitch,
+                    button.getToggleState(),over,down,text=="OFF");return;
+            }
+            if(bandSelector){
                 scalpel::finish::hardware(g,r,button.getToggleState(),over,down);
                 const auto warning=button.findColour(juce::TextButton::buttonColourId);
                 if(bandSelector&&warning.getRed()>180&&warning.getGreen()<65&&warning.getBlue()<65){
@@ -130,7 +134,7 @@ public:
                 }
                 return;
             }
-            if(deckSwitch||reset){scalpel::finish::darkButton(g,r,deckSwitch&&button.getToggleState(),over,deckSwitch,button.getButtonText()=="OFF"?scalpel::finish::offRed:scalpel::finish::onGreen);return;}
+            if(reset){scalpel::finish::darkButton(g,r,deckSwitch&&button.getToggleState(),over,deckSwitch,button.getButtonText()=="OFF"?scalpel::finish::offRed:scalpel::finish::onGreen);return;}
             if(xray){
                 scalpel::finish::darkButton(g,r,false,over);
                 const float lamp=r.getHeight()*.18f;
@@ -310,8 +314,8 @@ public:
             g.setFont(buttonFont);
             auto bounds=label=="X-RAY"?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2);
             if(tab)bounds=bounds.withTrimmedBottom(4).translated(juce::roundToInt(b.getWidth()*.022f),-1);
-            if(hardware)bounds=bounds.translated(0,label.startsWith("BAND ")?-2:-1);
-            if(label=="ON"||label=="OFF")bounds=bounds.translated(1,-1);
+            // Flush cap text shares its true center; no menu-specific offsets.
+            if(hardware&&label.startsWith("BAND "))bounds=bounds.translated(0,-2);
             g.drawFittedText(label.startsWith("PHASE")?juce::String("PHASE\nCORRECTION"):label,bounds,juce::Justification::centred,label.startsWith("PHASE")?2:1);
             return;
         }
@@ -419,5 +423,6 @@ public:
         g.setColour(juce::Colour(0xfffaf0dc));g.drawEllipse(pos-6,track.getCentreY()-6,12,12,.7f);
     }
 };
+
 
 

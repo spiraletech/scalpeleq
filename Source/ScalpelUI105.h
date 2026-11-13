@@ -61,16 +61,12 @@ inline void drawRackFace(juce::Graphics& g,int width,int height,int mode)
     scalpel::finish::panel(g,deck(),19);
     for(const auto c:housingScrews(true))scalpel::finish::screw(g,c);
     if(mode==0||mode==1){
-        shadow(switchBounds(false).toFloat(),5);shadow(switchBounds(true).toFloat(),5);
+        shadow(switchBounds(false,mode==1).toFloat(),12.f*flushScale());shadow(switchBounds(true,mode==1).toFloat(),12.f*flushScale());
         if(mode==0){
-            // Exact layoutRack bounds, including its unequal action widths.
-            for(float y:{627.f,716.f}){
-                shadow(bounds(1187,y,193,70).toFloat(),7);
-                shadow(bounds(1398,y,189,70).toFloat(),7);
-            }
+            for(int i=0;i<4;++i)shadow(bandAction(i).toFloat(),12.f*flushScale());
             shadow(bounds(837,636,296,55).toFloat(),5);
             shadow(bounds(837,732,296,55).toFloat(),5);
-        }else for(int i=0;i<4;++i)shadow(carveSlot(i).toFloat(),7);
+        }else for(int i=0;i<4;++i)shadow(carveSlot(i).toFloat(),12.f*flushScale());
     }
     std::array<float,4> dividers{};int count=4;
     if(mode==0)dividers={313,560,805,1164};
@@ -129,5 +125,6 @@ inline void drawAnalyzerPanel(juce::Graphics& g,juce::Rectangle<float> full,
     (void)full;
 }
 } // namespace scalpel::ui105
+
 
 

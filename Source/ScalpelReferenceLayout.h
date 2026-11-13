@@ -30,8 +30,14 @@ inline juce::Rectangle<int> tab(int i){
     constexpr std::array<float,4> x{42,469,841,1225},w{425,360,380,384};
     return bounds(x[(size_t)i],506,w[(size_t)i],62);
 }
-inline juce::Rectangle<int> switchBounds(bool off){return bounds(109,off?709.f:623.f,181,74);}
-inline juce::Rectangle<int> carveSlot(int i){return bounds(1170+(i%2)*225,623+(i/2)*91,181,74);}
+// Flush kit positions are local to its 32,567,1574,312 lower panel.
+// Uniformly register them to the verified deck; never move the screw anchors
+// or scale the whole editor to reconcile differing screenshot/host chrome.
+inline float flushScale(){return deck().getWidth()/1574.f;}
+inline juce::Rectangle<int> flushRect(float x,float y,float w,float h){const auto d=deck();const float s=flushScale();return juce::Rectangle<float>{d.getX()+(x-32.f)*s,d.getY()+(y-567.f)*s,w*s,h*s}.toNearestInt();}
+inline juce::Rectangle<int> switchBounds(bool off,bool carve=false){return flushRect((carve?214.f:196.f)-95.f,(off?749.f:660.f)-36.f,190,72);}
+inline juce::Rectangle<int> bandAction(int i){return flushRect((i%2?1480.f:1270.f)-94.f,(i/2?753.f:662.f)-33.f,188,66);}
+inline juce::Rectangle<int> carveSlot(int i){return flushRect((i%2?1447.f:1239.f)-94.f,(i/2?753.f:662.f)-33.f,188,66);}
 inline juce::Rectangle<int> carveDial(int i){
     constexpr std::array<float,3> centres{473.3333f,740,1006.6667f};
     return bounds(centres[(size_t)i]-83,624,166,199);
@@ -64,5 +70,6 @@ inline std::array<juce::Point<float>,4> housingScrews(bool lower){
     return result;
 }
 }
+
 
 

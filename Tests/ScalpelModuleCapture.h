@@ -120,8 +120,8 @@ inline bool captureScalpelModule(const juce::String& modulePath){
     const auto hit=[&](juce::Rectangle<int> box){return click(box.getCentreX(),box.getCentreY());};
     using namespace scalpel::reference;
     bool ok=hit(band(2))&&hit(tab(1))&&hit(carveSlot(3))&&capture("surgery-ui-VST3-CARVE-1344x756.png");
-    ok=ok&&hit(switchBounds(false))&&capture("surgery-ui-VST3-CARVE-ON.png");
-    ok=ok&&hit(switchBounds(true))&&capture("surgery-ui-VST3-CARVE-OFF.png");
+    ok=ok&&hit(switchBounds(false,true))&&capture("surgery-ui-VST3-CARVE-ON.png");
+    ok=ok&&hit(switchBounds(true,true))&&capture("surgery-ui-VST3-CARVE-OFF.png");
     ok=ok&&hit(tab(2))&&capture("surgery-ui-VST3-COLOR-1344x756.png");
     ok=ok&&hit(tab(0))&&capture("surgery-ui-VST3-BAND-1344x756.png");
     ok=ok&&hit(switchBounds(false))&&capture("surgery-ui-VST3-BAND-ON.png");
@@ -161,4 +161,5 @@ inline bool captureScalpelModule(const juce::String& modulePath){
     return ok;
 }
 #endif
+
 

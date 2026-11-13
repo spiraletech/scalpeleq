@@ -1,4 +1,4 @@
-Scalpel EQ 1.0.7.5 — Dual knob calibration review — Windows x64 VST3
+Scalpel EQ 1.0.7.6 — Flush BAND/CARVE buttons review — Windows x64 VST3
 
 Close FL Studio and other DAWs before replacing the plugin.
 Extract this ZIP. Copy the COMPLETE “Scalpel EQ.vst3” folder to:
@@ -19,5 +19,6 @@ The supplied kit's rejected sponsor plaque and footer vents are excluded.
 Actual Windows VST3 validation and screenshots are reported separately.
 FL Studio 25 verification must be performed in FL Studio; a generic test host
 is not a substitute for FL Studio project recall/playback/removal testing.
+
 
 

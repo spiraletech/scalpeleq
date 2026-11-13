@@ -116,6 +116,43 @@ inline bool verifyScalpelFinish(){
         if(lamps(*on).first!=0||lamps(*off).second<25)return fail(__LINE__);
         if(!save("surgery-ui-IVORY-"+juce::String(page).replaceCharacter(' ','-')+"-OFF.png"))return fail(__LINE__);
     }
+    // Flush is one physical cap family across different functional sections.
+    std::ofstream flushGeometry("surgery-flush-controls.csv");
+    flushGeometry<<"page,control,x,y,width,height,reference_center_x,reference_center_y\n";
+    const auto background=[](juce::TextButton& b){
+        auto image=juce::SoftwareImageType{}.convert(juce::Image(juce::Image::ARGB,b.getWidth(),b.getHeight(),true));
+        juce::Graphics graphics(image);b.getLookAndFeel().drawButtonBackground(graphics,b,b.findColour(juce::TextButton::buttonColourId),false,false);return image;
+    };
+    const auto identical=[](const juce::Image& a,const juce::Image& b){
+        if(a.getWidth()!=b.getWidth()||a.getHeight()!=b.getHeight())return false;
+        for(int y=0;y<a.getHeight();++y)for(int x=0;x<a.getWidth();++x)if(a.getPixelAt(x,y)!=b.getPixelAt(x,y))return false;
+        return true;
+    };
+    juce::Image bandOnCap,bandOffCap,bandActionCap;
+    juce::Rectangle<int> toggleShape,actionShape;
+    for(const bool carve:{false,true}){
+        const char* page=carve?"CARVE":"BAND MODE";
+        if(!click(page)||!click("ON"))return fail(__LINE__);
+        const std::array<const char*,4> names=carve?std::array<const char*,4>{"C1","C2","C3","C4"}:std::array<const char*,4>{"MONO","SOLO","PHASE CORRECTION","LIMIT"};
+        const auto check=[&](juce::TextButton& b,float x,float y,float w,float h){
+            // Independently register supplied reference dimensions/centers.
+            const auto d=scalpel::reference::deck();const float scale=d.getWidth()/1574.f;
+            const auto expected=juce::Rectangle<float>{d.getX()+(x-32.f-w*.5f)*scale,d.getY()+(y-567.f-h*.5f)*scale,w*scale,h*scale}.toNearestInt();
+            const auto actual=b.getBounds();flushGeometry<<page<<','<<b.getButtonText()<<','<<actual.getX()<<','<<actual.getY()<<','<<actual.getWidth()<<','<<actual.getHeight()<<','<<x<<','<<y<<'\n';
+            return actual==expected&&d.contains(actual.toFloat());
+        };
+        auto* on=button("ON");auto* off=button("OFF");
+        if(!on||!off||!check(*on,carve?214.f:196.f,660,190,72)||!check(*off,carve?214.f:196.f,749,190,72))return fail(__LINE__);
+        if(!carve){bandOnCap=background(*on);bandOffCap=background(*off);toggleShape=on->getLocalBounds();}
+        else if(on->getLocalBounds()!=toggleShape||!identical(bandOnCap,background(*on))||!identical(bandOffCap,background(*off)))return fail(__LINE__);
+        for(int i=0;i<4;++i){auto* b=button(names[(size_t)i]);const float x=carve?(i%2?1447.f:1239.f):(i%2?1480.f:1270.f);
+            if(!b||!check(*b,x,i/2?753.f:662.f,188,66)||!contrast(*b,false))return fail(__LINE__);
+            if(!carve&&i==0){bandActionCap=background(*b);actionShape=b->getLocalBounds();}
+            if(b->getLocalBounds()!=actionShape)return fail(__LINE__);
+            if(carve&&i==0&&!identical(bandActionCap,background(*b)))return fail(__LINE__);
+        }
+        if(!save("surgery-ui-FLUSH-"+juce::String(carve?"CARVE":"BAND")+"-1344x756.png"))return fail(__LINE__);
+    }
     // Kit correction: extend the actual faceplate downward, with eight corner
     // screws retained. Never resize the editor or modify parameter values.
     if(!click("ANALYZE"))return fail(__LINE__);
@@ -189,8 +226,9 @@ inline bool verifyScalpelFinish(){
     }
     // Immutable static texture must not own a Direct2D bitmap at DLL unload.
     if(scalpel::finish::grain().getPixelData()->createType()->getTypeID()!=juce::SoftwareImageType{}.getTypeID())return fail(__LINE__);
-    std::cout<<"FORMIDABLE 1.0.7.4 REVIEW: CARVE/COLOR native geometry, BAND3/C4 215.87Hz Q0.300 states, typography contrast, two scales, parameter invariance stable ON/OFF materials and extended ANALYZE faceplate, proportional kit glyphs and corner anchors passed\n";
+    std::cout<<"FORMIDABLE 1.0.7.6 REVIEW: CARVE/COLOR native geometry, BAND3/C4 215.87Hz Q0.300 states, typography contrast, two scales, parameter invariance stable ON/OFF materials and extended ANALYZE faceplate, proportional kit glyphs and corner anchors passed\n";
     return true;
 }
+
 
 

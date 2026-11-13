@@ -1,0 +1,21 @@
+{
+  "version": "1.0.7.6",
+  "base_commit": "afa3bfa2d029824517ea91d4db5d4a4da29511fc",
+  "scope": "BAND/CARVE ON/OFF and action grids only; native SVG-cap reconstruction and parent shadows",
+  "registration": "Uniform lower-panel-local mapping from (32,567,1574,312) onto existing deck width; editor, deck, analyzer and all eight anchors preserved",
+  "target_toggle_face": [
+    190,
+    72
+  ],
+  "target_action_face": [
+    188,
+    66
+  ],
+  "vector_masters": {
+    "BUTTON_GRAPHITE_RAISED_NO_TEXT.svg": "5680df55a96dfb98e168629b73d425556a37e4b41d5eb12d257e9e285d254dde",
+    "BUTTON_IVORY_RAISED_NO_TEXT.svg": "a07dcaa6bc2963fe9af5915f7fc2a1d7534a04e3e99f434605eee3d426bcea16",
+    "BUTTON_AMBER_RAISED_NO_TEXT.svg": "a9a3f6b7204bb09b9abeb455828a9db2d93cd82502fb61bdc1a7a80320021af7"
+  },
+  "preserved": "1.0.7.5 threshold/Q calibration, knob positions/art, DSP and automation; COLOR/ANALYZE layout",
+  "source_conflict_resolution": "Reference screenshots have differing screw coordinates. No established anchor moves between pages; only specified lower button centers are registered locally."
+}

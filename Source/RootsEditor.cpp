@@ -1553,11 +1553,11 @@ void RootsEditor::layoutRack(){
     compLabel_.setBounds(bounds(843,601,270,28));compressor_.setBounds(bounds(837,636,296,55));
     domainLabel_.setBounds(bounds(843,698,270,28));domain_.setBounds(bounds(837,732,296,55));
     detectorLabel_.setBounds(0,0,1,1);detector_.setBounds(0,0,1,1);limitAmount_.setBounds(0,0,1,1);
-    mono_.setBounds(bounds(1187,627,193,70));solo_.setBounds(bounds(1398,627,189,70));
-    phase_.setBounds(bounds(1187,716,193,70));limit_.setBounds(bounds(1398,716,189,70));
+    mono_.setBounds(bandAction(0));solo_.setBounds(bandAction(1));
+    phase_.setBounds(bandAction(2));limit_.setBounds(bandAction(3));
 
     selection_.setBounds(bounds(94,589,250,28));
-    carveOn_.setBounds(switchBounds(false));carveOff_.setBounds(switchBounds(true));
+    carveOn_.setBounds(switchBounds(false,true));carveOff_.setBounds(switchBounds(true,true));
     carveDynamic_.setBounds(0,0,1,1);
     const std::array<juce::Slider*,3> cs{&carveFrequency_,&carveDepth_,static_cast<juce::Slider*>(&carveQ_)};
     const std::array<juce::Label*,3> cl{&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_};
@@ -1591,6 +1591,7 @@ void RootsEditor::layoutRack(){
     save_.setBounds(0,0,1,1);load_.setBounds(0,0,1,1);
     outputLabel_.setBounds(0,0,1,1);output_.setBounds(0,0,1,1);
 }
+
 
 
 

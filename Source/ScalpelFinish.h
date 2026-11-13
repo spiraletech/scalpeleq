@@ -80,6 +80,32 @@ inline void hardware(juce::Graphics& g,juce::Rectangle<float> r,bool selected,bo
     if(pressed){g.setColour(ink.withAlpha(.12f));g.drawRoundedRectangle(face.reduced(1),4,1.5f);}
     if(hover){g.setColour(juce::Colours::white.withAlpha(.035f));g.fillRoundedRectangle(face,4.8f);}
 }
+// Native reconstruction of the kit's no-text SVG cap masters. One physical
+// cap/bevel family for lower-deck controls; no baked labels or sprite margin
+// is included in the hit rectangle. Parent cache owns the single shadow.
+inline void flushCap(juce::Graphics& g,juce::Rectangle<float> r,bool graphiteCap,
+                     bool selected,bool hover,bool pressed,bool off=false){
+    const float s=reference::flushScale(),radius=12.f*s;
+    g.setColour(juce::Colour(0xff27211d));g.fillRoundedRectangle(r,radius);
+    juce::ColourGradient rim(juce::Colour(0xfff3dec8),r.getX(),r.getY(),juce::Colour(0xff4a3529),r.getRight(),r.getBottom(),false);
+    g.setGradientFill(rim);g.drawRoundedRectangle(r.reduced(.6f),radius-.5f,1.1f*s);
+    const auto face=r.reduced(3.f*s).translated(0,pressed?.5f*s:0.f);
+    const auto top=juce::Colour(graphiteCap?0xff534b45:selected?0xfffbcb83:0xfff2d9be);
+    const auto bottom=juce::Colour(graphiteCap?0xff201c1a:selected?0xffcc925c:0xffb48e76);
+    juce::ColourGradient material(top,face.getX(),face.getY(),bottom,face.getX(),face.getBottom(),false);
+    g.setGradientFill(material);g.fillRoundedRectangle(face,radius-2.f*s);
+    roughness(g,face,radius-2.f*s,.24f);
+    g.setColour(juce::Colour(0xffefe0cd).withAlpha(.54f));g.drawRoundedRectangle(face.reduced(.4f),radius-2.4f*s,.9f*s);
+    g.setColour(juce::Colour(0xffffe8d0).withAlpha(.32f));g.drawLine(face.getX()+8*s,face.getY()+3*s,face.getRight()-8*s,face.getY()+3*s,s);
+    if(graphiteCap){
+        const auto light=juce::Rectangle<float>{r.getCentreX()-25.f*s,r.getY()+8.f*s,50.f*s,4.5f*s};
+        const auto color=juce::Colour(off?0xfffc494f:0xff87e54f);
+        g.setColour(juce::Colour(0xff131210));g.fillRoundedRectangle(light.expanded(s),2.5f*s);
+        if(selected){g.setColour(color.withAlpha(.13f));g.fillRoundedRectangle(light.expanded(s,.6f*s),2.5f*s);}
+        g.setColour(selected?color:color.darker(.83f));g.fillRoundedRectangle(light,2.f*s);
+    }
+    if(hover){g.setColour(juce::Colours::white.withAlpha(.035f));g.fillRoundedRectangle(face,radius-2.f*s);}
+}
 inline void darkButton(juce::Graphics& g,juce::Rectangle<float> r,bool selected,bool hover,bool lamp=false,juce::Colour lampColour=onGreen,bool navigation=false){
     // Recessed controls use their bevel; raised keys get a parent shadow.
     juce::ColourGradient face(juce::Colour(navigation?0xff554a3e:0xff52463e),r.getX(),r.getY(),juce::Colour(0xff171411),r.getX(),r.getBottom(),false);
@@ -175,4 +201,5 @@ inline void number(juce::Graphics& g,const juce::String& value,juce::Rectangle<f
     }
 }
 }
+
 
