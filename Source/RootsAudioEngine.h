@@ -293,7 +293,7 @@ public:
                 --soloFadeLeft_;
                 if(soloFadeLeft_==0)previousSolo_=-1;
             }
-            // BAND OFF removes its territory from BOTH channels. MONO uses
+            // BAND OFF removes its territory only in the assigned domain. MONO uses
             // that same independently filtered territory on SIDE only, so
             // its audible width change extends throughout the actual root
             // boundaries, not just the narrower colour/compressor tap.
@@ -304,9 +304,11 @@ public:
                 const double notchS=filters[3].sample(filters[2].sample(s));
                 const auto& node=nodes_[(size_t)(root*2)];
                 const double muted=1.0-node.enableMix;
+                const double midMuted=node.config.domain==Domain::side?0.0:muted;
+                const double sideMuted=node.config.domain==Domain::mid?0.0:muted;
                 const double monoWet=node.monoMix*node.enableMix;
-                const double sideWet=1.0-(1.0-muted)*(1.0-monoWet);
-                m+=muted*(notchM-m);
+                const double sideWet=1.0-(1.0-sideMuted)*(1.0-monoWet);
+                m+=midMuted*(notchM-m);
                 s+=sideWet*(notchS-s);
             }
             // SOLO contains only the selected territory. Its MONO switch

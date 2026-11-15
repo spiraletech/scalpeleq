@@ -1,0 +1,8 @@
+sr=44100 domain=1 unselected_max_error=7.45058e-09 selected_change_db=-61.7625 pass=1
+sr=44100 domain=2 unselected_max_error=7.45058e-09 selected_change_db=-61.7625 pass=1
+sr=48000 domain=1 unselected_max_error=7.45058e-09 selected_change_db=-61.7637 pass=1
+sr=48000 domain=2 unselected_max_error=7.45058e-09 selected_change_db=-61.7637 pass=1
+sr=96000 domain=1 unselected_max_error=7.45058e-09 selected_change_db=-61.7683 pass=1
+sr=96000 domain=2 unselected_max_error=7.45058e-09 selected_change_db=-61.7683 pass=1
+sr=192000 domain=1 unselected_max_error=7.45058e-09 selected_change_db=-61.7694 pass=1
+sr=192000 domain=2 unselected_max_error=7.45058e-09 selected_change_db=-61.7694 pass=1
