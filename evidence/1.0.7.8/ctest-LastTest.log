@@ -1,0 +1,488 @@
+Start testing: Nov 15 10:39 UTC
+----------------------------------------------------------
+1/28 Testing: ScalpelDbAxis
+1/28 Test: ScalpelDbAxis
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/ScalpelDbAxis"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"ScalpelDbAxis" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+dB axis: all 11 reference rows, -30 midpoint, -35 uniqueness, 6 scales, amplitude calibration, tilt and floor passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"ScalpelDbAxis" end time: Nov 15 10:39 UTC
+"ScalpelDbAxis" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/28 Testing: ScalpelAnalyzerHealth
+2/28 Test: ScalpelAnalyzerHealth
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/ScalpelAnalyzerHealth"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"ScalpelAnalyzerHealth" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+Scalpel analyzer transport counters PASS
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"ScalpelAnalyzerHealth" end time: Nov 15 10:39 UTC
+"ScalpelAnalyzerHealth" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/28 Testing: ScalpelUnderCurve
+3/28 Test: ScalpelUnderCurve
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/ScalpelUnderCurve"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"ScalpelUnderCurve" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+X-RAY under-curve mask: silence, contour, falloff, floor PASS
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"ScalpelUnderCurve" end time: Nov 15 10:39 UTC
+"ScalpelUnderCurve" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/28 Testing: ScalpelMercury
+4/28 Test: ScalpelMercury
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/ScalpelMercury"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"ScalpelMercury" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+SCALPEL X-RAY: silence inert, localized FFT surface, reduced motion, bounded decay PASS
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"ScalpelMercury" end time: Nov 15 10:39 UTC
+"ScalpelMercury" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/28 Testing: ScalpelChroma
+5/28 Test: ScalpelChroma
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/ScalpelChroma"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"ScalpelChroma" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+X-RAY pitch-class colour estimates calibrated
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"ScalpelChroma" end time: Nov 15 10:39 UTC
+"ScalpelChroma" time elapsed: 00:00:00
+----------------------------------------------------------
+
+6/28 Testing: ScalpelColor
+6/28 Test: ScalpelColor
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/ScalpelColor"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"ScalpelColor" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+Scalpel COLOR: five independent knobs, true zero, 4 rates, compatibility PASS
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"ScalpelColor" end time: Nov 15 10:39 UTC
+"ScalpelColor" time elapsed: 00:00:00
+----------------------------------------------------------
+
+7/28 Testing: ScalpelBand
+7/28 Test: ScalpelBand
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/ScalpelBand"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"ScalpelBand" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+Scalpel bands: OFF spectral mute, MONO selected-side reduction, MID/SIDE EQ DOMAIN routing and SOLO audition, PHASE CORRECTION, LIMIT optical leveling PASS
+<end of output>
+Test time =   0.71 sec
+----------------------------------------------------------
+Test Passed.
+"ScalpelBand" end time: Nov 15 10:39 UTC
+"ScalpelBand" time elapsed: 00:00:00
+----------------------------------------------------------
+
+8/28 Testing: RootsCore
+8/28 Test: RootsCore
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/RootsCore"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"RootsCore" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+PROOF 1 PASS: neutral stereo bypass
+PROOF 2 PASS: overlapping EQ and gain range
+PROOF 3 PASS: MID/SIDE isolation, exact mono
+PROOF 4 PASS: measured phase guard, no polarity flip
+PRISM ROOTS — FOUR DSP PROOFS PASSED
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"RootsCore" end time: Nov 15 10:39 UTC
+"RootsCore" time elapsed: 00:00:00
+----------------------------------------------------------
+
+9/28 Testing: PrismLabAnalyzer
+9/28 Test: PrismLabAnalyzer
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/PrismLabAnalyzer"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"PrismLabAnalyzer" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+PROOF 1 PASS: bin-centered amplitude and bin Hz calibrated
+PROOF 2 PASS: calibrated 256-band frequency mapping
+PROOF 3 PASS: silent frame floor
+PROOF 4 PASS: independent release and peak hold
+PRISM LAB -> ROOTS FOUR ANALYZER PROOFS PASSED
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"PrismLabAnalyzer" end time: Nov 15 10:39 UTC
+"PrismLabAnalyzer" time elapsed: 00:00:00
+----------------------------------------------------------
+
+10/28 Testing: RootsRealtime
+10/28 Test: RootsRealtime
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/RootsRealtime"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"RootsRealtime" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+A PASS bit-exact neutral bypass
+B PASS per-root-only gain, retired node gain, and ±60 clamp
+C PASS whole-root bandpass audition and 8ms A/B crossfade
+D PASS compressor gain reduction and mono/phase
+E PASS per-ROOT ONYX isolation and threshold reduction
+FOUR ROOTS v2 AUDIO PROOFS PASSED
+<end of output>
+Test time =   0.22 sec
+----------------------------------------------------------
+Test Passed.
+"RootsRealtime" end time: Nov 15 10:39 UTC
+"RootsRealtime" time elapsed: 00:00:00
+----------------------------------------------------------
+
+11/28 Testing: RootsUiSpectrum
+11/28 Test: RootsUiSpectrum
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/RootsUiSpectrum"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"RootsUiSpectrum" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+PROOF 1 PASS: 20-20000 Hz axis calibrated
+PROOF 2 PASS: two handles form one 20Hz-clamped root region
+PROOF 3 PASS: exact, movable boundary-based bar colours
+PROOF 4 PASS: overlap blending and bounded-filter numerical stability
+PROOF 5 PASS: immovable log-frequency heat columns
+PROOF 6 PASS: metered heat intensity and silence gating
+PROOF 7 PASS: non-scrolling bottom heat strip
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"RootsUiSpectrum" end time: Nov 15 10:39 UTC
+"RootsUiSpectrum" time elapsed: 00:00:00
+----------------------------------------------------------
+
+12/28 Testing: RootsParentControls
+12/28 Test: RootsParentControls
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/RootsParentControls"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"RootsParentControls" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+P1 PASS: transparent unprocessed ROOT
+P2 PASS: ROOT SPACE still works with MID-only compressor domain
+P3 PASS: right-click ROOT compressor and threshold affect audio
+P4 PASS: global SPACE mono/wide changes real stereo audio
+<end of output>
+Test time =   0.11 sec
+----------------------------------------------------------
+Test Passed.
+"RootsParentControls" end time: Nov 15 10:39 UTC
+"RootsParentControls" time elapsed: 00:00:00
+----------------------------------------------------------
+
+13/28 Testing: SurgeryCarve
+13/28 Test: SurgeryCarve
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/SurgeryCarve"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"SurgeryCarve" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+Surgery CARVE four proof groups passed
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"SurgeryCarve" end time: Nov 15 10:39 UTC
+"SurgeryCarve" time elapsed: 00:00:00
+----------------------------------------------------------
+
+14/28 Testing: SurgerySonar
+14/28 Test: SurgerySonar
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/SurgerySonar"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"SurgerySonar" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+SONAR four proof groups passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"SurgerySonar" end time: Nov 15 10:39 UTC
+"SurgerySonar" time elapsed: 00:00:00
+----------------------------------------------------------
+
+15/28 Testing: SurgeryHeaderLayout
+15/28 Test: SurgeryHeaderLayout
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/SurgeryHeaderLayout"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"SurgeryHeaderLayout" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+Surgery header overlap proofs passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"SurgeryHeaderLayout" end time: Nov 15 10:39 UTC
+"SurgeryHeaderLayout" time elapsed: 00:00:00
+----------------------------------------------------------
+
+16/28 Testing: SurgeryNodeFocus
+16/28 Test: SurgeryNodeFocus
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/SurgeryNodeFocus"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"SurgeryNodeFocus" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+Selected ROOT CARVE foreground layout and hit geometry passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"SurgeryNodeFocus" end time: Nov 15 10:39 UTC
+"SurgeryNodeFocus" time elapsed: 00:00:00
+----------------------------------------------------------
+
+17/28 Testing: SurgeryRootRouting
+17/28 Test: SurgeryRootRouting
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/SurgeryRootRouting"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"SurgeryRootRouting" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+ROOT-local mono, MID/SIDE routing and 28 CARVE defaults passed
+<end of output>
+Test time =   0.18 sec
+----------------------------------------------------------
+Test Passed.
+"SurgeryRootRouting" end time: Nov 15 10:39 UTC
+"SurgeryRootRouting" time elapsed: 00:00:00
+----------------------------------------------------------
+
+18/28 Testing: SurgeryResponse
+18/28 Test: SurgeryResponse
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/SurgeryResponse"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"SurgeryResponse" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+Original response: 19.6668 ms, checksum -31156.1
+Prepared response: 13.0879 ms, checksum -31156.1
+Response evaluation speedup: 1.50267x
+Measured/display separation and exact biquad response proofs passed
+<end of output>
+Test time =   0.10 sec
+----------------------------------------------------------
+Test Passed.
+"SurgeryResponse" end time: Nov 15 10:39 UTC
+"SurgeryResponse" time elapsed: 00:00:00
+----------------------------------------------------------
+
+19/28 Testing: SurgeryAnalysis
+19/28 Test: SurgeryAnalysis
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/SurgeryAnalysis"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"SurgeryAnalysis" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"SurgeryAnalysis" end time: Nov 15 10:39 UTC
+"SurgeryAnalysis" time elapsed: 00:00:00
+----------------------------------------------------------
+
+20/28 Testing: SurgeryPrecision
+20/28 Test: SurgeryPrecision
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/SurgeryPrecision"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"SurgeryPrecision" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+ROOT frequency clamp, CTRL scrub and numerical Q proofs passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"SurgeryPrecision" end time: Nov 15 10:39 UTC
+"SurgeryPrecision" time elapsed: 00:00:00
+----------------------------------------------------------
+
+21/28 Testing: SurgeryDualKnobDSP
+21/28 Test: SurgeryDualKnobDSP
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/SurgeryDualKnobDSP"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"SurgeryDualKnobDSP" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+DUAL KNOB DSP: 0/-30/-60 threshold; 0/50/100 logarithmic Q; all five compressor profiles at 44.1/48/96k; OFF threshold-independent; narrower CARVEs; bounded finite sweeps passed
+<end of output>
+Test time =   1.57 sec
+----------------------------------------------------------
+Test Passed.
+"SurgeryDualKnobDSP" end time: Nov 15 10:39 UTC
+"SurgeryDualKnobDSP" time elapsed: 00:00:01
+----------------------------------------------------------
+
+22/28 Testing: SurgerySpectrogram
+22/28 Test: SurgerySpectrogram
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/SurgerySpectrogram"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"SurgerySpectrogram" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+SPSC waterfall history and ultra Q tightness proofs passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"SurgerySpectrogram" end time: Nov 15 10:39 UTC
+"SurgerySpectrogram" time elapsed: 00:00:00
+----------------------------------------------------------
+
+23/28 Testing: SurgerySpectrumFill
+23/28 Test: SurgerySpectrumFill
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/SurgerySpectrumFill"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"SurgerySpectrumFill" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+Single-spectrum fast attack, finite input and decay proofs passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"SurgerySpectrumFill" end time: Nov 15 10:39 UTC
+"SurgerySpectrumFill" time elapsed: 00:00:00
+----------------------------------------------------------
+
+24/28 Testing: SurgerySpectralColours
+24/28 Test: SurgerySpectralColours
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/SurgerySpectralColours"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"SurgerySpectralColours" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+Synesthesia V1: muted spectral heat, fixed hues, level brightness, silence and approximate 12-TET labels passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"SurgerySpectralColours" end time: Nov 15 10:39 UTC
+"SurgerySpectralColours" time elapsed: 00:00:00
+----------------------------------------------------------
+
+25/28 Testing: ScalpelRemovalDomain
+25/28 Test: ScalpelRemovalDomain
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/ScalpelRemovalDomain"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"ScalpelRemovalDomain" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+sr=44100 domain=1 unselected_max_error=7.45058e-09 selected_change_db=-61.7625 pass=1
+sr=44100 domain=2 unselected_max_error=7.45058e-09 selected_change_db=-61.7625 pass=1
+sr=48000 domain=1 unselected_max_error=7.45058e-09 selected_change_db=-61.7637 pass=1
+sr=48000 domain=2 unselected_max_error=7.45058e-09 selected_change_db=-61.7637 pass=1
+sr=96000 domain=1 unselected_max_error=7.45058e-09 selected_change_db=-61.7683 pass=1
+sr=96000 domain=2 unselected_max_error=7.45058e-09 selected_change_db=-61.7683 pass=1
+sr=192000 domain=1 unselected_max_error=7.45058e-09 selected_change_db=-61.7694 pass=1
+sr=192000 domain=2 unselected_max_error=7.45058e-09 selected_change_db=-61.7694 pass=1
+<end of output>
+Test time =   1.41 sec
+----------------------------------------------------------
+Test Passed.
+"ScalpelRemovalDomain" end time: Nov 15 10:39 UTC
+"ScalpelRemovalDomain" time elapsed: 00:00:01
+----------------------------------------------------------
+
+26/28 Testing: ScalpelBandStopTransition
+26/28 Test: ScalpelBandStopTransition
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/ScalpelBandStopTransition"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"ScalpelBandStopTransition" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+sr=44100 peak=0.282041 max_sample_jump=0.0137348 pass=1
+sr=48000 peak=0.280432 max_sample_jump=0.0126542 pass=1
+sr=96000 peak=0.281699 max_sample_jump=0.00624582 pass=1
+sr=192000 peak=0.270304 max_sample_jump=0.00304408 pass=1
+<end of output>
+Test time =   0.09 sec
+----------------------------------------------------------
+Test Passed.
+"ScalpelBandStopTransition" end time: Nov 15 10:39 UTC
+"ScalpelBandStopTransition" time elapsed: 00:00:00
+----------------------------------------------------------
+
+27/28 Testing: scalpel_spectral_release_gate
+27/28 Test: scalpel_spectral_release_gate
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/scalpel_spectral_gate" "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/spectral-gate.csv"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"scalpel_spectral_release_gate" start time: Nov 15 10:39 UTC
+Output:
+----------------------------------------------------------
+probes=116 interior_60dB_failures=24 domain_isolation_failures=0
+<end of output>
+Test time =  60.30 sec
+----------------------------------------------------------
+Test Failed.
+"scalpel_spectral_release_gate" end time: Nov 15 10:40 UTC
+"scalpel_spectral_release_gate" time elapsed: 00:01:00
+----------------------------------------------------------
+
+28/28 Testing: scalpel_experimental_audio_safety_gate
+28/28 Test: scalpel_experimental_audio_safety_gate
+Command: "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest/scalpel_bandstop_experiment" "/workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest"
+Directory: /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+"scalpel_experimental_audio_safety_gate" start time: Nov 15 10:40 UTC
+Output:
+----------------------------------------------------------
+candidate_probes=128 interior_60dB_failures=0 signal_or_safety_failures=4
+<end of output>
+Test time =   0.18 sec
+----------------------------------------------------------
+Test Failed.
+"scalpel_experimental_audio_safety_gate" end time: Nov 15 10:40 UTC
+"scalpel_experimental_audio_safety_gate" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Nov 15 10:40 UTC
+
+release_gate =  60.48 sec*proc
+

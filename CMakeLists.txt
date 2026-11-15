@@ -5,6 +5,13 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# Phase A/B gate harness can run on machines without the JUCE toolchain.
+option(SCALPEL_PORTABLE_TESTS_ONLY "Build only standalone core and release gates" OFF)
+if(SCALPEL_PORTABLE_TESTS_ONLY)
+  include(cmake/PortableTests.cmake)
+  return()
+endif()
+
 include(FetchContent)
 FetchContent_Declare(
   JUCE
@@ -238,3 +245,32 @@ endif()
 
 
 
+
+# Preserve assertion-based inherited checks in Release configurations.
+if(PRISMVST_BUILD_TESTS)
+  get_property(scalpelTargets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+  foreach(target IN LISTS scalpelTargets)
+    if(target MATCHES "(_tests$|_study$)")
+      if(MSVC)
+        target_compile_options(${target} PRIVATE /UNDEBUG)
+      else()
+        target_compile_options(${target} PRIVATE -UNDEBUG)
+      endif()
+    endif()
+  endforeach()
+  add_executable(scalpel_removal_domain_tests Tests/ScalpelRemovalDomainTests.cpp)
+  add_test(NAME scalpel_removal_domain_isolation COMMAND scalpel_removal_domain_tests)
+  add_executable(scalpel_bandstop_transition_tests Tests/ScalpelBandStopTransitionTests.cpp)
+  add_test(NAME scalpel_experimental_crossfade_transition COMMAND scalpel_bandstop_transition_tests)
+  add_executable(scalpel_spectral_gate Tests/ScalpelSpectralGateTests.cpp)
+  add_test(NAME scalpel_spectral_release_gate COMMAND scalpel_spectral_gate ${CMAKE_CURRENT_BINARY_DIR}/spectral-gate.csv)
+  add_executable(scalpel_bandstop_experiment Tests/ScalpelBandStopExperiment.cpp)
+  add_test(NAME scalpel_experimental_audio_safety_gate COMMAND scalpel_bandstop_experiment ${CMAKE_CURRENT_BINARY_DIR})
+  set_tests_properties(scalpel_spectral_release_gate scalpel_experimental_audio_safety_gate
+    PROPERTIES LABELS "release_gate" TIMEOUT 180)
+endif()
+
+if(PRISMVST_BUILD_TESTS)
+  add_executable(scalpel_candidate_measured Tests/ScalpelBandStopMeasuredTests.cpp)
+  add_test(NAME scalpel_candidate_steady_sine_measurements COMMAND scalpel_candidate_measured ${CMAKE_CURRENT_BINARY_DIR}/candidate-measured.csv)
+endif()

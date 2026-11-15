@@ -1,0 +1,55 @@
+Test project /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+      Start  1: ScalpelDbAxis
+ 1/25 Test  #1: ScalpelDbAxis ....................   Passed    0.00 sec
+      Start  2: ScalpelAnalyzerHealth
+ 2/25 Test  #2: ScalpelAnalyzerHealth ............   Passed    0.00 sec
+      Start  3: ScalpelUnderCurve
+ 3/25 Test  #3: ScalpelUnderCurve ................   Passed    0.00 sec
+      Start  4: ScalpelMercury
+ 4/25 Test  #4: ScalpelMercury ...................   Passed    0.00 sec
+      Start  5: ScalpelChroma
+ 5/25 Test  #5: ScalpelChroma ....................   Passed    0.00 sec
+      Start  6: ScalpelColor
+ 6/25 Test  #6: ScalpelColor .....................   Passed    0.04 sec
+      Start  7: ScalpelBand
+ 7/25 Test  #7: ScalpelBand ......................   Passed    0.76 sec
+      Start  8: RootsCore
+ 8/25 Test  #8: RootsCore ........................   Passed    0.01 sec
+      Start  9: PrismLabAnalyzer
+ 9/25 Test  #9: PrismLabAnalyzer .................   Passed    0.00 sec
+      Start 10: RootsRealtime
+10/25 Test #10: RootsRealtime ....................   Passed    0.20 sec
+      Start 11: RootsUiSpectrum
+11/25 Test #11: RootsUiSpectrum ..................   Passed    0.03 sec
+      Start 12: RootsParentControls
+12/25 Test #12: RootsParentControls ..............   Passed    0.11 sec
+      Start 13: SurgeryCarve
+13/25 Test #13: SurgeryCarve .....................   Passed    0.01 sec
+      Start 14: SurgerySonar
+14/25 Test #14: SurgerySonar .....................   Passed    0.00 sec
+      Start 15: SurgeryHeaderLayout
+15/25 Test #15: SurgeryHeaderLayout ..............   Passed    0.00 sec
+      Start 16: SurgeryNodeFocus
+16/25 Test #16: SurgeryNodeFocus .................   Passed    0.00 sec
+      Start 17: SurgeryRootRouting
+17/25 Test #17: SurgeryRootRouting ...............   Passed    0.19 sec
+      Start 18: SurgeryResponse
+18/25 Test #18: SurgeryResponse ..................   Passed    0.09 sec
+      Start 19: SurgeryAnalysis
+19/25 Test #19: SurgeryAnalysis ..................   Passed    0.00 sec
+      Start 20: SurgeryPrecision
+20/25 Test #20: SurgeryPrecision .................   Passed    0.00 sec
+      Start 21: SurgeryDualKnobDSP
+21/25 Test #21: SurgeryDualKnobDSP ...............   Passed    1.53 sec
+      Start 22: SurgerySpectrogram
+22/25 Test #22: SurgerySpectrogram ...............   Passed    0.00 sec
+      Start 23: SurgerySpectrumFill
+23/25 Test #23: SurgerySpectrumFill ..............   Passed    0.00 sec
+      Start 24: SurgerySpectralColours
+24/25 Test #24: SurgerySpectralColours ...........   Passed    0.00 sec
+      Start 25: ScalpelRemovalDomain
+25/25 Test #25: ScalpelRemovalDomain .............   Passed    1.37 sec
+
+100% tests passed out of 25
+
+Total Test time (real) =   4.37 sec

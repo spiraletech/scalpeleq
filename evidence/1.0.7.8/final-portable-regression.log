@@ -1,0 +1,59 @@
+Test project /workspace/scratch/d9bcf1141ddd/scalpeleq/build-portable-ctest
+      Start  1: ScalpelDbAxis
+ 1/27 Test  #1: ScalpelDbAxis ................................   Passed    0.00 sec
+      Start  2: ScalpelAnalyzerHealth
+ 2/27 Test  #2: ScalpelAnalyzerHealth ........................   Passed    0.00 sec
+      Start  3: ScalpelUnderCurve
+ 3/27 Test  #3: ScalpelUnderCurve ............................   Passed    0.00 sec
+      Start  4: ScalpelMercury
+ 4/27 Test  #4: ScalpelMercury ...............................   Passed    0.00 sec
+      Start  5: ScalpelChroma
+ 5/27 Test  #5: ScalpelChroma ................................   Passed    0.00 sec
+      Start  6: ScalpelColor
+ 6/27 Test  #6: ScalpelColor .................................   Passed    0.03 sec
+      Start  7: ScalpelBand
+ 7/27 Test  #7: ScalpelBand ..................................   Passed    0.73 sec
+      Start  8: RootsCore
+ 8/27 Test  #8: RootsCore ....................................   Passed    0.01 sec
+      Start  9: PrismLabAnalyzer
+ 9/27 Test  #9: PrismLabAnalyzer .............................   Passed    0.00 sec
+      Start 10: RootsRealtime
+10/27 Test #10: RootsRealtime ................................   Passed    0.20 sec
+      Start 11: RootsUiSpectrum
+11/27 Test #11: RootsUiSpectrum ..............................   Passed    0.02 sec
+      Start 12: RootsParentControls
+12/27 Test #12: RootsParentControls ..........................   Passed    0.11 sec
+      Start 13: SurgeryCarve
+13/27 Test #13: SurgeryCarve .................................   Passed    0.01 sec
+      Start 14: SurgerySonar
+14/27 Test #14: SurgerySonar .................................   Passed    0.00 sec
+      Start 15: SurgeryHeaderLayout
+15/27 Test #15: SurgeryHeaderLayout ..........................   Passed    0.00 sec
+      Start 16: SurgeryNodeFocus
+16/27 Test #16: SurgeryNodeFocus .............................   Passed    0.00 sec
+      Start 17: SurgeryRootRouting
+17/27 Test #17: SurgeryRootRouting ...........................   Passed    0.18 sec
+      Start 18: SurgeryResponse
+18/27 Test #18: SurgeryResponse ..............................   Passed    0.10 sec
+      Start 19: SurgeryAnalysis
+19/27 Test #19: SurgeryAnalysis ..............................   Passed    0.00 sec
+      Start 20: SurgeryPrecision
+20/27 Test #20: SurgeryPrecision .............................   Passed    0.00 sec
+      Start 21: SurgeryDualKnobDSP
+21/27 Test #21: SurgeryDualKnobDSP ...........................   Passed    1.55 sec
+      Start 22: SurgerySpectrogram
+22/27 Test #22: SurgerySpectrogram ...........................   Passed    0.00 sec
+      Start 23: SurgerySpectrumFill
+23/27 Test #23: SurgerySpectrumFill ..........................   Passed    0.00 sec
+      Start 24: SurgerySpectralColours
+24/27 Test #24: SurgerySpectralColours .......................   Passed    0.00 sec
+      Start 25: ScalpelRemovalDomain
+25/27 Test #25: ScalpelRemovalDomain .........................   Passed    1.37 sec
+      Start 26: ScalpelBandStopTransition
+26/27 Test #26: ScalpelBandStopTransition ....................   Passed    0.09 sec
+      Start 27: scalpel_candidate_steady_sine_measurements
+27/27 Test #27: scalpel_candidate_steady_sine_measurements ...   Passed    1.72 sec
+
+100% tests passed out of 27
+
+Total Test time (real) =   6.16 sec

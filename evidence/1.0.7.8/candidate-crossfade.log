@@ -1,0 +1,4 @@
+sr=44100 peak=0.282041 max_sample_jump=0.0137348 pass=1
+sr=48000 peak=0.280432 max_sample_jump=0.0126542 pass=1
+sr=96000 peak=0.281699 max_sample_jump=0.00624582 pass=1
+sr=192000 peak=0.270304 max_sample_jump=0.00304408 pass=1
