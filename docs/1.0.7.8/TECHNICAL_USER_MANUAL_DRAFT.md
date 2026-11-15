@@ -188,7 +188,9 @@ build dependencies and do not establish VST3 or host reliability.
 | Mid/Side removal fix | PASS; see `patched-domain.log` |
 | Direct coefficient-modulation experiment | FAIL audio safety |
 | Crossfade experiment | Narrow trajectory test passes; integration unverified |
-| Windows build / pluginval / FL Studio | See checkpoint report for current status |
+| Windows x64 build / native VST3 capture | PASS on tested code `e23cb6e` |
+| Windows CTest | 32/34 pass; two audio release gates fail |
+| pluginval / FL Studio | Skipped after failed gate / not tested |
 | Magnetic interactions / migration | Not implemented; not tested |
 
 Reproduce standalone checks with:

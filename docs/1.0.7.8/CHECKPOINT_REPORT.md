@@ -88,7 +88,7 @@ There is no lookahead or explicit sample delay; phase and group delay remain.
   This is an unacceptable roughly +12 to +14 dBFS output for a 0.25 input.
 - The fixed-bank crossfade follow-up gave peaks 0.282041, 0.280432, 0.281699,
   0.270304 in the tested trajectory. It is a promising containment experiment,
-  not a validated integration. Up to a fade interval of target lag, mixed
+  not a validated integration. Retarget lag, mixed
   responses, temporary residual energy and extra CPU remain to characterize.
 - Direct experiment observed zero ordinary `operator new` allocations while
   configuring/processing the audited loop. This does not prove all allocations
@@ -123,21 +123,32 @@ LeakSanitizer reported that it cannot run under this environment's ptrace.
 Both attempts are retained. This is a focused address/undefined-behavior check,
 not full memory-safety or leak certification.
 
-Windows x64 VST3 compilation, full CTest, pluginval, FL Studio 25 playback,
-automation, preset/session restore, rapid editor use, removal and editor closure
-are unverified at this checkpoint. Source-branch CI can exercise Windows checks;
-its result must be recorded separately. No validated 1.0.7.8 VST3 artifact is
-provided, and no generic test is represented as FL Studio evidence.
+Windows x64 configuration and VST3 compilation succeeded in
+[run 43705694363](https://github.com/spiraletech/scalpeleq/actions/runs/43705694363),
+on tested source commit `e23cb6e16e570cd9bbcf045e85ded71a99b2e2f8`.
+The full Windows CTest run passed 32 of 34 tests, including native VST3
+load/capture. Its only failures were the production spectral rejection gate
+(24 interior failures, zero domain-isolation failures) and the direct-modulation
+experiment (four audio-safety failures). The decoded Windows log (line endings/trailing whitespace normalized) and job
+metadata are in `windows-job.log` and `windows-job.json`.
+
+The pipeline uploaded regression evidence (artifact `SCALPEL-EQ-quality-evidence`,
+ID `14158638345`); VST3 staging, pluginval and VST3 artifact upload were skipped
+after the failed test gate. Successful compilation/native capture does not
+constitute a validated release. No validated 1.0.7.8 VST3 artifact is provided.
+FL Studio 25 playback, automation, preset/session restoration and editor/removal
+behavior remain untested in that actual host. Generic processor/quality tests
+are not represented as FL Studio findings.
 
 ## Phase status and remaining work
 
 | Phase | Status |
 | --- | --- |
-| A — architecture and regression baseline | Baseline mapped and portable regressions recorded; full JUCE/host baseline unavailable locally. |
+| A — architecture and regression baseline | Baseline mapped; portable and Windows regression evidence recorded. Actual FL Studio baseline unavailable. |
 | B — audio integrity | Domain defect fixed. Production rejection remains failed. Candidate experiments retained; not integrated. Other channel/dynamics features have inherited tests, not comprehensive new verification. |
 | C — magnetic band engine | HELD: not implemented. No add/remove, shared anchors, explicit unlink, group movement, serialization or undo/redo results exist. |
 | D — analyzer accuracy | HELD: cumulative response, removal overlay, hover, full-song history and decay corrections not implemented. |
-| E — host validation and manual | Draft manual provided. Windows/host release validation incomplete. |
+| E — host validation and manual | Draft manual provided. Windows compile/native capture pass; Windows CTest 32/34. Pluginval skipped; FL Studio untested. |
 
 The exact next engineering task is to decide and test a transition-band contract
 for spectral removal, validate a safe retarget architecture against that contract
@@ -149,3 +160,22 @@ The directive explicitly permits retaining an experimental build and reporting
 failure when reliable rejection has not been established. This checkpoint follows
 that gate; it does not request promotion, merge, stable publication or canonical
 replacement of 1.0.7.7.
+
+## Delivery mapping
+
+| Required delivery | Location/status |
+| --- | --- |
+| A — branch/commits | This report's baseline/isolation section; tested code commit `e23cb6e`. |
+| B — affected source files | Code-change table above. |
+| C — attenuation/audio evidence | Raw CSVs, experiment logs and Windows regression artifact. |
+| D — magnetic tests | Unavailable: Phase C is held; no claimed passes. |
+| E — regression/VST3 logs | Portable CTest and `windows-job.log`; pluginval skipped. |
+| F — FL Studio findings | No actual host test performed. |
+| G — validated 1.0.7.8 VST3 | Withheld because audio gates failed. |
+| H — manual draft | `TECHNICAL_USER_MANUAL_DRAFT.md`. |
+| I — limitations | Audio evidence and phase-status sections above. |
+
+`source-preservation.json` records processor/editor file hashes and verifies
+that approved artwork is unchanged. `EVIDENCE_MANIFEST.json` hashes the delivered
+logs and CSVs. This final documentation/evidence update does not modify the
+code tested by Windows CI and does not promote a release.

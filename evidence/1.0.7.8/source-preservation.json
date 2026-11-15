@@ -1,0 +1,39 @@
+{
+  "tested_source_head": "e23cb6e16e570cd9bbcf045e85ded71a99b2e2f8",
+  "baseline": "ad546dcc1c829a83d894d7f8fe94b55c5c131d79",
+  "files": [
+    {
+      "path": "Source/PluginProcessor.cpp",
+      "sha256": "ea11ee7dff75fec33e2ca6ade42a14a98b852f79b305806c9be1c9eb949b4b98",
+      "unchanged_from_approved_baseline": true
+    },
+    {
+      "path": "Source/PluginProcessor.h",
+      "sha256": "0391dc76750505f3484dd334afa0965549651d99d7df35cc107e94e508e50b8b",
+      "unchanged_from_approved_baseline": true
+    },
+    {
+      "path": "Source/RootsEditor.cpp",
+      "sha256": "3bd7076bec2d9380597ed4998ab50bbc05b1ad1d91ceed57fb119348548a27cc",
+      "unchanged_from_approved_baseline": true
+    },
+    {
+      "path": "Source/RootsEditor.h",
+      "sha256": "2d186a1e47bb63f6d7ea1c7418b6085bd9ea39c321acc79f769d61994c9a1a4c",
+      "unchanged_from_approved_baseline": true
+    },
+    {
+      "path": "Source/PluginEditor.cpp",
+      "sha256": "346c676a1f408f0450e252452921453bc7195bcc4e793c8e557195fb04791528",
+      "unchanged_from_approved_baseline": true
+    },
+    {
+      "path": "Source/PluginEditor.h",
+      "sha256": "3c92b5e4333804b8b0a619e2350373dc4d7e09345b1ef7c71696a4eda77efcd4",
+      "unchanged_from_approved_baseline": true
+    }
+  ],
+  "asset_files_changed": [],
+  "release_test_assertions_enabled": true,
+  "example_compile_command": "/usr/bin/c++   -O3 -DNDEBUG -std=gnu++20 -fPIE -UNDEBUG -MD -MT CMakeFiles/ScalpelBand.dir/Tests/ScalpelBandTests.cpp.o -MF CMakeFiles/ScalpelBand.dir/Tests/ScalpelBandTests.cpp.o.d -o CMakeFiles/ScalpelBand.dir/Tests/ScalpelBandTests.cpp.o -c /workspace/scratch/d9bcf1141ddd/scalpeleq/Tests/ScalpelBandTests.cpp"
+}

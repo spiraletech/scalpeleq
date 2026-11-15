@@ -1,0 +1,145 @@
+{
+  "approved_baseline": "ad546dcc1c829a83d894d7f8fe94b55c5c131d79",
+  "tested_code_commit": "e23cb6e16e570cd9bbcf045e85ded71a99b2e2f8",
+  "source_branch": "fix/scalpel-1.0.7.8-magnetic-dsp",
+  "status": "HOLD_PHASE_B",
+  "portable_passing_subset": 27,
+  "portable_failed_release_gates": 2,
+  "windows_ctest_pass": 32,
+  "windows_ctest_fail": 2,
+  "windows_build": "PASS",
+  "native_vst3_capture": "PASS",
+  "pluginval": "SKIPPED",
+  "fl_studio_25": "NOT_TESTED",
+  "magnetic_system": "NOT_IMPLEMENTED",
+  "state_migration": "NOT_IMPLEMENTED",
+  "analyzer_corrections": "NOT_IMPLEMENTED",
+  "release_promoted": false,
+  "files": [
+    {
+      "path": "baseline-portable-regressions.json",
+      "size_bytes": 5946,
+      "sha256": "636d8a404721c4872fa41cca624c902831e7be91c56db5fa946e974ae3d34952"
+    },
+    {
+      "path": "baseline-regression.log",
+      "size_bytes": 517,
+      "sha256": "8410f93aa304ccc7e054255fba6e1fa17cd5ec1956167eb609266b8be30080cf"
+    },
+    {
+      "path": "baseline-spectral.csv",
+      "size_bytes": 8083,
+      "sha256": "0228be37be350c292db6cc052a08b9ad8d4466da23927377ab54943e43abaaac"
+    },
+    {
+      "path": "baseline-spectral.log",
+      "size_bytes": 65,
+      "sha256": "a240d68267ec578e21ff805636ab0de9a272fe40c0382675a77b90ce2b943e3f"
+    },
+    {
+      "path": "candidate-crossfade.log",
+      "size_bytes": 227,
+      "sha256": "df5ce1717793d5ce70db03a3b7213586d4b567b0f0177acb0e1b3fd86b731e3c"
+    },
+    {
+      "path": "candidate-measured-ctest.log",
+      "size_bytes": 280,
+      "sha256": "48f7792fc06a6408d27176e40cae29d353adabe079cc5d5ed0f9372b3fb71267"
+    },
+    {
+      "path": "candidate-measured.csv",
+      "size_bytes": 4248,
+      "sha256": "a63c1f1a3edea126f1dbe4bac54b0ee7717058dc843302094585be6d55bccd0a"
+    },
+    {
+      "path": "candidate-measured.log",
+      "size_bytes": 34,
+      "sha256": "ca638a0f6e62171c76e70d531ff64c938351fb439cf088dbc237b70c20a2ade2"
+    },
+    {
+      "path": "candidate-response.csv",
+      "size_bytes": 4574,
+      "sha256": "ba918b7c7fcd6f61f76a957d943417fbb52ce6dcea6b41e95d957bd59da52dbf"
+    },
+    {
+      "path": "candidate-signals.csv",
+      "size_bytes": 813,
+      "sha256": "71b22eef02ffe165c56382d756ff673303cd197a6e818760506d4f945f672f11"
+    },
+    {
+      "path": "candidate.log",
+      "size_bytes": 74,
+      "sha256": "97ac740ff5336f995760be7f0d9d920a06575e7f5c64a1743056b1dfb6b9cfce"
+    },
+    {
+      "path": "ctest-LastTest.log",
+      "size_bytes": 21194,
+      "sha256": "ebb35876e0f33b58571914ec43bde619c8e3d09814140cd76a727cb204ab2f1a"
+    },
+    {
+      "path": "domain-sanitizers-initial.log",
+      "size_bytes": 222,
+      "sha256": "b5bdd6fcf970498582ea75d05fc3e77f2928ab4c9ecb09e3a52eeeae17844ec6"
+    },
+    {
+      "path": "domain-sanitizers.log",
+      "size_bytes": 690,
+      "sha256": "146e7c91cb6eaff643d8e92761ee4475023ac8e768fbd3e45f2c37620da9bc69"
+    },
+    {
+      "path": "final-portable-regression.log",
+      "size_bytes": 3329,
+      "sha256": "52c25b46076993511af51e8c108edda956193c049f39abf16618dcef874cdab8"
+    },
+    {
+      "path": "native-configure.log",
+      "size_bytes": 9419,
+      "sha256": "070dd95182699d8cfb406c9f5ff473ec15637bb1f5597c0c84bfe30627432c01"
+    },
+    {
+      "path": "patched-ctest.log",
+      "size_bytes": 3760,
+      "sha256": "58f50b860eecb73d1c71d9a770c27d049a3c4c570bebec9168c60c2b52f8882d"
+    },
+    {
+      "path": "patched-domain.log",
+      "size_bytes": 690,
+      "sha256": "146e7c91cb6eaff643d8e92761ee4475023ac8e768fbd3e45f2c37620da9bc69"
+    },
+    {
+      "path": "patched-regression.log",
+      "size_bytes": 2760,
+      "sha256": "744ce3b783d06b38abee8d2e028f64576ddc95506ba87a5ead1ed528c4ee251b"
+    },
+    {
+      "path": "patched-spectral.csv",
+      "size_bytes": 8110,
+      "sha256": "ef8750db1808e796146986dd717771311639d336522eb656adfadfd206957d6d"
+    },
+    {
+      "path": "portable-build.log",
+      "size_bytes": 165,
+      "sha256": "024fd13e5ab54231fc5d1c90c1c8a9505f4dd9eca7db752c7dfd942725ab12f7"
+    },
+    {
+      "path": "portable-configure.log",
+      "size_bytes": 153,
+      "sha256": "b518282880e6b82b9789b8d22dbbc2767826123b02c17e9b53f3a30711b2704c"
+    },
+    {
+      "path": "source-preservation.json",
+      "size_bytes": 1671,
+      "sha256": "31520cee54c6878c1cb1af6d23d423f756451771ccd143d51784e3e4cc0d4e06"
+    },
+    {
+      "path": "windows-job.json",
+      "size_bytes": 2165,
+      "sha256": "4ea760a3927aeea9fe78abca9e3d06c8cc47da28ff61578ffa36cc9cd28f60f6"
+    },
+    {
+      "path": "windows-job.log",
+      "size_bytes": 61642,
+      "sha256": "519848b0a90ef2282551e77e72109f92883f5b463b13f34417ce3bc0ad7697e1"
+    }
+  ]
+}

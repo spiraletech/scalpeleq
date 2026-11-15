@@ -1,0 +1,637 @@
+﻿2026-11-15T10:46:33.8444466Z Current runner version: '2.338.2'
+2026-11-15T10:46:33.8484186Z ##[group]Runner Image Provisioner
+2026-11-15T10:46:33.8485564Z Hosted Compute Agent
+2026-11-15T10:46:33.8486519Z Version: 20261103.629
+2026-11-15T10:46:33.8487554Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+2026-11-15T10:46:33.8488787Z Build Date: 2026-11-03T17:26:59Z
+2026-11-15T10:46:33.8489862Z Worker ID: {55f76a61-a7e8-453c-bab8-48c52733ab47}
+2026-11-15T10:46:33.8491090Z Region: eastus
+2026-11-15T10:46:33.8491892Z Cloud: Azure
+2026-11-15T10:46:33.8492691Z ##[endgroup]
+2026-11-15T10:46:33.8494904Z ##[group]Operating System
+2026-11-15T10:46:33.8495907Z Microsoft Windows Server 2025
+2026-11-15T10:46:33.8496940Z 10.0.26100
+2026-11-15T10:46:33.8497899Z Datacenter
+2026-11-15T10:46:33.8498752Z ##[endgroup]
+2026-11-15T10:46:33.8499699Z ##[group]Runner Image
+2026-11-15T10:46:33.8500856Z Image: windows-2025-vs2026
+2026-11-15T10:46:33.8501908Z Version: 20261103.298.1
+2026-11-15T10:46:33.8505020Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20261103.298/images/windows/Windows2025-VS2026-Readme.md
+2026-11-15T10:46:33.8508143Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20261103.298
+2026-11-15T10:46:33.8509849Z ##[endgroup]
+2026-11-15T10:46:33.8511955Z ##[group]GITHUB_TOKEN Permissions
+2026-11-15T10:46:33.8515241Z Contents: read
+2026-11-15T10:46:33.8516156Z Metadata: read
+2026-11-15T10:46:33.8517075Z Packages: read
+2026-11-15T10:46:33.8518283Z ##[endgroup]
+2026-11-15T10:46:33.8521662Z Secret source: Actions
+2026-11-15T10:46:33.8523052Z Cache mode: write
+2026-11-15T10:46:33.8524292Z Prepare workflow directory
+2026-11-15T10:46:33.8894810Z Prepare all required actions
+2026-11-15T10:46:33.8947446Z Getting action download info
+2026-11-15T10:46:34.0646670Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-15T10:46:34.2098723Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-15T10:46:34.5614608Z Complete job name: build
+2026-11-15T10:46:34.7160439Z ##[group]Run actions/checkout@v4
+2026-11-15T10:46:34.7161708Z with:
+2026-11-15T10:46:34.7162221Z   repository: spiraletech/scalpeleq
+2026-11-15T10:46:34.7167113Z   token: ***
+2026-11-15T10:46:34.7167578Z   ssh-strict: true
+2026-11-15T10:46:34.7167977Z   ssh-user: git
+2026-11-15T10:46:34.7168381Z   persist-credentials: true
+2026-11-15T10:46:34.7168830Z   clean: true
+2026-11-15T10:46:34.7169234Z   sparse-checkout-cone-mode: true
+2026-11-15T10:46:34.7169731Z   fetch-depth: 1
+2026-11-15T10:46:34.7170129Z   fetch-tags: false
+2026-11-15T10:46:34.7170529Z   show-progress: true
+2026-11-15T10:46:34.7170946Z   lfs: false
+2026-11-15T10:46:34.7171312Z   submodules: false
+2026-11-15T10:46:34.7171720Z   set-safe-directory: true
+2026-11-15T10:46:34.7172195Z   allow-unsafe-pr-checkout: false
+2026-11-15T10:46:34.7172919Z ##[endgroup]
+2026-11-15T10:46:34.8825579Z Syncing repository: spiraletech/scalpeleq
+2026-11-15T10:46:34.8828990Z ##[group]Getting Git version info
+2026-11-15T10:46:34.8830101Z Working directory is 'D:\a\scalpeleq\scalpeleq'
+2026-11-15T10:46:34.9847157Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-11-15T10:46:35.3096487Z git version 2.56.0.windows.4
+2026-11-15T10:46:35.3166335Z ##[endgroup]
+2026-11-15T10:46:35.3190742Z Temporarily overriding HOME='D:\a\_temp\783bae57-2875-475c-80bc-3064954a8a4f' before making global git config changes
+2026-11-15T10:46:35.3193483Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-15T10:46:35.3204494Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\scalpeleq\scalpeleq
+2026-11-15T10:46:35.3874845Z Deleting the contents of 'D:\a\scalpeleq\scalpeleq'
+2026-11-15T10:46:35.3881248Z ##[group]Initializing the repository
+2026-11-15T10:46:35.3890537Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\scalpeleq\scalpeleq
+2026-11-15T10:46:35.4823168Z Initialized empty Git repository in D:/a/scalpeleq/scalpeleq/.git/
+2026-11-15T10:46:35.4875880Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/spiraletech/scalpeleq
+2026-11-15T10:46:35.5626107Z ##[endgroup]
+2026-11-15T10:46:35.5627329Z ##[group]Disabling automatic garbage collection
+2026-11-15T10:46:35.5635398Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2026-11-15T10:46:35.6050996Z ##[endgroup]
+2026-11-15T10:46:35.6052179Z ##[group]Setting up auth
+2026-11-15T10:46:35.6063666Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-11-15T10:46:35.6489805Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-11-15T10:46:37.3692796Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-15T10:46:37.4132003Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-11-15T10:46:38.0168398Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-15T10:46:38.0594811Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-11-15T10:46:38.6972617Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2026-11-15T10:46:38.7402790Z ##[endgroup]
+2026-11-15T10:46:38.7403772Z ##[group]Fetching the repository
+2026-11-15T10:46:38.7419829Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +e23cb6e16e570cd9bbcf045e85ded71a99b2e2f8:refs/remotes/origin/fix/scalpel-1.0.7.8-magnetic-dsp
+2026-11-15T10:46:39.8340274Z From https://github.com/spiraletech/scalpeleq
+2026-11-15T10:46:39.8341472Z  * [new ref]         e23cb6e16e570cd9bbcf045e85ded71a99b2e2f8 -> origin/fix/scalpel-1.0.7.8-magnetic-dsp
+2026-11-15T10:46:39.8390483Z ##[endgroup]
+2026-11-15T10:46:39.8390984Z ##[group]Determining the checkout info
+2026-11-15T10:46:39.8393232Z ##[endgroup]
+2026-11-15T10:46:39.8402632Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2026-11-15T10:46:39.9044384Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2026-11-15T10:46:39.9575199Z ##[group]Checking out the ref
+2026-11-15T10:46:39.9587134Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force -B fix/scalpel-1.0.7.8-magnetic-dsp refs/remotes/origin/fix/scalpel-1.0.7.8-magnetic-dsp
+2026-11-15T10:46:40.1083590Z Switched to a new branch 'fix/scalpel-1.0.7.8-magnetic-dsp'
+2026-11-15T10:46:40.1215612Z branch 'fix/scalpel-1.0.7.8-magnetic-dsp' set up to track 'origin/fix/scalpel-1.0.7.8-magnetic-dsp'.
+2026-11-15T10:46:40.1281620Z ##[endgroup]
+2026-11-15T10:46:40.1903027Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2026-11-15T10:46:40.2280612Z e23cb6e16e570cd9bbcf045e85ded71a99b2e2f8
+2026-11-15T10:46:40.2767407Z ##[group]Run cmake -S . -B build -A x64 -DPRISMVST_BUILD_TESTS=ON
+2026-11-15T10:46:40.2768058Z [36;1mcmake -S . -B build -A x64 -DPRISMVST_BUILD_TESTS=ON[0m
+2026-11-15T10:46:40.3419228Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-11-15T10:46:40.3419742Z ##[endgroup]
+2026-11-15T10:46:51.2195274Z -- Building for: Visual Studio 18 2026
+2026-11-15T10:46:51.2199001Z -- The C compiler identification is MSVC 19.51.36260.0
+2026-11-15T10:46:52.6103812Z -- The CXX compiler identification is MSVC 19.51.36260.0
+2026-11-15T10:46:52.7446351Z -- Detecting C compiler ABI info
+2026-11-15T10:46:53.8291682Z -- Detecting C compiler ABI info - done
+2026-11-15T10:46:53.8590358Z -- Check for working C compiler: C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe - skipped
+2026-11-15T10:46:53.8605802Z -- Detecting C compile features
+2026-11-15T10:46:53.8620839Z -- Detecting C compile features - done
+2026-11-15T10:46:53.9187611Z -- Detecting CXX compiler ABI info
+2026-11-15T10:46:54.6721604Z -- Detecting CXX compiler ABI info - done
+2026-11-15T10:46:54.6926057Z -- Check for working CXX compiler: C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe - skipped
+2026-11-15T10:46:54.6931558Z -- Detecting CXX compile features
+2026-11-15T10:46:54.6940209Z -- Detecting CXX compile features - done
+2026-11-15T10:47:05.7810520Z -- Configuring juceaide
+2026-11-15T10:47:10.0750470Z -- Building juceaide
+2026-11-15T10:47:41.4068829Z -- Exporting juceaide
+2026-11-15T10:47:41.4074676Z -- Testing juceaide
+2026-11-15T10:47:41.4470536Z -- Finished setting up juceaide
+2026-11-15T10:47:41.4519023Z -- PRISMVST VST2 build disabled. Set PRISMVST_VST2_SDK_PATH to build PRISMVST.dll
+2026-11-15T10:47:41.5087219Z -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+2026-11-15T10:47:42.1389598Z -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Failed
+2026-11-15T10:47:42.1390919Z -- Looking for pthread_create in pthreads
+2026-11-15T10:47:42.7568101Z -- Looking for pthread_create in pthreads - not found
+2026-11-15T10:47:42.7568785Z -- Looking for pthread_create in pthread
+2026-11-15T10:47:43.3687033Z -- Looking for pthread_create in pthread - not found
+2026-11-15T10:47:43.3700468Z -- Found Threads: TRUE
+2026-11-15T10:47:43.9532867Z -- Configuring done (62.6s)
+2026-11-15T10:47:44.3196618Z -- Generating done (0.4s)
+2026-11-15T10:47:44.3206984Z -- Build files have been written to: D:/a/scalpeleq/scalpeleq/build
+2026-11-15T10:47:44.4637341Z ##[group]Run cmake --build build --config Release --parallel 2
+2026-11-15T10:47:44.4637845Z [36;1mcmake --build build --config Release --parallel 2[0m
+2026-11-15T10:47:44.4713056Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-11-15T10:47:44.4713478Z ##[endgroup]
+2026-11-15T10:47:44.8941669Z MSBuild version 18.11.1-1.26513.3+940033be3 for .NET Framework
+2026-11-15T10:47:44.9445724Z
+2026-11-15T10:47:45.1793249Z   Checking File Globs
+2026-11-15T10:47:45.3873791Z   1>Checking Build System
+2026-11-15T10:47:45.5631738Z   Generating PRISMVST_artefacts/JuceLibraryCode/PRISMVST_resources.rc
+2026-11-15T10:47:45.6253614Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:47:45.7523455Z   Generating prismvst_tests_artefacts/JuceLibraryCode/prismvst_tests_resources.rc
+2026-11-15T10:47:45.7843033Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:47:45.8897468Z   PRISMVST_rc_lib.vcxproj -> D:\a\scalpeleq\scalpeleq\build\PRISMVST_rc_lib.dir\Release\PRISMVST_rc_lib.lib
+2026-11-15T10:47:45.9973317Z   prismvst_tests_rc_lib.vcxproj -> D:\a\scalpeleq\scalpeleq\build\prismvst_tests_rc_lib.dir\Release\prismvst_tests_rc_lib.lib
+2026-11-15T10:47:46.1323116Z   Generating juce_binarydata_SurgeryRackAssets/JuceLibraryCode/BinaryData1.cpp, juce_binarydata_SurgeryRackAssets/JuceLibraryCode/BinaryData2.cpp, juce_binarydata_SurgeryRackAssets/JuceLibraryCode/BinaryData3.cpp, juce_binarydata_SurgeryRackAssets/JuceLibraryCode/BinaryData4.cpp, juce_binarydata_SurgeryRackAssets/JuceLibraryCode/BinaryData5.cpp, juce_binarydata_SurgeryRackAssets/JuceLibraryCode/BinaryData6.cpp, juce_binarydata_SurgeryRackAssets/JuceLibraryCode/BinaryData7.cpp, juce_binarydata_SurgeryRackAssets/JuceLibraryCode/BinaryData.h
+2026-11-15T10:47:46.2304563Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:47:46.4059799Z   juce_VST3ManifestHelper.cpp
+2026-11-15T10:47:46.7085765Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:47:46.8657672Z   BinaryData1.cpp
+2026-11-15T10:47:47.9153624Z   BinaryData2.cpp
+2026-11-15T10:47:48.7697452Z   BinaryData3.cpp
+2026-11-15T10:47:48.8267561Z   BinaryData4.cpp
+2026-11-15T10:47:48.8571390Z   BinaryData5.cpp
+2026-11-15T10:47:49.6350854Z   BinaryData6.cpp
+2026-11-15T10:47:50.5519897Z   BinaryData7.cpp
+2026-11-15T10:47:52.2851674Z   Generating Code...
+2026-11-15T10:47:53.4836601Z   SurgeryRackAssets.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\SurgeryRackAssets.lib
+2026-11-15T10:47:53.5520617Z   Generating PRISMVST_artefacts/JuceLibraryCode/JuceHeader.h
+2026-11-15T10:47:53.6015855Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:47:53.7586341Z   PluginProcessor.cpp
+2026-11-15T10:47:53.7601085Z   SurgeryWeatherAnalysis.cpp
+2026-11-15T10:47:53.8010510Z   PluginEditor.cpp
+2026-11-15T10:47:53.8230594Z   RootsEditor.cpp
+2026-11-15T10:47:55.9109051Z   juce_vst3_helper.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\juce_vst3_helper.exe
+2026-11-15T10:47:59.9817423Z D:\a\scalpeleq\scalpeleq\Source\SurgeryWeatherMeasurement.h(48,5): warning C4324: 'surgery::weather::SnapshotQueue<surgery::weather::Snapshot,8>': structure was padded due to alignment specifier [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:47:59.9866743Z   (compiling source file '../Source/SurgeryWeatherAnalysis.cpp')
+2026-11-15T10:47:59.9993668Z       D:\a\scalpeleq\scalpeleq\Source\SurgeryWeatherMeasurement.h(48,5):
+2026-11-15T10:48:00.0156038Z       the template instantiation context (the oldest one first) is
+2026-11-15T10:48:00.0203490Z           D:\a\scalpeleq\scalpeleq\Source\PluginProcessor.h(231,65):
+2026-11-15T10:48:00.0363125Z           see reference to class template instantiation 'surgery::weather::SnapshotQueue<surgery::weather::Snapshot,8>' being compiled
+2026-11-15T10:48:00.0483888Z
+2026-11-15T10:48:00.0531219Z D:\a\scalpeleq\scalpeleq\Source\SurgeryWeatherMeasurement.h(48,5): warning C4324: 'surgery::weather::SnapshotQueue<surgery::weather::Snapshot,8>': structure was padded due to alignment specifier [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:00.0533424Z   (compiling source file '../Source/PluginEditor.cpp')
+2026-11-15T10:48:00.0709285Z       D:\a\scalpeleq\scalpeleq\Source\SurgeryWeatherMeasurement.h(48,5):
+2026-11-15T10:48:00.0820819Z       the template instantiation context (the oldest one first) is
+2026-11-15T10:48:00.0860307Z           D:\a\scalpeleq\scalpeleq\Source\PluginProcessor.h(231,65):
+2026-11-15T10:48:00.1041337Z           see reference to class template instantiation 'surgery::weather::SnapshotQueue<surgery::weather::Snapshot,8>' being compiled
+2026-11-15T10:48:00.1158036Z
+2026-11-15T10:48:00.1179609Z D:\a\scalpeleq\scalpeleq\Source\SurgeryWeatherMeasurement.h(48,5): warning C4324: 'surgery::weather::SnapshotQueue<surgery::weather::Snapshot,8>': structure was padded due to alignment specifier [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:00.1220143Z   (compiling source file '../Source/RootsEditor.cpp')
+2026-11-15T10:48:00.1377137Z       D:\a\scalpeleq\scalpeleq\Source\SurgeryWeatherMeasurement.h(48,5):
+2026-11-15T10:48:00.1476196Z       the template instantiation context (the oldest one first) is
+2026-11-15T10:48:00.1500584Z           D:\a\scalpeleq\scalpeleq\Source\PluginProcessor.h(231,65):
+2026-11-15T10:48:00.1536778Z           see reference to class template instantiation 'surgery::weather::SnapshotQueue<surgery::weather::Snapshot,8>' being compiled
+2026-11-15T10:48:00.1694754Z
+2026-11-15T10:48:00.1795935Z D:\a\scalpeleq\scalpeleq\Source\SurgeryWeatherMeasurement.h(48,5): warning C4324: 'surgery::weather::SnapshotQueue<surgery::weather::Snapshot,8>': structure was padded due to alignment specifier [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:00.1854667Z   (compiling source file '../Source/PluginProcessor.cpp')
+2026-11-15T10:48:00.2013144Z       D:\a\scalpeleq\scalpeleq\Source\SurgeryWeatherMeasurement.h(48,5):
+2026-11-15T10:48:00.2133508Z       the template instantiation context (the oldest one first) is
+2026-11-15T10:48:00.2173437Z           D:\a\scalpeleq\scalpeleq\Source\PluginProcessor.h(231,65):
+2026-11-15T10:48:00.2237910Z           see reference to class template instantiation 'surgery::weather::SnapshotQueue<surgery::weather::Snapshot,8>' being compiled
+2026-11-15T10:48:00.2371158Z
+2026-11-15T10:48:02.5202791Z   ScalpelFluid3D.cpp
+2026-11-15T10:48:02.7407107Z   juce_audio_processors.cpp
+2026-11-15T10:48:03.8111821Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(27,21): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8296345Z   (compiling source file '../Source/RootsEditor.cpp')
+2026-11-15T10:48:03.8297447Z
+2026-11-15T10:48:03.8304437Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,102): warning C4244: 'argument': conversion from 'ValueType' to 'ValueType', possible loss of data [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8308953Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,102): warning C4244:         with [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8312851Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,102): warning C4244:         [ [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8316736Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,102): warning C4244:             ValueType=int [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8320545Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,102): warning C4244:         ] [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8324399Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,102): warning C4244:         and [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8329301Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,102): warning C4244:         [ [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8332189Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,102): warning C4244:             ValueType=float [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8334822Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,102): warning C4244:         ] [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8336423Z   (compiling source file '../Source/RootsEditor.cpp')
+2026-11-15T10:48:03.8337156Z
+2026-11-15T10:48:03.8338845Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,68): warning C4244: 'argument': conversion from 'ValueType' to 'ValueType', possible loss of data [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8341382Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,68): warning C4244:         with [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8435810Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,68): warning C4244:         [ [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8455988Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,68): warning C4244:             ValueType=int [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8490984Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,68): warning C4244:         ] [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8654622Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,68): warning C4244:         and [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8771348Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,68): warning C4244:         [ [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8787518Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,68): warning C4244:             ValueType=float [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8831034Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,68): warning C4244:         ] [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.8989006Z   (compiling source file '../Source/RootsEditor.cpp')
+2026-11-15T10:48:03.9105939Z
+2026-11-15T10:48:03.9126885Z D:\a\scalpeleq\scalpeleq\Source\ScalpelFinish.h(190,47): warning C4996: 'juce::Font::getStringWidthFloat': Use GlyphArrangement or TextLayout to compute text layouts [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.9166460Z   (compiling source file '../Source/RootsEditor.cpp')
+2026-11-15T10:48:03.9326570Z
+2026-11-15T10:48:03.9445269Z D:\a\scalpeleq\scalpeleq\Source\ScalpelFinish.h(191,87): warning C4996: 'juce::Font::getStringWidthFloat': Use GlyphArrangement or TextLayout to compute text layouts [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.9463627Z   (compiling source file '../Source/RootsEditor.cpp')
+2026-11-15T10:48:03.9485316Z
+2026-11-15T10:48:03.9647102Z D:\a\scalpeleq\scalpeleq\Source\ScalpelFinish.h(193,25): warning C4996: 'juce::Font::getStringWidthFloat': Use GlyphArrangement or TextLayout to compute text layouts [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.9785485Z   (compiling source file '../Source/RootsEditor.cpp')
+2026-11-15T10:48:03.9791675Z
+2026-11-15T10:48:03.9805848Z D:\a\scalpeleq\scalpeleq\Source\ScalpelFinish.h(194,74): warning C4996: 'juce::Font::getStringWidthFloat': Use GlyphArrangement or TextLayout to compute text layouts [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:03.9983034Z   (compiling source file '../Source/RootsEditor.cpp')
+2026-11-15T10:48:04.0121142Z
+2026-11-15T10:48:04.0140531Z D:\a\scalpeleq\scalpeleq\Source\ScalpelFinish.h(199,118): warning C4996: 'juce::Font::getStringWidthFloat': Use GlyphArrangement or TextLayout to compute text layouts [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.0315965Z   (compiling source file '../Source/RootsEditor.cpp')
+2026-11-15T10:48:04.0457362Z
+2026-11-15T10:48:04.0476200Z D:\a\scalpeleq\scalpeleq\Source\ScalpelFinish.h(200,76): warning C4996: 'juce::Font::getStringWidthFloat': Use GlyphArrangement or TextLayout to compute text layouts [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.0658864Z   (compiling source file '../Source/RootsEditor.cpp')
+2026-11-15T10:48:04.0779754Z
+2026-11-15T10:48:04.0814882Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(27,21): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.0994553Z   (compiling source file '../Source/PluginProcessor.cpp')
+2026-11-15T10:48:04.1114494Z
+2026-11-15T10:48:04.1134546Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,102): warning C4244: 'argument': conversion from 'ValueType' to 'ValueType', possible loss of data [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.1139406Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,102): warning C4244:         with [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.1348988Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,102): warning C4244:         [ [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.1483008Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,102): warning C4244:             ValueType=int [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.1691575Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,102): warning C4244:         ] [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.1851252Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,102): warning C4244:         and [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.2015958Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,102): warning C4244:         [ [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.2150254Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,102): warning C4244:             ValueType=float [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.2190339Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,102): warning C4244:         ] [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.2210057Z   (compiling source file '../Source/PluginProcessor.cpp')
+2026-11-15T10:48:04.2347302Z
+2026-11-15T10:48:04.2484961Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,68): warning C4244: 'argument': conversion from 'ValueType' to 'ValueType', possible loss of data [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.2524819Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,68): warning C4244:         with [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.2541151Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,68): warning C4244:         [ [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.2683178Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,68): warning C4244:             ValueType=int [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.2819474Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,68): warning C4244:         ] [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.2876971Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,68): warning C4244:         and [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.3078180Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,68): warning C4244:         [ [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.3197015Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,68): warning C4244:             ValueType=float [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.3226737Z D:\a\scalpeleq\scalpeleq\Source\ScalpelReferenceLayout.h(63,68): warning C4244:         ] [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.3457433Z   (compiling source file '../Source/PluginProcessor.cpp')
+2026-11-15T10:48:04.3540878Z
+2026-11-15T10:48:04.3562412Z D:\a\scalpeleq\scalpeleq\Source\ScalpelFinish.h(190,47): warning C4996: 'juce::Font::getStringWidthFloat': Use GlyphArrangement or TextLayout to compute text layouts [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.3794550Z   (compiling source file '../Source/PluginProcessor.cpp')
+2026-11-15T10:48:04.3873209Z
+2026-11-15T10:48:04.3894063Z D:\a\scalpeleq\scalpeleq\Source\ScalpelFinish.h(191,87): warning C4996: 'juce::Font::getStringWidthFloat': Use GlyphArrangement or TextLayout to compute text layouts [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.4118933Z   (compiling source file '../Source/PluginProcessor.cpp')
+2026-11-15T10:48:04.4209998Z
+2026-11-15T10:48:04.4211624Z D:\a\scalpeleq\scalpeleq\Source\ScalpelFinish.h(193,25): warning C4996: 'juce::Font::getStringWidthFloat': Use GlyphArrangement or TextLayout to compute text layouts [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.4230732Z   (compiling source file '../Source/PluginProcessor.cpp')
+2026-11-15T10:48:04.4471912Z
+2026-11-15T10:48:04.4530486Z D:\a\scalpeleq\scalpeleq\Source\ScalpelFinish.h(194,74): warning C4996: 'juce::Font::getStringWidthFloat': Use GlyphArrangement or TextLayout to compute text layouts [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.4570305Z   (compiling source file '../Source/PluginProcessor.cpp')
+2026-11-15T10:48:04.4814760Z
+2026-11-15T10:48:04.4853067Z D:\a\scalpeleq\scalpeleq\Source\ScalpelFinish.h(199,118): warning C4996: 'juce::Font::getStringWidthFloat': Use GlyphArrangement or TextLayout to compute text layouts [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.4891919Z   (compiling source file '../Source/PluginProcessor.cpp')
+2026-11-15T10:48:04.5143090Z
+2026-11-15T10:48:04.5181441Z D:\a\scalpeleq\scalpeleq\Source\ScalpelFinish.h(200,76): warning C4996: 'juce::Font::getStringWidthFloat': Use GlyphArrangement or TextLayout to compute text layouts [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.5183656Z   (compiling source file '../Source/PluginProcessor.cpp')
+2026-11-15T10:48:04.5223973Z
+2026-11-15T10:48:04.5484951Z D:\a\scalpeleq\scalpeleq\Source\SurgeryLookAndFeel.h(390,41): warning C4996: 'juce::Font::getStringWidthFloat': Use GlyphArrangement or TextLayout to compute text layouts [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.5501212Z   (compiling source file '../Source/RootsEditor.cpp')
+2026-11-15T10:48:04.5520015Z
+2026-11-15T10:48:04.5570896Z D:\a\scalpeleq\scalpeleq\Source\SurgeryLookAndFeel.h(390,41): warning C4996: 'juce::Font::getStringWidthFloat': Use GlyphArrangement or TextLayout to compute text layouts [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.5824721Z   (compiling source file '../Source/PluginProcessor.cpp')
+2026-11-15T10:48:04.5836664Z
+2026-11-15T10:48:04.5895508Z D:\a\scalpeleq\scalpeleq\Source\ScalpelUI105.h(82,109): warning C4100: 'polished': unreferenced parameter [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.6155552Z   (compiling source file '../Source/RootsEditor.cpp')
+2026-11-15T10:48:04.6156270Z
+2026-11-15T10:48:04.6161428Z D:\a\scalpeleq\scalpeleq\Source\RootsEditor.cpp(1226,14): warning C4458: declaration of 'constrainer' hides class member [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:04.6220833Z       D:\a\scalpeleq\scalpeleq\build\_deps\juce-src\modules\juce_audio_processors\processors\juce_AudioProcessorEditor.h(265,33):
+2026-11-15T10:48:04.6480952Z       see declaration of 'juce::AudioProcessorEditor::constrainer'
+2026-11-15T10:48:04.6492401Z
+2026-11-15T10:48:06.9308157Z   juce_audio_processors_ara.cpp
+2026-11-15T10:48:06.9553384Z   juce_audio_processors_lv2_libs.cpp
+2026-11-15T10:48:06.9746899Z   juce_gui_extra.cpp
+2026-11-15T10:48:07.7498513Z   juce_gui_basics.cpp
+2026-11-15T10:48:10.2663118Z D:\a\scalpeleq\scalpeleq\Source\ScalpelFluid3D.cpp(292,38): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\scalpeleq\scalpeleq\build\PRISMVST.vcxproj]
+2026-11-15T10:48:12.9926285Z   juce_graphics.cpp
+2026-11-15T10:48:14.3385708Z   juce_graphics_Harfbuzz.cpp
+2026-11-15T10:48:15.6916058Z   juce_events.cpp
+2026-11-15T10:48:21.1479929Z   juce_core.cpp
+2026-11-15T10:48:25.9261806Z   juce_core_CompilationTime.cpp
+2026-11-15T10:48:25.9472815Z   juce_data_structures.cpp
+2026-11-15T10:48:27.1155005Z   juce_audio_basics.cpp
+2026-11-15T10:48:28.2146336Z   juce_audio_utils.cpp
+2026-11-15T10:48:30.0884282Z   juce_audio_formats.cpp
+2026-11-15T10:48:30.8421212Z   juce_audio_devices.cpp
+2026-11-15T10:48:33.0539480Z   juce_dsp.cpp
+2026-11-15T10:48:38.9947290Z   juce_graphics_Sheenbidi.c
+2026-11-15T10:48:40.9629524Z   PRISMVST.vcxproj -> D:\a\scalpeleq\scalpeleq\build\PRISMVST_artefacts\Release\Scalpel EQ_SharedCode.lib
+2026-11-15T10:48:41.0328727Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:48:41.1566585Z   juce_audio_plugin_client_AAX.cpp
+2026-11-15T10:48:41.1688631Z   juce_audio_plugin_client_AAX_utils.cpp
+2026-11-15T10:48:41.1690946Z   juce_audio_plugin_client_ARA.cpp
+2026-11-15T10:48:41.1692076Z   juce_audio_plugin_client_LV2.cpp
+2026-11-15T10:48:41.1938881Z   juce_audio_plugin_client_Standalone.cpp
+2026-11-15T10:48:41.1960395Z   juce_audio_plugin_client_Unity.cpp
+2026-11-15T10:48:41.1965462Z   juce_audio_plugin_client_VST2.cpp
+2026-11-15T10:48:41.1966041Z   juce_audio_plugin_client_VST3.cpp
+2026-11-15T10:48:49.9851901Z      Creating library D:/a/scalpeleq/scalpeleq/build/PRISMVST_artefacts/Release/VST3/Scalpel EQ.lib and object D:/a/scalpeleq/scalpeleq/build/PRISMVST_artefacts/Release/VST3/Scalpel EQ.exp
+2026-11-15T10:48:50.0219176Z   Generating code
+2026-11-15T10:50:23.1239960Z   Finished generating code
+2026-11-15T10:50:23.9556405Z   PRISMVST_VST3.vcxproj -> D:\a\scalpeleq\scalpeleq\build\PRISMVST_artefacts\Release\VST3\Scalpel EQ.vst3\Contents\x86_64-win\Scalpel EQ.vst3
+2026-11-15T10:50:24.0193076Z   removing moduleinfo.json
+2026-11-15T10:50:24.0658530Z   creating D:/a/scalpeleq/scalpeleq/build/PRISMVST_artefacts/Release/VST3/Scalpel EQ.vst3/Contents/Resources/moduleinfo.json
+2026-11-15T10:50:24.2810565Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:24.2834770Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:24.4233856Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\prism_roots_parent_controls_tests.vcxproj]
+2026-11-15T10:50:24.4239990Z   RootsParentControlsTests.cpp
+2026-11-15T10:50:24.4255634Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\prism_lab_analyzer_tests.vcxproj]
+2026-11-15T10:50:24.4256941Z   PrismLabAnalyzerTests.cpp
+2026-11-15T10:50:24.4721568Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:24.5714828Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\prism_roots_realtime_tests.vcxproj]
+2026-11-15T10:50:24.5762111Z   RootsRealtimeTests.cpp
+2026-11-15T10:50:26.1261947Z   prism_lab_analyzer_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\prism_lab_analyzer_tests.exe
+2026-11-15T10:50:26.3787183Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:26.4812561Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\prism_roots_tests.vcxproj]
+2026-11-15T10:50:26.4856168Z   RootsCoreTests.cpp
+2026-11-15T10:50:26.9990567Z   prism_roots_parent_controls_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\prism_roots_parent_controls_tests.exe
+2026-11-15T10:50:27.0941390Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:27.1854441Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\prism_roots_ui_spectrum_tests.vcxproj]
+2026-11-15T10:50:27.1902837Z   RootsUiSpectrumTests.cpp
+2026-11-15T10:50:27.3795337Z   prism_roots_realtime_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\prism_roots_realtime_tests.exe
+2026-11-15T10:50:27.5401782Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:27.6355837Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\scalpel_analyzer_health_tests.vcxproj]
+2026-11-15T10:50:27.6405047Z   ScalpelAnalyzerHealthTests.cpp
+2026-11-15T10:50:28.5416839Z   prism_roots_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\prism_roots_tests.exe
+2026-11-15T10:50:28.7157441Z   Generating prismvst_tests_artefacts/JuceLibraryCode/JuceHeader.h
+2026-11-15T10:50:28.7623675Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:28.8887742Z cl : command line  warning D9025: overriding '/DNDEBUG=1' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\prismvst_tests.vcxproj]
+2026-11-15T10:50:28.8936925Z   ProcessorTests.cpp
+2026-11-15T10:50:29.1967618Z   scalpel_analyzer_health_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\scalpel_analyzer_health_tests.exe
+2026-11-15T10:50:29.3029899Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:29.4088688Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\scalpel_band_tests.vcxproj]
+2026-11-15T10:50:29.4142836Z   ScalpelBandTests.cpp
+2026-11-15T10:50:29.5077883Z   prism_roots_ui_spectrum_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\prism_roots_ui_spectrum_tests.exe
+2026-11-15T10:50:29.6050719Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:29.7065186Z   ScalpelBandStopExperiment.cpp
+2026-11-15T10:50:31.7818635Z   scalpel_band_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\scalpel_band_tests.exe
+2026-11-15T10:50:31.9029238Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:32.0368846Z   ScalpelBandStopTransitionTests.cpp
+2026-11-15T10:50:33.1852039Z   scalpel_bandstop_experiment.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\scalpel_bandstop_experiment.exe
+2026-11-15T10:50:33.2822363Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:33.3734259Z   ScalpelBandStopMeasuredTests.cpp
+2026-11-15T10:50:33.9173711Z   scalpel_bandstop_transition_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\scalpel_bandstop_transition_tests.exe
+2026-11-15T10:50:34.0378498Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:34.1425783Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\scalpel_chroma_tests.vcxproj]
+2026-11-15T10:50:34.1460164Z   ScalpelChromaTests.cpp
+2026-11-15T10:50:35.5468128Z   scalpel_candidate_measured.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\scalpel_candidate_measured.exe
+2026-11-15T10:50:35.6528887Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:35.7764569Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\scalpel_color_tests.vcxproj]
+2026-11-15T10:50:35.7809272Z   ScalpelColorTests.cpp
+2026-11-15T10:50:35.9730153Z   scalpel_chroma_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\scalpel_chroma_tests.exe
+2026-11-15T10:50:36.1068144Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:36.2222091Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\scalpel_db_axis_tests.vcxproj]
+2026-11-15T10:50:36.2272927Z   ScalpelDbAxisTests.cpp
+2026-11-15T10:50:37.1629555Z   QualityTests.cpp
+2026-11-15T10:50:37.5594842Z   scalpel_color_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\scalpel_color_tests.exe
+2026-11-15T10:50:37.6494711Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:37.7553706Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\scalpel_mercury_tests.vcxproj]
+2026-11-15T10:50:37.7592506Z   ScalpelMercuryTests.cpp
+2026-11-15T10:50:37.9550808Z   scalpel_db_axis_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\scalpel_db_axis_tests.exe
+2026-11-15T10:50:38.0810722Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:38.1898031Z   ScalpelRemovalDomainTests.cpp
+2026-11-15T10:50:39.4752011Z   scalpel_mercury_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\scalpel_mercury_tests.exe
+2026-11-15T10:50:39.6512458Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:39.7662415Z   ScalpelSpectralGateTests.cpp
+2026-11-15T10:50:40.4821616Z   scalpel_removal_domain_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\scalpel_removal_domain_tests.exe
+2026-11-15T10:50:40.6126879Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:40.7204774Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\scalpel_under_curve_tests.vcxproj]
+2026-11-15T10:50:40.7250580Z   ScalpelUnderCurveTests.cpp
+2026-11-15T10:50:42.2402205Z   scalpel_spectral_gate.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\scalpel_spectral_gate.exe
+2026-11-15T10:50:42.3377802Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:42.3420249Z   scalpel_under_curve_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\scalpel_under_curve_tests.exe
+2026-11-15T10:50:42.4566517Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\surgery_analysis_tests.vcxproj]
+2026-11-15T10:50:42.4613081Z   SurgeryAnalysisTests.cpp
+2026-11-15T10:50:42.4681026Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:42.5695989Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\surgery_carve_tests.vcxproj]
+2026-11-15T10:50:42.5743450Z   SurgeryCarveTests.cpp
+2026-11-15T10:50:43.4242903Z   surgery_analysis_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\surgery_analysis_tests.exe
+2026-11-15T10:50:43.5230744Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:43.6166269Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\surgery_dual_knob_tests.vcxproj]
+2026-11-15T10:50:43.6202103Z   SurgeryDualKnobDSPTests.cpp
+2026-11-15T10:50:44.2236439Z   surgery_carve_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\surgery_carve_tests.exe
+2026-11-15T10:50:44.3569491Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:44.4683798Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\surgery_header_layout_tests.vcxproj]
+2026-11-15T10:50:44.4731763Z   SurgeryHeaderLayoutTests.cpp
+2026-11-15T10:50:45.9137408Z   surgery_header_layout_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\surgery_header_layout_tests.exe
+2026-11-15T10:50:46.0146915Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:46.1139941Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\surgery_node_focus_tests.vcxproj]
+2026-11-15T10:50:46.1186750Z   SurgeryNodeFocusTests.cpp
+2026-11-15T10:50:46.3184725Z   surgery_dual_knob_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\surgery_dual_knob_tests.exe
+2026-11-15T10:50:46.4268360Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:46.5357032Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\surgery_onyx_study.vcxproj]
+2026-11-15T10:50:46.5402718Z   OnyxStudy.cpp
+2026-11-15T10:50:47.7845407Z   surgery_node_focus_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\surgery_node_focus_tests.exe
+2026-11-15T10:50:47.8880329Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:47.9824485Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\surgery_precision_tests.vcxproj]
+2026-11-15T10:50:47.9873566Z   SurgeryPrecisionTests.cpp
+2026-11-15T10:50:49.5724351Z   surgery_precision_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\surgery_precision_tests.exe
+2026-11-15T10:50:49.6861800Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:49.7895475Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\surgery_response_tests.vcxproj]
+2026-11-15T10:50:49.7944858Z   SurgeryResponseTests.cpp
+2026-11-15T10:50:50.4546861Z   surgery_onyx_study.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\surgery_onyx_study.exe
+2026-11-15T10:50:50.5554558Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:50.6564604Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\surgery_root_routing_tests.vcxproj]
+2026-11-15T10:50:50.6595731Z   SurgeryWeatherTests.cpp
+2026-11-15T10:50:50.6601746Z   SurgeryRootRoutingTests.cpp
+2026-11-15T10:50:52.7518218Z   surgery_response_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\surgery_response_tests.exe
+2026-11-15T10:50:52.8800938Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:52.9856280Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\surgery_sonar_tests.vcxproj]
+2026-11-15T10:50:52.9902289Z   SurgerySonarTests.cpp
+2026-11-15T10:50:53.2847155Z   surgery_root_routing_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\surgery_root_routing_tests.exe
+2026-11-15T10:50:53.3931792Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:53.4862593Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\surgery_spectral_colour_tests.vcxproj]
+2026-11-15T10:50:53.4913374Z   SurgerySpectralColoursTests.cpp
+2026-11-15T10:50:54.6410774Z   surgery_sonar_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\surgery_sonar_tests.exe
+2026-11-15T10:50:54.7678921Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:54.8740993Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\surgery_spectrogram_tests.vcxproj]
+2026-11-15T10:50:54.8788200Z   SurgerySpectrogramTests.cpp
+2026-11-15T10:50:55.2127859Z   surgery_spectral_colour_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\surgery_spectral_colour_tests.exe
+2026-11-15T10:50:55.3166079Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:50:55.4240129Z cl : command line  warning D9025: overriding '/DNDEBUG' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\surgery_spectrum_fill_tests.vcxproj]
+2026-11-15T10:50:55.4287883Z   SurgerySpectrumFillTests.cpp
+2026-11-15T10:50:56.3921718Z   surgery_spectrogram_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\surgery_spectrogram_tests.exe
+2026-11-15T10:50:56.8812417Z   surgery_spectrum_fill_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\Release\surgery_spectrum_fill_tests.exe
+2026-11-15T10:50:58.3853188Z   SurgeryWeatherFieldTests.cpp
+2026-11-15T10:51:04.1305256Z   SurgeryStormChassisTests.cpp
+2026-11-15T10:51:11.0632540Z   AllocationProbe.cpp
+2026-11-15T10:51:11.1525737Z   PluginProcessor.cpp
+2026-11-15T10:51:19.0498055Z   SurgeryWeatherAnalysis.cpp
+2026-11-15T10:51:24.3416607Z   PluginEditor.cpp
+2026-11-15T10:51:29.7024129Z   RootsEditor.cpp
+2026-11-15T10:51:37.2030238Z   ScalpelFluid3D.cpp
+2026-11-15T10:51:43.3455826Z   juce_audio_utils.cpp
+2026-11-15T10:51:49.2229395Z   juce_audio_processors.cpp
+2026-11-15T10:51:58.8404656Z   juce_audio_processors_ara.cpp
+2026-11-15T10:51:58.8478336Z   juce_audio_processors_lv2_libs.cpp
+2026-11-15T10:51:58.8542568Z   juce_gui_extra.cpp
+2026-11-15T10:52:04.1233408Z   juce_gui_basics.cpp
+2026-11-15T10:52:15.3831205Z   juce_graphics.cpp
+2026-11-15T10:52:23.9381148Z   juce_graphics_Harfbuzz.cpp
+2026-11-15T10:52:34.9916447Z   juce_events.cpp
+2026-11-15T10:52:38.2908652Z   Generating Code...
+2026-11-15T10:54:06.8007615Z   Compiling...
+2026-11-15T10:54:06.8009553Z   juce_core.cpp
+2026-11-15T10:54:11.0368641Z   juce_core_CompilationTime.cpp
+2026-11-15T10:54:11.0434788Z   juce_data_structures.cpp
+2026-11-15T10:54:13.4952001Z   juce_audio_basics.cpp
+2026-11-15T10:54:17.0257364Z   juce_audio_formats.cpp
+2026-11-15T10:54:21.3432244Z   juce_audio_devices.cpp
+2026-11-15T10:54:26.6939423Z   juce_dsp.cpp
+2026-11-15T10:54:30.5444865Z   Generating Code...
+2026-11-15T10:54:53.4403124Z cl : command line  warning D9025: overriding '/DNDEBUG=1' with '/UNDEBUG' [D:\a\scalpeleq\scalpeleq\build\prismvst_tests.vcxproj]
+2026-11-15T10:54:53.4437416Z   juce_graphics_Sheenbidi.c
+2026-11-15T10:54:54.7053410Z   prismvst_tests.vcxproj -> D:\a\scalpeleq\scalpeleq\build\prismvst_tests_artefacts\Release\prismvst_tests.exe
+2026-11-15T10:54:54.8079379Z   Building Custom Rule D:/a/scalpeleq/scalpeleq/CMakeLists.txt
+2026-11-15T10:54:55.0998235Z ##[group]Run ctest --test-dir build -C Release --output-on-failure
+2026-11-15T10:54:55.0998819Z [36;1mctest --test-dir build -C Release --output-on-failure[0m
+2026-11-15T10:54:55.1074951Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-11-15T10:54:55.1075383Z env:
+2026-11-15T10:54:55.1075619Z   SCALPEL_GPU_DISABLE: 1
+2026-11-15T10:54:55.1075888Z ##[endgroup]
+2026-11-15T10:54:56.0372941Z Test project D:/a/scalpeleq/scalpeleq/build
+2026-11-15T10:54:56.0764882Z       Start  1: scalpel_db_axis_calibration
+2026-11-15T10:54:56.0921495Z  1/34 Test  #1: scalpel_db_axis_calibration ..................   Passed    0.01 sec
+2026-11-15T10:54:56.0933244Z       Start  2: scalpel_floor01_analyzer_health
+2026-11-15T10:54:56.1036683Z  2/34 Test  #2: scalpel_floor01_analyzer_health ..............   Passed    0.01 sec
+2026-11-15T10:54:56.1040359Z       Start  3: scalpel_xray_under_curve_mask
+2026-11-15T10:54:56.1141643Z  3/34 Test  #3: scalpel_xray_under_curve_mask ................   Passed    0.01 sec
+2026-11-15T10:54:56.1145337Z       Start  4: scalpel_xray_liquid_surface
+2026-11-15T10:54:56.1262054Z  4/34 Test  #4: scalpel_xray_liquid_surface ..................   Passed    0.01 sec
+2026-11-15T10:54:56.1265683Z       Start  5: scalpel_xray_pitch_class_mapping
+2026-11-15T10:54:56.1367880Z  5/34 Test  #5: scalpel_xray_pitch_class_mapping .............   Passed    0.01 sec
+2026-11-15T10:54:56.1371726Z       Start  6: scalpel_color_five_knob_dsp
+2026-11-15T10:54:56.1954176Z  6/34 Test  #6: scalpel_color_five_knob_dsp ..................   Passed    0.06 sec
+2026-11-15T10:54:56.1957906Z       Start  7: scalpel_phase_limit_band_processing
+2026-11-15T10:54:57.1700648Z  7/34 Test  #7: scalpel_phase_limit_band_processing ..........   Passed    0.97 sec
+2026-11-15T10:54:57.1704807Z       Start  8: surgery_onyx_character_regression
+2026-11-15T10:54:58.3078218Z  8/34 Test  #8: surgery_onyx_character_regression ............   Passed    1.14 sec
+2026-11-15T10:54:58.3082588Z       Start  9: scalpel_vst3_native_capture
+2026-11-15T10:55:09.0351251Z  9/34 Test  #9: scalpel_vst3_native_capture ..................   Passed   10.73 sec
+2026-11-15T10:55:09.0372265Z       Start 10: prismvst_tests
+2026-11-15T10:57:17.2288716Z 10/34 Test #10: prismvst_tests ...............................   Passed  128.19 sec
+2026-11-15T10:57:17.2293673Z       Start 11: surgery_weather_calibration
+2026-11-15T10:57:17.6141926Z 11/34 Test #11: surgery_weather_calibration ..................   Passed    0.38 sec
+2026-11-15T10:57:17.6146190Z       Start 12: surgery_weather_field
+2026-11-15T10:57:19.3463253Z 12/34 Test #12: surgery_weather_field ........................   Passed    1.73 sec
+2026-11-15T10:57:19.3467458Z       Start 13: prism_roots_four_proofs
+2026-11-15T10:57:19.3612193Z 13/34 Test #13: prism_roots_four_proofs ......................   Passed    0.01 sec
+2026-11-15T10:57:19.3615647Z       Start 14: prism_lab_analyzer_four_proofs
+2026-11-15T10:57:19.3726071Z 14/34 Test #14: prism_lab_analyzer_four_proofs ...............   Passed    0.01 sec
+2026-11-15T10:57:19.3729986Z       Start 15: prism_roots_realtime_four_proofs
+2026-11-15T10:57:19.6435843Z 15/34 Test #15: prism_roots_realtime_four_proofs .............   Passed    0.27 sec
+2026-11-15T10:57:19.6440525Z       Start 16: prism_roots_ui_spectrum_four_proofs
+2026-11-15T10:57:19.6840641Z 16/34 Test #16: prism_roots_ui_spectrum_four_proofs ..........   Passed    0.04 sec
+2026-11-15T10:57:19.6844391Z       Start 17: prism_roots_parent_controls_four_proofs
+2026-11-15T10:57:19.8215265Z 17/34 Test #17: prism_roots_parent_controls_four_proofs ......   Passed    0.14 sec
+2026-11-15T10:57:19.8220254Z       Start 18: surgery_carve_four_proofs
+2026-11-15T10:57:19.8427133Z 18/34 Test #18: surgery_carve_four_proofs ....................   Passed    0.02 sec
+2026-11-15T10:57:19.8431194Z       Start 19: surgery_sonar_four_proofs
+2026-11-15T10:57:19.8537413Z 19/34 Test #19: surgery_sonar_four_proofs ....................   Passed    0.01 sec
+2026-11-15T10:57:19.8543880Z       Start 20: surgery_header_layout_proofs
+2026-11-15T10:57:19.8648995Z 20/34 Test #20: surgery_header_layout_proofs .................   Passed    0.01 sec
+2026-11-15T10:57:19.8653057Z       Start 21: surgery_node_focus_proofs
+2026-11-15T10:57:19.8757947Z 21/34 Test #21: surgery_node_focus_proofs ....................   Passed    0.01 sec
+2026-11-15T10:57:19.8761859Z       Start 22: surgery_root_routing_proofs
+2026-11-15T10:57:20.1045936Z 22/34 Test #22: surgery_root_routing_proofs ..................   Passed    0.23 sec
+2026-11-15T10:57:20.1051409Z       Start 23: surgery_response_proofs
+2026-11-15T10:57:20.2450622Z 23/34 Test #23: surgery_response_proofs ......................   Passed    0.14 sec
+2026-11-15T10:57:20.2455754Z       Start 24: surgery_analysis_proofs
+2026-11-15T10:57:20.2557636Z 24/34 Test #24: surgery_analysis_proofs ......................   Passed    0.01 sec
+2026-11-15T10:57:20.2561197Z       Start 25: surgery_precision_controls
+2026-11-15T10:57:20.2665489Z 25/34 Test #25: surgery_precision_controls ...................   Passed    0.01 sec
+2026-11-15T10:57:20.2669341Z       Start 26: surgery_dual_knob_calibration
+2026-11-15T10:57:22.2734847Z 26/34 Test #26: surgery_dual_knob_calibration ................   Passed    2.01 sec
+2026-11-15T10:57:22.2739454Z       Start 27: surgery_spectrogram_spsc
+2026-11-15T10:57:22.2863662Z 27/34 Test #27: surgery_spectrogram_spsc .....................   Passed    0.01 sec
+2026-11-15T10:57:22.2867744Z       Start 28: surgery_spectrum_fill_decay
+2026-11-15T10:57:22.2969174Z 28/34 Test #28: surgery_spectrum_fill_decay ..................   Passed    0.01 sec
+2026-11-15T10:57:22.2972979Z       Start 29: surgery_spectral_colour_mapping
+2026-11-15T10:57:22.3080905Z 29/34 Test #29: surgery_spectral_colour_mapping ..............   Passed    0.01 sec
+2026-11-15T10:57:22.3085209Z       Start 30: scalpel_removal_domain_isolation
+2026-11-15T10:57:24.0098264Z 30/34 Test #30: scalpel_removal_domain_isolation .............   Passed    1.70 sec
+2026-11-15T10:57:24.0102730Z       Start 31: scalpel_experimental_crossfade_transition
+2026-11-15T10:57:24.1076795Z 31/34 Test #31: scalpel_experimental_crossfade_transition ....   Passed    0.10 sec
+2026-11-15T10:57:24.1081796Z       Start 32: scalpel_spectral_release_gate
+2026-11-15T10:58:37.6875191Z 32/34 Test #32: scalpel_spectral_release_gate ................***Failed   73.58 sec
+2026-11-15T10:58:37.6876162Z probes=116 interior_60dB_failures=24 domain_isolation_failures=0
+2026-11-15T10:58:37.6876692Z
+2026-11-15T10:58:37.6880705Z       Start 33: scalpel_experimental_audio_safety_gate
+2026-11-15T10:58:37.8575932Z 33/34 Test #33: scalpel_experimental_audio_safety_gate .......***Failed    0.17 sec
+2026-11-15T10:58:37.8576648Z candidate_probes=128 interior_60dB_failures=0 signal_or_safety_failures=4
+2026-11-15T10:58:37.8577011Z
+2026-11-15T10:58:37.8580834Z       Start 34: scalpel_candidate_steady_sine_measurements
+2026-11-15T10:58:39.5815340Z 34/34 Test #34: scalpel_candidate_steady_sine_measurements ...   Passed    1.72 sec
+2026-11-15T10:58:39.5826871Z
+2026-11-15T10:58:39.5827326Z 94% tests passed, 2 tests failed out of 34
+2026-11-15T10:58:39.5827706Z
+2026-11-15T10:58:39.5827883Z Label Time Summary:
+2026-11-15T10:58:39.5828367Z release_gate    =  73.75 sec*proc (2 tests)
+2026-11-15T10:58:39.5828710Z
+2026-11-15T10:58:39.5828910Z Total Test time (real) = 223.54 sec
+2026-11-15T10:58:39.5829246Z
+2026-11-15T10:58:39.5829406Z The following tests FAILED:
+2026-11-15T10:58:39.5830617Z 	 32 - scalpel_spectral_release_gate (Failed)            release_gate
+2026-11-15T10:58:39.5831663Z 	 33 - scalpel_experimental_audio_safety_gate (Failed)   release_gate
+2026-11-15T10:58:39.5836561Z Errors while running CTest
+2026-11-15T10:58:39.7162670Z ##[error]Process completed with exit code 1.
+2026-11-15T10:58:39.7384023Z ##[group]Run actions/upload-artifact@v4
+2026-11-15T10:58:39.7384461Z with:
+2026-11-15T10:58:39.7384724Z   name: SCALPEL-EQ-quality-evidence
+2026-11-15T10:58:39.7385593Z   path: build/Testing/Temporary/LastTest.log
+build/surgery-ui-*.png
+build/scalpel-ui-*.png
+build/surgery-*.csv
+build/spectral-gate.csv
+build/candidate-*.csv
+
+2026-11-15T10:58:39.7386366Z   if-no-files-found: warn
+2026-11-15T10:58:39.7386642Z   compression-level: 6
+2026-11-15T10:58:39.7386897Z   overwrite: false
+2026-11-15T10:58:39.7387154Z   include-hidden-files: false
+2026-11-15T10:58:39.7387430Z ##[endgroup]
+2026-11-15T10:58:39.9270576Z (node:5760) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-15T10:58:39.9271946Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-15T10:58:40.0205161Z With the provided path, there will be 184 files uploaded
+2026-11-15T10:58:40.0211708Z Artifact name is valid!
+2026-11-15T10:58:40.0213147Z Root directory input is valid!
+2026-11-15T10:58:40.2182261Z Beginning upload of artifact content to blob storage
+2026-11-15T10:58:40.5706565Z (node:5760) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-15T10:58:40.7280373Z Uploaded bytes 8388608
+2026-11-15T10:58:41.0816645Z Uploaded bytes 16777216
+2026-11-15T10:58:41.3141743Z Uploaded bytes 25165824
+2026-11-15T10:58:41.5502270Z Uploaded bytes 33554432
+2026-11-15T10:58:41.8448583Z Uploaded bytes 41943040
+2026-11-15T10:58:42.0837981Z Uploaded bytes 50331648
+2026-11-15T10:58:42.4262060Z Uploaded bytes 58720256
+2026-11-15T10:58:42.7471630Z Uploaded bytes 67108864
+2026-11-15T10:58:43.0079683Z Uploaded bytes 75497472
+2026-11-15T10:58:43.2515846Z Uploaded bytes 83886080
+2026-11-15T10:58:43.4910014Z Uploaded bytes 90925727
+2026-11-15T10:58:43.5066341Z Finished uploading artifact content to blob storage!
+2026-11-15T10:58:43.5070599Z SHA256 digest of uploaded artifact zip is e09b3c1910272bdce8b0b46e6c1209845d3df0570039dfad3f58e4dbcfaa2104
+2026-11-15T10:58:43.5073386Z Finalizing artifact upload
+2026-11-15T10:58:43.8080946Z Artifact SCALPEL-EQ-quality-evidence.zip successfully finalized. Artifact ID 14158638345
+2026-11-15T10:58:43.8081962Z Artifact SCALPEL-EQ-quality-evidence has been successfully uploaded! Final size is 90925727 bytes. Artifact ID is 14158638345
+2026-11-15T10:58:43.8096324Z Artifact download URL: https://github.com/spiraletech/scalpeleq/actions/runs/43705694363/artifacts/14158638345
+2026-11-15T10:58:43.8536625Z ##[group]Run actions/upload-artifact@v4
+2026-11-15T10:58:43.8536969Z with:
+2026-11-15T10:58:43.8537166Z   name: SCALPEL-EQ-pluginval
+2026-11-15T10:58:43.8537410Z   path: validation
+2026-11-15T10:58:43.8537604Z   if-no-files-found: warn
+2026-11-15T10:58:43.8537867Z   compression-level: 6
+2026-11-15T10:58:43.8538067Z   overwrite: false
+2026-11-15T10:58:43.8538276Z   include-hidden-files: false
+2026-11-15T10:58:43.8538531Z ##[endgroup]
+2026-11-15T10:58:44.0454476Z (node:3088) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-15T10:58:44.0455551Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-15T10:58:44.0523347Z ##[warning]No files were found with the provided path: validation. No artifacts will be uploaded.
+2026-11-15T10:58:44.0879913Z Post job cleanup.
+2026-11-15T10:58:44.2894120Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-11-15T10:58:44.3241295Z git version 2.56.0.windows.4
+2026-11-15T10:58:44.3311504Z Temporarily overriding HOME='D:\a\_temp\94ce80bd-3a25-4c2a-b134-41423a849927' before making global git config changes
+2026-11-15T10:58:44.3312647Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-15T10:58:44.3322976Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\scalpeleq\scalpeleq
+2026-11-15T10:58:44.3698970Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-11-15T10:58:44.4071379Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-11-15T10:58:45.0002192Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-15T10:58:45.0329053Z http.https://github.com/.extraheader
+2026-11-15T10:58:45.0370113Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all http.https://github.com/.extraheader
+2026-11-15T10:58:45.0742812Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-11-15T10:58:45.6081278Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-15T10:58:45.6458424Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-11-15T10:58:46.2320598Z Cleaning up orphan processes
+2026-11-15T10:58:46.2611978Z Terminate orphan process: pid (2156) (vctip)
+2026-11-15T10:58:46.2677197Z Terminate orphan process: pid (9644) (MSBuild)
+2026-11-15T10:58:46.2740491Z Terminate orphan process: pid (5180) (conhost)
+2026-11-15T10:58:46.2921194Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
