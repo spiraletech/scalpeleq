@@ -1,0 +1,170 @@
+[
+  {
+    "test": "ScalpelDbAxis",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "dB axis: all 11 reference rows, -30 midpoint, -35 uniqueness, 6 scales, amplitude calibration, tilt and floor passed\n"
+  },
+  {
+    "test": "ScalpelAnalyzerHealth",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "Scalpel analyzer transport counters PASS\n"
+  },
+  {
+    "test": "ScalpelUnderCurve",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "X-RAY under-curve mask: silence, contour, falloff, floor PASS\n"
+  },
+  {
+    "test": "ScalpelMercury",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "SCALPEL X-RAY: silence inert, localized FFT surface, reduced motion, bounded decay PASS\n"
+  },
+  {
+    "test": "ScalpelChroma",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "X-RAY pitch-class colour estimates calibrated\n"
+  },
+  {
+    "test": "ScalpelColor",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "Scalpel COLOR: five independent knobs, true zero, 4 rates, compatibility PASS\n"
+  },
+  {
+    "test": "ScalpelBand",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "Scalpel bands: OFF spectral mute, MONO selected-side reduction, MID/SIDE EQ DOMAIN routing and SOLO audition, PHASE CORRECTION, LIMIT optical leveling PASS\n"
+  },
+  {
+    "test": "RootsCore",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "PROOF 1 PASS: neutral stereo bypass\nPROOF 2 PASS: overlapping EQ and gain range\nPROOF 3 PASS: MID/SIDE isolation, exact mono\nPROOF 4 PASS: measured phase guard, no polarity flip\nPRISM ROOTS \u2014 FOUR DSP PROOFS PASSED\n"
+  },
+  {
+    "test": "PrismLabAnalyzer",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "PROOF 1 PASS: bin-centered amplitude and bin Hz calibrated\nPROOF 2 PASS: calibrated 256-band frequency mapping\nPROOF 3 PASS: silent frame floor\nPROOF 4 PASS: independent release and peak hold\nPRISM LAB -> ROOTS FOUR ANALYZER PROOFS PASSED\n"
+  },
+  {
+    "test": "RootsRealtime",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "A PASS bit-exact neutral bypass\nB PASS per-root-only gain, retired node gain, and \u00b160 clamp\nC PASS whole-root bandpass audition and 8ms A/B crossfade\nD PASS compressor gain reduction and mono/phase\nE PASS per-ROOT ONYX isolation and threshold reduction\nFOUR ROOTS v2 AUDIO PROOFS PASSED\n"
+  },
+  {
+    "test": "RootsUiSpectrum",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "PROOF 1 PASS: 20-20000 Hz axis calibrated\nPROOF 2 PASS: two handles form one 20Hz-clamped root region\nPROOF 3 PASS: exact, movable boundary-based bar colours\nPROOF 4 PASS: overlap blending and bounded-filter numerical stability\nPROOF 5 PASS: immovable log-frequency heat columns\nPROOF 6 PASS: metered heat intensity and silence gating\nPROOF 7 PASS: non-scrolling bottom heat strip\n"
+  },
+  {
+    "test": "RootsParentControls",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "P1 PASS: transparent unprocessed ROOT\nP2 PASS: ROOT SPACE still works with MID-only compressor domain\nP3 PASS: right-click ROOT compressor and threshold affect audio\nP4 PASS: global SPACE mono/wide changes real stereo audio\n"
+  },
+  {
+    "test": "SurgeryCarve",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "Surgery CARVE four proof groups passed\n"
+  },
+  {
+    "test": "SurgerySonar",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "SONAR four proof groups passed\n"
+  },
+  {
+    "test": "SurgeryHeaderLayout",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "Surgery header overlap proofs passed\n"
+  },
+  {
+    "test": "SurgeryNodeFocus",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "Selected ROOT CARVE foreground layout and hit geometry passed\n"
+  },
+  {
+    "test": "SurgeryRootRouting",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "ROOT-local mono, MID/SIDE routing and 28 CARVE defaults passed\n"
+  },
+  {
+    "test": "SurgeryResponse",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "Original response: 37.0459 ms, checksum -31156.1\nPrepared response: 12.7311 ms, checksum -31156.1\nResponse evaluation speedup: 2.90987x\nMeasured/display separation and exact biquad response proofs passed\n"
+  },
+  {
+    "test": "SurgeryAnalysis",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": ""
+  },
+  {
+    "test": "SurgeryPrecision",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "ROOT frequency clamp, CTRL scrub and numerical Q proofs passed\n"
+  },
+  {
+    "test": "SurgeryDualKnobDSP",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "DUAL KNOB DSP: 0/-30/-60 threshold; 0/50/100 logarithmic Q; all five compressor profiles at 44.1/48/96k; OFF threshold-independent; narrower CARVEs; bounded finite sweeps passed\n"
+  },
+  {
+    "test": "SurgerySpectrogram",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "SPSC waterfall history and ultra Q tightness proofs passed\n"
+  },
+  {
+    "test": "SurgerySpectrumFill",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "Single-spectrum fast attack, finite input and decay proofs passed\n"
+  },
+  {
+    "test": "SurgerySpectralColours",
+    "compile_exit": 0,
+    "run_exit": 0,
+    "compiler_output": "",
+    "output": "Synesthesia V1: muted spectral heat, fixed hues, level brightness, silence and approximate 12-TET labels passed\n"
+  }
+]
