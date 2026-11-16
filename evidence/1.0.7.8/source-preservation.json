@@ -1,10 +1,10 @@
 {
-  "tested_source_head": "787e186b87274e746f1be70b615eb34fc0e3038e",
+  "tested_source_head": "48b3037be4b21ec905a5bcb57e07b80f52e39a98",
   "baseline": "ad546dcc1c829a83d894d7f8fe94b55c5c131d79",
   "intentional_code_changes": [
     {
       "path": "Source/PluginProcessor.cpp",
-      "sha256": "27c0e60c9f8704ae6849dfd78bce90930f65992ae4a0079d4c8e0f60995e3fdb"
+      "sha256": "bfab6563f9b6107be31b7caf810305f1ea0f8d32b16284be15192414a40910d3"
     },
     {
       "path": "Source/PluginProcessor.h",
@@ -16,7 +16,7 @@
     },
     {
       "path": "Source/RootsEditor.cpp",
-      "sha256": "235a52167d4ace9739816b1ef858f9f648dd62b9eaf97367365cc2920af8542e"
+      "sha256": "18e042b0f7c4dd8cc54daa30dcfdb69f7a33257a5c7499f71a9cbb67b651e9df"
     },
     {
       "path": "Source/RootsEditor.h",

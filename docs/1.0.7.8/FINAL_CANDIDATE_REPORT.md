@@ -9,7 +9,7 @@ validation and canonical promotion remain outside this report.
 - Verified baseline commit: `ad546dcc1c829a83d894d7f8fe94b55c5c131d79`
 - Isolated patch branch: `fix/scalpel-1.0.7.8-magnetic-dsp`
 - Integrated code commit: `b24c5192f34b378c11ef105c80382c1667a4c5a5`
-- Final candidate/package commit: `787e186b87274e746f1be70b615eb34fc0e3038e`
+- Final candidate/package commit: `48b3037be4b21ec905a5bcb57e07b80f52e39a98`
 - Plugin identity retained: manufacturer `SpEt`, plugin code `ScE1`, bundle ID
   `com.spiraletech.scalpeleq`
 
@@ -93,16 +93,16 @@ newest target can have temporary residual energy.
 | Candidate VST3 bundle | produced and structurally checked |
 | Actual FL Studio 25 | not tested in this environment |
 
-Final Windows run: [GitHub Actions run 219](https://github.com/spiraletech/scalpeleq/actions/runs/43827684060)
+Final Windows run: [GitHub Actions run 220](https://github.com/spiraletech/scalpeleq/actions/runs/43954750440)
 
 Artifacts:
 
-- Candidate VST3: artifact `14207946318`
-  (`sha256:3eb58c6840bf725faccfa94578a7692d9839ebb24bb648bdd1c5eb6a2a53b863`)
-- CTest/measurement evidence: artifact `14208276172`
-  (`sha256:910e2fe88509d146c7504dcb3e578cb7ce37f7bf6d483a94393b6388ef73e0d3`)
-- pluginval log: artifact `14207238455`
-  (`sha256:4e4d0cae43b79bd4ecedb45e2cc005b741c44cb936c51893a88b1a7c3e77e02c`)
+- Candidate VST3: artifact `14271482906`
+  (`sha256:a9dab68cb3f6d68ec7d272aefe9b15d0a43c79ae6a9b356e13f55c43e8481343`)
+- CTest/measurement evidence: artifact `14272587573`
+  (`sha256:5cff13ca34c1cc8a5aada8da86df25bd5a49bf73a7d278a08bdc1c823c9d06f4`)
+- pluginval log: artifact `14271342894`
+  (`sha256:711748f08f92a9bc78c83ea2d182fd8018051e0a5a97b9ae5c3fe89d9c06f6df`)
 
 ## Important limitations
 
