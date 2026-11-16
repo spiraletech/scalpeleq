@@ -1,5 +1,10 @@
 # 1.0.7.8 magnetic DSP patch — controlled-development checkpoint
 
+> Historical checkpoint only. It records the earlier Phase-B hold before the
+> safe filter integration, magnetic engine and analyzer work were completed.
+> The current result is `FINAL_CANDIDATE_REPORT.md`; do not use this checkpoint
+> as the present candidate status.
+
 **Decision: HOLD at Phase B. The requested patch is not complete or stable.**
 
 ## Baseline and isolation

@@ -1,11 +1,12 @@
 # Scalpel EQ 1.0.7.8 Technical & User Manual — development draft
 
-**Status: integrated 1.0.7.8 release-candidate draft. Canonical promotion is not authorized.**
+**Status: automated-gate-passing 1.0.7.8 candidate draft. Canonical promotion is not authorized.**
 
 This describes the integrated 1.0.7.8 candidate: retargetable spectral removal,
 magnetic editing, independent band presence, legacy state migration and analyzer
-corrections. Do not treat the candidate as the canonical stable replacement until
-Windows, pluginval and actual FL Studio validation are recorded. Source code takes precedence over older
+corrections. Windows CTest and pluginval pass; actual FL Studio 25 validation is
+still required. Do not treat the candidate as the canonical stable replacement.
+Source code takes precedence over older
 product descriptions, including the obsolete PHASE description in
 `docs/SCALPEL_EQ_DSP_SPEC.md`.
 
@@ -21,8 +22,8 @@ work. Audio correctness and deterministic state recall remain release gates.
 
 ## 2. Installation and FL Studio integration
 
-No validated 1.0.7.8 Windows VST3 is supplied at this checkpoint. For a future
-validated build, close the DAW and preserve your working bundle before copying
+An automated-gate-passing 1.0.7.8 Windows candidate is supplied separately.
+Close the DAW and preserve your working bundle before copying
 the complete `Scalpel EQ.vst3` folder into
 `C:\Program Files\Common Files\VST3\`. Retain the nested
 `Contents\x86_64-win\Scalpel EQ.vst3` binary. Rescan in FL Studio's plugin
@@ -166,7 +167,8 @@ and two link parameters per band are appended. Frequencies and reciprocal links
 fully reconstruct the arrangement from APVTS XML state. Missing presence values
 migrate as legacy-present; missing links migrate unlinked. New-session defaults
 remain absent. Actual FL Studio automation, undo/redo and project restoration
-still require host validation.
+pass generic pluginval state-restoration and automation checks. Actual FL Studio
+automation, undo/redo and project restoration still require host validation.
 
 ## 13. Safety, troubleshooting and known limitations
 
@@ -197,10 +199,11 @@ build dependencies and do not establish VST3 or host reliability.
 | Mid/Side removal fix | PASS; see `patched-domain.log` |
 | Direct coefficient-modulation design | Rejected; retained as historical evidence |
 | Crossfaded retarget path | Integrated; live-drag safety gate passes |
-| Windows x64 build / native VST3 capture | PASS on tested code `e23cb6e` |
-| Windows CTest | 32/34 pass; two audio release gates fail |
-| pluginval / FL Studio | Skipped after failed gate / not tested |
-| Magnetic interactions | Standalone relationship/model gates pass; Windows GUI tests pending |
+| Windows x64 build / native VST3 capture | PASS on candidate `787e186b87274e746f1be70b615eb34fc0e3038e` |
+| Windows CTest | 35/35 pass in run 219 |
+| pluginval | SUCCESS at strictness 8, seed 12345; GUI tests skipped |
+| FL Studio 25 | Not tested in this environment |
+| Magnetic interactions | Portable/native relationship and invariant tests pass; actual host interaction pending |
 
 Reproduce standalone checks with:
 

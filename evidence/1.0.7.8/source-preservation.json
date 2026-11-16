@@ -1,39 +1,40 @@
 {
-  "tested_source_head": "e23cb6e16e570cd9bbcf045e85ded71a99b2e2f8",
+  "tested_source_head": "787e186b87274e746f1be70b615eb34fc0e3038e",
   "baseline": "ad546dcc1c829a83d894d7f8fe94b55c5c131d79",
-  "files": [
+  "intentional_code_changes": [
     {
       "path": "Source/PluginProcessor.cpp",
-      "sha256": "ea11ee7dff75fec33e2ca6ade42a14a98b852f79b305806c9be1c9eb949b4b98",
-      "unchanged_from_approved_baseline": true
+      "sha256": "27c0e60c9f8704ae6849dfd78bce90930f65992ae4a0079d4c8e0f60995e3fdb"
     },
     {
       "path": "Source/PluginProcessor.h",
-      "sha256": "0391dc76750505f3484dd334afa0965549651d99d7df35cc107e94e508e50b8b",
-      "unchanged_from_approved_baseline": true
+      "sha256": "49c4588e31033988da13a9c12008166538f50abe490a8fe8785c3c779f23fc0e"
+    },
+    {
+      "path": "Source/RootsAudioEngine.h",
+      "sha256": "e681e46bd324eb79a28894b64d497f3c8edf520d75a651d2b15e28e1f56948ba"
     },
     {
       "path": "Source/RootsEditor.cpp",
-      "sha256": "3bd7076bec2d9380597ed4998ab50bbc05b1ad1d91ceed57fb119348548a27cc",
-      "unchanged_from_approved_baseline": true
+      "sha256": "235a52167d4ace9739816b1ef858f9f648dd62b9eaf97367365cc2920af8542e"
     },
     {
       "path": "Source/RootsEditor.h",
-      "sha256": "2d186a1e47bb63f6d7ea1c7418b6085bd9ea39c321acc79f769d61994c9a1a4c",
-      "unchanged_from_approved_baseline": true
+      "sha256": "7bdeefd15e9683c93d79ab9c9f40bdc5765d8517b6531eaee0b5995200286d68"
     },
     {
-      "path": "Source/PluginEditor.cpp",
-      "sha256": "346c676a1f408f0450e252452921453bc7195bcc4e793c8e557195fb04791528",
-      "unchanged_from_approved_baseline": true
+      "path": "Source/ScalpelBandModel.h",
+      "sha256": "5a15fd8189d7d4bbfbbf09446849dcc8e203de8da9548ba34db37697d2435a4f"
     },
     {
-      "path": "Source/PluginEditor.h",
-      "sha256": "3c92b5e4333804b8b0a619e2350373dc4d7e09345b1ef7c71696a4eda77efcd4",
-      "unchanged_from_approved_baseline": true
+      "path": "Source/Experimental/ScalpelBandStop.h",
+      "sha256": "b373d251b504e31de24d684cd2fb190c7b63c76a140ce2ab8f1f4ffd935771bc"
     }
   ],
   "asset_files_changed": [],
-  "release_test_assertions_enabled": true,
-  "example_compile_command": "/usr/bin/c++   -O3 -DNDEBUG -std=gnu++20 -fPIE -UNDEBUG -MD -MT CMakeFiles/ScalpelBand.dir/Tests/ScalpelBandTests.cpp.o -MF CMakeFiles/ScalpelBand.dir/Tests/ScalpelBandTests.cpp.o.d -o CMakeFiles/ScalpelBand.dir/Tests/ScalpelBandTests.cpp.o -c /workspace/scratch/d9bcf1141ddd/scalpeleq/Tests/ScalpelBandTests.cpp"
+  "plugin_identity_changed": false,
+  "historical_parameter_ids_reordered": false,
+  "approved_1_0_7_7_visual_baseline_replaced": false,
+  "release_promoted": false,
+  "release_test_assertions_enabled": true
 }
