@@ -65,7 +65,7 @@ jobs:
       - name: Upload VST3
         uses: actions/upload-artifact@v4
         with:
-          name: SCALPEL-EQ-EXPERIMENTAL-Windows-x64-VST3
+          name: SCALPEL-EQ-1.0.7.8-CANDIDATE-Windows-x64-VST3
           path: dist
           if-no-files-found: error
 

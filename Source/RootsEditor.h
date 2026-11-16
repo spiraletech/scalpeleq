@@ -15,6 +15,7 @@
 #include "SurgeryAnalysis.h"
 #include "ScalpelMercuryField.h"
 #include "ScalpelFluid3D.h"
+#include "ScalpelBandModel.h"
 #include <array>
 #include <functional>
 #include <memory>
@@ -107,8 +108,10 @@ private:
     PRISMVSTAudioProcessor& processor_;
     std::array<float,PRISMVSTAudioProcessor::labBars> bands_{},peaks_{};
     std::array<float,7> peakWarnings_{};
-    int selected_=0,dragging_=-1,draggingCarve_=-1;
+    int selected_=0,dragging_=-1,draggingCarve_=-1,draggingInterior_=-1;
     float dragStartX_=0.0f,dragStartHz_=0.0f;
+    double snapTargetHz_=0.0;
+    scalpel::bands::Model dragStartModel_{};
     bool fineDragging_=false;
     int mode_=0,slot_=0;
     surgery::LiveSpectrumEnvelope<PRISMVSTAudioProcessor::labBars> spectrumEnvelope_;
@@ -154,6 +157,10 @@ private:
     float param(int i,const char* suffix) const;
     void write(int i,const char* suffix,float value);
     int hitNode(juce::Point<float>,bool cycleCoincidentBand=false) const;
+    int hitBandInterior(juce::Point<float>) const;
+    scalpel::bands::Model loadBandModel() const;
+    void storeBandModel(const scalpel::bands::Model&);
+    double snappedFrequency(double,bool disableSnap);
     int hitCarveNode(juce::Point<float>) const;
     int hitCarveTab(juce::Point<float>) const;
     void popup();

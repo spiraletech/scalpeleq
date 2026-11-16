@@ -60,7 +60,7 @@ public:
     float getChannelPeakDb(int channel) const noexcept {
         return channelPeakDb[(size_t)juce::jlimit(0, 1, channel)].load();
     }
-    void resetPeakHold() noexcept { peakHoldDb.store(-144.0f); }
+    void resetPeakHold() noexcept { peakHoldDb.store(-144.0f); analyzerPeakReset_.store(true,std::memory_order_release); }
     float getGainReductionDb() const noexcept { return gainReductionDb.load(); }
     float getLufsShort() const noexcept { return lufsShort.load(); }
     float getLufsIntegrated() const noexcept { return lufsIntegrated.load(); }
@@ -167,7 +167,7 @@ private:
     struct RootParameters {
         // Legacy indices 0..11 are frozen for recall; the new COLOR DYNAMIC,
         // PHASE, and optical LIMIT controls append without reordering them.
-        std::array<std::atomic<float>*, 16> values {};
+        std::array<std::atomic<float>*, 17> values {};
     };
     std::array<RootParameters, numSections> rootParameters;
     std::array<std::array<std::atomic<float>*, 2>, 14> nodeParameters {};
@@ -226,6 +226,7 @@ private:
     prism::analysis::LabBands labAnalyzer;
     std::array<std::atomic<float>, labBars> labDb {};
     std::array<std::atomic<float>, labBars> labPeakDb {};
+    std::atomic<bool> analyzerPeakReset_{false};
 
     surgery::weather::Measurement weatherMeasurement_;
     surgery::weather::SnapshotQueue<surgery::weather::Snapshot> weatherSnapshots_;

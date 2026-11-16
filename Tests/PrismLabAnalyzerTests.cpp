@@ -68,6 +68,12 @@ int main() {
         const float hold=lab.frame()[(size_t)idx].peakDb;
         if(!(following<first&&following>LabBands::floorDb && hold>following))
             return fail(4,"release and peak-hold behavior");
+        for(int i=0;i<500;++i)lab.processMagnitudes(zeros.data(),(int)zeros.size(),n,sr);
+        if(std::abs(lab.frame()[(size_t)idx].peakDb-hold)>.001f)
+            return fail(4,"full-song peak hold decayed");
+        lab.resetPeakHold();
+        if(lab.frame()[(size_t)idx].peakDb!=LabBands::floorDb)
+            return fail(4,"explicit peak reset");
         std::cout<<"PROOF 4 PASS: independent release and peak hold\n";
     }
     std::cout<<"PRISM LAB -> ROOTS FOUR ANALYZER PROOFS PASSED\n";

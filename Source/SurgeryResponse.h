@@ -24,11 +24,15 @@ public:
     }
     double magnitudeDb(std::complex<double> z1) const noexcept {
         if(bypass_)return 0;
+        const double ratio=std::abs(response(z1));
+        return std::clamp(20.0*std::log10(std::max(1.e-12,ratio)),-36.0,3.0);
+    }
+    std::complex<double> response(std::complex<double> z1) const noexcept {
+        if(bypass_)return {1.0,0.0};
         const auto z2=z1*z1;
         const auto numerator=b0_+b1_*z1+b2_*z2;
         const auto denominator=1.0+a1_*z1+a2_*z2;
-        const double ratio=std::abs(numerator)/std::max(1.e-12,std::abs(denominator));
-        return std::clamp(20.0*std::log10(std::max(1.e-12,ratio)),-36.0,3.0);
+        return numerator/denominator;
     }
 private:
     double b0_=1,b1_=0,b2_=0,a1_=0,a2_=0;

@@ -251,9 +251,9 @@ PRISMVSTAudioProcessor::PRISMVSTAudioProcessor()
 {
     const char* rootNames[] = { "gain_db", "mono", "on", "domain", "comp", "detector", "threshold",
         "onyx_sparkle", "onyx_shine", "onyx_smooth", "onyx_tape", "solo",
-        "color_dynamic", "phase", "limit_amount", "limit_on" };
+        "color_dynamic", "phase", "limit_amount", "limit_on", "present" };
     for (int root = 0; root < numSections; ++root)
-        for (int field = 0; field < 16; ++field)
+        for (int field = 0; field < 17; ++field)
             rootParameters[(size_t)root].values[(size_t)field] = apvts.getRawParameterValue(rootsRootControlId(root, rootNames[field]));
     for (int node = 0; node < 14; ++node)
         for (int field = 0; field < 2; ++field)
@@ -617,7 +617,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
         juce::ParameterID { "analyzer_slope", 2 }, "Analyzer Display Slope",
         juce::NormalisableRange<float>(0.0f, 6.0f, 0.1f), 0.0f));
 
-    juce::NormalisableRange<float> auraMemoryRange(0.05f, 10.0f, 0.01f);
+    juce::NormalisableRange<float> auraMemoryRange(0.0f, 10.0f, 0.01f);
     auraMemoryRange.setSkewForCentre(0.4f);
     p.push_back(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID { "aura_memory", 2 }, "Spectrum Release Time",
@@ -676,6 +676,16 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
     p.push_back(std::make_unique<juce::AudioParameterBool>(juce::ParameterID{"sonar_reduced_motion",1},"SONAR Reduced Motion",true));
     p.push_back(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"sonar_visual_style",1},"SONAR Visual Style",juce::StringArray{"Standard","Storm Symbiote","Synesthesia","Brooding","Pulse","Aura","Focus","Standard+"},0));
     p.push_back(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"juke_mode",1},"JUKE Mode",juce::StringArray{"Real Jukebox","Storm Tube","Symbiote Flow","Pulse Rail","Ambient Idle","Off"},0));
+    // 1.0.7.8 magnetic state appends after every historical parameter.
+    for(int root=0;root<numSections;++root){
+        const auto label=juce::String("BAND ")+juce::String(root+1)+" ";
+        p.push_back(std::make_unique<juce::AudioParameterBool>(
+            juce::ParameterID{rootsRootControlId(root,"present"),1},label+"Present",false));
+        p.push_back(std::make_unique<juce::AudioParameterInt>(
+            juce::ParameterID{rootsRootControlId(root,"left_link"),1},label+"Left Magnetic Link",-1,13,-1));
+        p.push_back(std::make_unique<juce::AudioParameterInt>(
+            juce::ParameterID{rootsRootControlId(root,"right_link"),1},label+"Right Magnetic Link",-1,13,-1));
+    }
     return { p.begin(), p.end() };
 }
 
@@ -1046,6 +1056,8 @@ void PRISMVSTAudioProcessor::renderSpectrumFrame()
 
     // PRISM Analysis 256-bar field, Hann-coherent-gain calibrated.
     // Kept exclusively on the analyzer worker; no audio DSP interaction.
+    if(analyzerPeakReset_.exchange(false,std::memory_order_acq_rel))
+        labAnalyzer.resetPeakHold();
     labAnalyzer.processMagnitudes(fftData.data(), fftSize / 2 + 1,
                                   fftSize, currentSampleRate, (double)fftSize);
     const auto& labFrame = labAnalyzer.frame();
@@ -1179,6 +1191,7 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
         c.gainDb=0.0; // retained obsolete host parameter is ignored
         c.q=nodeParameters[(size_t)i][1]->load();
         const int root=i/2;
+        c.present=rootParameters[(size_t)root].values[16]->load()>=0.5f;
         c.enabled=rootParameters[(size_t)root].values[2]->load()>=0.5f;
         c.solo=false; // only root-level SOLO is authoritative
         c.domain=(Domain)juce::roundToInt(rootParameters[(size_t)root].values[3]->load());
@@ -1211,6 +1224,7 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
         const float hi=nodeParameters[(size_t)(root*2+1)][0]->load();
         carveEngine.bounds(root,lo,hi);
         carveEngine.rootEnabled(root,
+            rootParameters[(size_t)root].values[16]->load()>=0.5f&&
             rootParameters[(size_t)root].values[2]->load()>=0.5f);
         carveEngine.rootDomain(root,(surgery::Channel)juce::roundToInt(
             rootParameters[(size_t)root].values[3]->load()));
@@ -1342,6 +1356,23 @@ void PRISMVSTAudioProcessor::setStateInformation(const void* data, int size)
             // selectors recall the old visuals rather than opting in silently.
             if(xml->getChildByAttribute("id","sonar_visual_style")==nullptr){auto* v=xml->createNewChildElement("PARAM");v->setAttribute("id","sonar_visual_style");v->setAttribute("value",0.0);}
             if(xml->getChildByAttribute("id","juke_mode")==nullptr){auto* v=xml->createNewChildElement("PARAM");v->setAttribute("id","juke_mode");const auto* old=xml->getChildByAttribute("id","sonar_weather_mode");v->setAttribute("value",old&&old->getDoubleAttribute("value")>=.5&&xml->getChildByAttribute("id","aura_color")&&xml->getChildByAttribute("id","aura_color")->getDoubleAttribute("value")>=.5?2.0:5.0);}
+            // A project without magnetic-presence parameters predates 1.0.7.8.
+            // Preserve its seven audible territories, while genuinely new
+            // sessions use the new clean graph defaults from the layout.
+            for(int root=0;root<numSections;++root){
+                const auto presence=rootsRootControlId(root,"present");
+                if(xml->getChildByAttribute("id",presence)==nullptr){
+                    auto* value=xml->createNewChildElement("PARAM");
+                    value->setAttribute("id",presence);value->setAttribute("value",1.0);
+                }
+                for(const auto* suffix:{"left_link","right_link"}){
+                    const auto id=rootsRootControlId(root,suffix);
+                    if(xml->getChildByAttribute("id",id)==nullptr){
+                        auto* value=xml->createNewChildElement("PARAM");
+                        value->setAttribute("id",id);value->setAttribute("value",-1.0);
+                    }
+                }
+            }
             apvts.replaceState(juce::ValueTree::fromXml(*xml));
             sanitizeCrossovers();
             // Resolve old sessions that persisted more than one SOLO flag.

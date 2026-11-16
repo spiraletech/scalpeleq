@@ -7,6 +7,7 @@
 #include <BinaryData.h>
 #include <cmath>
 #include <numbers>
+#include <optional>
 
 namespace {
 float pval(const juce::AudioProcessorValueTreeState& ap,const juce::String& id) {
@@ -86,6 +87,7 @@ int RootsGraph::hitNode(juce::Point<float> p,bool cycleCoincidentBand)const{
     float nearest=18.0f;
     std::array<float,prism::roots::v2::kNodes> distances{};
     for(int i=0;i<prism::roots::v2::kNodes;++i){
+        if(pval(processor_.apvts,PRISMVSTAudioProcessor::rootsRootControlId(i/2,"present"))<.5f){distances[(size_t)i]=100000.f;continue;}
         const auto x=freqToX(param(i,"hz")),y=area().getCentreY();
         distances[(size_t)i]=p.getDistanceFrom({x,y});
         nearest=juce::jmin(nearest,distances[(size_t)i]);
@@ -96,6 +98,49 @@ int RootsGraph::hitNode(juce::Point<float> p,bool cycleCoincidentBand)const{
         candidates[(size_t)i]=distances[(size_t)i]<=nearest+1.25f;
     return surgery::ui::chooseBoundaryNode(candidates,selected_,
                                             cycleCoincidentBand);
+}
+scalpel::bands::Model RootsGraph::loadBandModel() const {
+    using namespace scalpel::bands;Model model;
+    for(int root=0;root<count;++root){
+        auto& band=model.bands[(size_t)root];
+        const auto id=[root](const char* suffix){return PRISMVSTAudioProcessor::rootsRootControlId(root,suffix);};
+        band.present=pval(processor_.apvts,id("present"))>=.5f;
+        band.left=param(root*2,"hz");band.right=param(root*2+1,"hz");
+        band.domain=(Domain)juce::jlimit(0,2,juce::roundToInt(pval(processor_.apvts,id("domain"))));
+        for(int a=0;a<2;++a){
+            const int encoded=juce::roundToInt(pval(processor_.apvts,id(a==0?"left_link":"right_link")));
+            if(encoded>=0&&encoded<14)band.links[(size_t)a]={encoded/2,encoded%2?Anchor::right:Anchor::left};
+        }
+    }
+    if(!model.valid())for(auto& band:model.bands)band.links={};
+    return model;
+}
+void RootsGraph::storeBandModel(const scalpel::bands::Model& model){
+    using namespace scalpel::bands;
+    for(int root=0;root<count;++root){
+        const auto& band=model.bands[(size_t)root];
+        const auto id=[root](const char* suffix){return PRISMVSTAudioProcessor::rootsRootControlId(root,suffix);};
+        change(processor_,id("present"),band.present?1.f:0.f);
+        if(band.present){write(root*2,"hz",(float)band.left);write(root*2+1,"hz",(float)band.right);change(processor_,id("domain"),(float)(int)band.domain);}
+        for(int a=0;a<2;++a){const auto link=band.links[(size_t)a];const float encoded=link.band<0?-1.f:(float)(link.band*2+(link.anchor==Anchor::right));change(processor_,id(a==0?"left_link":"right_link"),encoded);}
+    }
+}
+int RootsGraph::hitBandInterior(juce::Point<float> point) const {
+    if(!area().contains(point))return -1;const auto model=loadBandModel();
+    const double hz=xToFreq(point.x);const int selectedRoot=selected_/2;
+    if(model.bands[(size_t)selectedRoot].present&&hz>model.bands[(size_t)selectedRoot].left&&hz<model.bands[(size_t)selectedRoot].right)return selectedRoot;
+    for(int root=0;root<7;++root)if(model.bands[(size_t)root].present&&hz>model.bands[(size_t)root].left&&hz<model.bands[(size_t)root].right)return root;
+    return -1;
+}
+double RootsGraph::snappedFrequency(double frequency,bool disableSnap){
+    if(disableSnap){snapTargetHz_=0;return frequency;}
+    static constexpr double grid[]{20,40,80,160,315,630,1250,2500,5000,10000,20000};
+    std::array<double,25> candidates{};int n=0;for(double value:grid)candidates[(size_t)n++]=value;
+    const auto model=loadBandModel();for(const auto& band:model.bands)if(band.present){candidates[(size_t)n++]=band.left;candidates[(size_t)n++]=band.right;}
+    if(snapTargetHz_>0&&std::abs(freqToX((float)snapTargetHz_)-freqToX((float)frequency))<14.f)return snapTargetHz_;
+    snapTargetHz_=0;double nearest=frequency;float distance=8.f;
+    for(int i=0;i<n;++i){const float d=std::abs(freqToX((float)candidates[(size_t)i])-freqToX((float)frequency));if(d<distance){distance=d;nearest=candidates[(size_t)i];}}
+    if(nearest!=frequency)snapTargetHz_=nearest;return nearest;
 }
 juce::Colour RootsGraph::colour(int root) const {
     const auto id="surgery_root"+juce::String(root+1)+"_rgb";
@@ -617,11 +662,59 @@ void RootsGraph::paint(juce::Graphics& g){
         responseOverlayKey_=overlayKey;responseOverlayValid_=true;
     }
     g.setOpacity(1.f);g.drawImage(responseOverlay_,getLocalBounds().toFloat());
+    // ANALYZE overlays cumulative static linear response separately from the
+    // measured spectrum. Three paths preserve Stereo/Mid/Side truth. Dynamic
+    // compression and nonlinear COLOR are deliberately excluded.
+    if(mode_==3){
+        struct StaticCarve {std::optional<surgery::PreparedCarveResponse> response;int domain=0;double weight=1;};
+        struct StaticGain {prism::roots::v2::Filter highPass,lowPass;double delta=0;int domain=0;};
+        std::array<StaticCarve,28> carves{};int carveCount=0;
+        std::array<std::optional<StaticGain>,7> gains{};
+        std::array<std::optional<scalpel::experimental::BandStop>,7> removals{};
+        std::array<int,7> removalDomains{};
+        for(int root=0;root<7;++root){
+            const auto rid=[root](const char* suffix){return PRISMVSTAudioProcessor::rootsRootControlId(root,suffix);};
+            if(pval(processor_.apvts,rid("present"))<.5f)continue;
+            const int domain=juce::jlimit(0,2,juce::roundToInt(pval(processor_.apvts,rid("domain"))));
+            const double lo=param(root*2,"hz"),hi=param(root*2+1,"hz");
+            const double gainDb=pval(processor_.apvts,PRISMVSTAudioProcessor::rootsRootGainId(root));
+            if(std::abs(gainDb)>.0001){StaticGain gain;gain.highPass.setEdge(sr,lo,true);gain.lowPass.setEdge(sr,hi,false);gain.delta=std::pow(10.0,gainDb/20.0)-1.0;gain.domain=domain;gains[(size_t)root]=gain;}
+            if(pval(processor_.apvts,rid("on"))<.5f){scalpel::experimental::BandStop stop;if(stop.configure(sr,lo,hi)){removals[(size_t)root]=stop;removalDomains[(size_t)root]=domain;}}
+            for(int slot=0;slot<4;++slot){
+                const auto cid=[root,slot](const char* suffix){return PRISMVSTAudioProcessor::carveId(root,slot,suffix);};
+                const double depth=pval(processor_.apvts,cid("depth"));
+                if(pval(processor_.apvts,rid("on"))<.5f||pval(processor_.apvts,cid("on"))<.5f||depth<.001)continue;
+                const double fc=surgery::precision::boundedFrequency(pval(processor_.apvts,cid("hz")),lo,hi);
+                auto& item=carves[(size_t)carveCount++];item.response.emplace(sr,fc,pval(processor_.apvts,cid("q")),depth);
+                const int local=juce::jlimit(0,2,juce::roundToInt(pval(processor_.apvts,cid("domain"))));
+                item.domain=domain==0?local:domain;item.weight=surgery::CarveEngine::boundaryWeight(fc,std::min(lo,hi),std::max(lo,hi));
+            }
+        }
+        std::array<juce::Path,3> totals;
+        for(size_t i=0;i<responseProbes_.size();++i){
+            const auto& probe=responseProbes_[i];
+            const double hz=20.0*std::pow(1000.0,(double)i/2048.0);
+            for(int domain=0;domain<3;++domain){
+                std::complex<double> h{1,0};
+                for(int c=0;c<carveCount;++c)if(carves[(size_t)c].domain==0||carves[(size_t)c].domain==domain){const auto raw=carves[(size_t)c].response->response(probe.z1);h*=std::complex<double>{1,0}+carves[(size_t)c].weight*(raw-std::complex<double>{1,0});}
+                for(int root=0;root<7;++root)if(gains[(size_t)root]&&(gains[(size_t)root]->domain==0||gains[(size_t)root]->domain==domain)){const auto band=gains[(size_t)root]->highPass.response(sr,hz)*gains[(size_t)root]->lowPass.response(sr,hz);h*=std::complex<double>{1,0}+gains[(size_t)root]->delta*band;}
+                for(int root=0;root<7;++root)if(removals[(size_t)root]&&(removalDomains[(size_t)root]==0||removalDomains[(size_t)root]==domain))h*=removals[(size_t)root]->response(sr,hz);
+                const double db=std::clamp(20.0*std::log10(std::max(1.e-12,std::abs(h))),-60.0,12.0);
+                const float y=baseY-(float)db*1.10f;if(i==0)totals[(size_t)domain].startNewSubPath(probe.x,y);else totals[(size_t)domain].lineTo(probe.x,y);
+            }
+        }
+        static constexpr unsigned totalColours[]{0xfff2eee8,0xff55bfcb,0xff9a63b8};
+        for(int domain=0;domain<3;++domain){g.setColour(juce::Colour(totalColours[domain]).withAlpha(domain==0?.95f:.78f));g.strokePath(totals[(size_t)domain],juce::PathStrokeType(domain==0?2.1f:1.35f));}
+        g.setFont(scalpel::finish::font(10,false));g.setColour(juce::Colour(0xffd9d5cf).withAlpha(.72f));
+        g.drawText("TOTAL S / MID / SIDE",r.withTrimmedTop(4).removeFromTop(16),juce::Justification::topRight);
+    }
     // No engineering telemetry or legacy SONAR prose over the primary lens.
     // Detailed numbers are available through the parameter shelf and hover.
     const float selectedLo=freqToX(param(selectedRoot*2,"hz"));
     const float selectedHi=freqToX(param(selectedRoot*2+1,"hz"));
-    {
+    const bool selectedPresent=pval(processor_.apvts,
+        PRISMVSTAudioProcessor::rootsRootControlId(selectedRoot,"present"))>=.5f;
+    if(selectedPresent){
         juce::Graphics::ScopedSaveState selectedGlass(g);
         g.reduceClipRegion(r.toNearestInt());
         const float lo=std::min(selectedLo,selectedHi), hi=std::max(selectedLo,selectedHi);
@@ -639,6 +732,7 @@ void RootsGraph::paint(juce::Graphics& g){
     // Two-pass z-order keeps the selected ROOT boundary pair above neighbors.
     for(int pass=0;pass<2;++pass)
     for(int i=0;i<prism::roots::v2::kNodes;++i){
+        if(pval(processor_.apvts,PRISMVSTAudioProcessor::rootsRootControlId(i/2,"present"))<.5f)continue;
         if((i/2==selectedRoot)!=(pass==1))continue;
         const float hz=param(i,"hz");
         const float x=freqToX(hz),y=r.getCentreY();
@@ -709,8 +803,7 @@ void RootsGraph::paint(juce::Graphics& g){
         // response line; reserve that hover guide for ANALYZE mode.
         if(mode_==3)
             g.drawHorizontalLine(juce::roundToInt(mouse_.y),r.getX(),r.getRight());
-        juce::String text=hzText(freq)+" Hz ~"+pitchText(freq)+" / "+
-                juce::String(bands_[(size_t)bar],1)+" dBFS / HOLD "+
+        juce::String text=hzText(freq)+" Hz ~"+pitchText(freq)+" / PEAK "+
                 juce::String(peaks_[(size_t)bar],1)+" dBFS";
         const int hoveredCarve=hitCarveNode(mouse_);
         if(hoveredCarve>=0) {
@@ -792,16 +885,7 @@ void RootsGraph::mouseDown(const juce::MouseEvent& e){
     const int hit=hitNode(e.position,cycleCoincidentBand);
     if(hit>=0)selectNode(hit);
     if(e.mods.isPopupMenu()){
-        if(hit<0){
-            const float f=xToFreq(e.position.x);
-            int target=6;
-            for(int root=0;root<7;++root){
-                const float low=param(root*2,"hz");
-                const float high=param(root*2+1,"hz");
-                if(f>=low&&f<=high){target=root;break;}
-            }
-            selectNode(target*2);
-        }
+        if(hit<0){const int interior=hitBandInterior(e.position);if(interior>=0)selectNode(interior*2);}
         popup();return;
     }
     dragging_=hit;
@@ -809,6 +893,9 @@ void RootsGraph::mouseDown(const juce::MouseEvent& e){
         if(auto* p=processor_.apvts.getParameter(
              PRISMVSTAudioProcessor::rootsNodeId(dragging_,"hz")))
             p->beginChangeGesture();
+    }else{
+        draggingInterior_=hitBandInterior(e.position);
+        if(draggingInterior_>=0){selectNode(draggingInterior_*2);dragStartX_=e.position.x;dragStartModel_=loadBandModel();snapTargetHz_=0;}
     }
 }
 void RootsGraph::mouseDrag(const juce::MouseEvent& e){
@@ -834,10 +921,22 @@ void RootsGraph::mouseDrag(const juce::MouseEvent& e){
                 area().getCentreY(),e.position.y));
         repaint();return;
     }
+    if(draggingInterior_>=0){
+        auto model=dragStartModel_;
+        const double start=xToFreq(dragStartX_),now=xToFreq(e.position.x);
+        model.moveGroup(draggingInterior_,std::log2(now/start));storeBandModel(model);repaint();return;
+    }
     if(dragging_<0)return;
-    const float newHz=xToFreq(e.position.x);
-    // Deliberately ignore e.position.y: frequency handles have no gain axis.
-    write(dragging_,"hz",newHz);
+    auto model=loadBandModel();const int root=dragging_/2;
+    const auto anchor=dragging_%2?scalpel::bands::Anchor::right:scalpel::bands::Anchor::left;
+    const double next=snappedFrequency(xToFreq(e.position.x),e.mods.isCtrlDown());
+    if(model.moveAnchor(root,anchor,next)&&!e.mods.isCtrlDown()){
+        for(int other=0;other<7;++other)if(other!=root&&model.bands[(size_t)other].present&&model.bands[(size_t)other].domain==model.bands[(size_t)root].domain)
+            for(const auto otherAnchor:{scalpel::bands::Anchor::left,scalpel::bands::Anchor::right})
+                if(std::abs(model.frequency(root,anchor)-model.frequency(other,otherAnchor))<.01)
+                    model.connect(root,anchor,other,otherAnchor);
+    }
+    storeBandModel(model);
     repaint();
 }
 void RootsGraph::mouseUp(const juce::MouseEvent&){
@@ -856,7 +955,11 @@ void RootsGraph::mouseUp(const juce::MouseEvent&){
             p->endChangeGesture();
     }
     if(dragging_>=0)clampCarvesToRoot(dragging_/2);
-    dragging_=-1;
+    if(draggingInterior_>=0){
+        const auto members=loadBandModel().group(draggingInterior_);
+        for(int root=0;root<7;++root)if(members[(size_t)root])clampCarvesToRoot(root);
+    }
+    dragging_=-1;draggingInterior_=-1;snapTargetHz_=0;
 }
 void RootsGraph::mouseMove(const juce::MouseEvent& e){mouse_=e.position;hover_=true;repaint();}
 void RootsGraph::mouseExit(const juce::MouseEvent&){hover_=false;repaint();}
@@ -885,10 +988,19 @@ void RootsGraph::mouseDoubleClick(const juce::MouseEvent& e){
         // Do not reset an overlapping boundary on click two of an intentional
         // triple-click. Unique handles retain their double-click reset.
         if(!coincidentBand){
-            processor_.resetRootBoundary(boundary);
-            clampCarvesToRoot(boundary/2);
+            auto model=loadBandModel();
+            const auto anchor=boundary%2?scalpel::bands::Anchor::right:scalpel::bands::Anchor::left;
+            if(model.moveAnchor(boundary/2,anchor,
+                prism::roots::v2::Engine::defaults[(size_t)boundary])){
+                storeBandModel(model);clampCarvesToRoot(boundary/2);
+            }
         }
         repaint();
+        return;
+    }
+    if(hitBandInterior(e.position)<0&&area().contains(e.position)){
+        auto model=loadBandModel();const int added=model.add(xToFreq(e.position.x));
+        if(added>=0){storeBandModel(model);selectNode(added*2);repaint();}
     }
 }
 void RootsGraph::mouseWheelMove(const juce::MouseEvent& e,
@@ -934,6 +1046,7 @@ void RootsGraph::popup(){
     };
     juce::PopupMenu menu;
     menu.addSectionHeader("SCALPEL / BAND "+juce::String(root+1));
+    const bool present=current("present")>=.5f;
     menu.addItem(1,"BAND ENABLED",true,current("on")>=0.5f);
     const bool solo=pval(processor_.apvts,
         PRISMVSTAudioProcessor::rootsRootSoloId(root))>=0.5f;
@@ -950,6 +1063,10 @@ void RootsGraph::popup(){
         menu.addItem(30+i,dn[i],true,juce::roundToInt(current("detector"))==i);
     menu.addSeparator();
     menu.addItem(15,"MONO SELECTED BAND",true,current("mono")>=0.5f);
+    menu.addSeparator();
+    menu.addItem(4,"UNLINK LEFT MAGNET",present&&current("left_link")>=0.f);
+    menu.addItem(5,"UNLINK RIGHT MAGNET",present&&current("right_link")>=0.f);
+    menu.addItem(3,"REMOVE BAND",present,false);
     menu.addSeparator();
     juce::PopupMenu palette;
     static constexpr const char* names[]{"CYAN","AMBER","JADE","VIOLET","ROSE","BLUE","LIME","WHITE"};
@@ -976,9 +1093,17 @@ void RootsGraph::popup(){
                 const bool on=pval(graph.processor_.apvts,key)>=0.5f;
                 change(graph.processor_,key,on?0.0f:1.0f);
             }
-            if(id>=10&&id<=12)set("domain",(float)(id-10));
+            if(id>=10&&id<=12){
+                auto model=graph.loadBandModel();auto candidate=model;
+                candidate.unlink(root,scalpel::bands::Anchor::left);
+                candidate.unlink(root,scalpel::bands::Anchor::right);
+                candidate.bands[(size_t)root].domain=(scalpel::bands::Domain)(id-10);
+                if(candidate.valid())graph.storeBandModel(candidate);
+            }
             if(id==15)set("mono",value("mono")>=0.5f?0.0f:1.0f);
             if(id>=30&&id<=33)set("detector",(float)(id-30));
+            if(id==3){auto model=graph.loadBandModel();model.remove(root);graph.storeBandModel(model);}
+            if(id==4||id==5){auto model=graph.loadBandModel();model.unlink(root,id==4?scalpel::bands::Anchor::left:scalpel::bands::Anchor::right);graph.storeBandModel(model);}
 
             const auto colorId="surgery_root"+juce::String(root+1)+"_rgb";
             static constexpr unsigned swatches[]{

@@ -14,7 +14,12 @@ public:
     void reset() noexcept {values_.fill(-144.0f);}
     void update(const Frame& latest,double dtSeconds,double releaseSeconds) noexcept {
         const double dt=std::clamp(dtSeconds,0.001,0.2);
-        const double seconds=std::clamp(releaseSeconds,0.05,10.0);
+        const double seconds=std::clamp(releaseSeconds,0.0,10.0);
+        if(seconds<=0.0){
+            for(std::size_t i=0;i<Bins;++i)values_[i]=std::isfinite(latest[i])?
+                std::clamp(latest[i],-144.0f,0.0f):-144.0f;
+            return;
+        }
         const float keep=(float)std::exp(-dt/seconds);
         for(std::size_t i=0;i<Bins;++i){
             const float requested=std::isfinite(latest[i])?

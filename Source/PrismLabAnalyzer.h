@@ -63,11 +63,12 @@ public:
             auto& b=frame_[static_cast<std::size_t>(i)];
             const float alpha=!initialized_?1.0f:(db>b.db?0.68f:0.16f);
             b.db+=alpha*(db-b.db);
-            b.peakDb=!initialized_?db:std::max(db,b.peakDb-0.32f);
+            b.peakDb=!initialized_?db:std::max(db,b.peakDb);
             b.binHz=static_cast<float>(strongest*sampleRate/fftSize);
         }
         initialized_=true;
     }
+    void resetPeakHold() noexcept {for(auto& b:frame_)b.peakDb=floorDb;}
     const Frame& frame() const noexcept {return frame_;}
 private:
     Frame frame_{};

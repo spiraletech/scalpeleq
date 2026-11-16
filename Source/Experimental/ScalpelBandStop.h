@@ -86,6 +86,12 @@ public:
         if(++position_>length_){current_=1-current_;fading_=false;}
         return y;
     }
+    void reset() noexcept {
+        for(auto& bank:banks_)bank.reset();
+        pending_.reset();
+        fading_=false;havePending_=false;position_=0;
+    }
+    bool isFading() const noexcept { return fading_; }
 private:
     void beginFade() noexcept {
         banks_[1-current_]=pending_;havePending_=false;

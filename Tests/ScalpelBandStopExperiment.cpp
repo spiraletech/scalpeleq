@@ -11,6 +11,7 @@ void operator delete(void* p)noexcept{std::free(p);}
 void operator delete(void* p,std::size_t)noexcept{std::free(p);}
 int main(int argc,char** argv){
     using scalpel::experimental::BandStop;
+    using scalpel::experimental::CrossfadedBandStop;
     const std::string dir=argc>1?argv[1]:".";
     std::ofstream csv(dir+"/candidate-response.csv"),time(dir+"/candidate-signals.csv");
     csv<<"sample_rate,low_hz,high_hz,log_position,probe_hz,response_db\n";
@@ -27,7 +28,8 @@ int main(int argc,char** argv){
         }
     }
     for(int sr:{44100,48000,96000,192000})for(int signal=0;signal<5;++signal){
-        BandStop filter;filter.configure(sr,250,500);
+        BandStop fixedFilter;fixedFilter.configure(sr,250,500);
+        CrossfadedBandStop movingFilter;movingFilter.configure(sr,250,500);
         std::mt19937 random(8128);std::uniform_real_distribution<double> noise(-.25,.25);
         double peak=0,jump=0,previous=0;bool finite=true;allocations=0;
         audit=true;
@@ -39,9 +41,10 @@ int main(int argc,char** argv){
                 .25*std::sin(2*std::numbers::pi*350*t);
             if(signal==4&&i%256==0){
                 const double low=100*std::pow(10.,.5+.5*std::sin(2*std::numbers::pi*3*t));
-                if(!filter.configure(sr,low,low*2))finite=false;
+                if(!movingFilter.configure(sr,low,low*2))finite=false;
             }
-            const double y=filter.sample(x);finite=finite&&std::isfinite(y);
+            const double y=signal==4?movingFilter.sample(x):fixedFilter.sample(x);
+            finite=finite&&std::isfinite(y);
             peak=std::max(peak,std::abs(y));jump=std::max(jump,std::abs(y-previous));previous=y;
         }
         audit=false;
