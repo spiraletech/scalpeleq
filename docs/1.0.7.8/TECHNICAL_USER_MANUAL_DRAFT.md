@@ -201,8 +201,8 @@ build dependencies and do not establish VST3 or host reliability.
 | Mid/Side removal fix | PASS; see `patched-domain.log` |
 | Direct coefficient-modulation design | Rejected; retained as historical evidence |
 | Crossfaded retarget path | Integrated; live-drag safety gate passes |
-| Windows x64 build / native VST3 capture | PASS on candidate `48b3037be4b21ec905a5bcb57e07b80f52e39a98` |
-| Windows CTest | 35/35 pass in run 220 |
+| Windows x64 build / native VST3 capture | PASS on candidate `aede202917c2d50b5a218149ec2288b5bd9289b3` |
+| Windows CTest | 35/35 pass in run 221 |
 | pluginval | SUCCESS at strictness 8, seed 12345; GUI tests skipped |
 | FL Studio 25 | Not tested in this environment |
 | Magnetic interactions | Portable/native relationship and invariant tests pass; actual host interaction pending |

@@ -1,6 +1,6 @@
 {
   "approved_baseline": "ad546dcc1c829a83d894d7f8fe94b55c5c131d79",
-  "tested_code_commit": "48b3037be4b21ec905a5bcb57e07b80f52e39a98",
+  "tested_code_commit": "aede202917c2d50b5a218149ec2288b5bd9289b3",
   "source_branch": "fix/scalpel-1.0.7.8-magnetic-dsp",
   "status": "AUTOMATED_GATES_PASS_CANDIDATE_NOT_PROMOTED",
   "portable_ctest_pass": 30,
@@ -14,13 +14,13 @@
   "magnetic_system": "IMPLEMENTED_MODEL_AND_INTERACTION_TESTS_PASS",
   "state_migration": "IMPLEMENTED_TESTS_PASS",
   "analyzer_corrections": "IMPLEMENTED_TESTS_PASS",
-  "windows_run": "https://github.com/spiraletech/scalpeleq/actions/runs/43954750440",
-  "candidate_vst3_artifact_id": 14271482906,
-  "candidate_vst3_artifact_sha256": "a9dab68cb3f6d68ec7d272aefe9b15d0a43c79ae6a9b356e13f55c43e8481343",
-  "quality_evidence_artifact_id": 14272587573,
-  "quality_evidence_artifact_sha256": "5cff13ca34c1cc8a5aada8da86df25bd5a49bf73a7d278a08bdc1c823c9d06f4",
-  "pluginval_artifact_id": 14271342894,
-  "pluginval_artifact_sha256": "711748f08f92a9bc78c83ea2d182fd8018051e0a5a97b9ae5c3fe89d9c06f6df",
+  "windows_run": "https://github.com/spiraletech/scalpeleq/actions/runs/43957376208",
+  "candidate_vst3_artifact_id": 14273990164,
+  "candidate_vst3_artifact_sha256": "a442a467a991afb59154adf8f655732151e3434fd5bdb1937c2d73a1b6ac3d82",
+  "quality_evidence_artifact_id": 14273945115,
+  "quality_evidence_artifact_sha256": "0b3634b8e510a75c5a4c890b3324fb42c6cf9af7837868d6dfb9f23dfb2dcdb2",
+  "pluginval_artifact_id": 14272584719,
+  "pluginval_artifact_sha256": "14e040b81dec4cac4f7af9b5a843e3ec91a5dd1e72a447d174b3ec9b2d94240c",
   "release_promoted": false,
   "files": [
     {
