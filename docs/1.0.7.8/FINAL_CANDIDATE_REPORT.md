@@ -34,7 +34,8 @@ was performed. The approved 1.0.7.7 artwork/material baseline was not replaced.
 
 - Seven stable slots each carry presence, left/right frequency, domain and two
   reciprocal connection identifiers.
-- New sessions start empty with BAND 1 selected as the primary focus.
+- New sessions start with BAND 1 present, selected and visibly editable; the
+  other six slots remain absent.
 - Double-click adds the first free slot; right-click removes only that band.
 - Both magnets drag independently; the translucent interior moves a band.
 - Same-domain collision rules prevent inversion/crossing while Mid/Side regions

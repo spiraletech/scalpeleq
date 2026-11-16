@@ -35,9 +35,10 @@ The source retains manufacturer `SpEt`, plugin code `ScE1`, and bundle ID
 
 ## 3. Band creation, removal and selection
 
-New sessions open with no visible regions and BAND 1 as the primary focus.
-Double-click unoccupied graph space to create a region in the first available
-slot. Right-click a region and choose **REMOVE BAND** to return that slot.
+New sessions open with BAND 1 present, selected and immediately editable through
+its two visible magnets. Double-click unoccupied graph space to create another
+region in the first available slot. If every band is removed, the graph displays
+the add-band gesture. Right-click a region and choose **REMOVE BAND** to return that slot.
 Removal hides both magnets and bypasses all processing for that band.
 
 BAND OFF remains spectral removal and is separate from deletion. Projects saved

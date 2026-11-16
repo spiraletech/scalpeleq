@@ -680,7 +680,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
     for(int root=0;root<numSections;++root){
         const auto label=juce::String("BAND ")+juce::String(root+1)+" ";
         p.push_back(std::make_unique<juce::AudioParameterBool>(
-            juce::ParameterID{rootsRootControlId(root,"present"),1},label+"Present",false));
+            juce::ParameterID{rootsRootControlId(root,"present"),1},label+"Present",root==0));
         p.push_back(std::make_unique<juce::AudioParameterInt>(
             juce::ParameterID{rootsRootControlId(root,"left_link"),1},label+"Left Magnetic Link",-1,13,-1));
         p.push_back(std::make_unique<juce::AudioParameterInt>(

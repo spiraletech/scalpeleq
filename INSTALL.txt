@@ -13,8 +13,9 @@ migrate their existing seven territories as present and unlinked.
 Keep your previous working Scalpel EQ.vst3 bundle so you can restore it.
 The ZIP contains a Windows plugin, not source code or a mockup.
 
-New sessions begin with no visible regions. Double-click empty graph space to
-add a band. Drag either magnet to edit an edge; drag the translucent interior
+New sessions begin with BAND 1 visible and its two magnets ready to edit.
+Double-click empty graph space to add another band. Drag either magnet to edit
+an edge; drag the translucent interior
 to move a region or its connected group. Hold Ctrl for unsnapped precision.
 Right-click a region to remove it or explicitly unlink a connected magnet.
 BAND OFF remains spectral removal; removing a band is a separate operation.

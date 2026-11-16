@@ -85,10 +85,13 @@ void RootsGraph::write(int i,const char* suffix,float value) {
 }
 int RootsGraph::hitNode(juce::Point<float> p,bool cycleCoincidentBand)const{
     float nearest=18.0f;
+    const auto graph=area();
     std::array<float,prism::roots::v2::kNodes> distances{};
     for(int i=0;i<prism::roots::v2::kNodes;++i){
         if(pval(processor_.apvts,PRISMVSTAudioProcessor::rootsRootControlId(i/2,"present"))<.5f){distances[(size_t)i]=100000.f;continue;}
-        const auto x=freqToX(param(i,"hz")),y=area().getCentreY();
+        const auto x=juce::jlimit(graph.getX()+10.0f,graph.getRight()-10.0f,
+                                  freqToX(param(i,"hz")));
+        const auto y=graph.getCentreY();
         distances[(size_t)i]=p.getDistanceFrom({x,y});
         nearest=juce::jmin(nearest,distances[(size_t)i]);
     }
@@ -712,11 +715,13 @@ void RootsGraph::paint(juce::Graphics& g){
     // Detailed numbers are available through the parameter shelf and hover.
     const bool selectedPresent=pval(processor_.apvts,
         PRISMVSTAudioProcessor::rootsRootControlId(selectedRoot,"present"))>=.5f;
+    int presentCount=0;
     {
         juce::Graphics::ScopedSaveState bandGlass(g);
         g.reduceClipRegion(r.toNearestInt());
         for(int root=0;root<7;++root){
             if(pval(processor_.apvts,PRISMVSTAudioProcessor::rootsRootControlId(root,"present"))<.5f)continue;
+            ++presentCount;
             const float lo=freqToX(param(root*2,"hz")),hi=freqToX(param(root*2+1,"hz"));
             const float warning=peakWarnings_[(size_t)root];const bool focused=root==selectedRoot;
             const auto tint=warning>0.f?juce::Colour(0xffed2d22):colour(root);
@@ -728,13 +733,21 @@ void RootsGraph::paint(juce::Graphics& g){
     // Both boundary handles always live on one horizontal rail.
     g.setColour(scalpel::finish::text.withAlpha(.65f));
     g.drawHorizontalLine(juce::roundToInt(r.getCentreY()),r.getX(),r.getRight());
+    if(presentCount==0){
+        g.setFont(scalpel::finish::font(12,true));
+        g.setColour(scalpel::finish::text.withAlpha(.68f));
+        g.drawText("DOUBLE-CLICK GRAPH TO ADD BAND 1",r,
+                   juce::Justification::centred,false);
+    }
     // Two-pass z-order keeps the selected ROOT boundary pair above neighbors.
     for(int pass=0;pass<2;++pass)
     for(int i=0;i<prism::roots::v2::kNodes;++i){
         if(pval(processor_.apvts,PRISMVSTAudioProcessor::rootsRootControlId(i/2,"present"))<.5f)continue;
         if((i/2==selectedRoot)!=(pass==1))continue;
         const float hz=param(i,"hz");
-        const float x=freqToX(hz),y=r.getCentreY();
+        const float guideX=freqToX(hz);
+        const float x=juce::jlimit(r.getX()+10.0f,r.getRight()-10.0f,guideX);
+        const float y=r.getCentreY();
         const bool enabled=pval(processor_.apvts,
             PRISMVSTAudioProcessor::rootsRootControlId(i/2,"on"))>=0.5f;
         const bool solo=pval(processor_.apvts,
@@ -745,7 +758,7 @@ void RootsGraph::paint(juce::Graphics& g){
             juce::Colour(0xffff4f38):
             colour(i/2);
         g.setColour(col.withAlpha(enabled?(focused?0.85f:0.65f):0.045f));
-        g.drawVerticalLine(juce::roundToInt(x),r.getY(),r.getBottom());
+        g.drawVerticalLine(juce::roundToInt(guideX),r.getY(),r.getBottom());
         g.setColour(col.withAlpha(enabled?(focused?0.24f:0.045f):0.025f));
         g.fillEllipse(x-10,y-10,20,20);
         g.setColour(enabled?col:juce::Colour(polished?0xff49545b:0xff6d6056));

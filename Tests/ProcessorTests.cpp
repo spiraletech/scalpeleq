@@ -77,9 +77,11 @@ int main(int argc,char** argv)
     // New/reset CARVEs start at 0% tightness without migrating existing Q.
     {
         PRISMVSTAudioProcessor p;
-        for(int root=0;root<7;++root)
-            if(p.apvts.getRawParameterValue(PRISMVSTAudioProcessor::rootsRootControlId(root,"present"))->load()>=.5f)
-                return 77;
+        for(int root=0;root<7;++root){
+            const bool present=p.apvts.getRawParameterValue(
+                PRISMVSTAudioProcessor::rootsRootControlId(root,"present"))->load()>=.5f;
+            if(present!=(root==0))return 77;
+        }
         for(int root=0;root<7;++root)for(int slot=0;slot<4;++slot){
             const auto id=PRISMVSTAudioProcessor::carveId(root,slot,"q");
             if(surgery::precision::tightnessPercent(p.apvts.getRawParameterValue(id)->load())!=0.f)return 74;
