@@ -307,7 +307,7 @@ public:
             // boundaries, not just the narrower colour/compressor tap.
             // Continuous notch state + 10 ms wet smoothing prevent clicks.
             for(int root=0;root<kTerritories;++root){
-                const auto& node=nodes_[(size_t)(root*2)];
+                auto& node=nodes_[(size_t)(root*2)];
                 const double muted=node.presenceMix*(1.0-node.enableMix);
                 const double midMuted=node.config.domain==Domain::side?0.0:muted;
                 const double sideMuted=node.config.domain==Domain::mid?0.0:muted;
