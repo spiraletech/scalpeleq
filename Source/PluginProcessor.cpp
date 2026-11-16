@@ -1373,6 +1373,18 @@ void PRISMVSTAudioProcessor::setStateInformation(const void* data, int size)
                     }
                 }
             }
+            // The first 1.0.7.8 candidate could persist an unusable all-absent
+            // graph. Supported sessions contain one to seven bands, so restore
+            // BAND 1 when that candidate state is encountered.
+            bool anyBandPresent=false;
+            for(int root=0;root<numSections;++root)
+                if(const auto* value=xml->getChildByAttribute(
+                    "id",rootsRootControlId(root,"present")))
+                    anyBandPresent=anyBandPresent||value->getDoubleAttribute("value")>=.5;
+            if(!anyBandPresent)
+                if(auto* first=xml->getChildByAttribute(
+                    "id",rootsRootControlId(0,"present")))
+                    first->setAttribute("value",1.0);
             apvts.replaceState(juce::ValueTree::fromXml(*xml));
             sanitizeCrossovers();
             // Resolve old sessions that persisted more than one SOLO flag.

@@ -43,7 +43,8 @@ Removal hides both magnets and bypasses all processing for that band.
 
 BAND OFF remains spectral removal and is separate from deletion. Projects saved
 before 1.0.7.8 migrate their seven territories to present so existing sessions
-do not become empty merely because they lack the new presence parameters.
+do not become empty merely because they lack the new presence parameters. The
+earlier all-absent 1.0.7.8 candidate state migrates BAND 1 back to present.
 
 ## 4. Dual magnets and the logarithmic grid
 

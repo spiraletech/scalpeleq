@@ -635,6 +635,17 @@ bool runQualityTests(){
         if(oldRecall->apvts.getRawParameterValue(PRISMVSTAudioProcessor::rootsRootControlId(root,"left_link"))->load()!=-1.f)return false;
         if(oldRecall->apvts.getRawParameterValue(PRISMVSTAudioProcessor::rootsRootControlId(root,"right_link"))->load()!=-1.f)return false;
     }
+    auto emptyCandidate=std::make_unique<PRISMVSTAudioProcessor>();
+    for(int root=0;root<7;++root)
+        set(*emptyCandidate,PRISMVSTAudioProcessor::rootsRootControlId(root,"present"),0);
+    juce::MemoryBlock emptyState;emptyCandidate->getStateInformation(emptyState);
+    auto migratedCandidate=std::make_unique<PRISMVSTAudioProcessor>();
+    migratedCandidate->setStateInformation(emptyState.getData(),(int)emptyState.getSize());
+    for(int root=0;root<7;++root){
+        const bool present=migratedCandidate->apvts.getRawParameterValue(
+            PRISMVSTAudioProcessor::rootsRootControlId(root,"present"))->load()>=.5f;
+        if(present!=(root==0))return false;
+    }
     auto poisoned=p->apvts.copyState().createXml();
     poisoned->getChildByAttribute("id",gain)->setAttribute("value","NaN");
     if(!poisoned->writeTo(bad)||p->loadPreset(bad))return false;
