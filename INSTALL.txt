@@ -1,4 +1,4 @@
-Scalpel EQ 1.0.7.7 — BAND-anchored CARVE flush layout review — Windows x64 VST3
+Scalpel EQ 1.0.7.8 — magnetic DSP stabilization candidate — Windows x64 VST3
 
 Close FL Studio and other DAWs before replacing the plugin.
 Extract this ZIP. Copy the COMPLETE “Scalpel EQ.vst3” folder to:
@@ -6,17 +6,23 @@ Extract this ZIP. Copy the COMPLETE “Scalpel EQ.vst3” folder to:
 Keep its Contents\x86_64-win\Scalpel EQ.vst3 binary inside that folder.
 Rescan plugins if your host requires it, then open Scalpel EQ.
 
-This is a separate review candidate, not a promoted stable release.
-It uses the existing Scalpel plugin identity, parameter IDs and state format.
+This is a controlled-development candidate, not a promoted stable release.
+It uses the existing Scalpel plugin identity and all historical parameter IDs.
+New presence and magnetic-link state is appended for 1.0.7.8; legacy projects
+migrate their existing seven territories as present and unlinked.
 Keep your previous working Scalpel EQ.vst3 bundle so you can restore it.
 The ZIP contains a Windows plugin, not source code or a mockup.
 
-New skin: Formidable warm titanium/polymer and graphite controls, shared live
-materials, green ON/red OFF indicators, white knob pointers, eight screws,
-and calibrated dB graph scale with separate PEAK(dBFS) display.
-The supplied kit's rejected sponsor plaque and footer vents are excluded.
+New sessions begin with no visible regions. Double-click empty graph space to
+add a band. Drag either magnet to edit an edge; drag the translucent interior
+to move a region or its connected group. Hold Ctrl for unsnapped precision.
+Right-click a region to remove it or explicitly unlink a connected magnet.
+BAND OFF remains spectral removal; removing a band is a separate operation.
 
-Actual Windows VST3 validation and screenshots are reported separately.
+The approved 1.0.7.7 champagne-ivory/graphite chassis and control families are
+preserved. This patch does not adopt the rejected 1.0.7.8 visual experiments.
+
+Automated Windows VST3 and pluginval results are reported separately.
 FL Studio 25 verification must be performed in FL Studio; a generic test host
 is not a substitute for FL Studio project recall/playback/removal testing.
 
