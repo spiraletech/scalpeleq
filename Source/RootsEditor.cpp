@@ -710,21 +710,20 @@ void RootsGraph::paint(juce::Graphics& g){
     }
     // No engineering telemetry or legacy SONAR prose over the primary lens.
     // Detailed numbers are available through the parameter shelf and hover.
-    const float selectedLo=freqToX(param(selectedRoot*2,"hz"));
-    const float selectedHi=freqToX(param(selectedRoot*2+1,"hz"));
     const bool selectedPresent=pval(processor_.apvts,
         PRISMVSTAudioProcessor::rootsRootControlId(selectedRoot,"present"))>=.5f;
-    if(selectedPresent){
-        juce::Graphics::ScopedSaveState selectedGlass(g);
+    {
+        juce::Graphics::ScopedSaveState bandGlass(g);
         g.reduceClipRegion(r.toNearestInt());
-        const float lo=std::min(selectedLo,selectedHi), hi=std::max(selectedLo,selectedHi);
-        const float warning=peakWarnings_[(size_t)selectedRoot];
-        const auto tint=warning>0.f?juce::Colour(0xffed2d22):colour(selectedRoot);
-        juce::ColourGradient selection(tint.withAlpha(warning>0.f?.22f:.095f),lo,r.getY(),
-            juce::Colour(0xff181718).withAlpha(.015f),hi,r.getY(),false);
-        g.setGradientFill(selection);g.fillRect(lo,r.getY(),hi-lo,r.getHeight());
-        g.setColour(tint.withAlpha(warning>0.f?.95f:.60f));
-        g.drawVerticalLine(juce::roundToInt(freqToX(param(selected_,"hz"))),r.getY(),r.getBottom());
+        for(int root=0;root<7;++root){
+            if(pval(processor_.apvts,PRISMVSTAudioProcessor::rootsRootControlId(root,"present"))<.5f)continue;
+            const float lo=freqToX(param(root*2,"hz")),hi=freqToX(param(root*2+1,"hz"));
+            const float warning=peakWarnings_[(size_t)root];const bool focused=root==selectedRoot;
+            const auto tint=warning>0.f?juce::Colour(0xffed2d22):colour(root);
+            juce::ColourGradient selection(tint.withAlpha(warning>0.f?.22f:(focused?.095f:.045f)),lo,r.getY(),juce::Colour(0xff181718).withAlpha(.012f),hi,r.getY(),false);
+            g.setGradientFill(selection);g.fillRect(lo,r.getY(),hi-lo,r.getHeight());
+        }
+        if(selectedPresent){g.setColour(colour(selectedRoot).withAlpha(.60f));g.drawVerticalLine(juce::roundToInt(freqToX(param(selected_,"hz"))),r.getY(),r.getBottom());}
     }
     // Both boundary handles always live on one horizontal rail.
     g.setColour(scalpel::finish::text.withAlpha(.65f));

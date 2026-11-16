@@ -619,7 +619,9 @@ bool runQualityTests(){
     auto oldState=p->apvts.copyState();
     for(int i=oldState.getNumChildren();--i>=0;){
         const auto id=oldState.getChild(i).getProperty("id").toString();
-        if(id=="surgery_bypass"||id=="surgery_output_db")oldState.removeChild(i,nullptr);
+        if(id=="surgery_bypass"||id=="surgery_output_db"||
+           id.endsWith("_present")||id.endsWith("_left_link")||id.endsWith("_right_link"))
+            oldState.removeChild(i,nullptr);
     }
     auto legacy=juce::File::getCurrentWorkingDirectory().getChildFile("quality-legacy.surgerypreset");
     if(!oldState.createXml()->writeTo(legacy))return false;
@@ -628,6 +630,11 @@ bool runQualityTests(){
     if(!oldRecall->loadPreset(legacy)||std::abs(oldRecall->apvts.getRawParameterValue("surgery_output_db")->load())>0.001f)
         return false;
     if(oldRecall->apvts.getRawParameterValue("surgery_bypass")->load()>0.5f)return false;
+    for(int root=0;root<7;++root){
+        if(oldRecall->apvts.getRawParameterValue(PRISMVSTAudioProcessor::rootsRootControlId(root,"present"))->load()<.5f)return false;
+        if(oldRecall->apvts.getRawParameterValue(PRISMVSTAudioProcessor::rootsRootControlId(root,"left_link"))->load()!=-1.f)return false;
+        if(oldRecall->apvts.getRawParameterValue(PRISMVSTAudioProcessor::rootsRootControlId(root,"right_link"))->load()!=-1.f)return false;
+    }
     auto poisoned=p->apvts.copyState().createXml();
     poisoned->getChildByAttribute("id",gain)->setAttribute("value","NaN");
     if(!poisoned->writeTo(bad)||p->loadPreset(bad))return false;

@@ -1,12 +1,11 @@
 # Scalpel EQ 1.0.7.8 Technical & User Manual — development draft
 
-**Status: Phase B held at a failed production audio gate. Not a release manual.**
+**Status: integrated 1.0.7.8 release-candidate draft. Canonical promotion is not authorized.**
 
-This describes the inspected 1.0.7.7 implementation plus the isolated 1.0.7.8
-routing fix. Magnetic editing, band presence, migration and analyzer changes
-have not been implemented. Do not install this source branch as a stable
-replacement. Version metadata intentionally remains 1.0.7.7 until an integrated
-candidate earns the 1.0.7.8 designation. Source code takes precedence over older
+This describes the integrated 1.0.7.8 candidate: retargetable spectral removal,
+magnetic editing, independent band presence, legacy state migration and analyzer
+corrections. Do not treat the candidate as the canonical stable replacement until
+Windows, pluginval and actual FL Studio validation are recorded. Source code takes precedence over older
 product descriptions, including the obsolete PHASE description in
 `docs/SCALPEL_EQ_DSP_SPEC.md`.
 
@@ -18,7 +17,7 @@ processing has filter skirts and phase consequences. It does not separate
 instruments or guarantee a mathematically isolated frequency interval.
 
 The approved BAND / CARVE / COLOR / ANALYZE interface is unchanged by this
-work. Audio correctness is the release gate for subsequent interaction work.
+work. Audio correctness and deterministic state recall remain release gates.
 
 ## 2. Installation and FL Studio integration
 
@@ -35,49 +34,58 @@ The source retains manufacturer `SpEt`, plugin code `ScE1`, and bundle ID
 
 ## 3. Band creation, removal and selection
 
-**Current:** seven existing territory slots and fourteen boundary parameters.
-Select a territory/handle using the existing graph and BAND selectors.
+New sessions open with no visible regions and BAND 1 as the primary focus.
+Double-click unoccupied graph space to create a region in the first available
+slot. Right-click a region and choose **REMOVE BAND** to return that slot.
+Removal hides both magnets and bypasses all processing for that band.
 
-**Not implemented:** an empty new-session graph; band presence independent of
-BAND OFF; double-click creation; removal and slot reuse. BAND OFF remains a
-spectral-removal command. It is not deletion. No new presence state or legacy
-migration has been introduced in this checkpoint.
+BAND OFF remains spectral removal and is separate from deletion. Projects saved
+before 1.0.7.8 migrate their seven territories to present so existing sessions
+do not become empty merely because they lack the new presence parameters.
 
 ## 4. Dual magnets and the logarithmic grid
 
-**Current:** handles edit frequency only; vertical movement does not set gain.
-The engine derives each interval from the minimum and maximum handle
-frequencies. This is not a magnetic constraint model.
+Each present band owns a left and right frequency magnet. A magnet edits only
+frequency. It cannot cross its partner or enter an unrelated same-domain region.
+Magnets snap to the logarithmic grid and nearby band boundaries. Hysteresis keeps
+the selected target stable while the pointer remains near it. Hold Ctrl while
+dragging for precise unsnapped placement.
 
-**Not implemented:** noncrossing anchors, grid snapping, snap hysteresis,
-shared-anchor ownership, fine-mode overrides for the proposed magnet system,
-and translucent-interior movement.
+Drag anywhere in the translucent interior to move the complete band while
+preserving logarithmic width. This removes reliance on a small center dot.
 
 ## 5. Connected bands and group movement
 
-**Not implemented.** Touching boundaries in the baseline are numeric
-coincidences, not persistent connections. There is no group traversal,
-whole-group clamp or explicit unlink command. None should be advertised.
+Snapping one same-domain magnet exactly onto another creates a reciprocal,
+serialized connection. Dragging a shared boundary resizes both neighboring
+regions at the exact shared coordinate. Dragging any connected interior moves
+the complete connected group while preserving each width and every shared edge.
+The group stops as a unit at 20 Hz, 20 kHz or an unrelated same-domain region.
+
+Right-click a connected band and choose **UNLINK LEFT MAGNET** or
+**UNLINK RIGHT MAGNET**. Connections never break merely because the pointer is
+dragged harder. Stereo, Mid and Side maintain separate collision spaces, so
+deliberate Mid/Side frequency overlap remains legal.
 
 ## 6. Spectral removal and limitations
 
-BAND OFF disables a territory's additive effects and blends in two cascaded
-notch sections in the assigned channel domain. The isolated routing fix makes
+BAND OFF disables a territory's additive effects and blends in a 24-pole
+Butterworth band-stop in the assigned channel domain. The routing fix makes
 MID removal preserve Side and SIDE removal preserve Mid when other effects
 are neutral. Stereo removal still processes both components. Amount changes
 use the existing approximately 10 ms smoothing.
 
-The production topology fails the new rejection requirement: probes at 25%
-and 75% of logarithmic interval width show roughly 14–16 dB attenuation in
-the tested cases, even when the center is deeply attenuated. Boundary rejection
-is weaker. Do not interpret BAND OFF as complete removal of the full region.
+The integrated design keeps two fixed filter banks and uses a 20 ms equal-power
+transition when boundaries change. This prevents the dangerous state/coefficient
+mismatch measured in the rejected direct-modulation design. The tested interior
+meets the preliminary 60 dB requirement across 44.1, 48, 96 and 192 kHz.
 
-An unconnected 24-pole Butterworth experiment has approximately −3 dB edges
-and much deeper interior rejection. Direct coefficient changes cause dangerous
-transients and must not be integrated. A two-bank, 20 ms crossfade reduces those
-spikes in one tested drag trajectory, but blends old and new responses, delays
-target tracking, increases CPU, and temporarily leaks energy relative to the
-latest selected interval. Neither experiment is a released processor.
+The exact filter edges are approximately −3.01 dB; “selected region” therefore
+does not mean every point up to and including both mathematical edges is reduced
+60 dB. Retarget transitions briefly contain both old and new responses, consume
+twice the stopband filter work and can leak energy relative to the newest target
+until the 20 ms transition completes. The process remains zero-lookahead with
+reported latency of zero samples, but causal IIR phase/group delay still exists.
 
 ## 7. Stereo, Mid, Side and MONO
 
@@ -136,28 +144,29 @@ switch on therefore does not represent bypass through that UI path.
 
 ## 11. Analyzer, X-RAY and metering
 
-The baseline graph draws measured spectrum and a peak trace, plus a selected
-territory's four CARVE previews. These are not the full cumulative response.
-BAND OFF suppression is not included in that theoretical preview. Measured
-spectrum and theoretical EQ must not be conflated.
+The graph draws measured spectrum and peak history independently from theoretical
+response. ANALYZE adds cumulative static Stereo/Mid/Side paths for all present
+linear band gains, CARVE filters and spectral-removal filters. Individual selected
+CARVE curves remain separately colored. Compression, PHASE, dynamic CARVE and
+nonlinear COLOR are not falsely represented as static transfer curves.
 
-The hover still includes spectrum-bin dBFS and `HOLD` values; the requested
-PEAK labeling and mouse-information cleanup are not implemented. RESET calls
-the processor's output sample-peak reset. There is no verified full-song
-spectral history or independent whole-song reset semantics.
+Hover shows frequency, musical pitch and **PEAK**. The old pointer-height dB
+readout is removed. Spectral peak history holds for the full run until RESET;
+RESET clears both output sample-peak and analyzer peak history. Visual Decay can
+reach true zero, which follows each new measurement without release persistence.
 
-Visual Decay / spectrum-release behavior has not been changed to true zero.
-X-RAY remains the inherited visualization path; this patch adds no audio
-connection to it. A new full-plugin X-RAY audio-null comparison is outstanding.
+X-RAY remains downstream of the analyzer and visual-only. A processor audio-null
+test compares X-RAY enabled/disabled output.
 Input/output sample peak is not a true-peak measurement.
 
 ## 12. Automation and preset recall
 
-Existing parameter IDs, order, defaults and plugin identifiers are unchanged.
-No presence/link parameters or magnetic serialization format were added.
-The existing APVTS XML state/preset mechanism and legacy sanitation remain.
-Source compatibility is preserved by inspection; actual old-project recall,
-automation, undo/redo and FL Studio session restoration are unverified.
+Existing parameter IDs, order and plugin identifiers remain unchanged. Presence
+and two link parameters per band are appended. Frequencies and reciprocal links
+fully reconstruct the arrangement from APVTS XML state. Missing presence values
+migrate as legacy-present; missing links migrate unlinked. New-session defaults
+remain absent. Actual FL Studio automation, undo/redo and project restoration
+still require host validation.
 
 ## 13. Safety, troubleshooting and known limitations
 
@@ -184,14 +193,14 @@ build dependencies and do not establish VST3 or host reliability.
 | Existing declared latency | 0 samples; IIR group delay still exists |
 | Sample rates probed | 44.1, 48, 96, 192 kHz |
 | Portable tests | See `evidence/1.0.7.8/patched-ctest.log` |
-| Production spectral gate | FAIL; see `patched-spectral.csv` |
+| Production spectral gate | PASS on integrated path |
 | Mid/Side removal fix | PASS; see `patched-domain.log` |
-| Direct coefficient-modulation experiment | FAIL audio safety |
-| Crossfade experiment | Narrow trajectory test passes; integration unverified |
+| Direct coefficient-modulation design | Rejected; retained as historical evidence |
+| Crossfaded retarget path | Integrated; live-drag safety gate passes |
 | Windows x64 build / native VST3 capture | PASS on tested code `e23cb6e` |
 | Windows CTest | 32/34 pass; two audio release gates fail |
 | pluginval / FL Studio | Skipped after failed gate / not tested |
-| Magnetic interactions / migration | Not implemented; not tested |
+| Magnetic interactions | Standalone relationship/model gates pass; Windows GUI tests pending |
 
 Reproduce standalone checks with:
 
@@ -201,6 +210,5 @@ cmake --build build-gates --parallel 2
 ctest --test-dir build-gates --output-on-failure
 ```
 
-The test command intentionally returns failure while the release gates fail.
-Do not hide those failures with expected-failure flags. A passing subset is
-not permission to promote a release.
+Passing automated gates are evidence for a candidate, not permission to promote
+the release. Actual FL Studio findings remain a separate required record.

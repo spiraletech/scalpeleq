@@ -139,6 +139,7 @@ public:
             node.phaseLeft.reset();node.phaseRight.reset();
             node.phaseReal=node.phaseImag=node.phaseLeftPower=
                 node.phaseRightPower=node.phaseAngle=0.0;
+            node.muteMidActive=node.muteSideActive=false;
             node.onyxMid.prepare(sr_);node.onyxSide.prepare(sr_);
             node.fx={node.config.dynamic,node.config.sparkle,node.config.shine,node.config.smooth,node.config.tape};
             node.presenceMix=node.config.present?1.0:0.0;
@@ -306,17 +307,19 @@ public:
             // boundaries, not just the narrower colour/compressor tap.
             // Continuous notch state + 10 ms wet smoothing prevent clicks.
             for(int root=0;root<kTerritories;++root){
-                auto& filters=rootMuteBands_[(size_t)root].filters;
-                const double notchM=filters[0].sample(m);
-                const double notchS=filters[1].sample(s);
                 const auto& node=nodes_[(size_t)(root*2)];
                 const double muted=node.presenceMix*(1.0-node.enableMix);
                 const double midMuted=node.config.domain==Domain::side?0.0:muted;
                 const double sideMuted=node.config.domain==Domain::mid?0.0:muted;
                 const double monoWet=node.monoMix*node.enableMix*node.presenceMix;
                 const double sideWet=1.0-(1.0-sideMuted)*(1.0-monoWet);
-                m+=midMuted*(notchM-m);
-                s+=sideWet*(notchS-s);
+                // Do no high-order stopband work for absent/fully enabled
+                // roots. Reset once after the wet envelope reaches zero so
+                // stale ringing cannot replay on a later engagement.
+                if(midMuted>1.e-8){node.muteMidActive=true;auto& filter=rootMuteBands_[(size_t)root].filters[0];m+=midMuted*(filter.sample(m)-m);}
+                else if(node.muteMidActive){rootMuteBands_[(size_t)root].filters[0].reset();node.muteMidActive=false;}
+                if(sideWet>1.e-8){node.muteSideActive=true;auto& filter=rootMuteBands_[(size_t)root].filters[1];s+=sideWet*(filter.sample(s)-s);}
+                else if(node.muteSideActive){rootMuteBands_[(size_t)root].filters[1].reset();node.muteSideActive=false;}
             }
             // SOLO contains only the selected territory. Its MONO switch
             // therefore means exact L==R on the audition output, not merely
@@ -366,6 +369,7 @@ private:
         OnyxMemory onyxMid{},onyxSide{};
         std::array<double,5> fx{};
         double presenceMix=1,enableMix=1,monoMix=0,compMix=0,threshold=0;
+        bool muteMidActive=false,muteSideActive=false;
         Compressor profile=Compressor::optical3;
     };
     void applyRootEffects(int root, double bandMid, double bandSide,

@@ -77,6 +77,9 @@ int main(int argc,char** argv)
     // New/reset CARVEs start at 0% tightness without migrating existing Q.
     {
         PRISMVSTAudioProcessor p;
+        for(int root=0;root<7;++root)
+            if(p.apvts.getRawParameterValue(PRISMVSTAudioProcessor::rootsRootControlId(root,"present"))->load()>=.5f)
+                return 77;
         for(int root=0;root<7;++root)for(int slot=0;slot<4;++slot){
             const auto id=PRISMVSTAudioProcessor::carveId(root,slot,"q");
             if(surgery::precision::tightnessPercent(p.apvts.getRawParameterValue(id)->load())!=0.f)return 74;
@@ -100,6 +103,16 @@ int main(int argc,char** argv)
     {
         PRISMVSTAudioProcessor p;
         if(p.getLatencySamples()!=0)return 31;
+    }
+    // X-RAY is visual-only: toggling it cannot create an audio branch.
+    {
+        PRISMVSTAudioProcessor off,on;off.prepareToPlay(48000,512);on.prepareToPlay(48000,512);
+        setActual(off,"scalpel_xray",0);setActual(on,"scalpel_xray",1);
+        juce::AudioBuffer<float> a(2,512),b(2,512);juce::MidiBuffer midi;
+        fillTone(a,997.f,.25f,48000,0);b.makeCopyOf(a);
+        off.processBlock(a,midi);on.processBlock(b,midi);
+        for(int c=0;c<2;++c)for(int i=0;i<512;++i)
+            if(a.getSample(c,i)!=b.getSample(c,i))return 78;
     }
     // Ultra Q must be host-editable, not just an extended rotary visual.
     {

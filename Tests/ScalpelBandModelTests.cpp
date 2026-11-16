@@ -11,9 +11,10 @@ int main(){
     if(std::abs(std::log2(m.bands[a].right/m.bands[a].left)-aw)>1e-9||std::abs(std::log2(m.bands[b].right/m.bands[b].left)-bw)>1e-9||std::abs(m.bands[a].right-m.bands[b].left)>.01)return 3;
     if(!m.moveAnchor(a,Anchor::right,400)||std::abs(m.bands[b].left-400)>.01)return 4;
     const double beforeLeft=m.bands[a].left,beforeShared=m.bands[a].right,beforeRight=m.bands[b].right;
+    const double resizedAw=std::log2(beforeShared/beforeLeft),resizedBw=std::log2(beforeRight/beforeShared);
     if(m.moveGroup(a,100.0)||m.bands[b].right>20000.001||
-       std::abs(std::log2(m.bands[a].right/m.bands[a].left)-aw)>1e-9||
-       std::abs(std::log2(m.bands[b].right/m.bands[b].left)-std::log2(beforeRight/beforeShared))>1e-9)return 8;
+       std::abs(std::log2(m.bands[a].right/m.bands[a].left)-resizedAw)>1e-9||
+       std::abs(std::log2(m.bands[b].right/m.bands[b].left)-resizedBw)>1e-9)return 8;
     if(!(m.bands[a].left>beforeLeft&&m.bands[a].right>beforeShared))return 9;
     m.unlink(a,Anchor::right);if(m.link(a,Anchor::right).band>=0||m.link(b,Anchor::left).band>=0)return 5;
     m.remove(a);if(m.bands[a].present||!m.bands[b].present||!m.valid())return 6;
