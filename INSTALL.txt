@@ -1,4 +1,4 @@
-Scalpel EQ 1.0.7.8 — DSP-only stabilization candidate — Windows x64 VST3
+Scalpel EQ 1.0.7.8 — magnetic DSP candidate — Windows x64 VST3
 
 Close FL Studio and other DAWs before replacing the plugin.
 Extract this ZIP. Copy the COMPLETE “Scalpel EQ.vst3” folder to:
@@ -11,10 +11,22 @@ It uses the existing Scalpel plugin identity, parameter IDs and state format.
 Keep your previous working Scalpel EQ.vst3 bundle so you can restore it.
 The ZIP contains a Windows plugin, not source code or a mockup.
 
-The approved 1.0.7.7 interface is retained exactly: all seven established
-bands remain available, with the same graph interaction, geometry, materials,
-controls and analyzer presentation. This candidate changes internal audio
-processing only; it does not contain the rejected add/remove or magnetic UI.
+The approved 1.0.7.7 chassis, geometry, materials, controls and menu layout
+remain protected. All seven established BAND 1–7 tabs and graph regions are
+visible in a new session. Each region has two frequency magnets; drag either
+magnet to resize, or drag anywhere inside the translucent colored region to
+move the whole region without changing its logarithmic width.
+
+Right-click an existing region to REMOVE BAND or explicitly unlink either
+magnet. Removal hides the region and magnets but keeps its BAND slot. Double-
+click legal empty graph space to recreate a removed slot. Removal is separate
+from BAND OFF: BAND OFF remains high-rejection spectral removal. Ctrl-drag a
+magnet for precise unsnapped adjustment.
+
+Snapped shared boundaries are real serialized relationships. Moving the
+colored interior of a connected band moves the connected group as one rigid
+unit and stops it at a spectrum edge or an unconnected same-domain region.
+Cross-domain Stereo/Mid/Side overlap remains legal.
 
 BAND OFF now uses high-rejection interval-wide filtering with click-safe live
 boundary transitions, and respects the selected Stereo/Mid/Side domain.
