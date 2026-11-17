@@ -480,7 +480,7 @@ int main(int argc,char** argv)
         const auto rootGain=PRISMVSTAudioProcessor::rootsRootGainId(1);
         setActual(p,left,92.0f);setActual(p,sibling,65.0f);
         setActual(p,rootGain,7.0f);
-        if(!p.resetRootBoundary(3)||std::abs(value(left)-120.0f)>0.02f
+        if(!p.resetRootBoundary(3)||std::abs(value(left)-125.0f)>0.02f
             ||std::abs(value(sibling)-65.0f)>0.02f
             ||std::abs(value(rootGain)-7.0f)>0.02f
             ||p.resetRootBoundary(-1)||p.resetRootBoundary(14)){
@@ -499,7 +499,7 @@ int main(int argc,char** argv)
         setActual(p,id(1,1,"depth"),5.0f);
         // Third CARVE slot resets to its own log-spaced position, not ROOT centre.
         const float midpoint=(float)std::exp(std::log(65.0)+
-            (3.0/5.0)*std::log(120.0/65.0));
+            (3.0/5.0)*std::log(125.0/65.0));
         if(!p.resetCarveNode(1,2)
             ||std::abs(value(id(1,2,"hz"))-midpoint)>0.1f
             ||std::abs(value(id(1,2,"depth")))>0.001f
