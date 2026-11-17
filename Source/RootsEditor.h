@@ -156,6 +156,7 @@ private:
     float xToFreq(float x) const;
     float param(int i,const char* suffix) const;
     void write(int i,const char* suffix,float value);
+    juce::Point<float> boundaryPoint(int node) const;
     int hitNode(juce::Point<float>,bool cycleCoincidentBand=false) const;
     int hitBandInterior(juce::Point<float>) const;
     scalpel::bands::Model loadBandModel() const;

@@ -82,18 +82,43 @@ float RootsGraph::param(int i,const char* suffix)const {
 void RootsGraph::write(int i,const char* suffix,float value) {
     change(processor_,PRISMVSTAudioProcessor::rootsNodeId(i,suffix),value);
 }
+juce::Point<float> RootsGraph::boundaryPoint(int node) const {
+    const auto graph=area();
+    const float x=juce::jlimit(graph.getX()+10.0f,graph.getRight()-10.0f,
+                               freqToX(param(node,"hz")));
+    float y=graph.getCentreY();
+    const int root=node/2;
+    const auto linkId=PRISMVSTAudioProcessor::rootsRootControlId(
+        root,node%2?"right_link":"left_link");
+    if(pval(processor_.apvts,linkId)>=0.f)return {x,y};
+
+    // Default adjacent regions may share a coordinate without being linked.
+    // Keep both magnets visible and individually hit-testable. A genuinely
+    // linked pair remains merged on the rail as one shared boundary.
+    int rank=0,total=0;
+    for(int other=0;other<prism::roots::v2::kNodes;++other){
+        if(pval(processor_.apvts,
+            PRISMVSTAudioProcessor::rootsRootControlId(other/2,"present"))<.5f)
+            continue;
+        const auto otherLink=PRISMVSTAudioProcessor::rootsRootControlId(
+            other/2,other%2?"right_link":"left_link");
+        if(pval(processor_.apvts,otherLink)>=0.f)continue;
+        if(std::abs(freqToX(param(other,"hz"))-freqToX(param(node,"hz")))>1.25f)
+            continue;
+        if(other<node)++rank;
+        ++total;
+    }
+    if(total>1)y+=((float)rank-0.5f*(float)(total-1))*10.0f;
+    return {x,y};
+}
 int RootsGraph::hitNode(juce::Point<float> p,bool cycleCoincidentBand)const{
     float nearest=18.0f;
-    const auto graph=area();
     std::array<float,prism::roots::v2::kNodes> distances{};
     for(int i=0;i<prism::roots::v2::kNodes;++i){
         if(pval(processor_.apvts,PRISMVSTAudioProcessor::rootsRootControlId(i/2,"present"))<.5f){
             distances[(size_t)i]=100000.f;continue;
         }
-        const auto x=juce::jlimit(graph.getX()+10.0f,graph.getRight()-10.0f,
-                                  freqToX(param(i,"hz")));
-        const auto y=graph.getCentreY();
-        distances[(size_t)i]=p.getDistanceFrom({x,y});
+        distances[(size_t)i]=p.getDistanceFrom(boundaryPoint(i));
         nearest=juce::jmin(nearest,distances[(size_t)i]);
     }
     if(nearest>=18.0f)return -1;
@@ -759,8 +784,8 @@ void RootsGraph::paint(juce::Graphics& g){
         if((i/2==selectedRoot)!=(pass==1))continue;
         const float hz=param(i,"hz");
         const float guideX=freqToX(hz);
-        const float x=juce::jlimit(r.getX()+10.0f,r.getRight()-10.0f,guideX);
-        const float y=r.getCentreY();
+        const auto magnet=boundaryPoint(i);
+        const float x=magnet.x,y=magnet.y;
         const bool enabled=pval(processor_.apvts,
             PRISMVSTAudioProcessor::rootsRootControlId(i/2,"on"))>=0.5f;
         const bool solo=pval(processor_.apvts,
