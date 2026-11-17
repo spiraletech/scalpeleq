@@ -167,7 +167,9 @@ private:
     struct RootParameters {
         // Legacy indices 0..11 are frozen for recall; the new COLOR DYNAMIC,
         // PHASE, and optical LIMIT controls append without reordering them.
-        std::array<std::atomic<float>*, 16> values {};
+        // Presence is appended at index 16. BAND OFF remains index 2 and
+        // continues to mean spectral removal; deletion never reuses it.
+        std::array<std::atomic<float>*, 17> values {};
     };
     std::array<RootParameters, numSections> rootParameters;
     std::array<std::array<std::atomic<float>*, 2>, 14> nodeParameters {};

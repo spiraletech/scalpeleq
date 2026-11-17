@@ -7,7 +7,8 @@ set(SCALPEL_PORTABLE_TESTS
   SurgerySonar SurgeryHeaderLayout SurgeryNodeFocus SurgeryRootRouting
   SurgeryResponse SurgeryAnalysis SurgeryPrecision SurgeryDualKnobDSP
   SurgerySpectrogram SurgerySpectrumFill SurgerySpectralColours
-  ScalpelRemovalDomain ScalpelBandStopTransition ScalpelBandStopPerformance)
+  ScalpelRemovalDomain ScalpelBandStopTransition ScalpelBandStopPerformance
+  ScalpelBandModel)
 foreach(name IN LISTS SCALPEL_PORTABLE_TESTS)
   add_executable(${name} Tests/${name}Tests.cpp)
   # The inherited assertions are meaningful only when NDEBUG is absent.

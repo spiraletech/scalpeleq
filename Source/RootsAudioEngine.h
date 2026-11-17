@@ -24,7 +24,7 @@ struct Config {
     double dynamic=0.0,sparkle=0.0,shine=0.0,smooth=0.0,tape=0.0;
     bool phase=false;
     double limit=0.0;
-    bool enabled=true,solo=false;
+    bool present=true,enabled=true,solo=false;
 };
 struct Meter {
     double correlation=1.0,midRms=0.0,sideRms=0.0,spaceApplied=1.0,largestGrDb=0.0;
@@ -137,6 +137,7 @@ public:
             node.muteMidActive=node.muteSideActive=false;
             node.onyxMid.prepare(sr_);node.onyxSide.prepare(sr_);
             node.fx={node.config.dynamic,node.config.sparkle,node.config.shine,node.config.smooth,node.config.tape};
+            node.presenceMix=node.config.present?1.0:0.0;
             node.enableMix=node.config.enabled?1.0:0.0;
             node.monoMix=rootMono_[(size_t)(i/2)]?1.0:0.0;
             node.compMix=node.config.comp==Compressor::off?0.0:1.0;
@@ -245,7 +246,8 @@ public:
                 processedM[(size_t)root]=fm;processedS[(size_t)root]=fs;
                 const double rootGain=std::pow(10.0,rootGainDb_[(size_t)root]/20.0);
                 blockRootPeak[(size_t)root]=std::max(blockRootPeak[(size_t)root],
-                    node.enableMix*rootGain*std::max(std::abs(fm+fs),std::abs(fm-fs)));
+                    node.presenceMix*node.enableMix*rootGain*
+                    std::max(std::abs(fm+fs),std::abs(fm-fs)));
                 m+=fm-bandMid;s+=fs-bandSide;
             }
             {
@@ -258,7 +260,9 @@ public:
                     const double db=rootGainDb_[(size_t)root];
 
                     if(std::abs(db)<0.00001&&std::abs(smoothedRootDelta_[(size_t)root])<1.0e-8)continue;
-                    const double delta=smoothedRootDelta_[(size_t)root]*nodes_[(size_t)(root*2)].enableMix;
+                    const auto& node=nodes_[(size_t)(root*2)];
+                    const double delta=smoothedRootDelta_[(size_t)root]*
+                        node.presenceMix*node.enableMix;
                     if(delta==0.0)continue;
                     const double bm=rootM[(size_t)root],bs=rootS[(size_t)root];
                     const auto domain=nodes_[(size_t)(root*2)].config.domain;
@@ -272,7 +276,8 @@ public:
                 const double normalM=m,normalS=s;
                 auto audition=[&](int root)->std::array<double,2> {
                     const auto& node=nodes_[(size_t)(root*2)];
-                    const double delta=smoothedRootDelta_[(size_t)root]*node.enableMix;
+                    const double delta=smoothedRootDelta_[(size_t)root]*
+                        node.presenceMix*node.enableMix;
                     const double bm=rootM[(size_t)root],bs=rootS[(size_t)root];
                     const auto domain=node.config.domain;
                     // EQ DOMAIN must also select the audible channel when
@@ -305,10 +310,10 @@ public:
             // Continuous notch state + 10 ms wet smoothing prevent clicks.
             for(int root=0;root<kTerritories;++root){
                 auto& node=nodes_[(size_t)(root*2)];
-                const double muted=1.0-node.enableMix;
+                const double muted=node.presenceMix*(1.0-node.enableMix);
                 const double midMuted=node.config.domain==Domain::side?0.0:muted;
                 const double sideMuted=node.config.domain==Domain::mid?0.0:muted;
-                const double monoWet=node.monoMix*node.enableMix;
+                const double monoWet=node.monoMix*node.enableMix*node.presenceMix;
                 const double sideWet=1.0-(1.0-sideMuted)*(1.0-monoWet);
                 // Skip the high-order filter while fully dry. Reset it once
                 // after the smoothed wet envelope reaches zero so stale
@@ -377,7 +382,7 @@ private:
                phaseRightPower=0.0,phaseAngle=0.0;
         OnyxMemory onyxMid{},onyxSide{};
         std::array<double,5> fx{};
-        double enableMix=1,monoMix=0,compMix=0,threshold=0;
+        double presenceMix=1,enableMix=1,monoMix=0,compMix=0,threshold=0;
         bool muteMidActive=false,muteSideActive=false;
         Compressor profile=Compressor::optical3;
     };
@@ -389,6 +394,7 @@ private:
         const double a=1.0-gainSmoothingAlpha_;
         const std::array<double,5> targets{c.dynamic,c.sparkle,c.shine,c.smooth,c.tape};
         for(size_t i=0;i<5;++i)node.fx[i]+=a*(targets[i]-node.fx[i]);
+        node.presenceMix+=a*((c.present?1.0:0.0)-node.presenceMix);
         node.enableMix+=a*((c.enabled?1.0:0.0)-node.enableMix);
         node.monoMix+=a*((rootMono_[(size_t)root]?1.0:0.0)-node.monoMix);
         node.compMix+=a*((c.comp==Compressor::off?0.0:1.0)-node.compMix);
@@ -459,7 +465,8 @@ private:
             const double sg=c.detector==Detector::mid?1.0:
                   c.detector==Detector::dual?g2:g1;
             greatestGr=std::max(greatestGr,-20.0*std::log10(
-                std::max(1e-9,std::min(mg,sg)))*node.compMix*node.enableMix);
+                std::max(1e-9,std::min(mg,sg)))*node.compMix*
+                node.enableMix*node.presenceMix);
             m+=node.compMix*tapM*(mg-1.0);
             s+=node.compMix*tapS*(sg-1.0);
             }
@@ -480,12 +487,14 @@ private:
             const double gain=std::pow(10.0,-reductionDb/20.0);
             m+=(gain-1.0)*tapM;
             s+=(gain-1.0)*tapS;
-            greatestGr=std::max(greatestGr,reductionDb*node.enableMix);
+            greatestGr=std::max(greatestGr,reductionDb*node.enableMix*
+                                             node.presenceMix);
         }
         // The final frequency-selective SIDE suppression is applied after
         // root gain and all per-root colour effects in process().
-        m=originalM+node.enableMix*(m-originalM);
-        s=originalS+node.enableMix*(s-originalS);
+        const double active=node.presenceMix*node.enableMix;
+        m=originalM+active*(m-originalM);
+        s=originalS+active*(s-originalS);
     }
     double onyxSample(double x,OnyxMemory& state,const Node& node) const noexcept {
         return state.sampleColor(x,node.fx);

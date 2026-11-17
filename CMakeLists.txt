@@ -246,7 +246,7 @@ if(PRISMVST_BUILD_TESTS)
 endif()
 
 # Preserve assertion-based inherited checks in Release configurations and add
-# the 1.0.7.8 sound-engine gates. No UI/presence/magnetic model is introduced.
+# the 1.0.7.8 sound-engine and magnetic relationship gates.
 if(PRISMVST_BUILD_TESTS)
   get_property(scalpelTargets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
   foreach(target IN LISTS scalpelTargets)
@@ -260,6 +260,8 @@ if(PRISMVST_BUILD_TESTS)
   endforeach()
   add_executable(scalpel_removal_domain_tests Tests/ScalpelRemovalDomainTests.cpp)
   add_test(NAME scalpel_removal_domain_isolation COMMAND scalpel_removal_domain_tests)
+  add_executable(scalpel_band_model_tests Tests/ScalpelBandModelTests.cpp)
+  add_test(NAME scalpel_magnetic_band_model COMMAND scalpel_band_model_tests)
   add_executable(scalpel_bandstop_transition_tests Tests/ScalpelBandStopTransitionTests.cpp)
   add_test(NAME scalpel_experimental_crossfade_transition COMMAND scalpel_bandstop_transition_tests)
   add_executable(scalpel_bandstop_performance_tests Tests/ScalpelBandStopPerformanceTests.cpp)

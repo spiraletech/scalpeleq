@@ -176,6 +176,23 @@ int main(){
         }
         std::cout<<"E PASS per-ROOT ONYX isolation and threshold reduction\n";
     }
-    std::cout<<"FOUR ROOTS v2 AUDIO PROOFS PASSED\n";
+    // PROOF F: deleting an OFF band fades its removal processing back to dry;
+    // absence is not another spelling of BAND OFF.
+    {
+        Engine engine(sr);std::vector<float> l(n),r(n);
+        Config lower=engine.get(0);lower.hz=500.0;lower.present=false;
+        lower.enabled=false;engine.config(0,lower);
+        Config upper=engine.get(1);upper.hz=1800.0;upper.present=false;
+        upper.enabled=false;engine.config(1,upper);
+        sine(l,r,1000.0,0.2);
+        const auto dry=l;
+        engine.process(l.data(),r.data(),n);
+        const double ratio=amplitude(l,1000.0)/amplitude(dry,1000.0);
+        if(!(ratio>0.995&&ratio<1.005)){
+            std::cerr<<"F FAIL absent band changed audio "<<ratio<<"\n";return 7;
+        }
+        std::cout<<"F PASS absent band bypass is distinct from BAND OFF\n";
+    }
+    std::cout<<"ROOTS v2 AUDIO PROOFS PASSED\n";
     return 0;
 }
