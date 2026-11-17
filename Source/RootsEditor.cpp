@@ -86,30 +86,7 @@ juce::Point<float> RootsGraph::boundaryPoint(int node) const {
     const auto graph=area();
     const float x=juce::jlimit(graph.getX()+10.0f,graph.getRight()-10.0f,
                                freqToX(param(node,"hz")));
-    float y=graph.getCentreY();
-    const int root=node/2;
-    const auto linkId=PRISMVSTAudioProcessor::rootsRootControlId(
-        root,node%2?"right_link":"left_link");
-    if(pval(processor_.apvts,linkId)>=0.f)return {x,y};
-
-    // Default adjacent regions may share a coordinate without being linked.
-    // Keep both magnets visible and individually hit-testable. A genuinely
-    // linked pair remains merged on the rail as one shared boundary.
-    int rank=0,total=0;
-    for(int other=0;other<prism::roots::v2::kNodes;++other){
-        if(pval(processor_.apvts,
-            PRISMVSTAudioProcessor::rootsRootControlId(other/2,"present"))<.5f)
-            continue;
-        const auto otherLink=PRISMVSTAudioProcessor::rootsRootControlId(
-            other/2,other%2?"right_link":"left_link");
-        if(pval(processor_.apvts,otherLink)>=0.f)continue;
-        if(std::abs(freqToX(param(other,"hz"))-freqToX(param(node,"hz")))>1.25f)
-            continue;
-        if(other<node)++rank;
-        ++total;
-    }
-    if(total>1)y+=((float)rank-0.5f*(float)(total-1))*10.0f;
-    return {x,y};
+    return {x,graph.getCentreY()};
 }
 int RootsGraph::hitNode(juce::Point<float> p,bool cycleCoincidentBand)const{
     float nearest=18.0f;
@@ -780,34 +757,57 @@ void RootsGraph::paint(juce::Graphics& g){
     // Two-pass z-order keeps the selected ROOT boundary pair above neighbors.
     for(int pass=0;pass<2;++pass)
     for(int i=0;i<prism::roots::v2::kNodes;++i){
-        if(!bandModel.bands[(size_t)(i/2)].present)continue;
-        if((i/2==selectedRoot)!=(pass==1))continue;
+        const int root=i/2;
+        if(!bandModel.bands[(size_t)root].present)continue;
+        const auto anchor=i%2?scalpel::bands::Anchor::right:
+                                scalpel::bands::Anchor::left;
+        const auto linked=bandModel.link(root,anchor);
+        const int linkedNode=linked.band<0?-1:
+            linked.band*2+(linked.anchor==scalpel::bands::Anchor::right);
+        if(linkedNode>=0&&i>linkedNode)continue; // one fused shared magnet
+        const bool focused=root==selectedRoot||linked.band==selectedRoot;
+        if(focused!=(pass==1))continue;
         const float hz=param(i,"hz");
         const float guideX=freqToX(hz);
         const auto magnet=boundaryPoint(i);
         const float x=magnet.x,y=magnet.y;
         const bool enabled=pval(processor_.apvts,
-            PRISMVSTAudioProcessor::rootsRootControlId(i/2,"on"))>=0.5f;
+            PRISMVSTAudioProcessor::rootsRootControlId(root,"on"))>=0.5f;
         const bool solo=pval(processor_.apvts,
-             PRISMVSTAudioProcessor::rootsRootSoloId(i/2))>=0.5f;
+             PRISMVSTAudioProcessor::rootsRootSoloId(root))>=0.5f;
         // Vertical guides represent frequency boundaries, not gain movements.
-        const bool focused=i/2==selectedRoot;
-        const auto col=focused&&peakWarnings_[(size_t)(i/2)]>0.f?
+        const auto col=root==selectedRoot&&peakWarnings_[(size_t)root]>0.f?
             juce::Colour(0xffff4f38):
-            colour(i/2);
+            colour(root);
         g.setColour(col.withAlpha(enabled?(focused?0.85f:0.65f):0.045f));
         g.drawVerticalLine(juce::roundToInt(guideX),r.getY(),r.getBottom());
         g.setColour(col.withAlpha(enabled?(focused?0.24f:0.045f):0.025f));
         g.fillEllipse(x-10,y-10,20,20);
-        g.setColour(enabled?col:juce::Colour(polished?0xff49545b:0xff6d6056));
-        g.fillEllipse(x-6.5f,y-6.5f,13,13);
+        const auto disabled=juce::Colour(polished?0xff49545b:0xff6d6056);
+        if(linked.band>=0){
+            const auto partner=colour(linked.band);
+            const auto leftColour=anchor==scalpel::bands::Anchor::right?col:partner;
+            const auto rightColour=anchor==scalpel::bands::Anchor::right?partner:col;
+            const auto bounds=juce::Rectangle<float>(x-6.5f,y-6.5f,13.f,13.f);
+            {
+                juce::Graphics::ScopedSaveState half(g);
+                g.reduceClipRegion(juce::Rectangle<float>(x-7.f,y-7.f,7.f,14.f).toNearestInt());
+                g.setColour(enabled?leftColour:disabled);g.fillEllipse(bounds);
+            }
+            {
+                juce::Graphics::ScopedSaveState half(g);
+                g.reduceClipRegion(juce::Rectangle<float>(x,y-7.f,7.f,14.f).toNearestInt());
+                g.setColour(enabled?rightColour:disabled);g.fillEllipse(bounds);
+            }
+        }else{
+            g.setColour(enabled?col:disabled);g.fillEllipse(x-6.5f,y-6.5f,13,13);
+        }
         if(enabled||i==selected_||solo||focused){
-            g.setColour(solo?juce::Colours::white:col.brighter(0.65f));
+            g.setColour(linked.band>=0?juce::Colours::white:
+                (solo?juce::Colours::white:col.brighter(0.65f)));
             g.drawEllipse(x-9,y-9,18,18,i==selected_?2.0f:1.2f);
         }
-        const auto anchor=i%2?scalpel::bands::Anchor::right:
-                                scalpel::bands::Anchor::left;
-        if(bandModel.link(i/2,anchor).band>=0){
+        if(linked.band>=0){
             g.setColour(juce::Colours::white.withAlpha(focused?.88f:.58f));
             g.fillEllipse(x-2.25f,y-2.25f,4.5f,4.5f);
         }
@@ -1138,69 +1138,20 @@ void RootsGraph::popup(){
     const auto rid=[root](const char* suffix){
         return PRISMVSTAudioProcessor::rootsRootControlId(root,suffix);
     };
-    const auto current=[this,&rid](const char* suffix){
-        return pval(processor_.apvts,rid(suffix));
-    };
     juce::PopupMenu menu;
-    menu.addSectionHeader("SCALPEL / BAND "+juce::String(root+1));
-    const bool present=current("present")>=0.5f;
-    menu.addItem(1,"BAND ENABLED",true,current("on")>=0.5f);
-    const bool solo=pval(processor_.apvts,
-        PRISMVSTAudioProcessor::rootsRootSoloId(root))>=0.5f;
-    menu.addItem(2,"SOLO BAND / OFF",true,solo);
-    menu.addSeparator();
-    menu.addSectionHeader("BAND GAIN + CARVE / EQ DOMAIN");
-    menu.addItem(10,"STEREO",true,juce::roundToInt(current("domain"))==0);
-    menu.addItem(11,"MID",true,juce::roundToInt(current("domain"))==1);
-    menu.addItem(12,"SIDE",true,juce::roundToInt(current("domain"))==2);
-    menu.addSeparator();
-    menu.addSectionHeader("DYNAMIC / COMPRESSOR CHANNEL");
-    static const char* dn[]{"STEREO LINK","DUAL MID/SIDE","MID ONLY","SIDE ONLY"};
-    for(int i=0;i<4;++i)
-        menu.addItem(30+i,dn[i],true,juce::roundToInt(current("detector"))==i);
-    menu.addSeparator();
-    menu.addItem(15,"MONO SELECTED BAND",true,current("mono")>=0.5f);
-    menu.addSeparator();
-    menu.addItem(4,"UNLINK LEFT MAGNET",present&&current("left_link")>=0.f);
-    menu.addItem(5,"UNLINK RIGHT MAGNET",present&&current("right_link")>=0.f);
-    menu.addItem(3,"REMOVE BAND",present,false);
-    menu.addSeparator();
-    juce::PopupMenu palette;
-    static constexpr const char* names[]{"CYAN","AMBER","JADE","VIOLET","ROSE","BLUE","LIME","WHITE"};
-    for(int i=0;i<8;++i)palette.addItem(80+i,names[i]);
-    palette.addItem(99,"CUSTOM HEX...");
-    menu.addSubMenu("BAND ACCENT",palette);
+    const bool present=pval(processor_.apvts,rid("present"))>=0.5f;
+    if(!present)return;
+    const bool leftLinked=pval(processor_.apvts,rid("left_link"))>=0.f;
+    const bool rightLinked=pval(processor_.apvts,rid("right_link"))>=0.f;
+    if(leftLinked)menu.addItem(4,"UNLINK LEFT MAGNET");
+    if(rightLinked)menu.addItem(5,"UNLINK RIGHT MAGNET");
+    if(leftLinked||rightLinked)menu.addSeparator();
+    menu.addItem(3,"REMOVE BAND");
     const juce::Component::SafePointer<RootsGraph> safe(this);
     menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(this),
         [safe,root](int id){
             if(safe==nullptr||id<=0)return;
             auto& graph=*safe;
-            const auto rid=[root](const char* suffix){
-                return PRISMVSTAudioProcessor::rootsRootControlId(root,suffix);
-            };
-            const auto value=[&graph,&rid](const char* suffix){
-                return pval(graph.processor_.apvts,rid(suffix));
-            };
-            const auto set=[&graph,&rid](const char* suffix,float v){
-                change(graph.processor_,rid(suffix),v);
-            };
-            if(id==1)set("on",value("on")>=0.5f?0.0f:1.0f);
-            if(id==2){
-                const auto key=PRISMVSTAudioProcessor::rootsRootSoloId(root);
-                const bool on=pval(graph.processor_.apvts,key)>=0.5f;
-                change(graph.processor_,key,on?0.0f:1.0f);
-            }
-            if(id>=10&&id<=12){
-                auto model=graph.loadBandModel();
-                auto candidate=model;
-                candidate.unlink(root,scalpel::bands::Anchor::left);
-                candidate.unlink(root,scalpel::bands::Anchor::right);
-                candidate.bands[(size_t)root].domain=
-                    (scalpel::bands::Domain)(id-10);
-                if(candidate.valid())graph.storeBandModel(candidate);
-            }
-            if(id==15)set("mono",value("mono")>=0.5f?0.0f:1.0f);
-            if(id>=30&&id<=33)set("detector",(float)(id-30));
             if(id==3){
                 auto model=graph.loadBandModel();model.remove(root);
                 graph.storeBandModel(model);
@@ -1210,30 +1161,6 @@ void RootsGraph::popup(){
                 model.unlink(root,id==4?scalpel::bands::Anchor::left:
                                          scalpel::bands::Anchor::right);
                 graph.storeBandModel(model);
-            }
-
-            const auto colorId="surgery_root"+juce::String(root+1)+"_rgb";
-            static constexpr unsigned swatches[]{
-                0xE05246,0xD99045,0x6EAA78,0x55BFCB,
-                0x425D9B,0x9A63B8,0xD97A9C,0xE5F4F3};
-            if(id>=80&&id<=87)change(graph.processor_,colorId,(float)swatches[id-80]);
-            if(id==99){
-                auto* dialog=new juce::AlertWindow(
-                    "BAND ACCENT","Enter a 6-digit RGB hexadecimal value",
-                    juce::MessageBoxIconType::NoIcon);
-                dialog->addTextEditor("hex","6BBDD4","RRGGBB");
-                dialog->addButton("APPLY",1);
-                dialog->addButton("CANCEL",0);
-                dialog->enterModalState(true,
-                    juce::ModalCallbackFunction::create(
-                        [safe,dialog,colorId](int result) {
-                            if(result!=1||safe==nullptr)return;
-                            auto str=dialog->getTextEditorContents("hex").trim().removeCharacters("#");
-                            if(str.length()!=6||!str.containsOnly("0123456789aAbBcCdDeEfF"))return;
-                            const unsigned value=(unsigned)str.getHexValue32()&0x00ffffffu;
-                            change(safe->processor_,colorId,(float)value);
-                            safe->repaint();
-                        }),true);
             }
             graph.repaint();
         });

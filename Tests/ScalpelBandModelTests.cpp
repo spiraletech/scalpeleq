@@ -14,6 +14,12 @@ int main(){
     Model factory;
     for(const auto& band:factory.bands)if(!band.present)return 1;
     if(!factory.valid())return 2;
+    for(int i=0;i<count-1;++i)
+        if(!(factory.bands[(size_t)i].right<factory.bands[(size_t)(i+1)].left))return 15;
+    const auto movableFactory=factory;
+    if(!factory.moveGroup(2,0.05)||
+       !(factory.bands[2].left>movableFactory.bands[2].left))return 16;
+    factory=movableFactory;
 
     // Delete is lifecycle-only; the slot can be recreated in the vacated gap.
     factory.remove(2);
@@ -22,7 +28,7 @@ int main(){
     if(recreated!=2||!factory.bands[2].present||!factory.valid())return 4;
 
     // Independent boundaries cannot invert or overlap a same-domain neighbor.
-    if(factory.moveAnchor(2,Anchor::left,250.0))return 5;
+    if(factory.moveAnchor(2,Anchor::left,factory.bands[2].right))return 5;
     if(factory.moveAnchor(2,Anchor::right,600.0))return 6;
 
     // Cross-domain overlap is intentional and legal.

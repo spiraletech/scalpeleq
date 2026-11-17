@@ -285,6 +285,24 @@ PRISMVSTAudioProcessor::PRISMVSTAudioProcessor()
         rootsSoloParameterIds[(size_t)i] = rootsRootSoloId(i);
         apvts.addParameterListener(rootsSoloParameterIds[(size_t)i], this);
     }
+    for(int node=0;node<14;++node) {
+        magneticFrequencyParameterIds[(size_t)node]=rootsNodeId(node,"hz");
+        apvts.addParameterListener(magneticFrequencyParameterIds[(size_t)node],this);
+        realtimeSafeBandHz[(size_t)node].store(nodeParameters[(size_t)node][0]->load());
+    }
+    for(int root=0;root<numSections;++root) {
+        const std::array<juce::String,4> ids {
+            rootsRootControlId(root,"present"), rootsRootControlId(root,"domain"),
+            rootsRootControlId(root,"left_link"), rootsRootControlId(root,"right_link")
+        };
+        for(int field=0;field<4;++field) {
+            const auto index=(size_t)(root*4+field);
+            magneticStateParameterIds[index]=ids[(size_t)field];
+            apvts.addParameterListener(magneticStateParameterIds[index],this);
+        }
+    }
+    if(const auto initial=readMagneticBandModel();initial.valid())
+        lastValidBandModel_=initial;
 }
 
 PRISMVSTAudioProcessor::~PRISMVSTAudioProcessor()
@@ -294,6 +312,10 @@ PRISMVSTAudioProcessor::~PRISMVSTAudioProcessor()
         apvts.removeParameterListener(id, this);
     for (const auto& id : rootsSoloParameterIds)
         apvts.removeParameterListener(id, this);
+    for(const auto& id:magneticFrequencyParameterIds)
+        apvts.removeParameterListener(id,this);
+    for(const auto& id:magneticStateParameterIds)
+        apvts.removeParameterListener(id,this);
 
     analyzerWorker.signalThreadShouldExit();
     analyzerEvent.signal();
@@ -370,12 +392,75 @@ void PRISMVSTAudioProcessor::parameterChanged(const juce::String& parameterID, f
         triggerAsyncUpdate();
         return;
     }
+    for(const auto& id:magneticFrequencyParameterIds)
+        if(parameterID==id){triggerAsyncUpdate();return;}
+    for(const auto& id:magneticStateParameterIds)
+        if(parameterID==id){triggerAsyncUpdate();return;}
 }
 
 void PRISMVSTAudioProcessor::handleAsyncUpdate()
 {
+    sanitizeMagneticBandState();
     reconcileExclusiveSolo();
     reconcileExclusiveRootsSolo();
+}
+
+scalpel::bands::Model PRISMVSTAudioProcessor::readMagneticBandModel() const noexcept
+{
+    using namespace scalpel::bands;
+    Model model;
+    for(int root=0;root<numSections;++root) {
+        auto& band=model.bands[(size_t)root];
+        band.present=rootParameters[(size_t)root].values[16]->load()>=0.5f;
+        band.left=nodeParameters[(size_t)(root*2)][0]->load();
+        band.right=nodeParameters[(size_t)(root*2+1)][0]->load();
+        band.domain=(Domain)juce::jlimit(0,2,juce::roundToInt(
+            rootParameters[(size_t)root].values[3]->load()));
+        for(int anchor=0;anchor<2;++anchor) {
+            const auto suffix=anchor==0?"left_link":"right_link";
+            const int encoded=juce::roundToInt(read(apvts,rootsRootControlId(root,suffix)));
+            band.links[(size_t)anchor]=encoded>=0&&encoded<14
+                ?Link{encoded/2,encoded%2?Anchor::right:Anchor::left}:Link{};
+        }
+    }
+    return model;
+}
+
+void PRISMVSTAudioProcessor::sanitizeMagneticBandState()
+{
+    using namespace scalpel::bands;
+    if(sanitizingMagneticState_)return;
+    const auto candidate=readMagneticBandModel();
+    if(candidate.valid()) {
+        lastValidBandModel_=candidate;
+        for(int root=0;root<numSections;++root) {
+            realtimeSafeBandHz[(size_t)(root*2)].store((float)candidate.bands[(size_t)root].left);
+            realtimeSafeBandHz[(size_t)(root*2+1)].store((float)candidate.bands[(size_t)root].right);
+        }
+        return;
+    }
+
+    sanitizingMagneticState_=true;
+    const auto assign=[this](const juce::String& id,float value) {
+        if(auto* parameter=apvts.getParameter(id))
+            parameter->setValueNotifyingHost(parameter->convertTo0to1(value));
+    };
+    for(int root=0;root<numSections;++root) {
+        const auto& band=lastValidBandModel_.bands[(size_t)root];
+        assign(rootsRootControlId(root,"present"),band.present?1.f:0.f);
+        assign(rootsRootControlId(root,"domain"),(float)band.domain);
+        assign(rootsNodeId(root*2,"hz"),(float)band.left);
+        assign(rootsNodeId(root*2+1,"hz"),(float)band.right);
+        for(int anchor=0;anchor<2;++anchor) {
+            const auto connection=band.links[(size_t)anchor];
+            const float encoded=connection.band<0?-1.f:
+                (float)(connection.band*2+(connection.anchor==Anchor::right?1:0));
+            assign(rootsRootControlId(root,anchor==0?"left_link":"right_link"),encoded);
+        }
+        realtimeSafeBandHz[(size_t)(root*2)].store((float)band.left);
+        realtimeSafeBandHz[(size_t)(root*2+1)].store((float)band.right);
+    }
+    sanitizingMagneticState_=false;
 }
 
 void PRISMVSTAudioProcessor::reconcileExclusiveSolo()
@@ -619,7 +704,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
         juce::ParameterID { "analyzer_slope", 2 }, "Analyzer Display Slope",
         juce::NormalisableRange<float>(0.0f, 6.0f, 0.1f), 0.0f));
 
-    juce::NormalisableRange<float> auraMemoryRange(0.05f, 10.0f, 0.01f);
+    juce::NormalisableRange<float> auraMemoryRange(0.0f, 10.0f, 0.01f);
     auraMemoryRange.setSkewForCentre(0.4f);
     p.push_back(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID { "aura_memory", 2 }, "Spectrum Release Time",
@@ -1178,6 +1263,32 @@ void PRISMVSTAudioProcessor::updateMeters(const juce::AudioBuffer<float>& buffer
 void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer)
 {
     using namespace prism::roots::v2;
+    // Take one coherent boundary snapshot for the complete block. Host
+    // automation can write parameters in any order, so reject an inverted or
+    // same-domain-overlapping intermediate state before it reaches either DSP
+    // engine. This is fixed-size, allocation-free and lock-free.
+    scalpel::bands::Model realtimeModel;
+    for(int root=0;root<numSections;++root) {
+        auto& band=realtimeModel.bands[(size_t)root];
+        band.present=rootParameters[(size_t)root].values[16]->load()>=0.5f;
+        band.left=nodeParameters[(size_t)(root*2)][0]->load();
+        band.right=nodeParameters[(size_t)(root*2+1)][0]->load();
+        band.domain=(scalpel::bands::Domain)juce::jlimit(0,2,juce::roundToInt(
+            rootParameters[(size_t)root].values[3]->load()));
+        band.links={}; // relationships are message-thread state, not DSP data
+    }
+    std::array<float,14> boundaryHz {};
+    if(realtimeModel.valid()) {
+        for(int root=0;root<numSections;++root) {
+            boundaryHz[(size_t)(root*2)]=(float)realtimeModel.bands[(size_t)root].left;
+            boundaryHz[(size_t)(root*2+1)]=(float)realtimeModel.bands[(size_t)root].right;
+            realtimeSafeBandHz[(size_t)(root*2)].store(boundaryHz[(size_t)(root*2)],std::memory_order_relaxed);
+            realtimeSafeBandHz[(size_t)(root*2+1)].store(boundaryHz[(size_t)(root*2+1)],std::memory_order_relaxed);
+        }
+    } else {
+        for(int node=0;node<14;++node)
+            boundaryHz[(size_t)node]=realtimeSafeBandHz[(size_t)node].load(std::memory_order_relaxed);
+    }
     // Historical global SPACE/MONO parameters remain for session recall,
     // but they are no longer exposed or allowed to alter this audio path.
     rootsEngine.setSpace(50.0);
@@ -1191,7 +1302,7 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
     for(int i=0;i<kNodes;++i)
     {
         Config c;
-        c.hz=nodeParameters[(size_t)i][0]->load();
+        c.hz=boundaryHz[(size_t)i];
         c.gainDb=0.0; // retained obsolete host parameter is ignored
         c.q=nodeParameters[(size_t)i][1]->load();
         const int root=i/2;
@@ -1224,8 +1335,8 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
                             (size_t)buffer.getNumSamples());
     // Bounds come from actual ROOT handle positions, with smooth acoustic tails.
     for(int root=0;root<surgery::kRoots;++root) {
-        const float lo=nodeParameters[(size_t)(root*2)][0]->load();
-        const float hi=nodeParameters[(size_t)(root*2+1)][0]->load();
+        const float lo=boundaryHz[(size_t)(root*2)];
+        const float hi=boundaryHz[(size_t)(root*2+1)];
         carveEngine.bounds(root,lo,hi);
         carveEngine.rootEnabled(root,
             rootParameters[(size_t)root].values[16]->load()>=0.5f&&

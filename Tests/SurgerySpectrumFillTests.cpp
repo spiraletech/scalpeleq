@@ -20,5 +20,9 @@ int main(){
     if(spectrum.frame()[2]!=0.0f)return 5;
     frame[2]=NAN;spectrum.update(frame,1.0/30.0,0.4);
     if(!std::isfinite(spectrum.frame()[2]))return 6;
+    frame.fill(-72.0f);spectrum.update(frame,1.0/30.0,0.0);
+    for(const auto value:spectrum.frame())if(value!=-72.0f)return 7;
+    frame[2]=-18.0f;spectrum.update(frame,1.0/30.0,0.0);
+    if(spectrum.frame()[2]!=-18.0f)return 8;
     std::cout<<"Single-spectrum fast attack, finite input and decay proofs passed\n";
 }

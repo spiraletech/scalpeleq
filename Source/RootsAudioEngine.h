@@ -110,7 +110,7 @@ class Engine {
 public:
     explicit Engine(double sampleRate=48000.0) noexcept { prepare(sampleRate); }
     static constexpr std::array<double,kNodes> defaults{
-        20.,60.,60.,120.,120.,250.,250.,500.,500.,2000.,2000.,6000.,6000.,20000.
+        20.,50.,65.,125.,160.,315.,400.,800.,1000.,2500.,3150.,8000.,10000.,20000.
     };
     void prepare(double sampleRate) noexcept {
         sr_=std::max(8000.0,sampleRate);

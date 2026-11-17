@@ -1,4 +1,4 @@
-Scalpel EQ 1.0.7.8 — magnetic DSP candidate — Windows x64 VST3
+Scalpel EQ 1.0.7.8 — magnetic patch R2 candidate — Windows x64 VST3
 
 Close FL Studio and other DAWs before replacing the plugin.
 Extract this ZIP. Copy the COMPLETE “Scalpel EQ.vst3” folder to:
@@ -17,8 +17,14 @@ visible in a new session. Each region has two frequency magnets; drag either
 magnet to resize, or drag anywhere inside the translucent colored region to
 move the whole region without changing its logarithmic width.
 
+The seven factory regions begin with deliberate logarithmic gaps so the
+colored interiors are immediately draggable. Every magnet uses the same
+horizontal rail. A connected boundary is one fused, two-color magnet rather
+than two coincident dots.
+
 Right-click an existing region to REMOVE BAND or explicitly unlink either
-magnet. Removal hides the region and magnets but keeps its BAND slot. Double-
+linked magnet. No audio, domain, compressor or color controls are duplicated
+in that graph menu. Removal hides the region and magnets but keeps its BAND slot. Double-
 click legal empty graph space to recreate a removed slot. Removal is separate
 from BAND OFF: BAND OFF remains high-rejection spectral removal. Ctrl-drag a
 magnet for precise unsnapped adjustment.
@@ -27,6 +33,9 @@ Snapped shared boundaries are real serialized relationships. Moving the
 colored interior of a connected band moves the connected group as one rigid
 unit and stops it at a spectrum edge or an unconnected same-domain region.
 Cross-domain Stereo/Mid/Side overlap remains legal.
+
+Visual Decay reaches and displays a true 0.00; at zero, the displayed
+measurement follows the current analyzer frame without retained falloff.
 
 BAND OFF now uses high-rejection interval-wide filtering with click-safe live
 boundary transitions, and respects the selected Stereo/Mid/Side domain.

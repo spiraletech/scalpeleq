@@ -28,8 +28,8 @@ struct Band {
 struct Model {
     static constexpr double minimumRatio = 1.001;
     static constexpr std::array<double, 14> factoryBoundaries {
-        20.0, 60.0, 60.0, 120.0, 120.0, 250.0, 250.0,
-        500.0, 500.0, 2000.0, 2000.0, 6000.0, 6000.0, 20000.0
+        20.0, 50.0, 65.0, 125.0, 160.0, 315.0, 400.0,
+        800.0, 1000.0, 2500.0, 3150.0, 8000.0, 10000.0, 20000.0
     };
 
     std::array<Band, count> bands {};

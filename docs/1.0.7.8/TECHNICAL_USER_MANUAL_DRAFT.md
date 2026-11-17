@@ -47,9 +47,10 @@ processing. BAND OFF keeps the band present and applies spectral removal.
 
 Every present band has a left and right frequency magnet. Drag either magnet to
 resize the region. A magnet cannot cross its partner or enter an unrelated
-same-domain region. Unlinked magnets at the same coordinate are displayed
-separately around the existing rail so both remain visible and selectable.
-Genuinely linked magnets merge at their shared coordinate.
+same-domain region. New sessions use deliberate logarithmic gaps, so unlinked
+magnets do not masquerade as shared boundaries. Genuinely linked magnets render
+as one fused, two-color handle at their exact shared coordinate. All magnets
+use one horizontal interaction rail.
 
 Magnets snap to meaningful logarithmic-grid values and neighboring boundaries.
 Acquire/release hysteresis prevents rapid target jitter. Hold Ctrl while

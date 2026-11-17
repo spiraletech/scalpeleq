@@ -7,6 +7,7 @@
 #include "PrismLabAnalyzer.h"
 #include "ScalpelAnalyzerHealth.h"
 #include "RootsAudioEngine.h"
+#include "ScalpelBandModel.h"
 #include "SurgeryCarveEngine.h"
 
 class PRISMVSTAudioProcessor final : public juce::AudioProcessor,
@@ -187,6 +188,11 @@ private:
     std::array<std::atomic<float>, numSections> stereoActivity {};
     std::array<juce::String, numSections> soloParameterIds {};
     std::array<juce::String, numSections> rootsSoloParameterIds {};
+    std::array<juce::String, 14> magneticFrequencyParameterIds {};
+    std::array<juce::String, 28> magneticStateParameterIds {};
+    std::array<std::atomic<float>, 14> realtimeSafeBandHz {};
+    scalpel::bands::Model lastValidBandModel_;
+    bool sanitizingMagneticState_ = false; // message thread only
     std::atomic<int> latestRootsSolo { -1 };
     std::atomic<int> latestSoloSection { -1 };
 
@@ -256,6 +262,8 @@ private:
     void handleAsyncUpdate() override;
     void reconcileExclusiveSolo(); // only invoked on message thread
     void reconcileExclusiveRootsSolo(); // message thread only
+    void sanitizeMagneticBandState(); // message thread only
+    scalpel::bands::Model readMagneticBandModel() const noexcept;
     void sanitizeCrossovers();
     void updateCrossoverCoefficients(int blockSamples);
     void processSevenSectionEngine(juce::AudioBuffer<float>& buffer);
