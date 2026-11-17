@@ -1,9 +1,17 @@
 cmake_minimum_required(VERSION 3.24)
-project(SCALPELEQ VERSION 1.0.7.7 LANGUAGES C CXX)
+project(SCALPELEQ VERSION 1.0.7.8 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+# The internal DSP release gates can run without JUCE, graphics, or audio
+# drivers. This does not alter the production plugin target.
+option(SCALPEL_PORTABLE_TESTS_ONLY "Build only standalone core and DSP release gates" OFF)
+if(SCALPEL_PORTABLE_TESTS_ONLY)
+  include(cmake/PortableTests.cmake)
+  return()
+endif()
 
 include(FetchContent)
 FetchContent_Declare(
@@ -51,6 +59,7 @@ list(GET SCALPEL_CHASSIS_STATUS 0 SCALPEL_CHASSIS_ERROR)
 if(NOT SCALPEL_CHASSIS_ERROR EQUAL 0)
   message(FATAL_ERROR "Pinned Surgery chassis unavailable: ${SCALPEL_CHASSIS_STATUS}")
 endif()
+
 file(DOWNLOAD
   "https://raw.githubusercontent.com/spiraletech/prismvst/f3a816060520b0c0e87be466ecdb4d2d34f654a8/Assets/StormChassis/approved-reference.png"
   "${SCALPEL_ART_DIR}/approved-reference.png"
@@ -234,6 +243,35 @@ if(PRISMVST_BUILD_TESTS)
   add_executable(surgery_spectral_colour_tests Tests/SurgerySpectralColoursTests.cpp Source/SurgerySpectralColours.h)
   target_compile_features(surgery_spectral_colour_tests PRIVATE cxx_std_20)
   add_test(NAME surgery_spectral_colour_mapping COMMAND surgery_spectral_colour_tests)
+endif()
+
+# Preserve assertion-based inherited checks in Release configurations and add
+# the 1.0.7.8 sound-engine gates. No UI/presence/magnetic model is introduced.
+if(PRISMVST_BUILD_TESTS)
+  get_property(scalpelTargets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+  foreach(target IN LISTS scalpelTargets)
+    if(target MATCHES "(_tests$|_study$)")
+      if(MSVC)
+        target_compile_options(${target} PRIVATE /UNDEBUG)
+      else()
+        target_compile_options(${target} PRIVATE -UNDEBUG)
+      endif()
+    endif()
+  endforeach()
+  add_executable(scalpel_removal_domain_tests Tests/ScalpelRemovalDomainTests.cpp)
+  add_test(NAME scalpel_removal_domain_isolation COMMAND scalpel_removal_domain_tests)
+  add_executable(scalpel_bandstop_transition_tests Tests/ScalpelBandStopTransitionTests.cpp)
+  add_test(NAME scalpel_experimental_crossfade_transition COMMAND scalpel_bandstop_transition_tests)
+  add_executable(scalpel_bandstop_performance_tests Tests/ScalpelBandStopPerformanceTests.cpp)
+  add_test(NAME scalpel_worst_case_realtime_budget COMMAND scalpel_bandstop_performance_tests)
+  add_executable(scalpel_spectral_gate Tests/ScalpelSpectralGateTests.cpp)
+  add_test(NAME scalpel_spectral_release_gate COMMAND scalpel_spectral_gate ${CMAKE_CURRENT_BINARY_DIR}/spectral-gate.csv)
+  add_executable(scalpel_bandstop_experiment Tests/ScalpelBandStopExperiment.cpp)
+  add_test(NAME scalpel_experimental_audio_safety_gate COMMAND scalpel_bandstop_experiment ${CMAKE_CURRENT_BINARY_DIR})
+  add_executable(scalpel_candidate_measured Tests/ScalpelBandStopMeasuredTests.cpp)
+  add_test(NAME scalpel_candidate_steady_sine_measurements COMMAND scalpel_candidate_measured ${CMAKE_CURRENT_BINARY_DIR}/candidate-measured.csv)
+  set_tests_properties(scalpel_spectral_release_gate scalpel_experimental_audio_safety_gate
+    PROPERTIES LABELS "release_gate" TIMEOUT 180)
 endif()
 
 
