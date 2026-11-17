@@ -52,9 +52,27 @@ jobs:
           Invoke-WebRequest "https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_Windows.zip" -OutFile pluginval.zip -MaximumRetryCount 4 -RetryIntervalSec 5
           Expand-Archive pluginval.zip -DestinationPath pluginval
           $process = Start-Process -FilePath "$PWD\pluginval\pluginval.exe" -ArgumentList @('--strictness-level', '8', '--random-seed', '12345', '--skip-gui-tests', '--output-dir', "$PWD\validation", '--validate', "`"$PWD\dist\Scalpel EQ.vst3`"") -Wait -PassThru -WindowStyle Hidden
-          if ($process.ExitCode -ne 0) { throw "pluginval failed" }
           $logs = Get-ChildItem validation -Filter '*.txt'
-          if (-not $logs -or -not (Select-String -Path $logs.FullName -Pattern '^SUCCESS$')) { throw "pluginval did not report SUCCESS" }
+          if ($logs) { $logs | ForEach-Object { Get-Content $_.FullName } }
+          if ($process.ExitCode -ne 0) { throw "pluginval failed with exit code $($process.ExitCode)" }
+          if (-not $logs -or -not (Select-String -Path $logs.FullName -Pattern '^SUCCESS
+      - name: Upload host validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SCALPEL-EQ-pluginval
+          path: validation
+          if-no-files-found: warn
+      - name: Upload VST3
+        uses: actions/upload-artifact@v4
+        with:
+          name: SCALPEL-EQ-1.0.7.8-MAGNETIC-PATCH-R2-Windows-x64-VST3
+          path: dist
+          if-no-files-found: error
+
+
+
+)) { throw "pluginval did not report SUCCESS" }
       - name: Upload host validation logs
         if: always()
         uses: actions/upload-artifact@v4
