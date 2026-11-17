@@ -55,24 +55,7 @@ jobs:
           $logs = Get-ChildItem validation -Filter '*.txt'
           if ($logs) { $logs | ForEach-Object { Get-Content $_.FullName } }
           if ($process.ExitCode -ne 0) { throw "pluginval failed with exit code $($process.ExitCode)" }
-          if (-not $logs -or -not (Select-String -Path $logs.FullName -Pattern '^SUCCESS
-      - name: Upload host validation logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: SCALPEL-EQ-pluginval
-          path: validation
-          if-no-files-found: warn
-      - name: Upload VST3
-        uses: actions/upload-artifact@v4
-        with:
-          name: SCALPEL-EQ-1.0.7.8-MAGNETIC-PATCH-R2-Windows-x64-VST3
-          path: dist
-          if-no-files-found: error
-
-
-
-)) { throw "pluginval did not report SUCCESS" }
+          if (-not $logs -or -not (Select-String -Path $logs.FullName -Pattern '^SUCCESS$')) { throw "pluginval did not report SUCCESS" }
       - name: Upload host validation logs
         if: always()
         uses: actions/upload-artifact@v4
