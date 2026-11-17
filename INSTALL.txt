@@ -1,4 +1,4 @@
-Scalpel EQ 1.0.7.7 — BAND-anchored CARVE flush layout review — Windows x64 VST3
+Scalpel EQ 1.0.7.8 — DSP-only stabilization candidate — Windows x64 VST3
 
 Close FL Studio and other DAWs before replacing the plugin.
 Extract this ZIP. Copy the COMPLETE “Scalpel EQ.vst3” folder to:
@@ -6,17 +6,20 @@ Extract this ZIP. Copy the COMPLETE “Scalpel EQ.vst3” folder to:
 Keep its Contents\x86_64-win\Scalpel EQ.vst3 binary inside that folder.
 Rescan plugins if your host requires it, then open Scalpel EQ.
 
-This is a separate review candidate, not a promoted stable release.
+This is a controlled-development candidate, not a promoted stable release.
 It uses the existing Scalpel plugin identity, parameter IDs and state format.
 Keep your previous working Scalpel EQ.vst3 bundle so you can restore it.
 The ZIP contains a Windows plugin, not source code or a mockup.
 
-New skin: Formidable warm titanium/polymer and graphite controls, shared live
-materials, green ON/red OFF indicators, white knob pointers, eight screws,
-and calibrated dB graph scale with separate PEAK(dBFS) display.
-The supplied kit's rejected sponsor plaque and footer vents are excluded.
+The approved 1.0.7.7 interface is retained exactly: all seven established
+bands remain available, with the same graph interaction, geometry, materials,
+controls and analyzer presentation. This candidate changes internal audio
+processing only; it does not contain the rejected add/remove or magnetic UI.
 
-Actual Windows VST3 validation and screenshots are reported separately.
+BAND OFF now uses high-rejection interval-wide filtering with click-safe live
+boundary transitions, and respects the selected Stereo/Mid/Side domain.
+
+Automated Windows VST3 and pluginval results are reported separately.
 FL Studio 25 verification must be performed in FL Studio; a generic test host
 is not a substitute for FL Studio project recall/playback/removal testing.
 
