@@ -9,6 +9,7 @@
 #include <numbers>
 #include "RootsSpectrumColours.h"
 #include "SurgeryOnyx.h"
+#include "Experimental/ScalpelBandStop.h"
 
 namespace prism::roots::v2 {
 constexpr int kTerritories=7,kNodes=14;
@@ -33,7 +34,7 @@ struct Meter {
 class Filter {
 public:
     void peak(double sr,const Config& c) noexcept {
-        const double f=std::clamp(c.hz,1.0,std::min(20000.0,sr*0.45));
+        const double f=std::clamp(c.hz,1.0,std::min(20000.0,sr*0.49));
         const double w=2.0*std::numbers::pi*f/sr;
         const double a=std::sin(w)/(2.0*std::clamp(c.q,0.15,24.0));
         const double g=std::pow(10.0,std::clamp(c.gainDb,-60.0,60.0)/40.0);
@@ -46,7 +47,7 @@ public:
     // NOT blind instrument/source separation.
     void tap(double sr,const Config& c) noexcept {
         const double w=2.0*std::numbers::pi*std::clamp(
-                         c.hz,1.0,std::min(20000.0,sr*0.45))/sr;
+                         c.hz,1.0,std::min(20000.0,sr*0.49))/sr;
         const double a=std::sin(w)/(2.0*std::clamp(c.q,0.15,24.0));
         const double norm=1.0/(1.0+a);
         b0_=a*norm;b1_=0.0;b2_=-a*norm;
@@ -59,7 +60,7 @@ public:
         return out;
     }
     void setEdge(double sr,double frequency,bool highPass) noexcept {
-        const double hz=std::clamp(frequency,20.0,std::min(20000.0,sr*0.45));
+        const double hz=std::clamp(frequency,20.0,std::min(20000.0,sr*0.49));
         const double w=2.0*std::numbers::pi*hz/sr;
         const double co=std::cos(w),alpha=std::sin(w)/(2.0*0.7071067811865476);
         const double norm=1.0/(1.0+alpha);
@@ -72,7 +73,7 @@ public:
     // deep notch with smooth skirts, and the engine crossfades the result.
     void notch(double sr,double low,double high) noexcept {
         const double f=std::clamp(std::sqrt(std::max(20.0,low)*
-            std::max(low+0.01,high)),20.0,std::min(20000.0,sr*0.45));
+            std::max(low+0.01,high)),20.0,std::min(20000.0,sr*0.49));
         const double q=std::clamp(f/std::max(1.0,high-low),0.15,24.0);
         const double w=2.0*std::numbers::pi*f/sr;
         const double co=std::cos(w),a=std::sin(w)/(2.0*q);
@@ -91,7 +92,7 @@ private:
 class Quadrature {
 public:
     void set(double sr,double frequency) noexcept {
-        const double hz=std::clamp(frequency,20.0,std::min(20000.0,sr*0.45));
+        const double hz=std::clamp(frequency,20.0,std::min(20000.0,sr*0.49));
         const double k=std::tan(std::numbers::pi*hz/sr);
         coefficient_=(k-1.0)/(k+1.0);
     }
@@ -133,6 +134,7 @@ public:
             node.phaseLeft.reset();node.phaseRight.reset();
             node.phaseReal=node.phaseImag=node.phaseLeftPower=
                 node.phaseRightPower=node.phaseAngle=0.0;
+            node.muteMidActive=node.muteSideActive=false;
             node.onyxMid.prepare(sr_);node.onyxSide.prepare(sr_);
             node.fx={node.config.dynamic,node.config.sparkle,node.config.shine,node.config.smooth,node.config.tape};
             node.enableMix=node.config.enabled?1.0:0.0;
@@ -154,7 +156,9 @@ public:
     }
     void config(int index, Config c) noexcept {
         if(index<0||index>=kNodes)return;
-        c.hz=std::clamp(c.hz,20.0,std::min(20000.0,sr_*0.45));
+        // 20 kHz remains addressable at 44.1 kHz while retaining margin
+        // below Nyquist for every recursive section.
+        c.hz=std::clamp(c.hz,20.0,std::min(20000.0,sr_*0.49));
         c.q=std::clamp(c.q,0.15,24.0);
         c.gainDb=0.0; // historical node gain retired: handles are Hz only
         c.space=std::clamp(c.space,0.0,100.0);
@@ -293,21 +297,38 @@ public:
                 --soloFadeLeft_;
                 if(soloFadeLeft_==0)previousSolo_=-1;
             }
-            // BAND OFF removes its territory from BOTH channels. MONO uses
+            // BAND OFF removes its territory only in the assigned channel
+            // domain. MONO uses
             // that same independently filtered territory on SIDE only, so
             // its audible width change extends throughout the actual root
             // boundaries, not just the narrower colour/compressor tap.
             // Continuous notch state + 10 ms wet smoothing prevent clicks.
             for(int root=0;root<kTerritories;++root){
-                auto& filters=rootMuteBands_[(size_t)root].filters;
-                const double notchM=filters[1].sample(filters[0].sample(m));
-                const double notchS=filters[3].sample(filters[2].sample(s));
-                const auto& node=nodes_[(size_t)(root*2)];
+                auto& node=nodes_[(size_t)(root*2)];
                 const double muted=1.0-node.enableMix;
+                const double midMuted=node.config.domain==Domain::side?0.0:muted;
+                const double sideMuted=node.config.domain==Domain::mid?0.0:muted;
                 const double monoWet=node.monoMix*node.enableMix;
-                const double sideWet=1.0-(1.0-muted)*(1.0-monoWet);
-                m+=muted*(notchM-m);
-                s+=sideWet*(notchS-s);
+                const double sideWet=1.0-(1.0-sideMuted)*(1.0-monoWet);
+                // Skip the high-order filter while fully dry. Reset it once
+                // after the smoothed wet envelope reaches zero so stale
+                // ringing cannot replay at the next engagement.
+                if(midMuted>1.e-8){
+                    node.muteMidActive=true;
+                    auto& filter=rootMuteBands_[(size_t)root].filters[0];
+                    m+=midMuted*(filter.sample(m)-m);
+                }else if(node.muteMidActive){
+                    rootMuteBands_[(size_t)root].filters[0].reset();
+                    node.muteMidActive=false;
+                }
+                if(sideWet>1.e-8){
+                    node.muteSideActive=true;
+                    auto& filter=rootMuteBands_[(size_t)root].filters[1];
+                    s+=sideWet*(filter.sample(s)-s);
+                }else if(node.muteSideActive){
+                    rootMuteBands_[(size_t)root].filters[1].reset();
+                    node.muteSideActive=false;
+                }
             }
             // SOLO contains only the selected territory. Its MONO switch
             // therefore means exact L==R on the audition output, not merely
@@ -357,6 +378,7 @@ private:
         OnyxMemory onyxMid{},onyxSide{};
         std::array<double,5> fx{};
         double enableMix=1,monoMix=0,compMix=0,threshold=0;
+        bool muteMidActive=false,muteSideActive=false;
         Compressor profile=Compressor::optical3;
     };
     void applyRootEffects(int root, double bandMid, double bandSide,
@@ -490,7 +512,7 @@ private:
         fxTap[0].setEdge(sr_,low,true);fxTap[1].setEdge(sr_,high,false);
         fxTap[2].setEdge(sr_,low,true);fxTap[3].setEdge(sr_,high,false);
         auto& mute=rootMuteBands_[(size_t)root].filters;
-        for(auto& filter:mute)filter.notch(sr_,low,high);
+        for(auto& filter:mute)filter.configure(sr_,low,high);
     }
     void updateFilters(int i) noexcept {
         auto& n=nodes_[(size_t)i];
@@ -530,10 +552,13 @@ private:
     }
     std::array<Node,kNodes> nodes_{};
     struct RootBand { std::array<Filter,4> filters; };
+    struct RootMuteBand {
+        std::array<scalpel::experimental::CrossfadedBandStop,2> filters;
+    };
     std::array<RootBand,kTerritories> soloBands_{};
     std::array<RootBand,kTerritories> rootGainBands_{};
     std::array<RootBand,kTerritories> rootFxBands_{};
-    std::array<RootBand,kTerritories> rootMuteBands_{};
+    std::array<RootMuteBand,kTerritories> rootMuteBands_{};
     std::array<double,kTerritories> rootGainDb_{};
     std::array<bool,kTerritories> rootMono_{};
     std::array<double,kTerritories> smoothedRootDelta_{};
