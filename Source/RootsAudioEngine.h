@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <numbers>
 #include "RootsSpectrumColours.h"
+#include "ScalpelBandModel.h"
 #include "SurgeryOnyx.h"
 #include "Experimental/ScalpelBandStop.h"
 
@@ -109,9 +110,7 @@ private:
 class Engine {
 public:
     explicit Engine(double sampleRate=48000.0) noexcept { prepare(sampleRate); }
-    static constexpr std::array<double,kNodes> defaults{
-        20.,50.,65.,125.,160.,315.,400.,800.,1000.,2500.,3150.,8000.,10000.,20000.
-    };
+    static constexpr auto defaults=scalpel::bands::Model::factoryBoundaries;
     void prepare(double sampleRate) noexcept {
         sr_=std::max(8000.0,sampleRate);
         correlationAlpha_=std::exp(-1.0/(0.025*sr_));

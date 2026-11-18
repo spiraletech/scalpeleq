@@ -27,8 +27,8 @@ struct Band {
 struct Model {
     static constexpr double minimumRatio = 1.001;
     static constexpr std::array<double, 14> factoryBoundaries {
-        20.0, 50.0, 65.0, 125.0, 160.0, 315.0, 400.0,
-        800.0, 1000.0, 2500.0, 3150.0, 8000.0, 10000.0, 20000.0
+        20.0, 60.0, 60.0, 120.0, 120.0, 250.0, 250.0,
+        500.0, 500.0, 2000.0, 2000.0, 6000.0, 6000.0, 20000.0
     };
 
     std::array<Band, count> bands {};
@@ -155,6 +155,62 @@ struct Model {
         return -1;
     }
 
+    bool restore(int slot) noexcept {
+        if (slot < 0 || slot >= count || bands[(size_t)slot].present) return false;
+        const auto previous=bands[(size_t)slot];
+        auto candidate=*this;
+        candidate.bands[(size_t)slot].present=true;
+        if (!candidate.valid()) {
+            double bestDistance=100.0;
+            int restored=-1;
+            // Free intervals start at 20 Hz or at the right edge of a present band.
+            for (int i=-1; i<count; ++i) {
+                double low=20.0;
+                if (i>=0) {
+                    const auto& band=bands[(size_t)i];
+                    if (!band.present || band.domain!=previous.domain) continue;
+                    low=band.right;
+                }
+                double high=20000.0;
+                for (const auto& band:bands)
+                    if (band.present && band.domain==previous.domain && band.left>=low)
+                        high=std::min(high,band.left);
+                if (high<low*minimumRatio) continue;
+                const double width=std::min(previous.right/previous.left, high/low);
+                const double left=std::clamp(previous.left,low,std::max(low,high/width));
+                const double right=std::min(high,left*width);
+                const double distance=std::abs(std::log(left/previous.left));
+                if (distance>=bestDistance) continue;
+                candidate.bands[(size_t)slot]={true,left,right,previous.domain,{}};
+                bestDistance=distance;
+                restored=slot;
+            }
+            if (restored<0 || !candidate.valid()) return false;
+        }
+        *this=candidate;
+        return true;
+    }
+
+    Link touchingNeighbor(int band, Anchor anchor) const noexcept {
+        const auto& source=bands[(size_t)band];
+        const auto opposite=anchor==Anchor::left?Anchor::right:Anchor::left;
+        for (int i=0; i<count; ++i)
+            if (i!=band && bands[(size_t)i].present && bands[(size_t)i].domain==source.domain
+                && frequency(i,opposite)==frequency(band,anchor))
+                return {i,opposite};
+        return {};
+    }
+
+    bool moveSeam(int band, Anchor anchor, double hz) noexcept {
+        const auto neighbor=touchingNeighbor(band,anchor);
+        if (neighbor.band<0 || link(band,anchor).band>=0) return moveAnchor(band,anchor,hz);
+        auto candidate=*this;
+        candidate.frequency(band,anchor)=candidate.frequency(neighbor.band,neighbor.anchor)=clampHz(hz);
+        if (!candidate.valid()) return false;
+        *this=candidate;
+        return true;
+    }
+
     std::array<bool, count> group(int seed) const noexcept {
         std::array<bool, count> members {};
         if (seed < 0 || seed >= count || !bands[(size_t)seed].present) return members;
@@ -176,49 +232,79 @@ struct Model {
         return members;
     }
 
-    // Returns true when the complete requested movement was legal. A blocked
-    // group still moves up to the boundary as one rigid logarithmic unit.
+    // The selected group translates at fixed width. A touching band behind it
+    // stretches to keep the seam closed. Bands ahead yield only as needed.
     bool moveGroup(int seed, double octaves) noexcept {
-        if (seed < 0 || seed >= count || !bands[(size_t)seed].present
+        if (seed<0 || seed>=count || !bands[(size_t)seed].present
             || !std::isfinite(octaves) || !valid()) return false;
-        const auto members = group(seed);
-        double minimumShift = -100.0;
-        double maximumShift = 100.0;
-        for (int i = 0; i < count; ++i) {
-            if (!members[(size_t)i]) continue;
-            minimumShift = std::max(minimumShift,
-                std::log2(20.0 / bands[(size_t)i].left));
-            maximumShift = std::min(maximumShift,
-                std::log2(20000.0 / bands[(size_t)i].right));
-            for (int j = 0; j < count; ++j) {
-                if (members[(size_t)j] || !bands[(size_t)j].present
-                    || bands[(size_t)i].domain != bands[(size_t)j].domain)
-                    continue;
-                if (bands[(size_t)i].right <= bands[(size_t)j].left)
-                    maximumShift = std::min(maximumShift,
-                        std::log2(bands[(size_t)j].left / bands[(size_t)i].right));
-                if (bands[(size_t)i].left >= bands[(size_t)j].right)
-                    minimumShift = std::max(minimumShift,
-                        std::log2(bands[(size_t)j].right / bands[(size_t)i].left));
+        if (octaves==0.0) return true;
+        const auto members=group(seed);
+        const bool rightward=octaves>0.0;
+        const auto entry=rightward?Anchor::left:Anchor::right;
+        const auto exit=rightward?Anchor::right:Anchor::left;
+        const auto ahead=[rightward](double a,double b){return rightward?a>b:a<b;};
+        std::array<int,count> order {};
+        int size=0;
+        int first=seed,last=seed;
+        for (int i=0; i<count; ++i) {
+            if (!bands[(size_t)i].present || bands[(size_t)i].domain!=bands[(size_t)seed].domain)
+                continue;
+            if (members[(size_t)i]) {
+                if (ahead(frequency(first,entry),frequency(i,entry))) first=i;
+                if (ahead(frequency(i,exit),frequency(last,exit))) last=i;
+            } else {
+                order[(size_t)size++]=i;
             }
         }
-        const double applied = std::clamp(octaves, minimumShift, maximumShift);
-        const auto shifted = [&](double ratio) {
-            auto candidate = *this;
-            for (int i = 0; i < count; ++i) {
+        std::sort(order.begin(),order.begin()+size,[&](int a,int b){
+            return ahead(frequency(b,entry),frequency(a,entry));
+        });
+        const auto behind=touchingNeighbor(first,entry);
+        const auto translated=[&](double fraction) {
+            auto candidate=*this;
+            const double shift=std::exp2(octaves*fraction);
+            for (int i=0; i<count; ++i) {
                 if (!members[(size_t)i]) continue;
-                candidate.bands[(size_t)i].left *= ratio;
-                candidate.bands[(size_t)i].right *= ratio;
+                candidate.bands[(size_t)i].left*=shift;
+                candidate.bands[(size_t)i].right*=shift;
+            }
+            if (behind.band>=0)
+                candidate.frequency(behind.band,behind.anchor)=candidate.frequency(first,entry);
+
+            double seam=candidate.frequency(last,exit);
+            int previous=last;
+            for (int index=0; index<size; ++index) {
+                const int i=order[(size_t)index];
+                if (ahead(frequency(last,exit),frequency(i,entry))) continue;
+                if (!ahead(seam,frequency(i,entry))
+                    && link(previous,exit).band!=i) break;
+                candidate.frequency(i,entry)=seam;
+                // Leave a usable strip when a drag runs against the graph edge.
+                // Respect a narrower territory that was already user-defined.
+                const auto& originalBand=bands[(size_t)i];
+                const double dragRatio=std::clamp(
+                    originalBand.right/originalBand.left,minimumRatio+0.001,1.12);
+                const double minExit=rightward?seam*dragRatio:seam/dragRatio;
+                if (ahead(minExit,frequency(i,exit))) candidate.frequency(i,exit)=minExit;
+                seam=candidate.frequency(i,exit);
+                previous=i;
             }
             return candidate;
         };
-        const double ratio = std::exp2(applied);
-        auto candidate = shifted(ratio);
-        // Rounding at a blocker or spectrum edge must never commit an overlap.
-        if (!candidate.valid()) candidate = shifted(std::nextafter(ratio, 1.0));
-        if (!candidate.valid()) return false;
-        *this = candidate;
-        return std::abs(applied - octaves) < 1.0e-9;
+        auto candidate=translated(1.0);
+        if (candidate.valid()) {
+            *this=candidate;
+            return true;
+        }
+        double low=0.0,high=1.0;
+        for (int i=0; i<36; ++i) {
+            const double middle=(low+high)*0.5;
+            candidate=translated(middle);
+            if (candidate.valid()) low=middle;
+            else high=middle;
+        }
+        if (low>0.0) *this=translated(low);
+        return false;
     }
 
     bool moveAnchor(int band, Anchor anchor, double hz) noexcept {

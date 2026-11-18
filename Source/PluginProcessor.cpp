@@ -431,6 +431,41 @@ scalpel::bands::Model PRISMVSTAudioProcessor::magneticBandModel() const noexcept
     return model.valid()?model:lastValidBandModel_;
 }
 
+void PRISMVSTAudioProcessor::setMagneticBandModel(const scalpel::bands::Model& model)
+{
+    using namespace scalpel::bands;
+    if (!model.valid()) return;
+    // An odd sequence identifies a multi-parameter editor write. The audio
+    // thread can continue processing its previous complete layout during it.
+    magneticEditSequence.fetch_add(1);
+    const auto assign=[this](const juce::String& id,float value) {
+        if(auto* parameter=apvts.getParameter(id)) {
+            const float normal=parameter->convertTo0to1(value);
+            if(parameter->getValue()!=normal) parameter->setValueNotifyingHost(normal);
+        }
+    };
+    for(int root=0;root<count;++root) {
+        const auto& band=model.bands[(size_t)root];
+        if(band.present){
+            assign(magneticFrequencyParameterIds[(size_t)(root*2)],(float)band.left);
+            assign(magneticFrequencyParameterIds[(size_t)(root*2+1)],(float)band.right);
+            assign(magneticStateParameterIds[(size_t)(root*4+1)],(float)band.domain);
+        }else{
+            assign(rootsSoloParameterIds[(size_t)root],0.f);
+        }
+        assign(magneticStateParameterIds[(size_t)(root*4)],band.present?1.f:0.f);
+        for(int anchor=0;anchor<2;++anchor){
+            const auto connection=band.links[(size_t)anchor];
+            const float encoded=connection.band<0?-1.f:
+                (float)(connection.band*2+(connection.anchor==Anchor::right));
+            assign(magneticStateParameterIds[(size_t)(root*4+2+anchor)],encoded);
+        }
+    }
+    magneticEditSequence.fetch_add(1);
+    const auto committed=readMagneticBandModel();
+    if(committed.valid()) lastValidBandModel_=committed;
+}
+
 void PRISMVSTAudioProcessor::sanitizeMagneticBandState()
 {
     using namespace scalpel::bands;
@@ -1266,6 +1301,7 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
     // automation can write parameters in any order, so reject an inverted or
     // same-domain-overlapping intermediate state before it reaches either DSP
     // engine. This is fixed-size, allocation-free and lock-free.
+    const auto editSequence=magneticEditSequence.load();
     scalpel::bands::Model realtimeModel;
     for(int root=0;root<numSections;++root) {
         auto& band=realtimeModel.bands[(size_t)root];
@@ -1276,7 +1312,8 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
             rootParameters[(size_t)root].values[3]->load()));
         band.links={}; // relationships are message-thread state, not DSP data
     }
-    if(realtimeModel.valid()) realtimeBandModel_=realtimeModel;
+    if((editSequence%2)==0&&editSequence==magneticEditSequence.load()&&realtimeModel.valid())
+        realtimeBandModel_=realtimeModel;
     // Presence and routing must come from the same accepted layout as the
     // boundaries. Mixing a rejected domain with accepted frequencies can
     // still send two overlapping bands to the same DSP path.
@@ -1479,6 +1516,33 @@ void PRISMVSTAudioProcessor::setStateInformation(const void* data, int size)
                     }
                 }
             }
+            // Repair only the withdrawn candidate's exact factory layout.
+            // Edited or removed bands keep their saved frequencies.
+            constexpr std::array<double,14> previousDefaults{
+                20.,50.,65.,125.,160.,315.,400.,800.,1000.,2500.,3150.,8000.,10000.,20000.
+            };
+            std::array<juce::XmlElement*,14> frequencies {};
+            bool previousFactory=true;
+            for(int root=0;root<numSections;++root){
+                const auto value=[&](const juce::String& id,double fallback){
+                    const auto* parameter=xml->getChildByAttribute("id",id);
+                    return parameter?parameter->getDoubleAttribute("value"):fallback;
+                };
+                if(value(rootsRootControlId(root,"present"),1.0)<0.5
+                    ||value(rootsRootControlId(root,"domain"),0.0)!=0.0
+                    ||value(rootsRootControlId(root,"left_link"),-1.0)>=0.0
+                    ||value(rootsRootControlId(root,"right_link"),-1.0)>=0.0)
+                    previousFactory=false;
+            }
+            for(size_t node=0;node<frequencies.size();++node){
+                auto* frequency=xml->getChildByAttribute("id",rootsNodeId((int)node,"hz"));
+                frequencies[node]=frequency;
+                if(frequency==nullptr||std::abs(frequency->getDoubleAttribute("value")
+                    -previousDefaults[node])>0.005)previousFactory=false;
+            }
+            if(previousFactory)
+                for(size_t node=0;node<frequencies.size();++node)
+                    frequencies[node]->setAttribute("value",scalpel::bands::Model::factoryBoundaries[node]);
             apvts.replaceState(juce::ValueTree::fromXml(*xml));
             sanitizeCrossovers();
             // Resolve old sessions that persisted more than one SOLO flag.

@@ -15,17 +15,21 @@ int main(){
     for(const auto& band:factory.bands)if(!band.present)return 1;
     if(!factory.valid())return 2;
     for(int i=0;i<count-1;++i)
-        if(!(factory.bands[(size_t)i].right<factory.bands[(size_t)(i+1)].left))return 15;
+        if(factory.bands[(size_t)i].right!=factory.bands[(size_t)(i+1)].left)return 15;
     const auto movableFactory=factory;
-    if(!factory.moveGroup(2,0.05)||
-       !(factory.bands[2].left>movableFactory.bands[2].left))return 16;
+    if(!factory.moveGroup(2,0.05)||!factory.valid()
+       ||factory.bands[2].left<=movableFactory.bands[2].left
+       ||factory.bands[1].right!=factory.bands[2].left
+       ||factory.bands[2].right!=factory.bands[3].left
+       ||factory.bands[1].left!=movableFactory.bands[1].left
+       ||factory.bands[3].right!=movableFactory.bands[3].right)return 16;
     factory=movableFactory;
 
     // Delete is lifecycle-only; the slot can be recreated in the vacated gap.
     factory.remove(2);
     if(factory.bands[2].present||!factory.valid())return 3;
-    const int recreated=factory.add(180.0);
-    if(recreated!=2||!factory.bands[2].present||!factory.valid())return 4;
+    if(!factory.restore(2)||!factory.valid()
+       ||factory.bands[2].left!=120.0||factory.bands[2].right!=250.0)return 4;
 
     // Independent boundaries cannot invert or overlap a same-domain neighbor.
     if(factory.moveAnchor(2,Anchor::left,factory.bands[2].right))return 5;
@@ -67,10 +71,10 @@ int main(){
     if(chain.link(1,Anchor::right).band>=0
        ||chain.link(2,Anchor::left).band>=0||!chain.valid())return 12;
 
-    // A connected group stops rigidly at an unconnected blocker.
+    // A connected group retains its width when an unconnected band yields.
     chain.bands[3]={true,3000.0,4000.0,Domain::stereo,{}};
     const double beforeWidth=std::log2(chain.bands[1].right/chain.bands[1].left);
-    if(chain.moveGroup(0,10.0)||chain.bands[2].right>3000.01
+    if(chain.moveGroup(0,10.0)||chain.bands[2].right>chain.bands[3].left||!chain.valid()
        ||!close(std::log2(chain.bands[1].right/chain.bands[1].left),beforeWidth,1e-9))
         return 13;
 
@@ -91,12 +95,22 @@ int main(){
     if(brokenLink.valid())return 18;
     if(chain.connect(0,Anchor::right,2,Anchor::left)
        ||chain.link(0,Anchor::right).band!=1)return 19;
-    // A large pointer jump must still stop at the first blocker.
+    // Large drags yield through multiple bands without gaps or inversions.
     auto sweep=movableFactory;
     sweep.moveGroup(2,8.0);
-    if(!sweep.valid()||!close(sweep.bands[2].right,sweep.bands[3].left)
+    if(!sweep.valid()||sweep.bands[2].right<=movableFactory.bands[3].right
+       ||!close(sweep.bands[2].right,sweep.bands[3].left)
        ||!close(sweep.bands[2].right/sweep.bands[2].left,
                 movableFactory.bands[2].right/movableFactory.bands[2].left,1e-9))return 20;
+
+    for(int i=0;i<count-1;++i)
+        if(sweep.bands[(size_t)i].right!=sweep.bands[(size_t)(i+1)].left)return 21;
+    auto left=movableFactory;
+    if(!left.moveGroup(4,-0.2)||!left.valid()||left.bands[4].left>=500.0
+       ||left.bands[3].right!=left.bands[4].left
+       ||left.bands[4].right!=left.bands[5].left)return 22;
+    if(!left.moveSeam(0,Anchor::right,70.0)
+       ||left.bands[0].right!=70.0||left.bands[1].left!=70.0)return 23;
 
     std::cout<<"Scalpel magnetic model: seven-band factory, delete/recreate, "
                 "dual anchors, cross-domain overlap, shared resize, group move, "

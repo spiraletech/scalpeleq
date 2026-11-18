@@ -76,7 +76,7 @@ public:
     std::function<void(int)> onSelectCarve;
     int selectedNode() const noexcept{return selected_;}
     void selectNode(int node);
-    void showRootMenu(int root);
+    void showRootMenu(int root,juce::Component& button);
     surgery::SpectralSnapshot spectralMetrics() const noexcept {
         return surgery::summarizeSpectrum(bands_);
     }
@@ -111,6 +111,7 @@ private:
     int selected_=0,dragging_=-1,draggingCarve_=-1,draggingInterior_=-1;
     float dragStartX_=0.0f,dragStartHz_=0.0f;
     double snapTargetHz_=0.0;
+    std::array<bool,prism::roots::v2::kNodes> bandGestures_ {};
     scalpel::bands::Model dragStartModel_ {};
     bool fineDragging_=false;
     int mode_=0,slot_=0;
@@ -155,17 +156,17 @@ private:
     float freqToX(float f) const;
     float xToFreq(float x) const;
     float param(int i,const char* suffix) const;
-    void write(int i,const char* suffix,float value);
     juce::Point<float> boundaryPoint(int node,const scalpel::bands::Model&) const;
     int hitNode(juce::Point<float>,bool cycleCoincidentBand=false) const;
     int hitBandInterior(juce::Point<float>) const;
     scalpel::bands::Model loadBandModel() const;
     void storeBandModel(const scalpel::bands::Model&);
+    void endBandGesture();
     double snappedFrequency(double,bool disableSnap,int movingBand,
                             scalpel::bands::Anchor movingAnchor);
     int hitCarveNode(juce::Point<float>) const;
     int hitCarveTab(juce::Point<float>) const;
-    void popup();
+    void popup(juce::Component* bandButton=nullptr);
     void clampCarvesToRoot(int root);
     juce::Colour colour(int territory) const;
 };

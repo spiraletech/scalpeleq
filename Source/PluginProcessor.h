@@ -83,6 +83,7 @@ public:
     int getActiveSoloSection() const noexcept;
     int getActiveRootsSolo() const noexcept;
     scalpel::bands::Model magneticBandModel() const noexcept; // message thread only
+    void setMagneticBandModel(const scalpel::bands::Model&); // message thread only
     // Message-thread selection transfer while SOLO is engaged.
     void transferRootsSoloTo(int node);
 
@@ -192,6 +193,7 @@ private:
     std::array<juce::String, 14> magneticFrequencyParameterIds {};
     std::array<juce::String, 28> magneticStateParameterIds {};
     scalpel::bands::Model realtimeBandModel_; // audio thread only
+    std::atomic<unsigned> magneticEditSequence { 0 };
     scalpel::bands::Model lastValidBandModel_;
     bool sanitizingMagneticState_ = false; // message thread only
     std::atomic<int> latestRootsSolo { -1 };

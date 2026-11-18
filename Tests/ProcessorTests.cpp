@@ -467,6 +467,34 @@ int main(int argc,char** argv)
         }
     }
 
+    // Exact R3 factory layouts migrate. Edited frequencies and removed slots recall as saved.
+    {
+        using namespace scalpel::bands;
+        constexpr std::array<double,14> withdrawn{
+            20.,50.,65.,125.,160.,315.,400.,800.,1000.,2500.,3150.,8000.,10000.,20000.
+        };
+        auto source=std::make_unique<PRISMVSTAudioProcessor>();
+        auto target=std::make_unique<PRISMVSTAudioProcessor>();
+        Model old;
+        for(int i=0;i<count;++i){
+            old.bands[(size_t)i].left=withdrawn[(size_t)(2*i)];
+            old.bands[(size_t)i].right=withdrawn[(size_t)(2*i+1)];
+        }
+        const auto recall=[&](const Model& model){
+            source->setMagneticBandModel(model);
+            juce::MemoryBlock data;
+            source->getStateInformation(data);
+            target->setStateInformation(data.getData(),(int)data.getSize());
+            return target->magneticBandModel();
+        };
+        const auto factory=recall(old);
+        if(factory.bands[0].right!=60.0||factory.bands[1].left!=60.0)return 71;
+        old.bands[0].right=52.0;
+        old.remove(2);
+        const auto edited=recall(old);
+        if(edited.bands[0].right!=52.0||edited.bands[2].present)return 72;
+    }
+
     // Double-click reset actions route through these host-aware processor methods.
     // Resetting one ROOT frequency cannot reset gain, SOLO or a neighboring boundary.
     {
@@ -480,7 +508,7 @@ int main(int argc,char** argv)
         const auto rootGain=PRISMVSTAudioProcessor::rootsRootGainId(1);
         setActual(p,left,92.0f);setActual(p,sibling,65.0f);
         setActual(p,rootGain,7.0f);
-        if(!p.resetRootBoundary(3)||std::abs(value(left)-125.0f)>0.02f
+        if(!p.resetRootBoundary(3)||std::abs(value(left)-120.0f)>0.02f
             ||std::abs(value(sibling)-65.0f)>0.02f
             ||std::abs(value(rootGain)-7.0f)>0.02f
             ||p.resetRootBoundary(-1)||p.resetRootBoundary(14)){
@@ -499,7 +527,7 @@ int main(int argc,char** argv)
         setActual(p,id(1,1,"depth"),5.0f);
         // Third CARVE slot resets to its own log-spaced position, not ROOT centre.
         const float midpoint=(float)std::exp(std::log(65.0)+
-            (3.0/5.0)*std::log(125.0/65.0));
+            (3.0/5.0)*std::log(120.0/65.0));
         if(!p.resetCarveNode(1,2)
             ||std::abs(value(id(1,2,"hz"))-midpoint)>0.1f
             ||std::abs(value(id(1,2,"depth")))>0.001f

@@ -17,7 +17,7 @@ int main(){
     std::cout<<"PROOF 1 PASS: 20-20000 Hz axis calibrated\n";
     // PROOF 2: both children define ONE region, even if their handles cross.
     Engine engine(48000.0);
-    if(engine.get(0).hz!=20.0||engine.get(1).hz!=50.0)return 2;
+    if(engine.get(0).hz!=20.0||engine.get(1).hz!=60.0)return 2;
     auto a=engine.get(0);a.hz=4.0;engine.config(0,a);
     if(engine.get(0).hz!=20.0)return 2;
     std::array<V::Node,V::kNodes> nodes{};
