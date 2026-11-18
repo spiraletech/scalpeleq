@@ -180,6 +180,20 @@ bool verifyMagneticGraphGesture(){
     if(hz(5)>hz(6)||std::abs(hz(5)-hz(6))>.02f
         ||std::abs(hz(5)/hz(4)-originalRatio)>.001f)return false;
 
+    const auto presence=PRISMVSTAudioProcessor::rootsRootControlId(2,"present");
+    const auto enabled=PRISMVSTAudioProcessor::rootsRootControlId(2,"on");
+    const float originalEnabled=processor->apvts.getRawParameterValue(enabled)->load();
+    set(*processor,presence,0.f);
+    const float removedLow=hz(4);
+    const auto removedCenter=juce::Point<float>{x(std::sqrt((double)hz(4)*hz(5))),start.y};
+    graph->mouseDown(event(removedCenter,held,false));
+    graph->mouseDrag(event(removedCenter.translated(-25.f,0.f),held,true));
+    graph->mouseUp(event(removedCenter.translated(-25.f,0.f),0,true));
+    if(hz(4)!=removedLow)return false;
+    graph->mouseDoubleClick(event(removedCenter,held,false));
+    if(hz(4)==removedLow||processor->apvts.getRawParameterValue(presence)->load()!=1.f
+        ||processor->apvts.getRawParameterValue(enabled)->load()!=originalEnabled)return false;
+
     if(!click(*editor,"ANALYZE"))return false;
     for(auto* child:editor->getChildren())
         if(auto* slider=dynamic_cast<juce::Slider*>(child);slider&&slider->isVisible()

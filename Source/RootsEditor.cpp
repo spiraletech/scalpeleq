@@ -354,23 +354,13 @@ void RootsGraph::paint(juce::Graphics& g){
         paintStaticFrame(frame);staticFrameScale_=frameScale;
     }
     g.setOpacity(1);g.drawImage(staticFrame_,full);
-    // Numeric axis marks carry the scale; avoid redundant corner-unit badges.
-    // ROOT handle height is constant and ROOT gain remains a separate control.
-    std::array<prism::roots::visual::Node,prism::roots::visual::kNodes> zones{};
-    for(int node=0;node<prism::roots::visual::kNodes;++node)
-    {
-        zones[(size_t)node].hz=param(node,"hz");
-        zones[(size_t)node].q=param(node,"q");
-        zones[(size_t)node].enabled=pval(processor_.apvts,
-            PRISMVSTAudioProcessor::rootsRootControlId(node/2,"on"))>=0.5f;
-    }
-    // The visible coverage is defined by each ROOT's two boundary handles,
-    // not Q distance or a fixed index/37 palette. Regions can intersect.
-    for(int root=0;root<prism::roots::visual::kRoots;++root) {
-        const auto interval=prism::roots::visual::region(root,zones);
-        if(!interval.enabled)continue;
-        const float x1=freqToX((float)interval.lowHz);
-        const float x2=freqToX((float)interval.highHz);
+    const auto bandModel=loadBandModel();
+    for(int root=0;root<scalpel::bands::count;++root) {
+        const auto& band=bandModel.bands[(size_t)root];
+        if(!band.present||pval(processor_.apvts,
+            PRISMVSTAudioProcessor::rootsRootControlId(root,"on"))<0.5f)continue;
+        const float x1=freqToX((float)band.left);
+        const float x2=freqToX((float)band.right);
         const auto warning=peakWarnings_[(size_t)root];
         const auto accent=warning>0.f?juce::Colour(0xffd71916):
             (root==selected_/2?colour(root):juce::Colour(0xff9b7b68));
@@ -655,8 +645,10 @@ void RootsGraph::paint(juce::Graphics& g){
     // the same horizontal reference. The previous +23 px offset fabricated
     // an apparently misplaced EQ line in BAND MODE.
     const float baseY=r.getCentreY();
-    const float lowHz=param(selectedRoot*2,"hz");
-    const float highHz=param(selectedRoot*2+1,"hz");
+    const auto& selectedBand=bandModel.bands[(size_t)selectedRoot];
+    const bool selectedPresent=selectedBand.present;
+    const float lowHz=(float)selectedBand.left;
+    const float highHz=(float)selectedBand.right;
     std::array<double,32> overlayKey{sr,(double)getWidth(),(double)getHeight(),(double)selectedRoot,lowHz,highHz,(double)slot_,(double)colour(selectedRoot).getARGB()};
     for(int i=0;i<4;++i){
         int index=8+i*4;
@@ -665,6 +657,7 @@ void RootsGraph::paint(juce::Graphics& g){
     const float overlayScale=juce::jlimit(.5f,4.f,g.getInternalContext().getPhysicalPixelScaleFactor());
     overlayKey[24]=overlayScale;
     overlayKey[25]=polished?1.:0.;
+    overlayKey[26]=selectedPresent?1.:0.;
     if(!responseOverlayValid_||responseOverlayKey_!=overlayKey){
         const int width=juce::jmax(1,juce::roundToInt(getWidth()*overlayScale));
         const int height=juce::jmax(1,juce::roundToInt(getHeight()*overlayScale));
@@ -681,7 +674,7 @@ void RootsGraph::paint(juce::Graphics& g){
             responseProbeKey_=probeKey;
         }
         juce::Graphics overlayGraphics(responseOverlay_);overlayGraphics.addTransform(juce::AffineTransform::scale(overlayScale));
-    for(int slot=0;slot<surgery::kSlots;++slot){
+    for(int slot=0;selectedPresent&&slot<surgery::kSlots;++slot){
         const auto id=[selectedRoot,slot](const char* suffix){
             return PRISMVSTAudioProcessor::carveId(selectedRoot,slot,suffix);
         };
@@ -729,8 +722,6 @@ void RootsGraph::paint(juce::Graphics& g){
     g.setOpacity(1.f);g.drawImage(responseOverlay_,getLocalBounds().toFloat());
     // No engineering telemetry or legacy SONAR prose over the primary lens.
     // Detailed numbers are available through the parameter shelf and hover.
-    const auto bandModel=loadBandModel();
-    const bool selectedPresent=bandModel.bands[(size_t)selectedRoot].present;
     {
         juce::Graphics::ScopedSaveState selectedGlass(g);
         g.reduceClipRegion(r.toNearestInt());
@@ -751,7 +742,7 @@ void RootsGraph::paint(juce::Graphics& g){
             const float warning=peakWarnings_[(size_t)selectedRoot];
             const auto tint=warning>0.f?juce::Colour(0xffed2d22):colour(selectedRoot);
             g.setColour(tint.withAlpha(warning>0.f?.95f:.60f));
-            g.drawVerticalLine(juce::roundToInt(freqToX(param(selected_,"hz"))),
+            g.drawVerticalLine(juce::roundToInt(freqToX(selected_%2==0?lowHz:highHz)),
                                r.getY(),r.getBottom());
         }
     }
@@ -832,8 +823,7 @@ void RootsGraph::paint(juce::Graphics& g){
         const bool enabled=pval(processor_.apvts,id("on"))>=0.5f;
         if(!enabled)continue; // Disabled CARVEs are genuinely invisible on the graph.
         const float x=freqToX(surgery::precision::boundedFrequency(
-            pval(processor_.apvts,id("hz")),
-            param(selectedRoot*2,"hz"),param(selectedRoot*2+1,"hz")));
+            pval(processor_.apvts,id("hz")),lowHz,highHz));
         const float depth=pval(processor_.apvts,id("depth"));
         const float y=surgery::ui::carveY(r.getCentreY(),depth);
         const auto outline=focusedColor.brighter(0.35f);
@@ -895,6 +885,9 @@ int RootsGraph::hitCarveTab(juce::Point<float> point) const {
 }
 int RootsGraph::hitCarveNode(juce::Point<float> point) const {
     const int root=selected_/2;
+    const auto model=loadBandModel();
+    const auto& band=model.bands[(size_t)root];
+    if(!band.present)return -1;
     float nearest=15.0f;
     int target=-1;
     for(int slot=0;slot<surgery::ui::kSlotsPerRoot;++slot){
@@ -903,8 +896,7 @@ int RootsGraph::hitCarveNode(juce::Point<float> point) const {
         };
         if(pval(processor_.apvts,id("on"))<0.5f)continue; // Invisible means not hit-testable.
         const float x=freqToX(surgery::precision::boundedFrequency(
-            pval(processor_.apvts,id("hz")),
-            param(root*2,"hz"),param(root*2+1,"hz")));
+            pval(processor_.apvts,id("hz")),(float)band.left,(float)band.right));
         const float y=surgery::ui::carveY(area().getCentreY(),
                                           pval(processor_.apvts,id("depth")));
         const float distance=point.getDistanceFrom({x,y});
