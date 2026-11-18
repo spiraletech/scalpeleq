@@ -82,6 +82,22 @@ int main(){
     if(!chain.valid()||!chain.bands[1].present
        ||chain.link(0,Anchor::right).band!=1)return 14;
 
+    // A sub-step overlap and a mismatched shared coordinate are invalid.
+    auto tinyOverlap=movableFactory;
+    tinyOverlap.bands[1].left=tinyOverlap.bands[0].right-0.001;
+    if(tinyOverlap.valid())return 17;
+    auto brokenLink=snapshot;
+    brokenLink.bands[1].left+=0.001;
+    if(brokenLink.valid())return 18;
+    if(chain.connect(0,Anchor::right,2,Anchor::left)
+       ||chain.link(0,Anchor::right).band!=1)return 19;
+    // A large pointer jump must still stop at the first blocker.
+    auto sweep=movableFactory;
+    sweep.moveGroup(2,8.0);
+    if(!sweep.valid()||!close(sweep.bands[2].right,sweep.bands[3].left)
+       ||!close(sweep.bands[2].right/sweep.bands[2].left,
+                movableFactory.bands[2].right/movableFactory.bands[2].left,1e-9))return 20;
+
     std::cout<<"Scalpel magnetic model: seven-band factory, delete/recreate, "
                 "dual anchors, cross-domain overlap, shared resize, group move, "
                 "explicit unlink and deterministic restore PASS\n";

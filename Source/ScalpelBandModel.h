@@ -23,8 +23,7 @@ struct Band {
     std::array<Link, 2> links {};
 };
 
-// Message-thread relationship model. The audio thread receives only the
-// validated, atomic parameter snapshot and never traverses this graph.
+// Fixed-size band layout shared by the editor and the audio processor.
 struct Model {
     static constexpr double minimumRatio = 1.001;
     static constexpr std::array<double, 14> factoryBoundaries {
@@ -70,8 +69,8 @@ struct Model {
             return false;
         const auto reverse = link(connection.band, connection.anchor);
         return reverse.band == band && reverse.anchor == anchor
-            && std::abs(frequency(band, anchor)
-                        - frequency(connection.band, connection.anchor)) < 0.01;
+            && frequency(band, anchor)
+                == frequency(connection.band, connection.anchor);
     }
 
     bool valid() const noexcept {
@@ -81,7 +80,8 @@ struct Model {
                 if (band.links[0].band >= 0 || band.links[1].band >= 0) return false;
                 continue;
             }
-            if (band.left < 20.0 || band.right > 20000.0
+            if (!std::isfinite(band.left) || !std::isfinite(band.right)
+                || band.left < 20.0 || band.right > 20000.0
                 || band.right < band.left * minimumRatio
                 || !validLink(i, Anchor::left) || !validLink(i, Anchor::right))
                 return false;
@@ -89,7 +89,7 @@ struct Model {
                 const auto& other = bands[(size_t)j];
                 if (!other.present || other.domain != band.domain) continue;
                 if (std::max(band.left, other.left)
-                    < std::min(band.right, other.right) - 0.005)
+                    < std::min(band.right, other.right))
                     return false;
             }
         }
@@ -111,14 +111,13 @@ struct Model {
                  int second, Anchor secondAnchor) noexcept {
         if (first < 0 || first >= count || second < 0 || second >= count
             || first == second || firstAnchor == secondAnchor
+            || link(first, firstAnchor).band >= 0 || link(second, secondAnchor).band >= 0
             || !bands[(size_t)first].present || !bands[(size_t)second].present
             || bands[(size_t)first].domain != bands[(size_t)second].domain)
             return false;
         auto candidate = *this;
-        candidate.unlink(first, firstAnchor);
-        candidate.unlink(second, secondAnchor);
         const double shared = candidate.frequency(second, secondAnchor);
-        candidate.frequency(first, firstAnchor) = shared;
+        if (!candidate.moveAnchor(first, firstAnchor, shared)) return false;
         candidate.link(first, firstAnchor) = { second, secondAnchor };
         candidate.link(second, secondAnchor) = { first, firstAnchor };
         if (!candidate.valid()) return false;
@@ -180,6 +179,8 @@ struct Model {
     // Returns true when the complete requested movement was legal. A blocked
     // group still moves up to the boundary as one rigid logarithmic unit.
     bool moveGroup(int seed, double octaves) noexcept {
+        if (seed < 0 || seed >= count || !bands[(size_t)seed].present
+            || !std::isfinite(octaves) || !valid()) return false;
         const auto members = group(seed);
         double minimumShift = -100.0;
         double maximumShift = 100.0;
@@ -202,12 +203,21 @@ struct Model {
             }
         }
         const double applied = std::clamp(octaves, minimumShift, maximumShift);
+        const auto shifted = [&](double ratio) {
+            auto candidate = *this;
+            for (int i = 0; i < count; ++i) {
+                if (!members[(size_t)i]) continue;
+                candidate.bands[(size_t)i].left *= ratio;
+                candidate.bands[(size_t)i].right *= ratio;
+            }
+            return candidate;
+        };
         const double ratio = std::exp2(applied);
-        for (int i = 0; i < count; ++i) {
-            if (!members[(size_t)i]) continue;
-            bands[(size_t)i].left *= ratio;
-            bands[(size_t)i].right *= ratio;
-        }
+        auto candidate = shifted(ratio);
+        // Rounding at a blocker or spectrum edge must never commit an overlap.
+        if (!candidate.valid()) candidate = shifted(std::nextafter(ratio, 1.0));
+        if (!candidate.valid()) return false;
+        *this = candidate;
         return std::abs(applied - octaves) < 1.0e-9;
     }
 

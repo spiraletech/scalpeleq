@@ -144,6 +144,52 @@ bool verifyPluginRemovalLifecycle() {
     return true;
 }
 
+bool verifyMagneticGraphGesture(){
+    auto processor=std::make_unique<PRISMVSTAudioProcessor>();
+    std::unique_ptr<juce::AudioProcessorEditor> editor(processor->createEditor());
+    if(!editor)return false;
+    RootsGraph* graph=nullptr;
+    for(auto* child:editor->getChildren())
+        if(auto* candidate=dynamic_cast<RootsGraph*>(child))graph=candidate;
+    if(!graph)return false;
+
+    const auto plot=scalpel::reference::plotLocal();
+    const auto x=[&](double hz){
+        return plot.getX()+plot.getWidth()*(float)prism::roots::visual::graphUnit(hz);
+    };
+    const auto hz=[&](int node){
+        return processor->apvts.getRawParameterValue(
+            PRISMVSTAudioProcessor::rootsNodeId(node,"hz"))->load();
+    };
+    const auto start=juce::Point<float>{x(std::sqrt((double)hz(4)*hz(5))),
+        plot.getY()+plot.getHeight()*.25f};
+    const auto originalRatio=hz(5)/hz(4);
+    const auto time=juce::Time::getCurrentTime();
+    const auto event=[&](juce::Point<float> point,int buttons,bool dragged){
+        return juce::MouseEvent(juce::Desktop::getInstance().getMainMouseSource(),
+            point,juce::ModifierKeys(buttons),1.f,0,0,0,0,graph,graph,
+            time,start,time,1,dragged);
+    };
+    const auto held=juce::ModifierKeys::leftButtonModifier;
+    graph->mouseDown(event(start,held,false));
+    graph->mouseDrag(event(start.translated(12.f,0.f),held,true));
+    if(hz(4)<=160.f||hz(5)<=315.f||std::abs(hz(5)/hz(4)-originalRatio)>.001f)
+        return false;
+    graph->mouseDrag(event(start.translated(300.f,0.f),held,true));
+    graph->mouseUp(event(start.translated(300.f,0.f),0,true));
+    if(hz(5)>hz(6)||std::abs(hz(5)-hz(6))>.02f
+        ||std::abs(hz(5)/hz(4)-originalRatio)>.001f)return false;
+
+    if(!click(*editor,"ANALYZE"))return false;
+    for(auto* child:editor->getChildren())
+        if(auto* slider=dynamic_cast<juce::Slider*>(child);slider&&slider->isVisible()
+            &&slider->getMaximum()==10.0){
+            slider->setValue(0.0,juce::sendNotificationSync);
+            return slider->getTextFromValue(slider->getValue())=="0.00"
+                &&processor->apvts.getRawParameterValue("aura_memory")->load()==0.f;
+        }
+    return false;
+}
 bool verifyCarveGraphSync(){
     auto p=std::make_unique<PRISMVSTAudioProcessor>();
     p->prepareToPlay(48000,512);
@@ -233,6 +279,10 @@ bool runQualityTests(){
         return false;
     }
     juce::ScopedJuceInitialiser_GUI gui;
+    if(!verifyMagneticGraphGesture()){
+        std::cerr<<"Magnetic graph drag or visual decay regression\n";
+        return false;
+    }
     if(!verifyDualKnobCalibration())return false;
     if(!verifyScalpelFinish()){std::cerr<<"AAA finish validation failed\n";return false;}
     {

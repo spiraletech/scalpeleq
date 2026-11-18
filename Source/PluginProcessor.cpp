@@ -288,7 +288,6 @@ PRISMVSTAudioProcessor::PRISMVSTAudioProcessor()
     for(int node=0;node<14;++node) {
         magneticFrequencyParameterIds[(size_t)node]=rootsNodeId(node,"hz");
         apvts.addParameterListener(magneticFrequencyParameterIds[(size_t)node],this);
-        realtimeSafeBandHz[(size_t)node].store(nodeParameters[(size_t)node][0]->load());
     }
     for(int root=0;root<numSections;++root) {
         const std::array<juce::String,4> ids {
@@ -426,6 +425,12 @@ scalpel::bands::Model PRISMVSTAudioProcessor::readMagneticBandModel() const noex
     return model;
 }
 
+scalpel::bands::Model PRISMVSTAudioProcessor::magneticBandModel() const noexcept
+{
+    const auto model=readMagneticBandModel();
+    return model.valid()?model:lastValidBandModel_;
+}
+
 void PRISMVSTAudioProcessor::sanitizeMagneticBandState()
 {
     using namespace scalpel::bands;
@@ -433,10 +438,6 @@ void PRISMVSTAudioProcessor::sanitizeMagneticBandState()
     const auto candidate=readMagneticBandModel();
     if(candidate.valid()) {
         lastValidBandModel_=candidate;
-        for(int root=0;root<numSections;++root) {
-            realtimeSafeBandHz[(size_t)(root*2)].store((float)candidate.bands[(size_t)root].left);
-            realtimeSafeBandHz[(size_t)(root*2+1)].store((float)candidate.bands[(size_t)root].right);
-        }
         return;
     }
 
@@ -457,8 +458,6 @@ void PRISMVSTAudioProcessor::sanitizeMagneticBandState()
                 (float)(connection.band*2+(connection.anchor==Anchor::right?1:0));
             assign(rootsRootControlId(root,anchor==0?"left_link":"right_link"),encoded);
         }
-        realtimeSafeBandHz[(size_t)(root*2)].store((float)band.left);
-        realtimeSafeBandHz[(size_t)(root*2+1)].store((float)band.right);
     }
     sanitizingMagneticState_=false;
 }
@@ -1277,23 +1276,18 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
             rootParameters[(size_t)root].values[3]->load()));
         band.links={}; // relationships are message-thread state, not DSP data
     }
-    std::array<float,14> boundaryHz {};
-    if(realtimeModel.valid()) {
-        for(int root=0;root<numSections;++root) {
-            boundaryHz[(size_t)(root*2)]=(float)realtimeModel.bands[(size_t)root].left;
-            boundaryHz[(size_t)(root*2+1)]=(float)realtimeModel.bands[(size_t)root].right;
-            realtimeSafeBandHz[(size_t)(root*2)].store(boundaryHz[(size_t)(root*2)],std::memory_order_relaxed);
-            realtimeSafeBandHz[(size_t)(root*2+1)].store(boundaryHz[(size_t)(root*2+1)],std::memory_order_relaxed);
-        }
-    } else {
-        for(int node=0;node<14;++node)
-            boundaryHz[(size_t)node]=realtimeSafeBandHz[(size_t)node].load(std::memory_order_relaxed);
-    }
+    if(realtimeModel.valid()) realtimeBandModel_=realtimeModel;
+    // Presence and routing must come from the same accepted layout as the
+    // boundaries. Mixing a rejected domain with accepted frequencies can
+    // still send two overlapping bands to the same DSP path.
+    const auto& layout=realtimeBandModel_;
+    int soloRoot=getActiveRootsSolo();
+    if(soloRoot>=0&&!layout.bands[(size_t)soloRoot].present) soloRoot=-1;
     // Historical global SPACE/MONO parameters remain for session recall,
     // but they are no longer exposed or allowed to alter this audio path.
     rootsEngine.setSpace(50.0);
     rootsEngine.setMono(false);
-    rootsEngine.setSoloRoot(getActiveRootsSolo());
+    rootsEngine.setSoloRoot(soloRoot);
     for(int root=0;root<numSections;++root){
         rootsEngine.setRootGain(root,rootParameters[(size_t)root].values[0]->load());
         rootsEngine.setRootMono(root,
@@ -1302,14 +1296,15 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
     for(int i=0;i<kNodes;++i)
     {
         Config c;
-        c.hz=boundaryHz[(size_t)i];
+        const int root=i/2;
+        const auto& band=layout.bands[(size_t)root];
+        c.hz=i%2==0?band.left:band.right;
         c.gainDb=0.0; // retained obsolete host parameter is ignored
         c.q=nodeParameters[(size_t)i][1]->load();
-        const int root=i/2;
-        c.present=rootParameters[(size_t)root].values[16]->load()>=0.5f;
+        c.present=band.present;
         c.enabled=rootParameters[(size_t)root].values[2]->load()>=0.5f;
         c.solo=false; // only root-level SOLO is authoritative
-        c.domain=(Domain)juce::roundToInt(rootParameters[(size_t)root].values[3]->load());
+        c.domain=static_cast<Domain>(band.domain);
         c.space=50.0; // deprecated invisible ROOT SPACE neutralized
         c.comp=(Compressor)juce::roundToInt(rootParameters[(size_t)root].values[4]->load());
         c.detector=(Detector)juce::roundToInt(rootParameters[(size_t)root].values[5]->load());
@@ -1335,14 +1330,11 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
                             (size_t)buffer.getNumSamples());
     // Bounds come from actual ROOT handle positions, with smooth acoustic tails.
     for(int root=0;root<surgery::kRoots;++root) {
-        const float lo=boundaryHz[(size_t)(root*2)];
-        const float hi=boundaryHz[(size_t)(root*2+1)];
-        carveEngine.bounds(root,lo,hi);
-        carveEngine.rootEnabled(root,
-            rootParameters[(size_t)root].values[16]->load()>=0.5f&&
+        const auto& band=layout.bands[(size_t)root];
+        carveEngine.bounds(root,(float)band.left,(float)band.right);
+        carveEngine.rootEnabled(root,band.present&&
             rootParameters[(size_t)root].values[2]->load()>=0.5f);
-        carveEngine.rootDomain(root,(surgery::Channel)juce::roundToInt(
-            rootParameters[(size_t)root].values[3]->load()));
+        carveEngine.rootDomain(root,static_cast<surgery::Channel>(band.domain));
         for(int slot=0;slot<surgery::kSlots;++slot) {
             const auto& values = carveParameters[(size_t)(root*4+slot)];
             surgery::CarveConfig c;
@@ -1358,7 +1350,7 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
     }
     if(buffer.getNumChannels()>=2)
         carveEngine.process(buffer.getWritePointer(0),buffer.getWritePointer(1),
-                            (size_t)buffer.getNumSamples(),getActiveRootsSolo());
+                            (size_t)buffer.getNumSamples(),soloRoot);
     const auto meters = rootsEngine.meter();
     rootMeters[0].store(meters.correlation); rootMeters[1].store(meters.midRms);
     rootMeters[2].store(meters.sideRms); rootMeters[3].store(meters.spaceApplied);
