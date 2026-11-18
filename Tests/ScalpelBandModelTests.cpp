@@ -112,6 +112,15 @@ int main(){
     if(!left.moveSeam(0,Anchor::right,70.0)
        ||left.bands[0].right!=70.0||left.bands[1].left!=70.0)return 23;
 
+    auto covered=movableFactory;
+    covered.remove(2);
+    covered.bands[1].right=250.0;
+    if(!covered.valid()||!covered.restore(2)||!covered.valid()
+       ||covered.bands[2].left<60.0||covered.bands[2].right>500.0)return 24;
+    double totalOctaves=0.0;
+    for(const auto& band:covered.bands)totalOctaves+=std::log2(band.right/band.left);
+    if(!close(totalOctaves,std::log2(1000.0),1e-9))return 25;
+
     std::cout<<"Scalpel magnetic model: seven-band factory, delete/recreate, "
                 "dual anchors, cross-domain overlap, shared resize, group move, "
                 "explicit unlink and deterministic restore PASS\n";

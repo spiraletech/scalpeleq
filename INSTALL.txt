@@ -24,7 +24,8 @@ graph stays contiguous, with no same-domain overlap or reordering.
 
 Right-click a present band or its BAND tab to remove it or unlink an explicit
 magnetic relationship. Right-click a removed band's tab and choose ADD BAND to
-restore it. Double-clicking free graph space can also recreate a removed slot.
+restore it. If its range is occupied, the nearest editable band can give up
+space. Double-clicking free graph space can also recreate a removed slot.
 BAND OFF continues to apply spectral removal. Ctrl-drag a magnet to bypass snap.
 
 Visual Decay reaches and displays a true 0.00; at zero, the displayed

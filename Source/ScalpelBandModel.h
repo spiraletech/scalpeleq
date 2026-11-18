@@ -185,6 +185,31 @@ struct Model {
                 bestDistance=distance;
                 restored=slot;
             }
+            if (restored<0) {
+                // The vacancy may have been covered by a later drag. Make
+                // space at the nearest editable seam by shortening one band.
+                for (int i=0; i<count; ++i) {
+                    const auto& band=bands[(size_t)i];
+                    if (!band.present || band.domain!=previous.domain) continue;
+                    const double available=std::sqrt(band.right/band.left);
+                    if (available<minimumRatio+0.001) continue;
+                    const double ratio=std::min(previous.right/previous.left,available);
+                    for (const auto anchor:{Anchor::left,Anchor::right}) {
+                        if (link(i,anchor).band>=0) continue;
+                        const double edge=frequency(i,anchor);
+                        const double distance=std::abs(std::log(
+                            edge/std::sqrt(previous.left*previous.right)));
+                        if (distance>=bestDistance) continue;
+                        const double seam=anchor==Anchor::left?edge*ratio:edge/ratio;
+                        candidate=*this;
+                        candidate.frequency(i,anchor)=seam;
+                        candidate.bands[(size_t)slot]={true,std::min(edge,seam),
+                            std::max(edge,seam),previous.domain,{}};
+                        bestDistance=distance;
+                        restored=slot;
+                    }
+                }
+            }
             if (restored<0 || !candidate.valid()) return false;
         }
         *this=candidate;
