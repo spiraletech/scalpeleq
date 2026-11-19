@@ -142,8 +142,14 @@ inline bool captureScalpelModule(const juce::String& modulePath){
     const auto lens=plot().transformedBy(juce::AffineTransform::scale(1.2f));
     const juce::Point<int> hover{juce::roundToInt(lens.getRight()-34.f),
         juce::roundToInt(lens.getCentreY()+6.f)};
-    ok=ok&&capture("surgery-ui-VST3-1082-HOVER-ACTIONS.png",hover);
+    ok=ok&&capture("surgery-ui-VST3-HOVER-ACTIONS.png",hover);
     ok=ok&&hit(bandAction(0))&&hit(bandAction(1))&&hit(bandAction(2))&&hit(bandAction(3));
+    ok=ok&&setText("ROOT 1 ROOT Gain","24")&&setText("BAND 1 Dynamics Mode","176E")
+        &&setText("BAND 1 Comp Calibration","-9");
+    pump(65);
+    ok=ok&&capture("surgery-ui-VST3-1083-SIGNED-RESPONSE.png",hover);
+    ok=ok&&setText("ROOT 1 ROOT Gain","0")&&setText("BAND 1 Dynamics Mode","Off")
+        &&setText("BAND 1 Comp Calibration","0");
     ok=ok&&hit(tab(3))&&capture("surgery-ui-VST3-ANALYZE-1344x756.png");
     // Actual compiled pointer/readout calibration. These are live host values,
     // not artwork or replacement waveforms. Restore the capture fixture below.

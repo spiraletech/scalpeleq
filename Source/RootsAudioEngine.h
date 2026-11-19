@@ -9,6 +9,8 @@
 #include <numbers>
 #include "RootsSpectrumColours.h"
 #include "ScalpelBandModel.h"
+#include "ScalpelBandGain.h"
+#include "ScalpelDynamics.h"
 #include "SurgeryCarveEngine.h"
 #include "Experimental/ScalpelBandStop.h"
 
@@ -28,9 +30,11 @@ struct Config {
     bool present=true,enabled=true,solo=false;
     double compOffsetDb=0.0,compRatio=0.0;
 };
+struct DynamicsMeter {double detectorDb=-144.0,reductionDb=0.0,liftDb=0.0;};
 struct Meter {
     double correlation=1.0,midRms=0.0,sideRms=0.0,spaceApplied=1.0,largestGrDb=0.0;
     std::array<double,kTerritories> rootPeakDb{};
+    std::array<DynamicsMeter,kTerritories> dynamics{};
 };
 
 class Filter {
@@ -54,6 +58,9 @@ public:
         const double norm=1.0/(1.0+a);
         b0_=a*norm;b1_=0.0;b2_=-a*norm;
         a1_=-2.0*std::cos(w)*norm;a2_=(1.0-a)*norm;
+    }
+    void setGainResponse(const scalpel::bands::GainResponse& h) noexcept {
+        b0_=h.b0; b1_=h.b1; b2_=h.b2; a1_=h.a1; a2_=h.a2;
     }
     double sample(double v) noexcept {
         const double out=b0_*v+z1_;
@@ -118,20 +125,24 @@ public:
         sideAlpha_=std::exp(-1.0/(0.008*sr_));
         gainSmoothingAlpha_=std::exp(-1.0/(0.010*sr_));
         phaseAnalysisAlpha_=std::exp(-1.0/(0.060*sr_));
-        denseRelease_=std::exp(-1.0/(0.28*sr_));
+        denseRelease_=std::exp(-1.0/(0.32*sr_));
+        fastProfileSustainRelease_=std::exp(-1.0/(0.155*sr_));
+        opticalMemoryAlpha_=std::exp(-1.0/(0.080*sr_));
+        bandGainAlpha_=std::exp(-32.0/(0.010*sr_));
         optoAttackAlpha_=std::exp(-1.0/(0.010*sr_));
         optoReleaseAlpha_=std::exp(-1.0/(0.350*sr_));
         optoReleaseDeepAlpha_=std::exp(-1.0/(1.000*sr_));
         globalMidPower_=globalSidePower_=0.0;appliedSpace_=1.0;
         grMax_=0.0;meter_={};
         currentSolo_=-1;previousSolo_=-1;previousRequest_=-1;soloWet_=0;soloFadeLeft_=0;soloFadeSamples_=0;
-        smoothedRootDelta_.fill(0.0);
+        gainCountdown_=0;
         for(int i=0;i<kNodes;++i) {
             auto& node=nodes_[(size_t)i];
             if(!haveConfig_) {node.config.hz=defaults[(size_t)i];}
             node.midEq.reset();node.sideEq.reset();
             node.midTap.reset();node.sideTap.reset();
-            node.g1=node.g2=0.0;
+            node.g1=node.g2=node.opticalMemory=0.0;
+            node.detectorDb=-144.0;
             node.e1=node.e2=node.sideEnergy=node.midEnergy=0.0;
             node.optoEnvelope=0.0;node.phaseMix=0.0;node.limitAmount=0.0;
             node.phaseLeft.reset();node.phaseRight.reset();
@@ -152,7 +163,7 @@ public:
         for(int root=0;root<kTerritories;++root){
             auto& taps=soloBands_[(size_t)root];
             for(auto& f:taps.filters)f.reset();
-            for(auto& f:rootGainBands_[(size_t)root].filters)f.reset();
+            gainBands_[(size_t)root]={};
             for(auto& f:rootFxBands_[(size_t)root].filters)f.reset();
             for(auto& f:rootMuteBands_[(size_t)root].filters)f.reset();
             updateSoloBand(root);
@@ -171,8 +182,8 @@ public:
         const bool changed=n.config.hz!=c.hz || n.config.q!=c.q;
         n.config=c;
         if(c.comp!=Compressor::off)n.profile=c.comp;
-        n.attack=std::exp(-1.0/((n.profile==Compressor::fet4?0.0008:n.profile==Compressor::tube3?0.012:n.profile==Compressor::dynamics176E?0.003:n.profile==Compressor::dynamicsCE1B?0.001:0.010)*sr_));
-        n.release=std::exp(-1.0/((n.profile==Compressor::fet4?0.14:n.profile==Compressor::tube3?0.32:n.profile==Compressor::dynamics176E?0.10:n.profile==Compressor::dynamicsCE1B?0.05:0.65)*sr_));
+        n.attack=std::exp(-1.0/((n.profile==Compressor::fet4?0.0008:n.profile==Compressor::tube3?0.012:n.profile==Compressor::dynamics176E?0.0008:n.profile==Compressor::dynamicsCE1B?0.001:0.010)*sr_));
+        n.release=std::exp(-1.0/((n.profile==Compressor::fet4?0.14:n.profile==Compressor::tube3?0.32:n.profile==Compressor::dynamics176E?0.075:n.profile==Compressor::dynamicsCE1B?0.05:0.65)*sr_));
         if(changed){updateFilters(index);updateSoloBand(index/2);}
     }
     Config get(int index) const noexcept {return nodes_[(size_t)std::clamp(index,0,kNodes-1)].config;}
@@ -215,18 +226,10 @@ public:
         double greatestGr=0.0;
         std::array<double,kTerritories> blockRootPeak{};
         const double globalWidth=mono_?0.0:spaceToWidth(space_);
-        std::array<double,kTerritories> gainTargets{};
-        for(int root=0;root<kTerritories;++root)
-            gainTargets[(size_t)root]=std::pow(10.0,rootGainDb_[(size_t)root]/20.0)-1.0;
         for(std::size_t i=0;i<count;++i) {
-            // Sample-rate smoothing applies even during SOLO, so the ROOT
-            // gain knob always affects the selected frequency territory.
-            for(int root=0;root<kTerritories;++root){
-                auto& smooth=smoothedRootDelta_[(size_t)root];
-                const double target=gainTargets[(size_t)root];
-                smooth=gainSmoothingAlpha_*smooth+(1.0-gainSmoothingAlpha_)*target;
-                if(std::abs(target)<1.0e-12 && std::abs(smooth)<1.0e-8)
-                    smooth=0.0;
+            if(gainCountdown_--==0){
+                updateBandGain();
+                gainCountdown_=31;
             }
             const double dryM=((double)l[i]+(double)r[i])*0.5;
             const double dryS=((double)l[i]-(double)r[i])*0.5;
@@ -234,7 +237,7 @@ public:
             double carveMid=dryM,carveSide=dryS;
             // One DSP state per ROOT; each pair of handles is ONLY the
             // boundary definition. One stereo/dynamics profile per ROOT.
-            std::array<double,kTerritories> rootM{},rootS{},processedM{},processedS{};
+            std::array<double,kTerritories> processedM{},processedS{};
             for(int root=0;root<kTerritories;++root) {
                 auto& node=nodes_[(size_t)(root*2)];
                 auto& tap=rootFxBands_[(size_t)root].filters;
@@ -245,41 +248,31 @@ public:
                 const double ea=1.0-correlationAlpha_;
                 node.midEnergy+=ea*(bandMid*bandMid-node.midEnergy);
                 node.sideEnergy+=ea*(bandSide*bandSide-node.sideEnergy);
-                rootM[(size_t)root]=bandMid;rootS[(size_t)root]=bandSide;
                 const double beforeMid=carveMid,beforeSide=carveSide;
                 if(carves)carves->processRootSample(root,carveMid,carveSide);
                 const double shapedMid=bandMid+(carveMid-beforeMid);
                 const double shapedSide=bandSide+(carveSide-beforeSide);
                 double fm=shapedMid,fs=shapedSide;
                 applyRootEffects(root,shapedMid,shapedSide,fm,fs,greatestGr);
+                m+=fm-bandMid;s+=fs-bandSide;
+                auto& gain=gainBands_[(size_t)root];
+                if(gain.db!=0.0){
+                    if(node.config.domain!=Domain::side)fm=gain.filters[2].sample(fm);
+                    if(node.config.domain!=Domain::mid)fs=gain.filters[3].sample(fs);
+                }
                 processedM[(size_t)root]=fm;processedS[(size_t)root]=fs;
-                const double rootGain=1.0+gainTargets[(size_t)root];
                 const double bandPeak=node.config.domain==Domain::mid?std::abs(fm):
                     node.config.domain==Domain::side?std::abs(fs):
                     std::max(std::abs(fm+fs),std::abs(fm-fs));
                 blockRootPeak[(size_t)root]=std::max(blockRootPeak[(size_t)root],
-                    node.presenceMix*node.enableMix*rootGain*bandPeak);
-                m+=fm-bandMid;s+=fs-bandSide;
+                    node.presenceMix*node.enableMix*bandPeak);
             }
-            {
-                // One gain per ROOT, applied to the *whole* interval.
-                // Shared HP/LP coefficients with the SOLO path guarantee the
-                // coloured territory and affected signal agree in frequency.
-                // This is parallel band gain with natural filter skirts,
-                // not mathematically flat brick-wall frequency selection.
-                for(int root=0;root<kTerritories;++root) {
-                    const double db=rootGainDb_[(size_t)root];
-
-                    if(std::abs(db)<0.00001&&std::abs(smoothedRootDelta_[(size_t)root])<1.0e-8)continue;
-                    const auto& node=nodes_[(size_t)(root*2)];
-                    const double delta=smoothedRootDelta_[(size_t)root]*
-                        node.presenceMix*node.enableMix;
-                    if(delta==0.0)continue;
-                    const double bm=rootM[(size_t)root],bs=rootS[(size_t)root];
-                    const auto domain=nodes_[(size_t)(root*2)].config.domain;
-                    if(domain!=Domain::side)m+=delta*bm;
-                    if(domain!=Domain::mid)s+=delta*bs*(1.0-nodes_[(size_t)(root*2)].monoMix);
-                }
+            for(int root=0;root<kTerritories;++root){
+                auto& gain=gainBands_[(size_t)root];
+                if(gain.db==0.0)continue;
+                const auto domain=nodes_[(size_t)(root*2)].config.domain;
+                if(domain!=Domain::side)m=gain.filters[0].sample(m);
+                if(domain!=Domain::mid)s=gain.filters[1].sample(s);
             }
             const double soloStep=1.0/(0.008*sr_);
             soloWet_=solo?std::min(1.0,soloWet_+soloStep):std::max(0.0,soloWet_-soloStep);
@@ -287,17 +280,14 @@ public:
                 const double normalM=m,normalS=s;
                 auto audition=[&](int root)->std::array<double,2> {
                     const auto& node=nodes_[(size_t)(root*2)];
-                    const double delta=smoothedRootDelta_[(size_t)root]*
-                        node.presenceMix*node.enableMix;
-                    const double bm=rootM[(size_t)root],bs=rootS[(size_t)root];
                     const auto domain=node.config.domain;
                     // EQ DOMAIN must also select the audible channel when
                     // auditioning a BAND in SOLO. Previously the raw MID and
                     // SIDE taps leaked through even in the opposite domain.
                     const double auditionMid=domain==Domain::side?0.0:
-                        processedM[(size_t)root]+delta*bm;
+                        processedM[(size_t)root];
                     const double auditionSide=domain==Domain::mid?0.0:
-                        processedS[(size_t)root]+delta*bs;
+                        processedS[(size_t)root];
                     const double audible=node.presenceMix*node.enableMix;
                     return {auditionMid*audible,auditionSide*audible};
                 };
@@ -378,8 +368,12 @@ public:
         meter_.sideRms=std::sqrt(sumS/(double)count);
         meter_.spaceApplied=appliedSpace_;
         meter_.largestGrDb=greatestGr;
-        for(int root=0;root<kTerritories;++root)
+        for(int root=0;root<kTerritories;++root){
+            const auto& node=nodes_[(size_t)(root*2)];
             meter_.rootPeakDb[(size_t)root]=20.0*std::log10(std::max(1.0e-12,blockRootPeak[(size_t)root]));
+            const double wet=node.compMix*node.presenceMix*node.enableMix;
+            meter_.dynamics[(size_t)root]={node.detectorDb,node.g2*wet,node.g1*wet};
+        }
     }
 private:
     struct Node {
@@ -387,7 +381,7 @@ private:
         double attack=0.99,release=0.999;
         Filter midEq,sideEq,midTap,sideTap;
         Quadrature phaseLeft,phaseRight;
-        double g1=0,g2=0,compOffset=0,ratioSlope=0.75;
+        double g1=0,g2=0,compOffset=0,ratioSlope=0.75,opticalMemory=0.0,detectorDb=-144.0;
         double e1=0.0,e2=0.0,midEnergy=0.0,sideEnergy=0.0;
         double optoEnvelope=0.0,phaseMix=0.0,limitAmount=0.0;
         double phaseReal=0.0,phaseImag=0.0,phaseLeftPower=0.0,
@@ -465,19 +459,16 @@ private:
                 c.domain==Domain::side?std::abs(tapS):
                 std::max(std::abs(tapM+tapS),std::abs(tapM-tapS));
             node.e1=follow(node.e1,level,node.attack,node.release);
-            const double detectorDb=20.0*std::log10(std::max(1e-12,node.e1))+node.compOffset;
-            const double over=detectorDb-(-18.0);
-            const double knee=dense?6.0:4.0;
-            const double excess=over<=-knee*0.5?0.0:over>=knee*0.5?over:
-                (over+knee*0.5)*(over+knee*0.5)/(2.0*knee);
+            node.detectorDb=20.0*std::log10(std::max(1e-12,node.e1));
             const double ratio=c.compRatio>=1.0?c.compRatio:(dense?6.0:4.0);
             node.ratioSlope+=a*((1.0-1.0/ratio)-node.ratioSlope);
-            const double takeDb=excess*node.ratioSlope;
-            const double liftDb=std::clamp((-26.0-detectorDb)*(dense?0.45:0.25),0.0,dense?6.0:3.0)*
-                std::clamp((detectorDb+66.0)/20.0,0.0,1.0);
-            const double release=dense&&node.g2>3.0?denseRelease_:node.release;
-            node.g2=follow(node.g2,takeDb,node.attack,release);
-            node.g1=follow(node.g1,liftDb,gainSmoothingAlpha_,gainSmoothingAlpha_);
+            const auto target=scalpel::dynamics::transfer(node.detectorDb,node.compOffset,node.ratioSlope,dense);
+            node.opticalMemory=opticalMemoryAlpha_*node.opticalMemory+
+                (1.0-opticalMemoryAlpha_)*std::clamp(target.reductionDb/6.0,0.0,1.0);
+            const double release=std::lerp(node.release,
+                dense?denseRelease_:fastProfileSustainRelease_,node.opticalMemory);
+            node.g2=follow(node.g2,target.reductionDb,node.attack,release);
+            node.g1=follow(node.g1,target.liftDb,gainSmoothingAlpha_,gainSmoothingAlpha_);
             const double delta=node.compMix*(std::pow(10.0,(node.g1-node.g2)/20.0)-1.0);
             m+=delta*tapM;s+=delta*tapS;
             greatestGr=std::max(greatestGr,node.g2*node.compMix*node.enableMix*node.presenceMix);
@@ -544,9 +535,9 @@ private:
         auto& tap=soloBands_[(size_t)root].filters;
         tap[0].setEdge(sr_,low,true); tap[1].setEdge(sr_,high,false);
         tap[2].setEdge(sr_,low,true); tap[3].setEdge(sr_,high,false);
-        auto& gainTap=rootGainBands_[(size_t)root].filters;
-        gainTap[0].setEdge(sr_,low,true);gainTap[1].setEdge(sr_,high,false);
-        gainTap[2].setEdge(sr_,low,true);gainTap[3].setEdge(sr_,high,false);
+        auto& gain=gainBands_[(size_t)root];
+        gain.shape=scalpel::bands::GainBand::fromEdges(sr_,low,high);
+        gain.dirty=true;
         auto& fxTap=rootFxBands_[(size_t)root].filters;
         fxTap[0].setEdge(sr_,low,true);fxTap[1].setEdge(sr_,high,false);
         fxTap[2].setEdge(sr_,low,true);fxTap[3].setEdge(sr_,high,false);
@@ -557,6 +548,23 @@ private:
         auto& n=nodes_[(size_t)i];
         n.midEq.peak(sr_,n.config);n.sideEq.peak(sr_,n.config);
         n.midTap.tap(sr_,n.config);n.sideTap.tap(sr_,n.config);
+    }
+    void updateBandGain() noexcept {
+        for(int root=0;root<kTerritories;++root){
+            auto& gain=gainBands_[(size_t)root];
+            const auto& c=nodes_[(size_t)(root*2)].config;
+            const double target=c.enabled&&c.present?rootGainDb_[(size_t)root]:0.0;
+            double next=target+(gain.db-target)*bandGainAlpha_;
+            if(std::abs(next-target)<1.0e-5)next=target;
+            if(next==gain.db&&!gain.dirty)continue;
+            gain.dirty=false;
+            gain.db=next;
+            const scalpel::bands::GainResponse response(gain.shape,next);
+            for(auto& filter:gain.filters){
+                filter.setGainResponse(response);
+                if(next==0.0)filter.reset();
+            }
+        }
     }
     static double spaceToWidth(double space) noexcept {
         return space<=50.0?space/50.0:1.0+(space-50.0)/100.0;
@@ -595,16 +603,22 @@ private:
         std::array<scalpel::experimental::CrossfadedBandStop,2> filters;
     };
     std::array<RootBand,kTerritories> soloBands_{};
-    std::array<RootBand,kTerritories> rootGainBands_{};
+    struct BandGain {
+        scalpel::bands::GainBand shape{};
+        std::array<Filter,4> filters;
+        double db=0.0;
+        bool dirty=true;
+    };
+    std::array<BandGain,kTerritories> gainBands_{};
     std::array<RootBand,kTerritories> rootFxBands_{};
     std::array<RootMuteBand,kTerritories> rootMuteBands_{};
     std::array<double,kTerritories> rootGainDb_{};
     std::array<bool,kTerritories> rootMono_{};
-    std::array<double,kTerritories> smoothedRootDelta_{};
-    double gainSmoothingAlpha_=0.99;
+    int gainCountdown_=0;
+    double gainSmoothingAlpha_=0.99,bandGainAlpha_=0.99,opticalMemoryAlpha_=0.99;
     double optoAttackAlpha_=0.998,optoReleaseAlpha_=0.9999,optoReleaseDeepAlpha_=0.99998;
     int soloRoot_=-1;
-    double denseRelease_=0.99;
+    double denseRelease_=0.99,fastProfileSustainRelease_=0.99;
     double sr_=48000.0,correlationAlpha_=0.999,sideAlpha_=0.99,phaseAnalysisAlpha_=0.999;
     double globalMidPower_=0.0,globalSidePower_=0.0,appliedSpace_=1.0,grMax_=0.0;
     double space_=50.0;

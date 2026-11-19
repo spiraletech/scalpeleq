@@ -879,6 +879,9 @@ void PRISMVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     lufsShort.store(kFloorDb); lufsIntegrated.store(kFloorDb);
     rootMeters[0].store(1); rootMeters[1].store(0); rootMeters[2].store(0); rootMeters[3].store(1); rootMeters[4].store(0);
     for(auto& peak:rootBandPeakDb)peak.store(-144.f);
+    for(auto& band:bandDynamics_){
+        band[0].store(-144.f);band[1].store(0.f);band[2].store(0.f);
+    }
     rootsEngine.prepare(sampleRate);
     carveEngine.prepare(sampleRate);
     signedCarveEngine.prepare(sampleRate);
@@ -1445,6 +1448,11 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
         const auto peak = measuring ? std::max(kFloorDb, (float)meters.rootPeakDb[(size_t)root]) : kFloorDb;
         rootBandPeakDb[(size_t)root].store(peak, std::memory_order_relaxed);
         recordPeak(root, peak, bandPeakEpoch);
+        const auto& dynamics=meters.dynamics[(size_t)root];
+        auto& values=bandDynamics_[(size_t)root];
+        values[0].store(measuring?(float)dynamics.detectorDb:-144.f,std::memory_order_relaxed);
+        values[1].store(measuring?(float)dynamics.reductionDb:0.f,std::memory_order_relaxed);
+        values[2].store(measuring?(float)dynamics.liftDb:0.f,std::memory_order_relaxed);
     }
     // UI may consume a measurement only once. Otherwise stopping the host
     // after a loud block would refresh the red warning indefinitely.

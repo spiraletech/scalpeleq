@@ -1,4 +1,4 @@
-Scalpel EQ 1.0.8.2 — Formidable controls and phase candidate — Windows x64 VST3
+Scalpel EQ 1.0.8.3 — Formidable calibrated graph and dynamics candidate — Windows x64 VST3
 
 Close FL Studio and other DAWs before replacing the plugin.
 Extract this ZIP. Copy the COMPLETE “Scalpel EQ.vst3” folder to:
@@ -41,11 +41,18 @@ is not a substitute for FL Studio project recall/playback/removal testing.
 
 
 
-1.0.8.2 checks
+1.0.8.3 checks
 - MASTER STEREO plays the full mix, MID plays the center, and SIDE plays the
   difference signal. Right-click a band to set its independent EQ domain.
 - BAND PEAK holds the maximum reading for each band. RESET clears all band
   holds and the master output peak.
+- The right graph ruler is the measured output in dBFS. The left ruler is
+  the selected band's signed EQ target in dB. BAND GAIN reaches ±60 dB at
+  the calibrated band center, with shaped shoulders between band edges.
+- COMP THRESHOLD 0 dB uses a -18 dBFS detector reference. -9 dB lowers it
+  to -27 dBFS for more peak reduction. +9 dB raises it to -9 dBFS and adds
+  up to 9 dB of quiet-signal lift. Review existing offset automation because
+  1.0.8.2 used the opposite sign for peak control.
 - COMPRESSOR RATIO sets the band's compressor slope. AUTO recalls the
   original 4:1 for 176E and 6:1 for CE1B.
 - PHASE CORRECTION estimates coherent L/R phase near the stereo band's

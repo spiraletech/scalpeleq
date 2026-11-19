@@ -20,4 +20,11 @@ inline constexpr float unitFontHeight=9.f*logicalPerNativePixel;
 inline constexpr float toY(float db,float top,float height) noexcept {
     return top-db*height/rangeDb;
 }
+
+inline constexpr float responseY(float db,float top,float height) noexcept {
+    return top+height*(60.f-db)/120.f;
+}
+inline constexpr float responseDb(float y,float top,float height) noexcept {
+    return height>0.f?60.f-120.f*(y-top)/height:0.f;
+}
 }

@@ -118,6 +118,11 @@ public:
     float getHeldRootBandPeakDb(int root) const noexcept {
         return root >= 0 && root < numSections ? heldPeak(root) : -144.f;
     }
+    std::array<float,3> getBandDynamics(int root) const noexcept {
+        const auto& values=bandDynamics_[(size_t)juce::jlimit(0,numSections-1,root)];
+        return {values[0].load(std::memory_order_relaxed),values[1].load(std::memory_order_relaxed),
+                values[2].load(std::memory_order_relaxed)};
+    }
     std::uint64_t getRootBandPeakRevision() const noexcept {
         return rootBandPeakRevision_.load(std::memory_order_acquire);
     }
@@ -195,6 +200,7 @@ private:
     std::atomic<float>* masterDomainValue_ = nullptr;
     std::array<std::atomic<double>, 5> rootMeters { 1.0, 0.0, 0.0, 1.0, 0.0 };
     std::array<std::atomic<float>,numSections> rootBandPeakDb {};
+    std::array<std::array<std::atomic<float>,3>,numSections> bandDynamics_ {};
     // Each published hold carries its reset epoch, so an in-flight audio block
     // cannot repopulate a cleared reading from before RESET.
     std::atomic<std::uint32_t> bandPeakEpoch_ {1};

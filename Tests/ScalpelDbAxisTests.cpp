@@ -35,5 +35,10 @@ int main(){
     if(surgery::displayDb(-30,2000,3,rangeDb)!=-27)return 6;
     if(toY(surgery::displayDb(-144,1000,0,rangeDb),183,204)!=387)return 7;
     if(toY(surgery::displayDb(6,1000,0,rangeDb),183,204)!=183)return 8;
+    for(float db:{-60.f,-40.f,-9.f,0.f,9.f,40.f,60.f}){
+        const float y=responseY(db,183,204);
+        if(std::abs(responseDb(y,183,204)-db)>.0001f)return 9;
+    }
+    if(responseY(0,183,204)!=toY(-30,183,204)||responseY(60,183,204)!=toY(0,183,204))return 10;
     std::cout<<"dB axis: all 11 reference rows, -30 midpoint, -35 uniqueness, 6 scales, amplitude calibration, tilt and floor passed\n";
 }

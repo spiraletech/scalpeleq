@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstddef>
 #include <numbers>
+#include "ScalpelBandGain.h"
 
 namespace surgery {
 constexpr int kRoots=7, kSlots=4, kCarves=kRoots*kSlots;
@@ -28,11 +29,8 @@ public:
     void notch(double sr,double frequency,double q,double gainDb) noexcept {
         const double hz=std::clamp(frequency,20.0,sr*0.45);
         const double w=2.0*std::numbers::pi*hz/sr;
-        const double A=std::pow(10.0,gainDb/40.0);
-        const double alpha=std::sin(w)/(2.0*q);
-        const double c=std::cos(w),d=1.0/(1.0+alpha/A);
-        b0_=(1.0+alpha*A)*d;b1_=-2.0*c*d;b2_=(1.0-alpha*A)*d;
-        a1_=-2.0*c*d;a2_=(1.0-alpha/A)*d;
+        const scalpel::bands::GainResponse response({hz,std::cos(w),std::sin(w)/(2.0*q)},gainDb);
+        b0_=response.b0;b1_=response.b1;b2_=response.b2;a1_=response.a1;a2_=response.a2;
     }
     void bandpass(double sr,double frequency,double q) noexcept {
         const double w=2.0*std::numbers::pi*std::clamp(frequency,20.0,sr*0.45)/sr;

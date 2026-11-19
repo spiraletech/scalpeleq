@@ -157,12 +157,8 @@ private:
     std::array<float,surgery::kRoots> peakReadouts_ {};
     bool hover_=false,frozen_=false,xrayActive_=false;
     juce::Point<float> mouse_;
-    struct ResponseCache {
-        std::array<double,9> key{};
-        juce::Path contour,footprint;
-        bool valid=false;
-    };
-    std::array<ResponseCache,4> responseCache_;
+    std::array<float,3> dynamicsReadout_{-144.f,0.f,0.f};
+    std::array<float,2049> responseDb_{};
     struct ResponseProbe {float x=0;std::complex<double> z1;};
     std::array<ResponseProbe,2049> responseProbes_;
     std::array<double,3> responseProbeKey_{};
@@ -184,13 +180,13 @@ private:
     float mercuryPhase_=0;
     scalpel::xray::LiquidSurface<> mercurySurface_;
     juce::Image responseOverlay_;
-    std::array<double,32> responseOverlayKey_{};
+    std::array<double,40> responseOverlayKey_{};
     bool responseOverlayValid_=false;
     // The graph observes the same host parameters as the controls. Carve
     // edits must invalidate it even when FFT frames are silent or frozen.
     static constexpr std::array<const char*,5> carveRepaintFields_{"on","hz","depth","gain_db","q"};
     std::array<std::unique_ptr<juce::ParameterAttachment>,
-               surgery::kSlots*carveRepaintFields_.size()+2> carveRepaintAttachments_;
+               surgery::kSlots*carveRepaintFields_.size()+8> carveRepaintAttachments_;
     void bindCarveRepaints();
 
     juce::Rectangle<float> area() const;

@@ -5,6 +5,7 @@
 #include <cmath>
 #include <complex>
 #include <numbers>
+#include "ScalpelBandGain.h"
 namespace surgery {
 // Display-only prepared response: compute coefficients once per changed
 // CARVE, then evaluate the unchanged 2049-point contour with cached probes.
@@ -14,50 +15,27 @@ public:
         const double sr=std::max(8000.0,sampleRate);
         const double fc=std::clamp(centerHz,20.0,sr*.45);
         const double gain=signedGain?std::clamp(cutDb,-40.0,40.0):-std::clamp(cutDb,0.0,36.0);
-        bypass_=gain==0;
         const double w=2.0*std::numbers::pi*fc/sr;
-        const double A=std::pow(10.0,gain/40.0);
-        const double alpha=std::sin(w)/(2.0*std::clamp(q,.3,96.0));
-        const double c=std::cos(w),norm=1.0/(1.0+alpha/A);
-        b0_=(1.0+alpha*A)*norm;b1_=-2.0*c*norm;b2_=(1.0-alpha*A)*norm;
-        a1_=-2.0*c*norm;a2_=(1.0-alpha/A)*norm;
+        response_=scalpel::bands::GainResponse(
+            {fc,std::cos(w),std::sin(w)/(2.0*std::clamp(q,.3,96.0))},gain);
+    }
+    std::complex<double> transfer(std::complex<double> z1) const noexcept {
+        return response_.transfer(z1);
     }
     double magnitudeDb(std::complex<double> z1) const noexcept {
-        if(bypass_)return 0;
-        const auto z2=z1*z1;
-        const auto numerator=b0_+b1_*z1+b2_*z2;
-        const auto denominator=1.0+a1_*z1+a2_*z2;
-        const double ratio=std::abs(numerator)/std::max(1.e-12,std::abs(denominator));
+        const double ratio=std::abs(transfer(z1));
         return std::clamp(20.0*std::log10(std::max(1.e-12,ratio)),-40.0,40.0);
     }
 private:
-    double b0_=1,b1_=0,b2_=0,a1_=0,a2_=0;
-    bool bypass_=true;
+    scalpel::bands::GainResponse response_;
 };
 inline double carveMagnitudeDb(double sampleRate,double centerHz,double q,
                                double cutDb,double probeHz) noexcept {
     const double sr=std::max(8000.0,sampleRate);
-    const double fc=std::clamp(centerHz,20.0,sr*0.45);
     const double hz=std::clamp(probeHz,10.0,sr*0.49);
-    const double qq=std::clamp(q,0.3,96.0);
-    const double gain=-std::clamp(cutDb,0.0,36.0);
-    if(gain==0.0)return 0.0;
-    const double w=2.0*std::numbers::pi*fc/sr;
-    const double A=std::pow(10.0,gain/40.0);
-    const double alpha=std::sin(w)/(2.0*qq);
-    const double c=std::cos(w),norm=1.0/(1.0+alpha/A);
-    const double b0=(1.0+alpha*A)*norm;
-    const double b1=-2.0*c*norm;
-    const double b2=(1.0-alpha*A)*norm;
-    const double a1=-2.0*c*norm;
-    const double a2=(1.0-alpha/A)*norm;
     const double phase=-2.0*std::numbers::pi*hz/sr;
-    const std::complex<double> z1=std::polar(1.0,phase);
-    const auto z2=z1*z1;
-    const auto numerator=b0+b1*z1+b2*z2;
-    const auto denominator=1.0+a1*z1+a2*z2;
-    const double ratio=std::abs(numerator)/std::max(1.e-12,std::abs(denominator));
-    return std::clamp(20.0*std::log10(std::max(1.e-12,ratio)),-36.0,3.0);
+    return std::clamp(PreparedCarveResponse(sr,centerHz,q,cutDb).magnitudeDb(std::polar(1.0,phase)),
+                      -36.0,3.0);
 }
 inline float displayDb(float measuredDb,float frequencyHz,float tiltPerOctave,
                        float rangeDb) noexcept {

@@ -169,8 +169,51 @@ double preUiRender(double gain,prism::roots::v2::Compressor comp,double offset,
     return 10.0*std::log10(energy/(level*level*rate/4));
 }
 
+bool verifyBandGain(){
+    using namespace prism::roots::v2;
+    for(const double rate:{44100.,48000.,96000.}){
+        for(int root=0;root<kTerritories;++root){
+            const auto low=Engine::defaults[(size_t)(root*2)];
+            const auto high=Engine::defaults[(size_t)(root*2+1)];
+            const auto band=scalpel::bands::GainBand::fromEdges(rate,low,high);
+            const auto z=[rate](double hz){return std::polar(1.0,-2*std::numbers::pi*hz/rate);};
+            for(const double target:{-60.,-12.,12.,60.}){
+                const scalpel::bands::GainResponse response(band,target);
+                for(const auto& sample:std::array<std::pair<double,double>,3>{{
+                    {low,target*.5},{band.centerHz,target},{high,target*.5}}}){
+                    const auto measured=20.0*std::log10(std::abs(response.transfer(z(sample.first))));
+                    if(!std::isfinite(measured)||std::abs(measured-sample.second)>.003)return false;
+                }
+                if((root!=0&&root!=3&&root!=6)||std::abs(target)!=60.)continue;
+                Engine engine(rate);
+                engine.setRootGain(root,target);
+                constexpr double amplitude=.0005;
+                const int count=(int)(rate*2.6),start=(int)(rate*2.);
+                std::vector<float> l(count),r(count);
+                for(int i=0;i<count;++i)
+                    r[(size_t)i]=l[(size_t)i]=(float)(amplitude*std::sin(2*std::numbers::pi*band.centerHz*i/rate));
+                engine.process(l.data(),r.data(),l.size());
+                double out=0.0,in=0.0;
+                for(int i=start;i<count;++i){
+                    const auto dry=amplitude*std::sin(2*std::numbers::pi*band.centerHz*i/rate);
+                    in+=dry*dry;
+                    out+=(double)l[(size_t)i]*l[(size_t)i];
+                }
+                const auto measured=10.0*std::log10(out/in);
+                if(!std::isfinite(measured)||std::abs(measured-target)>.12){
+                    std::cerr<<"Band gain endpoint "<<rate<<' '<<root+1<<' '<<target<<' '<<measured<<"\n";
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
 int main(){
     using prism::roots::v2::Compressor;
+    if(!verifyBandGain())return 86;
+    std::cout<<"BAND GAIN: shared analytic shoulders and center in all seven bands; measured ±60 dB at 44.1/48/96 kHz\n";
     for(const double gain:{-40.,-12.,0.,12.,40.}){
         double leakage=1.0;
         const double measured=preUiRender(gain,Compressor::off,0.0,.001,true,false,&leakage);
@@ -181,7 +224,7 @@ int main(){
     }
     const double clean=preUiRender(0,Compressor::dynamics176E,0,.35,false,false);
     const double dense=preUiRender(0,Compressor::dynamicsCE1B,0,.35,false,false);
-    const double driven=preUiRender(0,Compressor::dynamics176E,9,.35,false,false);
+    const double driven=preUiRender(0,Compressor::dynamics176E,-9,.35,false,false);
     const double quiet=preUiRender(0,Compressor::dynamics176E,0,.015,false,false);
     const double carved=preUiRender(12,Compressor::dynamics176E,0,.08,false,false);
     const double audition=preUiRender(12,Compressor::off,0,.005,true,true);
@@ -189,7 +232,21 @@ int main(){
         std::cerr<<"Pre-UI dynamics/solo: "<<clean<<' '<<dense<<' '<<driven<<' '<<quiet<<' '<<carved<<' '<<audition<<"\n";
         return 81;
     }
-    std::cout<<"1.0.7.9: signed endpoints, domain isolation, upward/downward profiles, offset, CARVE-before-detector and Solo PASS\n";
+    for(const auto comp:{Compressor::dynamics176E,Compressor::dynamicsCE1B}){
+        const double loudNeg=preUiRender(0,comp,-9,.35,false,false);
+        const double loudCenter=preUiRender(0,comp,0,.35,false,false);
+        const double loudPos=preUiRender(0,comp,9,.35,false,false);
+        const double quietNeg=preUiRender(0,comp,-9,.012,false,false);
+        const double quietCenter=preUiRender(0,comp,0,.012,false,false);
+        const double quietPos=preUiRender(0,comp,9,.012,false,false);
+        const double silenceFloor=preUiRender(0,comp,9,1e-5,false,false);
+        if(!(loudNeg<loudCenter-1.0&&loudCenter<loudPos-1.0&&std::abs(quietNeg)<.04
+            &&quietCenter>1.0&&quietPos>quietCenter+.50&&quietPos<=9.05&&std::abs(silenceFloor)<.04)){
+            std::cerr<<"Signed comp threshold: "<<loudNeg<<' '<<loudCenter<<' '<<loudPos<<" / "
+                <<quietNeg<<' '<<quietCenter<<' '<<quietPos<<" / "<<silenceFloor<<"\n";return 85;
+        }
+    }
+    std::cout<<"Signed CARVE endpoints and signed compressor threshold verified for both profiles\n";
 
     // PHASE CORRECTION must reduce a measured L/R phase offset without
     // achieving the result by attenuating stereo energy.

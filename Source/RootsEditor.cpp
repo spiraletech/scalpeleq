@@ -1,4 +1,5 @@
 #include "RootsEditor.h"
+#include <optional>
 #include "RootsSpectrumColours.h"
 #include "ScalpelXRayChroma.h"
 #include "ScalpelUI105.h"
@@ -221,7 +222,11 @@ void RootsGraph::updateAnalyzer(
     bands_=spectrumEnvelope_.frame();
     peaks_=pk;
     // Retain 60 Hz decay semantics; settled/unchanged frames need no paint.
-    if(previous!=bands_||previousPeaks!=peaks_||peakChanged)repaint();
+    auto dynamics=processor_.getBandDynamics(selected_/2);
+    for(auto& value:dynamics)value=std::round(10.f*value)*0.1f;
+    const bool dynamicsChanged=dynamics!=dynamicsReadout_;
+    dynamicsReadout_=dynamics;
+    if(previous!=bands_||previousPeaks!=peaks_||peakChanged||dynamicsChanged)repaint();
 }
 void RootsGraph::updateWeather(const surgery::weather::Snapshot* snapshot,double elapsed,bool active,bool reduced,double memory,int style){
     style=style>0?7:0; // All retained legacy values resolve to Standard+.
@@ -282,13 +287,19 @@ void RootsGraph::bindCarveRepaints(){
             observe(PRISMVSTAudioProcessor::carveId(root,slot,suffix));
     observe(PRISMVSTAudioProcessor::rootsNodeId(root*2,"hz"));
     observe(PRISMVSTAudioProcessor::rootsNodeId(root*2+1,"hz"));
+    observe(PRISMVSTAudioProcessor::rootsRootGainId(root));
+    for(const auto* field:{"on","present","domain","dynamics_mode","comp_offset"})
+        observe(PRISMVSTAudioProcessor::rootsRootControlId(root,field));
 }
 void RootsGraph::selectNode(int i){
     const int target=juce::jlimit(0,prism::roots::v2::kNodes-1,i);
     if(target==selected_)return;
     const bool changedRoot=selected_/2!=target/2;
     selected_=target;
-    if(changedRoot)bindCarveRepaints();
+    if(changedRoot){
+        bindCarveRepaints();
+        dynamicsReadout_=processor_.getBandDynamics(selected_/2);
+    }
     // Once solo audition is engaged it travels with the selected root.
     processor_.transferRootsSoloTo(selected_);
     if(onSelectNode)onSelectNode(selected_);
@@ -365,7 +376,7 @@ void RootsGraph::paint(juce::Graphics& g){
     // Measurement still extends below -144 dBFS. X-RAY uses the locked
     // 0..-60 dBFS presentation scale without modifying analyzer precision.
     const float rangeDb=scalpel::dbaxis::rangeDb;
-    const float slope=pval(processor_.apvts,"analyzer_slope");
+    constexpr float slope=0.f; // The dBFS ruler reports the measured spectrum without hidden tilt.
     const bool heatOn=pval(processor_.apvts,"aura_color")>=0.5f&&(weatherStyle_<=2||weatherStyle_==7);
     juce::Path spectrumPath,filledPath,peakPath;
     const int N=PRISMVSTAudioProcessor::labBars;
@@ -627,91 +638,127 @@ void RootsGraph::paint(juce::Graphics& g){
     // No GPU readiness label in Floor 01: it was misleading and no GPU
     // device is initialized by the active X-RAY paint path.
 
-    // Predict the EXACT static RBJ peak-filter response used in the CARVE DSP.
-    // It shows the maximum possible response for dynamic nodes, not measured GR.
+    // The output FFT uses the right dBFS scale. The selected band's static
+    // EQ target uses an independent signed dB scale and the actual filters.
     const int selectedRoot=selected_/2;
-    const double sr=processor_.getSampleRate()>8000.0?
-                    processor_.getSampleRate():48000.0;
-    // 0 dB of CARVE response and the frequency-only BAND handle rail are
-    // the same horizontal reference. The previous +23 px offset fabricated
-    // an apparently misplaced EQ line in BAND MODE.
-    const float baseY=r.getCentreY();
+    const double sr=processor_.getSampleRate()>=8000.0?processor_.getSampleRate():48000.0;
     const auto& selectedBand=bandModel.bands[(size_t)selectedRoot];
     const bool selectedPresent=selectedBand.present;
-    const float lowHz=(float)selectedBand.left;
-    const float highHz=(float)selectedBand.right;
-    std::array<double,32> overlayKey{sr,(double)getWidth(),(double)getHeight(),(double)selectedRoot,lowHz,highHz,(double)slot_,(double)colour(selectedRoot).getARGB()};
-    for(int i=0;i<4;++i){
-        int index=8+i*4;
-        for(const char* suffix:{"on","hz","q"})overlayKey[(size_t)index++]=pval(processor_.apvts,PRISMVSTAudioProcessor::carveId(selectedRoot,i,suffix));
-        overlayKey[(size_t)index]=processor_.getCarveGainDb(selectedRoot,i);
-    }
+    const float lowHz=(float)selectedBand.left,highHz=(float)selectedBand.right;
+    const auto rid=[selectedRoot](const char* id){
+        return PRISMVSTAudioProcessor::rootsRootControlId(selectedRoot,id);
+    };
+    const bool bandEnabled=selectedPresent&&pval(processor_.apvts,rid("on"))>=.5f;
+    const double gain=pval(processor_.apvts,PRISMVSTAudioProcessor::rootsRootGainId(selectedRoot));
+    const bool showResponse=mode_!=3&&selectedPresent;
+    const auto responseY=[r](float db){return scalpel::dbaxis::responseY(db,r.getY(),r.getHeight());};
+    const float baseY=responseY(0.f);
     const float overlayScale=juce::jlimit(.5f,4.f,g.getInternalContext().getPhysicalPixelScaleFactor());
-    overlayKey[24]=overlayScale;
-    overlayKey[25]=polished?1.:0.;
-    overlayKey[26]=selectedPresent?1.:0.;
-    if(!responseOverlayValid_||responseOverlayKey_!=overlayKey){
+    std::array<double,40> overlayKey{sr,(double)getWidth(),(double)getHeight(),(double)selectedRoot,
+        lowHz,highHz,(double)slot_,(double)mode_,gain,(double)bandEnabled,overlayScale,(double)showResponse};
+    for(int slot=0;slot<4;++slot){
+        int i=12+slot*4;
+        for(const auto* id:{"on","hz","q"})
+            overlayKey[(size_t)i++]=pval(processor_.apvts,PRISMVSTAudioProcessor::carveId(selectedRoot,slot,id));
+        overlayKey[(size_t)i]=processor_.getCarveGainDb(selectedRoot,slot);
+    }
+    if(showResponse&&(!responseOverlayValid_||responseOverlayKey_!=overlayKey)){
         const int width=juce::jmax(1,juce::roundToInt(getWidth()*overlayScale));
         const int height=juce::jmax(1,juce::roundToInt(getHeight()*overlayScale));
-        if(responseOverlay_.getWidth()!=width||responseOverlay_.getHeight()!=height)
-            responseOverlay_=juce::Image(juce::Image::ARGB,width,height,true);
-        else responseOverlay_.clear(responseOverlay_.getBounds());
+        responseOverlay_=juce::SoftwareImageType{}.convert(juce::Image(juce::Image::ARGB,width,height,true));
         const std::array<double,3> probeKey{sr,(double)getWidth(),(double)getHeight()};
         if(responseProbeKey_!=probeKey){
             for(size_t i=0;i<responseProbes_.size();++i){
-                const float f=20.0f*std::pow(1000.0f,(float)i/2048.0f);
+                const float f=20.f*std::pow(1000.f,(float)i/2048.f);
                 responseProbes_[i]={freqToX(f),std::polar(1.0,
                     -2.0*std::numbers::pi*std::clamp((double)f,10.0,sr*.49)/sr)};
             }
             responseProbeKey_=probeKey;
         }
-        juce::Graphics overlayGraphics(responseOverlay_);overlayGraphics.addTransform(juce::AffineTransform::scale(overlayScale));
-    for(int slot=0;selectedPresent&&slot<surgery::kSlots;++slot){
-        const auto id=[selectedRoot,slot](const char* suffix){
-            return PRISMVSTAudioProcessor::carveId(selectedRoot,slot,suffix);
+        juce::Graphics overlay(responseOverlay_);
+        overlay.addTransform(juce::AffineTransform::scale(overlayScale));
+        overlay.reduceClipRegion(r.toNearestInt());
+        const scalpel::bands::GainResponse bell(scalpel::bands::GainBand::fromEdges(sr,lowHz,highHz),
+                                               bandEnabled?gain:0.0);
+        scalpel::experimental::BandStop mute;
+        const bool muted=!bandEnabled&&mute.configure(sr,lowHz,highHz);
+        std::array<std::optional<surgery::PreparedCarveResponse>,4> carves;
+        std::array<double,4> weights{};
+        for(int slot=0;slot<4;++slot){
+            const auto i=(size_t)(12+slot*4);
+            if(!bandEnabled||overlayKey[i]<.5||std::abs(overlayKey[i+3])<.001)continue;
+            const auto fc=std::clamp(overlayKey[i+1],(double)lowHz,(double)highHz);
+            carves[(size_t)slot].emplace(sr,fc,overlayKey[i+2],overlayKey[i+3],true);
+            weights[(size_t)slot]=surgery::CarveEngine::boundaryWeight(fc,lowHz,highHz);
+        }
+        const auto magnitudeDb=[](std::complex<double> h){
+            return (float)(20.0*std::log10(std::max(1e-12,std::abs(h))));
         };
-        if(pval(processor_.apvts,id("on"))<0.5f)continue;
-        const double fc=surgery::precision::boundedFrequency(
-            pval(processor_.apvts,id("hz")),lowHz,highHz);
-        const double q=pval(processor_.apvts,id("q"));
-        const double depth=processor_.getCarveGainDb(selectedRoot,slot);
-        if(std::abs(depth)<0.001)continue;
-        auto& cache=responseCache_[(size_t)slot];
-        const std::array<double,9> key{sr,fc,q,depth,lowHz,highHz,(double)getWidth(),(double)getHeight(),(double)selectedRoot};
-        auto& contour=cache.contour;auto& footprint=cache.footprint;
-        if(!cache.valid||cache.key!=key){
-        contour.clear();footprint.clear();
-        const float firstX=freqToX(20.0f);
-        footprint.startNewSubPath(firstX,baseY);
-        const surgery::PreparedCarveResponse prepared(sr,fc,q,depth,true);
-        const double scale=surgery::CarveEngine::boundaryWeight(fc,
-            std::min(lowHz,highHz),std::max(lowHz,highHz));
-        // High Q requires sub-pixel-aware sampling; old 256 samples across
-        // 10 octaves could miss the entire ultra-narrow notch!
-        for(int i=0;i<=2048;++i){
-            const auto& probe=responseProbes_[(size_t)i];
-            const float x=probe.x;
-            // Static-response preview: approximate dB interpolation for dry/wet
-            // blend; exact RBJ biquad curve tested separately.
-            const double response=prepared.magnitudeDb(probe.z1)*scale;
-            const float y=baseY-(float)response*1.10f;
-            if(i==0)contour.startNewSubPath(x,y);
-            else contour.lineTo(x,y);
-            footprint.lineTo(x,y);
+        juce::Path target,fill;
+        std::array<juce::Path,4> nodes;
+        fill.startNewSubPath(r.getX(),baseY);
+        for(size_t i=0;i<responseProbes_.size();++i){
+            const auto& probe=responseProbes_[i];
+            auto response=bell.transfer(probe.z1);
+            for(size_t slot=0;slot<carves.size();++slot){
+                if(!carves[slot])continue;
+                const auto contribution=1.0+weights[slot]*(carves[slot]->transfer(probe.z1)-1.0);
+                response*=contribution;
+                if(mode_==1){
+                    const auto y=responseY(magnitudeDb(contribution));
+                    if(i==0)nodes[slot].startNewSubPath(probe.x,y);
+                    else nodes[slot].lineTo(probe.x,y);
+                }
+            }
+            if(muted){
+                const double hz=20.0*std::pow(1000.0,(double)i/2048.0);
+                response=mute.response(sr,hz);
+            }
+            const float db=magnitudeDb(response);
+            responseDb_[i]=db;
+            const auto y=responseY(db);
+            if(i==0)target.startNewSubPath(probe.x,y);
+            else target.lineTo(probe.x,y);
+            fill.lineTo(probe.x,y);
         }
-        footprint.lineTo(freqToX(20000.0f),baseY);
-        footprint.closeSubPath();
-        cache.key=key;cache.valid=true;
+        fill.lineTo(r.getRight(),baseY);
+        fill.closeSubPath();
+        overlay.setColour(scalpel::finish::ice.withAlpha(.10f));overlay.fillPath(fill);
+        for(size_t slot=0;slot<nodes.size();++slot){
+            if(nodes[slot].isEmpty())continue;
+            overlay.setColour(colour(selectedRoot).brighter(.65f).withAlpha(slot==(size_t)slot_?.82f:.35f));
+            overlay.strokePath(nodes[slot],juce::PathStrokeType(slot==(size_t)slot_?1.6f:1.1f));
         }
-        const auto tint=(polished?scalpel::finish::ice:juce::Colour(0xffe79577)).brighter(slot==slot_?.28f:0.f);
-        overlayGraphics.setColour(tint.withAlpha(slot==slot_?0.20f:0.08f));
-        overlayGraphics.fillPath(footprint);
-        overlayGraphics.setColour(tint.withAlpha(slot==slot_?0.96f:0.58f));
-        overlayGraphics.strokePath(contour,juce::PathStrokeType(slot==slot_?2.4f:1.35f));
+        overlay.setColour(scalpel::finish::ice.withAlpha(.94f));
+        overlay.strokePath(target,juce::PathStrokeType(1.5f));
+        responseOverlayKey_=overlayKey;
+        responseOverlayValid_=true;
     }
-        responseOverlayKey_=overlayKey;responseOverlayValid_=true;
+    if(showResponse){
+        g.setOpacity(1.f);g.drawImage(responseOverlay_,full);
+        g.setColour(scalpel::finish::ice.withAlpha(.85f));
+        g.setFont(juce::Font(juce::FontOptions("Segoe UI",9.f,juce::Font::bold)));
+        for(const int db:{60,30,0,-30,-60}){
+            const auto y=std::clamp(responseY((float)db),r.getY()+5.f,r.getBottom()-5.f);
+            g.drawText((db>0?"+":"")+juce::String(db),r.getX()-20.f,y-5.f,17.f,10.f,
+                       juce::Justification::centredRight);
+        }
     }
-    g.setOpacity(1.f);g.drawImage(responseOverlay_,getLocalBounds().toFloat());
+    const bool compActive=bandEnabled&&pval(processor_.apvts,rid("dynamics_mode"))>=2.f;
+    const auto threshold=scalpel::dynamics::threshold(pval(processor_.apvts,rid("comp_offset")));
+    if(mode_==0&&compActive){
+        juce::Graphics::ScopedSaveState clipped(g);
+        g.reduceClipRegion(r.toNearestInt());
+        const float left=freqToX(lowHz),right=freqToX(highHz);
+        const float thresholdY=scalpel::dbaxis::toY((float)threshold,r.getY(),r.getHeight());
+        g.setColour(scalpel::finish::accent.withAlpha(.8f));
+        const float dashes[]{3.f,3.f};
+        g.drawDashedLine({left,thresholdY,right,thresholdY},dashes,2,1.f);
+        if(dynamicsReadout_[0]>-60.f){
+            const float levelY=scalpel::dbaxis::toY(std::min(0.f,dynamicsReadout_[0]),r.getY(),r.getHeight());
+            g.fillEllipse((left+right)*.5f-2.f,levelY-2.f,4.f,4.f);
+        }
+    }
     // No engineering telemetry or legacy SONAR prose over the primary lens.
     // Detailed numbers are available through the parameter shelf and hover.
     {
@@ -818,7 +865,7 @@ void RootsGraph::paint(juce::Graphics& g){
         const float x=freqToX(surgery::precision::boundedFrequency(
             pval(processor_.apvts,id("hz")),lowHz,highHz));
         const float depth=processor_.getCarveGainDb(selectedRoot,slot);
-        const float y=surgery::ui::signedCarveY(r.getCentreY(),depth);
+        const float y=responseY(depth);
         const auto outline=focusedColor.brighter(0.35f);
         if(enabled) {
             g.setColour(focusedColor.withAlpha(0.42f));
@@ -845,6 +892,14 @@ void RootsGraph::paint(juce::Graphics& g){
     g.setColour(juce::Colours::white.withAlpha(.82f));
     g.setFont(juce::Font(juce::FontOptions("Segoe UI",11.0f,juce::Font::bold)));
     g.drawText(info,r.reduced(12.f).removeFromTop(15.f),juce::Justification::centredLeft);
+    if(showResponse){
+        const auto graphLabel=mode_==0&&compActive
+            ? "THR "+juce::String(threshold,1)+" dBFS   /   GR "+juce::String(-dynamicsReadout_[1],1)
+                +" dB   /   LIFT +"+juce::String(dynamicsReadout_[2],1)+" dB"
+            : juce::String(bandEnabled?"BAND EQ (dB)":"BAND OFF");
+        g.setColour((mode_==0&&compActive?scalpel::finish::accent:scalpel::finish::ice).withAlpha(.9f));
+        g.drawText(graphLabel,r.reduced(10.f).removeFromTop(15.f),juce::Justification::centredRight);
+    }
     if(hover_&&r.contains(mouse_)){
         const int bar=prism::analysis::LabBands::indexForFrequency(xToFreq(mouse_.x));
         const float freq=xToFreq(mouse_.x);
@@ -857,6 +912,11 @@ void RootsGraph::paint(juce::Graphics& g){
             g.drawHorizontalLine(juce::roundToInt(mouse_.y),r.getX(),r.getRight());
         juce::String text=hzText(freq)+" Hz ~"+pitchText(freq)+" / "+
                 juce::String(bands_[(size_t)bar],1)+" dBFS";
+        if(showResponse){
+            const auto p=(size_t)std::clamp((int)std::lround(std::log(freq/20.f)*2048.0/std::log(1000.0)),0,2048);
+            const auto db=responseDb_[p];
+            text+=" / EQ "+(db>=0?juce::String("+"):juce::String())+juce::String(db,1)+" dB";
+        }
         const int hoveredCarve=hitCarveNode(mouse_);
         if(hoveredCarve>=0) {
             const int root=selected_/2;
@@ -904,7 +964,8 @@ int RootsGraph::hitCarveNode(juce::Point<float> point) const {
         if(pval(processor_.apvts,id("on"))<0.5f)continue; // Invisible means not hit-testable.
         const float x=freqToX(surgery::precision::boundedFrequency(
             pval(processor_.apvts,id("hz")),(float)band.left,(float)band.right));
-        const float y=surgery::ui::signedCarveY(area().getCentreY(),processor_.getCarveGainDb(root,slot));
+        const auto plot=area();
+        const float y=scalpel::dbaxis::responseY(processor_.getCarveGainDb(root,slot),plot.getY(),plot.getHeight());
         const float distance=point.getDistanceFrom({x,y});
         // Prefer the selected slot for overlapping real audio nodes.
         if(distance<nearest-0.5f || (slot==slot_&&distance<=nearest+0.5f)){
@@ -984,7 +1045,9 @@ void RootsGraph::mouseDrag(const juce::MouseEvent& e){
             fine,a,b);
         change(processor_,id("hz"),next);
         if(!fine){
-            change(processor_,id("gain_db"),surgery::ui::gainFromY(area().getCentreY(),e.position.y));
+            const auto plot=area();
+            const auto gain=scalpel::dbaxis::responseDb(e.position.y,plot.getY(),plot.getHeight());
+            change(processor_,id("gain_db"),std::clamp(gain,-40.f,40.f));
             change(processor_,id("depth"),0.0f);
         }
         repaint();return;
@@ -1259,7 +1322,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     gain_.setTooltip("Selected BAND frequency range gain: -60 to +60 dB");
 
     thresholdLabel_.setText("COMP THRESHOLD",juce::dontSendNotification);
-    threshold_.setTooltip("Post-CARVE detector calibration. +9 dB engages compression sooner; double-click restores the reference.");
+    threshold_.setTooltip("-9 dB lowers the loud-signal threshold to -27 dBFS. +9 dB raises it to -9 dBFS and increases quiet-signal lift. Double-click for the -18 dBFS reference.");
     limitAmount_.setTextValueSuffix(" %");
     limitAmount_.setDoubleClickReturnValue(true,0.0);
     limitAmount_.setTooltip("LA-2A-inspired optical leveling depth. Program-dependent attack/release; not brickwall limiting.");

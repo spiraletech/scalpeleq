@@ -29,7 +29,7 @@ inline void draw(juce::Graphics& g,juce::Rectangle<float> plot){
         glyphs.draw(g,juce::AffineTransform::translation(x-(centred?advance.getCentreX():advance.getRight()),y-ink.getCentreY()));
     };
     g.setColour(juce::Colour(0xffc9bcaf));
-    text("dB",unitFont,right,plot.getY()-unitElevation,true);
+    text("dBFS",unitFont,right,plot.getY()-unitElevation,true);
     for(const int db:labels){
         g.setColour(juce::Colour(db==0?0xfff6efe7:0xffe6e0d8));
         text(juce::String(db),labelFont,right,toY((float)db,plot.getY(),plot.getHeight()),false);
