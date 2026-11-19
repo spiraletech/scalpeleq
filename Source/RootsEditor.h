@@ -139,11 +139,14 @@ public:
     }
 private:
     std::uint64_t paintedFrames_=0;
+    using Spectrum = std::array<float,PRISMVSTAudioProcessor::labBars>;
     void paintStaticFrame(juce::Graphics&) const;
+    void paintSpectrumGlass(juce::Graphics&, juce::Rectangle<float>, const Spectrum&);
     juce::Image staticFrame_;
     float staticFrameScale_=0;
     PRISMVSTAudioProcessor& processor_;
-    std::array<float,PRISMVSTAudioProcessor::labBars> bands_{},peaks_{};
+    Spectrum bands_{},peaks_{},glassContour_{};
+    juce::Image glassEmission_;
     std::array<float,7> peakWarnings_{};
     int selected_=0,dragging_=-1,draggingCarve_=-1,draggingInterior_=-1;
     float dragStartX_=0.0f,dragStartHz_=0.0f;

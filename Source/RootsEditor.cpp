@@ -4,10 +4,10 @@
 #include "ScalpelXRayChroma.h"
 #include "ScalpelUI105.h"
 #include "ScalpelDbAxis.h"
-#include "SurgerySpectralColours.h"
 #include <BinaryData.h>
 #include <cmath>
 #include <numbers>
+#include <vector>
 
 namespace {
 float pval(const juce::AudioProcessorValueTreeState& ap,const juce::String& id) {
@@ -336,6 +336,67 @@ void RootsGraph::paintStaticFrame(juce::Graphics& g) const {
     }
     scalpel::dbaxis::draw(g,r);
 }
+void RootsGraph::paintSpectrumGlass(juce::Graphics& g, juce::Rectangle<float> plot,
+                                   const Spectrum& contour)
+{
+    if (std::all_of(contour.begin(), contour.end(), [](float db) {
+        return db <= -scalpel::dbaxis::rangeDb;
+    }))
+        return;
+
+    if (!glassEmission_.isValid() || glassContour_ != contour) {
+        static const auto falloff = [] {
+            const auto& image = scalpel::formidable::image(scalpel::formidable::Art::spectrum_falloff_10842);
+            std::vector<juce::uint8> alpha(static_cast<size_t>(image.getHeight()));
+            const juce::Image::BitmapData pixels(image, juce::Image::BitmapData::readOnly);
+            for (int y = 0; y < image.getHeight(); ++y)
+                alpha[static_cast<size_t>(y)] = pixels.getPixelColour(0, y).getAlpha();
+            return alpha;
+        }();
+        if (!glassEmission_.isValid())
+            glassEmission_ = juce::Image(juce::Image::SingleChannel, 2 * (int)contour.size(), 128,
+                                         false, juce::SoftwareImageType{});
+
+        const int width = glassEmission_.getWidth();
+        const int height = glassEmission_.getHeight();
+        const float falloffHeight = static_cast<float>(height) * 0.34f;
+        const int lastSample = static_cast<int>(falloff.size()) - 1;
+        juce::Image::BitmapData mask(glassEmission_, juce::Image::BitmapData::writeOnly);
+        for (int y = 0; y < height; ++y)
+            std::fill_n(mask.getLinePointer(y), width, juce::uint8{0});
+
+        for (int x = 0; x < width; ++x) {
+            // FFT bins sit at the centres of equal-width log-frequency
+            // intervals. Interpolate the same dB points as the trace.
+            const float bin = std::clamp((x + 0.5f) * static_cast<float>(contour.size()) / width - 0.5f,
+                                         0.f, static_cast<float>(contour.size() - 1));
+            const auto left = static_cast<size_t>(bin);
+            const auto right = std::min(left + 1, contour.size() - 1);
+            const float db = std::lerp(contour[left], contour[right], bin - static_cast<float>(left));
+            const float crest = scalpel::dbaxis::toY(db, 0.f, static_cast<float>(height));
+            const float brightness = 0.46f * scalpel::dbaxis::glassEmission(db);
+
+            if (brightness == 0.f)
+                continue;
+            const int firstRow = static_cast<int>(crest);
+            const int endRow = std::min(height, static_cast<int>(std::ceil(crest + falloffHeight)));
+            for (int y = firstRow; y < endRow; ++y) {
+                const float belowCrest = y + 0.5f - crest;
+                const float coverage = std::clamp(belowCrest + 0.5f, 0.f, 1.f);
+                const int sample = std::clamp(juce::roundToInt(belowCrest * lastSample / falloffHeight),
+                                              0, lastSample);
+                const auto opacity = falloff[static_cast<size_t>(sample)];
+                mask.getLinePointer(y)[x] = static_cast<juce::uint8>(
+                    juce::roundToInt(brightness * coverage * opacity));
+            }
+        }
+        glassContour_ = contour;
+    }
+
+    g.setColour(juce::Colour(0xff84dcff));
+    g.drawImage(glassEmission_, plot, juce::RectanglePlacement::stretchToFit, true);
+}
+
 void RootsGraph::paint(juce::Graphics& g){
     ++paintedFrames_;
     const auto full=getLocalBounds().toFloat();
@@ -377,10 +438,12 @@ void RootsGraph::paint(juce::Graphics& g){
     const bool heatOn=pval(processor_.apvts,"aura_color")>=0.5f&&(weatherStyle_<=2||weatherStyle_==7);
     juce::Path spectrumPath,filledPath,peakPath;
     const int N=PRISMVSTAudioProcessor::labBars;
+    Spectrum contour{};
     for(int i=0;i<N;++i){
         const float frequency=prism::analysis::LabBands::centreFrequency(i);
         const float x=freqToX(frequency);
         const float db=surgery::displayDb(bands_[(size_t)i],frequency,slope,rangeDb);
+        contour[(size_t)i]=db;
         const float y=scalpel::dbaxis::toY(db,r.getY(),r.getHeight());
         const float peak=surgery::displayDb(peaks_[(size_t)i],frequency,slope,rangeDb);
         const float py=scalpel::dbaxis::toY(peak,r.getY(),r.getHeight());
@@ -611,22 +674,7 @@ void RootsGraph::paint(juce::Graphics& g){
         g.drawImage(spectralHeat_,r);
         g.setOpacity(1.f);
     }
-    // Two restrained, stationary glow layers follow ONLY the measured path.
-    // Existing attack/release supplies persistence; no clock-driven shimmer,
-    // independent objects or fabricated motion is introduced during silence.
-    const float luminous=surgery::spectrum::brightness(*std::max_element(bands_.begin(),bands_.end()));
-    if(luminous>0){
-        // The optical emission is generated from the exact measured contour,
-        // not a second decorative waveform. Floor bins therefore emit zero.
-        juce::ColourGradient emission(juce::Colour(0xff84dcff).withAlpha(.24f*luminous),
-            r.getCentreX(),r.getY(),juce::Colour(0xff102a66).withAlpha(.035f*luminous),
-            r.getCentreX(),r.getBottom(),false);
-        g.setGradientFill(emission);g.fillPath(filledPath);
-        g.setColour(juce::Colour(0xff8bdfff).withAlpha(.18f*luminous));
-        g.strokePath(spectrumPath,juce::PathStrokeType(5.2f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
-        g.setColour(juce::Colour(0xffd9f5ff).withAlpha(.34f*luminous));
-        g.strokePath(spectrumPath,juce::PathStrokeType(2.1f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
-    }
+    paintSpectrumGlass(g, r, contour);
     // A single fine readout follows the spectrum edge, never a 2D waterfall.
     g.setColour(juce::Colour(xrayActive_?0xffd9ddd6:0xffc1b2a3));
     g.strokePath(spectrumPath,juce::PathStrokeType(weatherStyle_==7?1.7f:1.3f,

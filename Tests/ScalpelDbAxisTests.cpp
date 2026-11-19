@@ -40,5 +40,9 @@ int main(){
         if(std::abs(responseDb(y,183,204)-db)>.0001f)return 9;
     }
     if(responseY(0,183,204)!=toY(-30,183,204)||responseY(60,183,204)!=toY(0,183,204))return 10;
+    // A quiet column stays dark while another frequency reaches full scale.
+    if(glassEmission(-144.f)!=0.f||glassEmission(-60.f)!=0.f||glassEmission(0.f)!=1.f)return 11;
+    if(!(glassEmission(-59.f)>0.f&&glassEmission(-59.f)<glassEmission(-30.f)
+         &&glassEmission(-30.f)<glassEmission(-6.f)))return 12;
     std::cout<<"dB axis: single 7-label 0..-60 dBFS ruler, -30 midpoint, 6 scales, amplitude calibration, tilt and floor passed\n";
 }

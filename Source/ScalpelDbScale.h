@@ -1,5 +1,7 @@
 #pragma once
+#include <algorithm>
 #include <array>
+#include <cmath>
 
 // Display coordinates only. The measured FFT values and presentation tilt
 // remain in their existing analyzer path; this scale never touches audio.
@@ -21,6 +23,10 @@ inline constexpr float unitFontHeight=9.f*logicalPerNativePixel;
 // already clipped by surgery::displayDb to [-60,0], as before this patch.
 inline constexpr float toY(float db,float top,float height) noexcept {
     return top-db*height/rangeDb;
+}
+
+inline float glassEmission(float db) noexcept {
+    return std::pow(std::clamp(1.f + db / rangeDb, 0.f, 1.f), 1.6f);
 }
 
 inline constexpr float responseY(float db,float top,float height) noexcept {
