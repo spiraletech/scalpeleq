@@ -63,6 +63,8 @@ inline const juce::Image& image(Art asset){
             BinaryData::f1081_readout_idle_png,BinaryData::f1081_readout_idle_pngSize);
         result[static_cast<size_t>(Art::champagne_header)]=juce::ImageFileFormat::loadFrom(
             BinaryData::f1081_champagne_header_png,BinaryData::f1081_champagne_header_pngSize);
+        const juce::SoftwareImageType software;
+        for(auto& frame:result)frame=software.convert(frame);
         return result;
     }();
     return images[static_cast<size_t>(asset)];

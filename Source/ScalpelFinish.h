@@ -142,11 +142,13 @@ inline constexpr float knobDiameter=154.f*scalpel::reference::scale;
 inline void knob(juce::Graphics& g,int x,int y,int w,int h,float position,float start,float end,const juce::Slider&){
     const float cx=x+w*.5f,cy=y+h*.5f,radius=juce::jmin(knobDiameter*.5f,.485f*(float)std::min(w,h));
     const auto r=juce::Rectangle<float>(cx-radius,cy-radius,2*radius,2*radius);
-    formidable::draw(g,formidable::Art::knob_face,r);
+    const auto faceBounds=r.expanded(.85f);
+    formidable::draw(g,formidable::Art::knob_face,faceBounds);
     juce::Graphics::ScopedSaveState scoped(g);
     g.addTransform(juce::AffineTransform::rotation(start+position*(end-start),cx,cy));
     // Both 2× layers share the kit's [152,148] pointer pivot.
-    formidable::draw(g,formidable::Art::knob_pointer,r.translated(0,4.f*r.getHeight()/304.f));
+    formidable::draw(g,formidable::Art::knob_pointer,
+                    faceBounds.translated(0,4.f*faceBounds.getHeight()/304.f));
 }
 // Explicit tabular digit advances, retaining the same font as the labels.
 inline void number(juce::Graphics& g,const juce::String& value,juce::Rectangle<float> r,float size=20){
