@@ -46,7 +46,7 @@ is not a substitute for FL Studio project recall/playback/removal testing.
   difference signal. Right-click a band to set its independent EQ domain.
 - BAND PEAK holds the maximum reading for each band. RESET clears all band
   holds and the master output peak.
-- The right graph ruler is the measured output in dBFS. The left ruler is
+- The right graph ruler is the measured output in dBFS. The inner ruler shows
   the selected band's signed EQ target in dB. BAND GAIN reaches ±60 dB at
   the calibrated band center, with shaped shoulders between band edges.
 - COMP THRESHOLD 0 dB uses a -18 dBFS detector reference. -9 dB lowers it

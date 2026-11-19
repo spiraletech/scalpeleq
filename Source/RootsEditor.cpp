@@ -737,10 +737,14 @@ void RootsGraph::paint(juce::Graphics& g){
     if(showResponse){
         g.setOpacity(1.f);g.drawImage(responseOverlay_,full);
         g.setColour(scalpel::finish::ice.withAlpha(.85f));
-        g.setFont(juce::Font(juce::FontOptions("Segoe UI",9.f,juce::Font::bold)));
+        g.setFont(juce::Font(juce::FontOptions("Segoe UI",8.5f,juce::Font::bold)));
+        // Both rulers fit in the meter gutter. The signed EQ ruler is
+        // nearest the plot and leaves the outer ruler for measured dBFS.
+        const float axisX=r.getRight()+1.f,axisWidth=14.f;
+        g.drawText("dB",axisX,r.getY()-19.f,axisWidth,10.f,juce::Justification::centredRight);
         for(const int db:{60,30,0,-30,-60}){
-            const auto y=std::clamp(responseY((float)db),r.getY()+5.f,r.getBottom()-5.f);
-            g.drawText((db>0?"+":"")+juce::String(db),r.getX()-20.f,y-5.f,17.f,10.f,
+            const auto y=responseY((float)db);
+            g.drawText((db>0?"+":"")+juce::String(db),axisX,y-5.f,axisWidth,10.f,
                        juce::Justification::centredRight);
         }
     }
