@@ -186,7 +186,9 @@ private:
     bool responseOverlayValid_=false;
     // The graph observes the same host parameters as the controls. Carve
     // edits must invalidate it even when FFT frames are silent or frozen.
-    std::array<std::unique_ptr<juce::ParameterAttachment>,18> carveRepaintAttachments_;
+    static constexpr std::array<const char*,5> carveRepaintFields_{"on","hz","depth","gain_db","q"};
+    std::array<std::unique_ptr<juce::ParameterAttachment>,
+               surgery::kSlots*carveRepaintFields_.size()+2> carveRepaintAttachments_;
     void bindCarveRepaints();
 
     juce::Rectangle<float> area() const;

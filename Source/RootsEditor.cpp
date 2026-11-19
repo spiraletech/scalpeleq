@@ -269,7 +269,7 @@ void RootsGraph::bindCarveRepaints(){
     };
     const int root=selected_/2;
     for(int slot=0;slot<surgery::kSlots;++slot)
-        for(const char* suffix:{"on","hz","depth","gain_db","q"})
+        for(const char* suffix:carveRepaintFields_)
             observe(PRISMVSTAudioProcessor::carveId(root,slot,suffix));
     observe(PRISMVSTAudioProcessor::rootsNodeId(root*2,"hz"));
     observe(PRISMVSTAudioProcessor::rootsNodeId(root*2+1,"hz"));
