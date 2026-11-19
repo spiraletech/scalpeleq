@@ -205,7 +205,7 @@ void RootsGraph::updateAnalyzer(
     if(frozen_)return;
     bool peakChanged=false;
     for(int root=0;root<surgery::kRoots;++root){
-        const auto peak=juce::roundToInt(processor_.getRootBandPeakDb(root)*10.0f)*0.1f;
+        const auto peak=juce::roundToInt(processor_.getHeldRootBandPeakDb(root)*10.0f)*0.1f;
         auto& shown=peakReadouts_[(size_t)root];
         peakChanged|=shown!=peak;
         shown=peak;
@@ -868,13 +868,20 @@ void RootsGraph::paint(juce::Graphics& g){
                  juce::String(pval(processor_.apvts,id("q")),2)+" / GAIN "+
                  juce::String(processor_.getCarveGainDb(root,hoveredCarve),1)+" dB";
         }
-        const float left=juce::jlimit(r.getX(),r.getRight()-274.0f,mouse_.x+12);
-        const float hoverTop=juce::jlimit(r.getY(),r.getBottom()-29.0f,mouse_.y-39.0f);
+        const juce::Font hoverFont(juce::FontOptions("Segoe UI",11.0f,juce::Font::plain));
+        juce::GlyphArrangement glyphs;
+        glyphs.addLineOfText(hoverFont,text,0,0);
+        const float width=std::min(r.getWidth(),std::ceil(glyphs.getBoundingBox(0,-1,true).getWidth())+14.f);
+        const float height=std::min(22.f,r.getHeight());
+        const float x=mouse_.x+10.f+width<=r.getRight()?mouse_.x+10.f:mouse_.x-width-10.f;
+        const float y=mouse_.y-height-9.f>=r.getY()?mouse_.y-height-9.f:mouse_.y+9.f;
+        const juce::Rectangle<float> tip{std::clamp(x,r.getX(),r.getRight()-width),
+            std::clamp(y,r.getY(),r.getBottom()-height),width,height};
         g.setColour(juce::Colour::fromRGB(6,11,18).withAlpha(0.97f));
-        g.fillRoundedRectangle(left,hoverTop,274,27,4.0f);
+        g.fillRoundedRectangle(tip,4.f);
         g.setColour(juce::Colour::fromRGB(236,243,247));
-        g.setFont(juce::Font(juce::FontOptions("Segoe UI",11.0f,juce::Font::plain)));
-        g.drawFittedText(text,(int)left+6,(int)hoverTop+3,262,21,
+        g.setFont(hoverFont);
+        g.drawFittedText(text,tip.toNearestInt().reduced(6,1),
                          juce::Justification::centredLeft,1);
     }
 }
@@ -1133,8 +1140,27 @@ void RootsGraph::clampCarvesToRoot(int root){
 void RootsGraph::popup(juce::Component* bandButton,juce::Point<int> screenPoint){
     const int root=selected_/2;
     auto model=loadBandModel();
+    const auto changeDomain=[root](scalpel::bands::Model& layout, int domain){
+        auto& band=layout.bands[(size_t)root];
+        const auto target=static_cast<scalpel::bands::Domain>(domain);
+        if(band.domain!=target){
+            layout.unlink(root,scalpel::bands::Anchor::left);
+            layout.unlink(root,scalpel::bands::Anchor::right);
+            band.domain=target;
+        }
+        return layout.valid();
+    };
     juce::PopupMenu menu;
     if(model.bands[(size_t)root].present){
+        juce::PopupMenu routing;
+        const char* domains[]{"STEREO","MID","SIDE"};
+        for(int domain=0;domain<3;++domain){
+            auto candidate=model;
+            routing.addItem(10+domain,domains[domain],changeDomain(candidate,domain),
+                (int)model.bands[(size_t)root].domain==domain);
+        }
+        menu.addSubMenu("BAND EQ DOMAIN",routing);
+        menu.addSeparator();
         using scalpel::bands::Anchor;
         const bool leftLinked=model.link(root,Anchor::left).band>=0;
         const bool rightLinked=model.link(root,Anchor::right).band>=0;
@@ -1156,10 +1182,21 @@ void RootsGraph::popup(juce::Component* bandButton,juce::Point<int> screenPoint)
                 ?juce::PopupMenu::Options::PopupDirection::upwards
                 :juce::PopupMenu::Options::PopupDirection::downwards);
     }
-    menu.showMenuAsync(options,[safe,root](int id){
+    menu.showMenuAsync(options,[safe,root,changeDomain](int id){
             if(safe==nullptr||id<=0)return;
             auto& graph=*safe;
             auto layout=graph.loadBandModel();
+            if(id>=10 && id<=12){
+                if(!layout.bands[(size_t)root].present || !changeDomain(layout,id-10))return;
+                const auto parameterId=PRISMVSTAudioProcessor::rootsRootControlId(root,"domain");
+                if(auto* parameter=graph.processor_.apvts.getParameter(parameterId)){
+                    parameter->beginChangeGesture();
+                    graph.storeBandModel(layout);
+                    parameter->endChangeGesture();
+                }
+                graph.repaint();
+                return;
+            }
             if(id==3)layout.remove(root);
             if(id==4||id==5)
                 layout.unlink(root,id==4?scalpel::bands::Anchor::left:scalpel::bands::Anchor::right);
@@ -1312,7 +1349,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     carveOff_.setTriggeredOnMouseDown(true);
     carveOff_.onClick=[this]{setSelectedEnabled(true,false);};
     mono_.setTooltip("Frequency-selective MONO on the selected BAND only");
-    phase_.setTooltip("Automatic per-band L/R phase alignment. Estimates the phase offset and rotates the right-channel band toward the left reference without reducing stereo width.");
+    phase_.setTooltip("Analyzes coherent L/R phase at the center of this stereo band and rotates both channels toward alignment. Stereo bands only.");
     limit_.setTooltip("Enable fixed-depth LA-2A-inspired optical leveling for the selected band. The hidden automation amount remains compatible with saved sessions.");
     analyzerDepthLabel_.setText("HEAT MAP",juce::dontSendNotification);
     analyzerSlopeLabel_.setText("FREEZE",juce::dontSendNotification);
@@ -1357,20 +1394,21 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     reducedMotionA_=std::make_unique<ButtonA>(processor_.apvts,"sonar_reduced_motion",reducedMotion_);
     analyzerLegend_.setText("SONAR 2.1 / VISUAL MODE",juce::dontSendNotification);
     compressor_.addItemList({ "OFF", "176E", "CE1B" },1);
-    domain_.addItemList({ "STEREO", "MID", "SIDE" },1);
+    ratio_.addItemList({"AUTO","2:1","3:1","4:1","6:1","8:1","12:1","20:1"},1);
+    ratio_.setTooltip("Selected band compressor ratio. AUTO uses 4:1 for 176E or 6:1 for CE1B.");
     detector_.addItemList({ "LINKED", "DUAL M/S", "MID ONLY", "SIDE ONLY" },1);
-    for(auto* box:{&compressor_,&domain_,&detector_})addAndMakeVisible(*box);
+    for(auto* box:{&compressor_,&ratio_,&detector_})addAndMakeVisible(*box);
     compLabel_.setText("COMPRESSION",juce::dontSendNotification);
-    domainLabel_.setText("EQ DOMAIN",juce::dontSendNotification);
+    ratioLabel_.setText("COMPRESSOR RATIO",juce::dontSendNotification);
     detectorLabel_.setText("DYNAMIC",juce::dontSendNotification);
-    for(auto* label:{&compLabel_,&domainLabel_,&detectorLabel_,&outputLabel_}){
+    for(auto* label:{&compLabel_,&ratioLabel_,&detectorLabel_,&outputLabel_}){
         label->setFont(juce::Font(juce::FontOptions("Segoe UI",11.0f,juce::Font::plain)));
         label->setColour(juce::Label::textColourId,juce::Colour(0xffafc8cf));
         addAndMakeVisible(*label);
     }
     for(auto* button:{&bypass_,&compare_,&copy_,&save_,&load_,&peakHold_})addAndMakeVisible(*button);
-    peakHold_.onClick=[this]{processor_.resetPeakHold();};
-    peakHold_.setTooltip("Maximum output sample peak. Click to reset. CLIP warns of digital full-scale overload.");
+    peakHold_.onClick=[this]{processor_.resetPeakHold();graph_.clearPeakReadouts();};
+    peakHold_.setTooltip("Reset the held output peak and all seven held band peaks.");
     bypass_.setClickingTogglesState(true);
     bypass_.setTooltip("5 ms dry bypass crossfade; processing stays warm. Fully bypassed output is exact input.");
     bypassA_=std::make_unique<ButtonA>(processor_.apvts,"surgery_bypass",bypass_);
@@ -1430,7 +1468,7 @@ void RootsEditor::choosePreset(bool saving){
 }
 void RootsEditor::bindNode(int n){
     node_=juce::jlimit(0,prism::roots::v2::kNodes-1,n);
-    compressorA_.reset();domainA_.reset();detectorA_.reset();
+    compressorA_.reset();ratioA_.reset();detectorA_.reset();
     gainA_.reset();thresholdA_.reset();limitAmountA_.reset();monoA_.reset();
     onA_.reset();soloA_.reset();phaseA_.reset();limitA_.reset();
     const auto rid=[this](const char* suffix){
@@ -1445,7 +1483,7 @@ void RootsEditor::bindNode(int n){
             compressorA_->setValueAsCompleteGesture((float)compressor_.getSelectedId());
     };
     compressorA_->sendInitialUpdate();
-    domainA_=std::make_unique<ComboA>(processor_.apvts,rid("domain"),domain_);
+    ratioA_=std::make_unique<ComboA>(processor_.apvts,rid("comp_ratio"),ratio_);
     detectorA_=std::make_unique<ComboA>(processor_.apvts,rid("detector"),detector_);
     gainA_=std::make_unique<SliderA>(processor_.apvts,
        PRISMVSTAudioProcessor::rootsRootGainId(node_/2),gain_);
@@ -1530,8 +1568,8 @@ void RootsEditor::setMode(int next){
     // but aren't injected into the redesigned 3-control ANALYZE shelf.
     analyzerLegend_.setVisible(false);
     weatherMode_.setVisible(false);jukeMode_.setVisible(false);jukeModeLabel_.setVisible(false);reducedMotion_.setVisible(false);
-    for(auto* box:{&compressor_,&domain_})box->setVisible(mode_==0);
-    for(auto* label:{&compLabel_,&domainLabel_})label->setVisible(mode_==0);
+    for(auto* box:{&compressor_,&ratio_})box->setVisible(mode_==0);
+    for(auto* label:{&compLabel_,&ratioLabel_})label->setVisible(mode_==0);
     // Retain the legacy detector parameter for automation/preset recall only.
     // Its former 75 px control collided with the MONO switch block.
     detector_.setVisible(false);detectorLabel_.setVisible(false);
@@ -1617,14 +1655,21 @@ void RootsEditor::timerCallback(){
     for(auto* label:{&title_,&selection_,&status_,&gainLabel_,&thresholdLabel_,
                     &carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_,
                     &analyzerDepthLabel_,&analyzerSlopeLabel_,&analyzerMemoryLabel_,&analyzerLegend_,
-                    &compLabel_,&domainLabel_,&detectorLabel_,&outputLabel_})
+                    &compLabel_,&ratioLabel_,&detectorLabel_,&outputLabel_})
         label->setColour(juce::Label::textColourId,labelColour);
     // Threshold remains editable while OFF without activating compression.
     threshold_.setEnabled(true);
+    phase_.setEnabled(pval(processor_.apvts,
+        PRISMVSTAudioProcessor::rootsRootControlId(node_/2,"domain"))==0.f);
 thresholdLabel_.setText("COMP THRESHOLD",
                             juce::dontSendNotification);
     updateRootButtons();
     updateCarveTightness();
+    for(int i=0;i<4;++i){
+        auto& button=carveSlotButtons_[(size_t)i];
+        const bool active=pval(processor_.apvts,PRISMVSTAudioProcessor::carveId(node_/2,i,"on"))>=.5f;
+        if(button.getProperties().set("carve-active",active))button.repaint();
+    }
     if(carveFrequencyA_){
         const auto bounds=surgery::precision::rootBounds(
             pval(processor_.apvts,PRISMVSTAudioProcessor::rootsNodeId(node_/2*2,"hz")),
@@ -1735,7 +1780,7 @@ void RootsEditor::layoutRack(){
     gainLabel_.setBounds(bounds(344,595,180,28));gain_.setBounds(bounds(352,624,164,199));
     thresholdLabel_.setBounds(bounds(580,595,190,28));threshold_.setBounds(bounds(592,624,166,199));
     compLabel_.setBounds(bounds(843,601,270,28));compressor_.setBounds(bounds(837,636,296,55));
-    domainLabel_.setBounds(bounds(843,698,270,28));domain_.setBounds(bounds(837,732,296,55));
+    ratioLabel_.setBounds(bounds(843,698,270,28));ratio_.setBounds(bounds(837,732,296,55));
     detectorLabel_.setBounds(0,0,1,1);detector_.setBounds(0,0,1,1);limitAmount_.setBounds(0,0,1,1);
     mono_.setBounds(bandAction(0));solo_.setBounds(bandAction(1));
     phase_.setBounds(bandAction(2));limit_.setBounds(bandAction(3));

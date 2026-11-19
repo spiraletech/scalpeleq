@@ -65,8 +65,13 @@ inline void shell(juce::Graphics& g,juce::Rectangle<float> r){
 }
 inline void hardware(juce::Graphics& g,juce::Rectangle<float> r,bool selected,bool hover,bool pressed){
     using A=formidable::Art;
-    formidable::draw(g,pressed?A::band_pressed:selected?A::band_selected:A::band_idle,r);
-    roughness(g,r.reduced(3),4.0f,.45f);
+    const auto face=(selected||pressed)?r.reduced(.5f).translated(0,1.f):r;
+    formidable::draw(g,pressed&&!selected?A::band_pressed:selected?A::band_selected:A::band_idle,face);
+    roughness(g,face.reduced(3),4.0f,.45f);
+    if(selected||pressed){
+        g.setColour(juce::Colour(0xff372315).withAlpha(.76f));
+        g.drawHorizontalLine(juce::roundToInt(r.getY()+1.f),r.getX()+7.f,r.getRight()-7.f);
+    }
     if(hover){g.setColour(juce::Colours::white.withAlpha(.055f));g.fillRoundedRectangle(r.reduced(3),4.5f);}
 }
 // Native reconstruction of the kit's no-text SVG cap masters. One physical

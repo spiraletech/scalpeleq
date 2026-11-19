@@ -116,6 +116,7 @@ public:
     surgery::SpectralSnapshot spectralMetrics() const noexcept {
         return surgery::summarizeSpectrum(bands_);
     }
+    void clearPeakReadouts() noexcept { peakReadouts_.fill(-144.f); repaint(); }
     void setFrozen(bool frozen) noexcept {
         if(frozen_!=frozen){frozen_=frozen;mercuryPaintCount_=0;}
         repaint();
@@ -271,10 +272,10 @@ private:
     juce::TextButton save_{"SAVE"},load_{"LOAD"};
     juce::TextButton peakHold_{"PEAK HOLD"};
     juce::Slider output_;
-    juce::Label outputLabel_,compLabel_,domainLabel_,detectorLabel_;
-    juce::ComboBox compressor_,domain_,detector_;
+    juce::Label outputLabel_,compLabel_,ratioLabel_,detectorLabel_;
+    juce::ComboBox compressor_,ratio_,detector_;
     std::unique_ptr<juce::ParameterAttachment> compressorA_;
-    std::unique_ptr<ComboA> domainA_,detectorA_;
+    std::unique_ptr<ComboA> ratioA_,detectorA_;
     std::unique_ptr<SliderA> outputA_;
     std::unique_ptr<ButtonA> bypassA_;
     std::unique_ptr<juce::FileChooser> presetChooser_;

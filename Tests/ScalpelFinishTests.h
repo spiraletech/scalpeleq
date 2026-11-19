@@ -148,7 +148,15 @@ inline bool verifyScalpelFinish(){
             if(!b||!check(*b,x,i/2?753.f:662.f,188,66)||!contrast(*b,false))return fail(__LINE__);
             if(!carve&&i==0){bandActionCap=background(*b);actionShape=b->getLocalBounds();}
             if(b->getLocalBounds()!=actionShape)return fail(__LINE__);
-            if(carve&&i==0&&!identical(bandActionCap,background(*b)))return fail(__LINE__);
+            if(i==0){
+                const bool original=b->getToggleState();
+                b->setToggleState(false,juce::dontSendNotification);
+                if(carve&&!identical(bandActionCap,background(*b)))return fail(__LINE__);
+                const auto raised=background(*b);
+                b->setToggleState(true,juce::dontSendNotification);
+                if(identical(raised,background(*b)))return fail(__LINE__);
+                b->setToggleState(original,juce::dontSendNotification);
+            }
         }
         if(!save("surgery-ui-FLUSH-"+juce::String(carve?"CARVE":"BAND")+"-1344x756.png"))return fail(__LINE__);
     }

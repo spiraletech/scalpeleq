@@ -1,4 +1,5 @@
 #pragma once
+#include <bit>
 #include "SurgeryWeatherMeasurement.h"
 #include <JuceHeader.h>
 #include <array>
@@ -57,11 +58,13 @@ public:
 
     float getInputPeakDb() const noexcept { return inputPeakDb.load(); }
     float getPeakDb() const noexcept { return peakDb.load(); }
-    float getPeakHoldDb() const noexcept { return peakHoldDb.load(); }
+    float getPeakHoldDb() const noexcept { return heldPeak(numSections); }
     float getChannelPeakDb(int channel) const noexcept {
         return channelPeakDb[(size_t)juce::jlimit(0, 1, channel)].load();
     }
-    void resetPeakHold() noexcept { peakHoldDb.store(-144.0f); }
+    void resetPeakHold() noexcept {
+        bandPeakEpoch_.fetch_add(1, std::memory_order_acq_rel);
+    }
     float getGainReductionDb() const noexcept { return gainReductionDb.load(); }
     float getLufsShort() const noexcept { return lufsShort.load(); }
     float getLufsIntegrated() const noexcept { return lufsIntegrated.load(); }
@@ -111,6 +114,9 @@ public:
     }
     float getRootBandPeakDb(int root) const noexcept {
         return root>=0&&root<numSections?rootBandPeakDb[(size_t)root].load():-144.f;
+    }
+    float getHeldRootBandPeakDb(int root) const noexcept {
+        return root >= 0 && root < numSections ? heldPeak(root) : -144.f;
     }
     std::uint64_t getRootBandPeakRevision() const noexcept {
         return rootBandPeakRevision_.load(std::memory_order_acquire);
@@ -181,7 +187,7 @@ private:
     std::array<RootParameters, numSections> rootParameters;
     std::array<std::array<std::atomic<float>*, 2>, 14> nodeParameters {};
     std::array<std::atomic<float>*,28> carveGainParameters {};
-    std::array<std::atomic<float>*,numSections> dynamicsModeParameters {}, dynamicsOffsetParameters {};
+    std::array<std::atomic<float>*,numSections> dynamicsModeParameters {}, dynamicsOffsetParameters {}, dynamicsRatioParameters {};
     std::array<std::array<std::atomic<float>*, 7>, 28> carveParameters {};
     std::atomic<float>* engineMode = nullptr;
     std::atomic<float>* bypassValue = nullptr;
@@ -189,6 +195,12 @@ private:
     std::atomic<float>* masterDomainValue_ = nullptr;
     std::array<std::atomic<double>, 5> rootMeters { 1.0, 0.0, 0.0, 1.0, 0.0 };
     std::array<std::atomic<float>,numSections> rootBandPeakDb {};
+    // Each published hold carries its reset epoch, so an in-flight audio block
+    // cannot repopulate a cleared reading from before RESET.
+    std::atomic<std::uint32_t> bandPeakEpoch_ {1};
+    std::array<std::atomic<std::uint64_t>,numSections+1> heldPeaks_ {};
+    float heldPeak(int index) const noexcept;
+    void recordPeak(int index, float peak, std::uint32_t epoch) noexcept;
     std::atomic<std::uint64_t> rootBandPeakRevision_ {0};
     juce::SmoothedValue<float> outputTrimSmoother, bypassMix, masterMidGain_, masterSideGain_;
     juce::AudioBuffer<float> dryScratch;
@@ -264,7 +276,6 @@ private:
 
     std::atomic<float> inputPeakDb { -144.0f };
     std::atomic<float> peakDb { -144.0f };
-    std::atomic<float> peakHoldDb { -144.0f };
     std::array<std::atomic<float>, 2> channelPeakDb {{ -144.0f, -144.0f }};
     std::atomic<float> gainReductionDb { 0.0f };
     std::atomic<float> lufsShort { -144.0f };
@@ -279,8 +290,8 @@ private:
     void sanitizeCrossovers();
     void updateCrossoverCoefficients(int blockSamples);
     void processSevenSectionEngine(juce::AudioBuffer<float>& buffer);
-    void processRootsEngine(juce::AudioBuffer<float>& buffer);
-    void updateMeters(const juce::AudioBuffer<float>& buffer);
+    void processRootsEngine(juce::AudioBuffer<float>& buffer, std::uint32_t bandPeakEpoch);
+    void updateMeters(const juce::AudioBuffer<float>& buffer, std::uint32_t bandPeakEpoch);
     void pushAnalyzerSamples(const juce::AudioBuffer<float>& buffer);
     void runAnalyzerThread();
     void consumeAnalyzerSample(float left, float right);

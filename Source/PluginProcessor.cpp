@@ -277,6 +277,7 @@ PRISMVSTAudioProcessor::PRISMVSTAudioProcessor()
     for(int root=0;root<numSections;++root){
         dynamicsModeParameters[(size_t)root]=apvts.getRawParameterValue(rootsRootControlId(root,"dynamics_mode"));
         dynamicsOffsetParameters[(size_t)root]=apvts.getRawParameterValue(rootsRootControlId(root,"comp_offset"));
+        dynamicsRatioParameters[(size_t)root]=apvts.getRawParameterValue(rootsRootControlId(root,"comp_ratio"));
         for(int slot=0;slot<4;++slot)
             carveGainParameters[(size_t)(root*4+slot)]=apvts.getRawParameterValue(carveId(root,slot,"gain_db"));
     }
@@ -846,6 +847,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
     p.push_back(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID{"master_output_domain",1},"Master Output Domain",
         juce::StringArray{"Stereo","Mid","Side"},0));
+    for (int root=0; root<numSections; ++root)
+        p.push_back(std::make_unique<juce::AudioParameterChoice>(
+            juce::ParameterID{rootsRootControlId(root,"comp_ratio"),1},
+            "BAND "+juce::String(root+1)+" Compressor Ratio",
+            juce::StringArray{"AUTO","2:1","3:1","4:1","6:1","8:1","12:1","20:1"},0));
     return { p.begin(), p.end() };
 }
 
@@ -869,7 +875,7 @@ void PRISMVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     outputTrimSmoother.setCurrentAndTargetValue(toGain(trimValue->load()));
     bypassMix.reset(sampleRate, 0.005);
     bypassMix.setCurrentAndTargetValue(bypassValue->load() >= 0.5f ? 1.0f : 0.0f);
-    inputPeakDb.store(kFloorDb); peakDb.store(kFloorDb); peakHoldDb.store(kFloorDb); gainReductionDb.store(0);
+    inputPeakDb.store(kFloorDb); peakDb.store(kFloorDb); gainReductionDb.store(0);
     lufsShort.store(kFloorDb); lufsIntegrated.store(kFloorDb);
     rootMeters[0].store(1); rootMeters[1].store(0); rootMeters[2].store(0); rootMeters[3].store(1); rootMeters[4].store(0);
     for(auto& peak:rootBandPeakDb)peak.store(-144.f);
@@ -1261,7 +1267,24 @@ void PRISMVSTAudioProcessor::copyPrismLabBars(
     }
 }
 
-void PRISMVSTAudioProcessor::updateMeters(const juce::AudioBuffer<float>& buffer)
+float PRISMVSTAudioProcessor::heldPeak(int index) const noexcept
+{
+    const auto reading = heldPeaks_[(size_t)index].load(std::memory_order_acquire);
+    return (reading >> 32) == bandPeakEpoch_.load(std::memory_order_acquire)
+        ? std::bit_cast<float>((std::uint32_t)reading) : kFloorDb;
+}
+
+void PRISMVSTAudioProcessor::recordPeak(int index, float peak, std::uint32_t epoch) noexcept
+{
+    auto& slot = heldPeaks_[(size_t)index];
+    const auto previous = slot.load(std::memory_order_relaxed);
+    if (peak > kFloorDb && ((previous >> 32) != epoch
+        || peak > std::bit_cast<float>((std::uint32_t)previous)))
+        slot.store((std::uint64_t{epoch} << 32) | std::bit_cast<std::uint32_t>(peak),
+            std::memory_order_release);
+}
+
+void PRISMVSTAudioProcessor::updateMeters(const juce::AudioBuffer<float>& buffer, std::uint32_t bandPeakEpoch)
 {
     const int n = buffer.getNumSamples();
     float peak = 0.0f;
@@ -1285,9 +1308,7 @@ void PRISMVSTAudioProcessor::updateMeters(const juce::AudioBuffer<float>& buffer
     peakDb.store(toDb(peak + 1.0e-9f));
     for (int channel = 0; channel < 2; ++channel)
         channelPeakDb[(size_t)channel].store(toDb(channelPeak[(size_t)channel] + 1.0e-9f));
-    auto held=peakHoldDb.load();
-    const float measured=peakDb.load();
-    while(measured>held&&!peakHoldDb.compare_exchange_weak(held,measured)) {}
+    recordPeak(numSections, toDb(peak + 1.0e-9f), bandPeakEpoch);
     double leftPower=0,rightPower=0,cross=0,midPower=0,sidePower=0;
     const auto* left=buffer.getReadPointer(0);const auto* right=buffer.getReadPointer(1);
     for(int i=0;i<n;++i){
@@ -1315,7 +1336,7 @@ void PRISMVSTAudioProcessor::updateMeters(const juce::AudioBuffer<float>& buffer
         ? (float)(-0.691 + 10.0 * std::log10(intMean)) : kFloorDb);
 }
 
-void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer)
+void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer, std::uint32_t bandPeakEpoch)
 {
     using namespace prism::roots::v2;
     // Take one coherent boundary snapshot for the complete block. Host
@@ -1367,6 +1388,8 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
         const int mode=juce::roundToInt(dynamicsModeParameters[(size_t)root]->load());
         c.comp=mode==2?Compressor::dynamics176E:mode==3?Compressor::dynamicsCE1B:Compressor::off;
         c.compOffsetDb=dynamicsOffsetParameters[(size_t)root]->load();
+        constexpr std::array<double,8> ratios{0,2,3,4,6,8,12,20};
+        c.compRatio=ratios[(size_t)juce::jlimit(0,7,juce::roundToInt(dynamicsRatioParameters[(size_t)root]->load()))];
         c.phase=rootParameters[(size_t)root].values[13]->load()>=0.5f;
         // The front panel has a dedicated LIMIT switch but no third rotary.
         // A previously neutral 0% hidden amount must not turn LIMIT into a
@@ -1417,8 +1440,12 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
     rootMeters[0].store(meters.correlation); rootMeters[1].store(meters.midRms);
     rootMeters[2].store(meters.sideRms); rootMeters[3].store(meters.spaceApplied);
     rootMeters[4].store(meters.largestGrDb);
-    for(int root=0;root<numSections;++root)
-        rootBandPeakDb[(size_t)root].store((float)meters.rootPeakDb[(size_t)root],std::memory_order_relaxed);
+    const bool measuring = bypassMix.getCurrentValue() < 1.f || bypassMix.getTargetValue() < 1.f;
+    for (int root=0; root<numSections; ++root) {
+        const auto peak = measuring ? std::max(kFloorDb, (float)meters.rootPeakDb[(size_t)root]) : kFloorDb;
+        rootBandPeakDb[(size_t)root].store(peak, std::memory_order_relaxed);
+        recordPeak(root, peak, bandPeakEpoch);
+    }
     // UI may consume a measurement only once. Otherwise stopping the host
     // after a loud block would refresh the red warning indefinitely.
     rootBandPeakRevision_.fetch_add(1,std::memory_order_release);
@@ -1448,6 +1475,7 @@ void PRISMVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
     masterMidGain_.setTargetValue(masterDomain==2?0.f:1.f);
     masterSideGain_.setTargetValue(masterDomain==1?0.f:1.f);
     bypassMix.setTargetValue(bypassValue->load() >= 0.5f ? 1.0f : 0.0f);
+    const auto bandPeakEpoch = bandPeakEpoch_.load(std::memory_order_acquire);
     const int capacity = dryScratch.getNumSamples();
     if (capacity <= 0) return;
     for (int offset = 0; offset < buffer.getNumSamples(); offset += capacity)
@@ -1457,7 +1485,7 @@ void PRISMVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
             dryScratch.copyFrom(c, 0, buffer, c, offset, count);
         float* channels[] = { buffer.getWritePointer(0, offset), buffer.getWritePointer(1, offset) };
         juce::AudioBuffer<float> chunk(channels, 2, count);
-        if (engineMode->load() >= 0.5f) processRootsEngine(chunk);
+        if (engineMode->load() >= 0.5f) processRootsEngine(chunk, bandPeakEpoch);
         else processSevenSectionEngine(chunk);
         for (int i = 0; i < count; ++i)
         {
@@ -1476,7 +1504,7 @@ void PRISMVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
         }
     }
     pushAnalyzerSamples(buffer);
-    updateMeters(buffer);
+    updateMeters(buffer, bandPeakEpoch);
 }
 
 void PRISMVSTAudioProcessor::getStateInformation(juce::MemoryBlock& dest)
@@ -1555,6 +1583,7 @@ void PRISMVSTAudioProcessor::setStateInformation(const void* data, int size)
             for(int root=0;root<numSections;++root){
                 addDefault(rootsRootControlId(root,"dynamics_mode"),1.0);
                 addDefault(rootsRootControlId(root,"comp_offset"));
+                addDefault(rootsRootControlId(root,"comp_ratio"));
                 for(int slot=0;slot<4;++slot)addDefault(carveId(root,slot,"gain_db"));
             }
             addDefault("master_output_domain");

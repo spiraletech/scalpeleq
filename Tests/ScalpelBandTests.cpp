@@ -9,13 +9,14 @@
 namespace {
 struct Result {double energy=0,peak=-144;};
 struct PhaseResult {double error=0,rms=0,correlation=0;};
-PhaseResult phaseAlignment(bool correction){
+PhaseResult phaseAlignment(bool correction,double offset=1.10,
+                           prism::roots::v2::Domain domain=prism::roots::v2::Domain::stereo){
     constexpr int sr=48000,count=96000;
-    constexpr double frequency=350.0,offset=1.10;
+    constexpr double frequency=350.0;
     prism::roots::v2::Engine engine(sr);
     using namespace prism::roots::v2;
     Config low=engine.get(6),high=engine.get(7);
-    low.hz=250;high.hz=500;low.phase=correction;low.enabled=true;
+    low.hz=250;high.hz=500;low.phase=correction;low.enabled=true;low.domain=high.domain=domain;
     engine.config(6,low);engine.config(7,high);
     std::vector<float> l(count),r(count);
     for(int i=0;i<count;++i){
@@ -132,7 +133,7 @@ double soloMonoResidual(){
 }
 // Run the same CARVE-before-dynamics path used by the production adapter.
 double preUiRender(double gain,prism::roots::v2::Compressor comp,double offset,
-                   double level,bool side,bool solo,double* other=nullptr) {
+                   double level,bool side,bool solo,double* other=nullptr,double ratio=0.0) {
     using namespace prism::roots::v2;
     constexpr int rate=48000;
     Engine engine(rate);
@@ -145,7 +146,7 @@ double preUiRender(double gain,prism::roots::v2::Compressor comp,double offset,
     eq.enabled=true;eq.hz=1000;eq.q=2;eq.gainDb=gain;
     carve.configure(4,0,eq);
     auto band=engine.get(8);
-    band.comp=comp;band.compOffsetDb=offset;
+    band.comp=comp;band.compOffsetDb=offset;band.compRatio=ratio;
     band.domain=side?Domain::side:Domain::mid;
     engine.config(8,band);
     if(solo)engine.setSoloRoot(4);
@@ -192,6 +193,11 @@ int main(){
 
     // PHASE CORRECTION must reduce a measured L/R phase offset without
     // achieving the result by attenuating stereo energy.
+    for(const auto profile:{Compressor::dynamics176E,Compressor::dynamicsCE1B}){
+        const double low=preUiRender(0,profile,0,.5,false,false,nullptr,2.0);
+        const double high=preUiRender(0,profile,0,.5,false,false,nullptr,12.0);
+        if(!(high<low-1.0))return 82;
+    }
     const auto phaseDry=phaseAlignment(false);
     const auto phaseCorrected=phaseAlignment(true);
     assert(phaseDry.error>0.80);
@@ -199,6 +205,23 @@ int main(){
     assert(phaseCorrected.correlation>phaseDry.correlation+0.30);
     assert(phaseCorrected.rms>phaseDry.rms*0.80);
     assert(phaseCorrected.rms<phaseDry.rms*1.20);
+    for(const double offset:{-1.10,0.0,1.10,3.141592653589793}){
+        const auto dry=phaseAlignment(false,offset);
+        const auto corrected=phaseAlignment(true,offset);
+        // The dry portion outside the band remains in the mix, including
+        // at a full polarity reversal through finite filter skirts.
+        const bool oppositePolarity=offset>3.0;
+        if(corrected.error>(oppositePolarity?0.55:0.40)
+            ||std::abs(corrected.rms/dry.rms-1.0)>(oppositePolarity?0.20:0.13)){
+            std::cerr<<"Stereo phase error or energy: "<<offset<<' '<<corrected.error<<' '<<corrected.rms/dry.rms<<"\n";
+            return 83;
+        }
+    }
+    for(const auto domain:{prism::roots::v2::Domain::mid,prism::roots::v2::Domain::side}){
+        const auto routedDry=phaseAlignment(false,1.1,domain);
+        const auto routedWet=phaseAlignment(true,1.1,domain);
+        if(routedDry.error!=routedWet.error||routedDry.rms!=routedWet.rms)return 84;
+    }
     // Optical amount applies measurable reduction without brickwall claims.
     const auto loudDry=run(false,0,false,.95);
     const auto loudOpto=run(false,1,false,.95);

@@ -466,35 +466,44 @@ bool runQualityTests(){
                 return false;
             control->setToggleState(false,juce::sendNotificationSync);
         }
-        // Real UI contract for the reported BAND MONO / EQ DOMAIN defects:
-        // changing the selected BAND rebinds both controls to that root, and
-        // the dropdown must update host automation (not just its caption).
+        // Ratio selection belongs to the selected band and survives session recall.
         if(!click(*ui,"BAND 4"))return false;
-        juce::TextButton* bandMono=nullptr;
-        juce::ComboBox* bandDomain=nullptr;
-        for(auto* child:ui->getChildren()){
-            if(auto* b=dynamic_cast<juce::TextButton*>(child))
-                if(b->getButtonText()=="MONO")bandMono=b;
-            if(auto* c=dynamic_cast<juce::ComboBox*>(child))
-                if(c->getNumItems()==3&&c->getItemText(0)=="STEREO"&&c->isVisible())bandDomain=c;
+        juce::ComboBox* ratio=nullptr;
+        for(auto* child:ui->getChildren())
+            if(auto* c=dynamic_cast<juce::ComboBox*>(child);c&&c->isVisible()&&c->getItemText(0)=="AUTO")ratio=c;
+        if(!ratio||ratio->getNumItems()!=8||ratio->getSelectedId()!=1)return false;
+        ratio->setSelectedId(7,juce::sendNotificationSync); // 12:1
+        const auto ratioId=PRISMVSTAudioProcessor::rootsRootControlId(3,"comp_ratio");
+        if(fresh->apvts.getRawParameterValue(ratioId)->load()!=6.f)return false;
+        if(!click(*ui,"BAND 5")||ratio->getSelectedId()!=1)return false;
+        if(!click(*ui,"BAND 4")||ratio->getSelectedId()!=7)return false;
+        juce::MemoryBlock ratioState;
+        fresh->getStateInformation(ratioState);
+        set(*fresh,ratioId,0);
+        fresh->setStateInformation(ratioState.getData(),(int)ratioState.getSize());
+        if(fresh->apvts.getRawParameterValue(ratioId)->load()!=6.f)return false;
+        // A stopped transport and quiet blocks must retain every band's high-water mark.
+        juce::AudioBuffer<float> peakBlock(2,512);
+        for(int i=0;i<32;++i){
+            tone(peakBlock,i*512);
+            fresh->processBlock(peakBlock,midi);
         }
-        if(!bandMono||!bandDomain)return false;
-        bandMono->setToggleState(true,juce::sendNotificationSync);
-        bandDomain->setSelectedId(2,juce::sendNotificationSync); // MID
-        const auto monoId=PRISMVSTAudioProcessor::rootsRootControlId(3,"mono");
-        const auto domainId=PRISMVSTAudioProcessor::rootsRootControlId(3,"domain");
-        if(fresh->apvts.getRawParameterValue(monoId)->load()<.5f
-            ||std::abs(fresh->apvts.getRawParameterValue(domainId)->load()-1.f)>.01f)
-            return false;
-        bandDomain->setSelectedId(3,juce::sendNotificationSync); // SIDE
-        if(std::abs(fresh->apvts.getRawParameterValue(domainId)->load()-2.f)>.01f)return false;
-        if(!click(*ui,"BAND 5")||bandMono->getToggleState()
-            ||bandDomain->getSelectedId()!=1)return false;
-        if(!click(*ui,"BAND 4")||!bandMono->getToggleState()
-            ||bandDomain->getSelectedId()!=3)return false;
-        // Leave the test instance neutral, as a fresh project should be.
-        bandMono->setToggleState(false,juce::sendNotificationSync);
-        bandDomain->setSelectedId(1,juce::sendNotificationSync);
+        std::array<float,7> held{};
+        const auto high=fresh->getPeakHoldDb();
+        for(int root=0;root<7;++root){
+            held[(size_t)root]=fresh->getHeldRootBandPeakDb(root);
+            if(held[(size_t)root]<=-140.f)return false;
+        }
+        for(int i=0;i<32;++i){
+            peakBlock.clear();
+            fresh->processBlock(peakBlock,midi);
+        }
+        for(int root=0;root<7;++root)
+            if(held[(size_t)root]!=fresh->getHeldRootBandPeakDb(root))return false;
+        if(high!=fresh->getPeakHoldDb()||!click(*ui,"RESET"))return false;
+        if(fresh->getPeakHoldDb()!=-144.f)return false;
+        for(int root=0;root<7;++root)
+            if(fresh->getHeldRootBandPeakDb(root)!=-144.f)return false;
         click(*ui,"BAND 1");
         if(!click(*ui,"CARVE"))return false;
         for(auto* child:ui->getChildren())if(auto* b=dynamic_cast<juce::TextButton*>(child))
@@ -684,7 +693,7 @@ bool runQualityTests(){
     auto oldState=p->apvts.copyState();
     for(int i=oldState.getNumChildren();--i>=0;){
         const auto id=oldState.getChild(i).getProperty("id").toString();
-        if(id=="surgery_bypass"||id=="surgery_output_db")oldState.removeChild(i,nullptr);
+        if(id=="surgery_bypass"||id=="surgery_output_db"||id.endsWith("_comp_ratio"))oldState.removeChild(i,nullptr);
     }
     auto legacy=juce::File::getCurrentWorkingDirectory().getChildFile("quality-legacy.surgerypreset");
     if(!oldState.createXml()->writeTo(legacy))return false;
@@ -693,6 +702,7 @@ bool runQualityTests(){
     if(!oldRecall->loadPreset(legacy)||std::abs(oldRecall->apvts.getRawParameterValue("surgery_output_db")->load())>0.001f)
         return false;
     if(oldRecall->apvts.getRawParameterValue("surgery_bypass")->load()>0.5f)return false;
+    if(oldRecall->apvts.getRawParameterValue(PRISMVSTAudioProcessor::rootsRootControlId(0,"comp_ratio"))->load()!=0.f)return false;
     auto poisoned=p->apvts.copyState().createXml();
     poisoned->getChildByAttribute("id",gain)->setAttribute("value","NaN");
     if(!poisoned->writeTo(bad)||p->loadPreset(bad))return false;

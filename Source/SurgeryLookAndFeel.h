@@ -132,12 +132,13 @@ public:
         }
         if(finish_){
             if(pageTab){scalpel::finish::tab(g,r,button.getToggleState(),over,down);return;}
-            if(deckSwitch||actionSwitch||carveSelector){
-                scalpel::finish::flushCap(g,button.getLocalBounds().toFloat().reduced(.5f),deckSwitch,
-                    button.getToggleState(),over,down,text=="OFF");return;
+            if(deckSwitch){
+                scalpel::finish::flushCap(g,button.getLocalBounds().toFloat().reduced(.5f),true,
+                    button.getToggleState(),over,active,text=="OFF");return;
             }
-            if(bandSelector){
-                scalpel::finish::hardware(g,r,button.getToggleState(),over,down);
+            if(actionSwitch||carveSelector||bandSelector){
+                const bool carveActive=carveSelector&&(bool)button.getProperties().getWithDefault("carve-active",false);
+                scalpel::finish::hardware(g,r,button.getToggleState()||carveActive,over,down);
                 const auto warning=button.findColour(juce::TextButton::buttonColourId);
                 if(bandSelector&&warning.getRed()>180&&warning.getGreen()<65&&warning.getBlue()<65){
                     g.setColour(juce::Colour(0xffed1919).withAlpha(.28f+warning.getFloatAlpha()*.62f));
@@ -335,6 +336,14 @@ public:
             if(tab)bounds=bounds.withTrimmedBottom(4).translated(juce::roundToInt(b.getWidth()*.022f),-1);
             // Flush cap text shares its true center; no menu-specific offsets.
             if(hardware&&label.startsWith("BAND "))bounds=bounds.translated(0,-2);
+            const bool carveActive=(bool)b.getProperties().getWithDefault("carve-active",false);
+            if((hardware||label=="ON"||label=="OFF")&&(b.getToggleState()||b.isDown()||carveActive))
+                bounds=bounds.translated(0,1);
+            if(carveActive&&!b.getToggleState()){
+                g.setColour(juce::Colour(0xff9c5f1a));
+                g.fillEllipse((float)bounds.getRight()-9.f,(float)bounds.getCentreY()-2.f,4.f,4.f);
+                g.setColour(scalpel::finish::ink);
+            }
             g.drawFittedText(label.startsWith("PHASE")?juce::String("PHASE\nCORRECTION"):label,bounds,juce::Justification::centred,label.startsWith("PHASE")?2:1);
             return;
         }

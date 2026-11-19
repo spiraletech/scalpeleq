@@ -26,7 +26,7 @@ struct Config {
     bool phase=false;
     double limit=0.0;
     bool present=true,enabled=true,solo=false;
-    double compOffsetDb=0.0;
+    double compOffsetDb=0.0,compRatio=0.0;
 };
 struct Meter {
     double correlation=1.0,midRms=0.0,sideRms=0.0,spaceApplied=1.0,largestGrDb=0.0;
@@ -117,6 +117,7 @@ public:
         correlationAlpha_=std::exp(-1.0/(0.025*sr_));
         sideAlpha_=std::exp(-1.0/(0.008*sr_));
         gainSmoothingAlpha_=std::exp(-1.0/(0.010*sr_));
+        phaseAnalysisAlpha_=std::exp(-1.0/(0.060*sr_));
         denseRelease_=std::exp(-1.0/(0.28*sr_));
         optoAttackAlpha_=std::exp(-1.0/(0.010*sr_));
         optoReleaseAlpha_=std::exp(-1.0/(0.350*sr_));
@@ -143,6 +144,7 @@ public:
             node.compMix=node.config.comp==Compressor::off?0.0:1.0;
             node.threshold=node.config.thresholdDb;
             node.compOffset=node.config.compOffsetDb;
+            node.ratioSlope=0.75;
             updateFilters(i);
             config(i,node.config);
         }
@@ -251,7 +253,7 @@ public:
                 double fm=shapedMid,fs=shapedSide;
                 applyRootEffects(root,shapedMid,shapedSide,fm,fs,greatestGr);
                 processedM[(size_t)root]=fm;processedS[(size_t)root]=fs;
-                const double rootGain=std::pow(10.0,rootGainDb_[(size_t)root]/20.0);
+                const double rootGain=1.0+gainTargets[(size_t)root];
                 const double bandPeak=node.config.domain==Domain::mid?std::abs(fm):
                     node.config.domain==Domain::side?std::abs(fs):
                     std::max(std::abs(fm+fs),std::abs(fm-fs));
@@ -385,7 +387,7 @@ private:
         double attack=0.99,release=0.999;
         Filter midEq,sideEq,midTap,sideTap;
         Quadrature phaseLeft,phaseRight;
-        double g1=0,g2=0,compOffset=0;
+        double g1=0,g2=0,compOffset=0,ratioSlope=0.75;
         double e1=0.0,e2=0.0,midEnergy=0.0,sideEnergy=0.0;
         double optoEnvelope=0.0,phaseMix=0.0,limitAmount=0.0;
         double phaseReal=0.0,phaseImag=0.0,phaseLeftPower=0.0,
@@ -406,8 +408,7 @@ private:
         node.compMix+=a*((c.comp==Compressor::off?0.0:1.0)-node.compMix);
         node.threshold+=a*(c.thresholdDb-node.threshold);
         node.compOffset+=a*(std::clamp(c.compOffsetDb,-9.0,9.0)-node.compOffset);
-        const double tapM=c.domain==Domain::side?0.0:bandMid;
-        const double tapS=c.domain==Domain::mid?0.0:bandSide;
+        double correctedMid=bandMid,correctedSide=bandSide;
         if(std::abs(c.space-50.0)>1e-5){
             const double requested=spaceToWidth(c.space);
             double allowed=requested;
@@ -417,36 +418,47 @@ private:
             // Only the SIDE content in this ROOT is changed.
             s+=(allowed-1.0)*bandSide;
         }
-        // PHASE CORRECTION: estimate the L/R phase offset from a quadrature
-        // pair at this band's center, then rotate R toward the L reference.
-        // This preserves band magnitude; it is not SIDE attenuation or a
-        // stereo-width/coherence control. Confidence gates incoherent noise.
+        // Analyze the complex L/R cross-power at this band's center. Split
+        // the correction between channels to keep the common phase reference.
+        // Only stereo bands can rotate L/R without crossing a domain boundary.
         const double bandL=bandMid+bandSide;
         const double bandR=bandMid-bandSide;
         const double quadL=node.phaseLeft.sample(bandL);
         const double quadR=node.phaseRight.sample(bandR);
-        const double pe=1.0-correlationAlpha_;
+        const double pe=1.0-phaseAnalysisAlpha_;
         node.phaseReal+=pe*(bandL*bandR+quadL*quadR-node.phaseReal);
         node.phaseImag+=pe*(quadL*bandR-bandL*quadR-node.phaseImag);
         node.phaseLeftPower+=pe*(bandL*bandL+quadL*quadL-node.phaseLeftPower);
         node.phaseRightPower+=pe*(bandR*bandR+quadR*quadR-node.phaseRightPower);
         const double phaseNorm=std::sqrt(std::max(0.0,
             node.phaseLeftPower*node.phaseRightPower));
-        const double confidence=phaseNorm>1.0e-10?
-            std::clamp(std::hypot(node.phaseReal,node.phaseImag)/phaseNorm,0.0,1.0):0.0;
-        const double targetAngle=confidence>=0.35?
-            std::atan2(node.phaseImag,node.phaseReal):0.0;
-        node.phaseAngle+=pe*std::remainder(targetAngle-node.phaseAngle,
-                                           2.0*std::numbers::pi);
-        node.phaseMix+=a*((c.phase?1.0:0.0)-node.phaseMix);
-        if(node.phaseMix>1.0e-8&&phaseNorm>1.0e-10){
-            const double correctedR=bandR*std::cos(node.phaseAngle)
-                                   -quadR*std::sin(node.phaseAngle);
-            const double correctedM=(bandL+correctedR)*0.5;
-            const double correctedS=(bandL-correctedR)*0.5;
-            m+=node.phaseMix*(correctedM-bandMid);
-            s+=node.phaseMix*(correctedS-bandSide);
+        if(c.domain==Domain::stereo && (c.phase || node.phaseMix>1.0e-8)){
+            const double coherence=phaseNorm>1.0e-16?
+                std::hypot(node.phaseReal,node.phaseImag)/phaseNorm:0.0;
+            const double balance=std::min(node.phaseLeftPower,node.phaseRightPower)/
+                std::max(1e-16,std::max(node.phaseLeftPower,node.phaseRightPower));
+            const double confidence=std::clamp((coherence-0.65)/0.25,0.0,1.0)
+                *std::clamp((balance-0.01)/0.04,0.0,1.0)
+                *std::clamp(phaseNorm/1e-8,0.0,1.0);
+            if(confidence>0.0){
+                const double angle=std::atan2(node.phaseImag,node.phaseReal);
+                node.phaseAngle+=pe*std::remainder(angle-node.phaseAngle,2.0*std::numbers::pi);
+            }
+            node.phaseMix+=a*((c.phase?confidence:0.0)-node.phaseMix);
+            const double cosine=std::cos(0.5*node.phaseAngle);
+            const double sine=std::sin(0.5*node.phaseAngle);
+            const double left=bandL*cosine+quadL*sine;
+            const double right=bandR*cosine-quadR*sine;
+            correctedMid+=node.phaseMix*(0.5*(left+right)-bandMid);
+            correctedSide+=node.phaseMix*(0.5*(left-right)-bandSide);
+            m+=correctedMid-bandMid;
+            s+=correctedSide-bandSide;
+        }else{
+            node.phaseMix=0.0;
+            node.phaseAngle=0.0;
         }
+        const double tapM=c.domain==Domain::side?0.0:correctedMid;
+        const double tapS=c.domain==Domain::mid?0.0:correctedSide;
         if(node.profile==Compressor::dynamics176E||node.profile==Compressor::dynamicsCE1B){
             const bool dense=node.profile==Compressor::dynamicsCE1B;
             const double level=c.domain==Domain::mid?std::abs(tapM):
@@ -458,7 +470,9 @@ private:
             const double knee=dense?6.0:4.0;
             const double excess=over<=-knee*0.5?0.0:over>=knee*0.5?over:
                 (over+knee*0.5)*(over+knee*0.5)/(2.0*knee);
-            const double takeDb=excess*(dense?5.0/6.0:3.0/4.0);
+            const double ratio=c.compRatio>=1.0?c.compRatio:(dense?6.0:4.0);
+            node.ratioSlope+=a*((1.0-1.0/ratio)-node.ratioSlope);
+            const double takeDb=excess*node.ratioSlope;
             const double liftDb=std::clamp((-26.0-detectorDb)*(dense?0.45:0.25),0.0,dense?6.0:3.0)*
                 std::clamp((detectorDb+66.0)/20.0,0.0,1.0);
             const double release=dense&&node.g2>3.0?denseRelease_:node.release;
@@ -591,7 +605,7 @@ private:
     double optoAttackAlpha_=0.998,optoReleaseAlpha_=0.9999,optoReleaseDeepAlpha_=0.99998;
     int soloRoot_=-1;
     double denseRelease_=0.99;
-    double sr_=48000.0,correlationAlpha_=0.999,sideAlpha_=0.99;
+    double sr_=48000.0,correlationAlpha_=0.999,sideAlpha_=0.99,phaseAnalysisAlpha_=0.999;
     double globalMidPower_=0.0,globalSidePower_=0.0,appliedSpace_=1.0,grMax_=0.0;
     double space_=50.0;
     bool mono_=false,haveConfig_=false;
