@@ -285,6 +285,7 @@ private:
     void bindNode(int n);
     void bindCarve();
     void setMode(int mode);
+    void updateCarveButtons();
     void updateRootButtons();
     void timerCallback() override;
 };

@@ -74,11 +74,12 @@ inline bool captureScalpelModule(const juce::String& modulePath){
         if(SendInput(2,input,sizeof(INPUT))!=2)return false;
         pump(100);return true;
     };
-    const auto capture=[&](const juce::String& name){
+    const auto capture=[&](const juce::String& name,
+                           juce::Point<int> cursor=juce::Point<int>{110,45}){
         RECT r{};GetClientRect(window,&r);POINT origin{0,0};ClientToScreen(window,&origin);
         const int width=r.right-r.left,height=r.bottom-r.top;
         if(width!=1344||height!=756){std::cerr<<"MODULE CAPTURE: native client size "<<width<<'x'<<height<<'\n';return false;}
-        SetCursorPos(origin.x+110,origin.y+45);pump(40);
+        SetCursorPos(origin.x+cursor.x,origin.y+cursor.y);pump(65);
         HDC screen=GetDC(nullptr),memory=CreateCompatibleDC(screen);void* bytes=nullptr;
         BITMAPINFO info{};info.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);
         info.bmiHeader.biWidth=width;info.bmiHeader.biHeight=-height;
@@ -137,6 +138,12 @@ inline bool captureScalpelModule(const juce::String& modulePath){
         plugin->processBlock(block,midi);if(n%4==3)pump(12);
     }
     ok=ok&&capture("surgery-ui-VST3-IVORY-BAND-AUDIO.png");
+    ok=ok&&hit(bandAction(0))&&hit(bandAction(1))&&hit(bandAction(2))&&hit(bandAction(3));
+    const auto lens=plot().transformedBy(juce::AffineTransform::scale(1.2f));
+    const juce::Point<int> hover{juce::roundToInt(lens.getRight()-34.f),
+        juce::roundToInt(lens.getCentreY()+6.f)};
+    ok=ok&&capture("surgery-ui-VST3-1082-HOVER-ACTIONS.png",hover);
+    ok=ok&&hit(bandAction(0))&&hit(bandAction(1))&&hit(bandAction(2))&&hit(bandAction(3));
     ok=ok&&hit(tab(3))&&capture("surgery-ui-VST3-ANALYZE-1344x756.png");
     // Actual compiled pointer/readout calibration. These are live host values,
     // not artwork or replacement waveforms. Restore the capture fixture below.

@@ -1540,11 +1540,7 @@ void RootsEditor::bindCarve(){
     updateCarveTightness();
     carveDynamicA_=std::make_unique<ButtonA>(processor_.apvts,id("dynamic"),carveDynamic_);
     carveOn_.setButtonText("ON");
-    for(int i=0;i<4;++i){
-        carveSlotButtons_[(size_t)i].setToggleState(i==slot,juce::dontSendNotification);
-        carveSlotButtons_[(size_t)i].setColour(juce::TextButton::buttonOnColourId,
-            juce::Colour(0xffc6a182));
-    }
+    updateCarveButtons();
     graph_.setPresentation(mode_,carveSlot_);
 }
 void RootsEditor::setMode(int next){
@@ -1619,7 +1615,17 @@ void RootsEditor::setSelectedEnabled(bool carve,bool enabled){
     const bool actual=pval(processor_.apvts,id)>=.5f;
     on.setToggleState(actual,juce::dontSendNotification);
     off.setToggleState(!actual,juce::dontSendNotification);
+    if(carve)updateCarveButtons();
     on.repaint();off.repaint();graph_.repaint();
+}
+void RootsEditor::updateCarveButtons(){
+    for(int i=0;i<4;++i){
+        auto& button=carveSlotButtons_[(size_t)i];
+        button.setToggleState(i==carveSlot_,juce::dontSendNotification);
+        const auto id=PRISMVSTAudioProcessor::carveId(node_/2,i,"on");
+        if(button.getProperties().set("carve-active",pval(processor_.apvts,id)>=.5f))
+            button.repaint();
+    }
 }
 void RootsEditor::updateRootButtons(){
     const double nowMs=juce::Time::getMillisecondCounterHiRes();
@@ -1665,11 +1671,7 @@ thresholdLabel_.setText("COMP THRESHOLD",
                             juce::dontSendNotification);
     updateRootButtons();
     updateCarveTightness();
-    for(int i=0;i<4;++i){
-        auto& button=carveSlotButtons_[(size_t)i];
-        const bool active=pval(processor_.apvts,PRISMVSTAudioProcessor::carveId(node_/2,i,"on"))>=.5f;
-        if(button.getProperties().set("carve-active",active))button.repaint();
-    }
+    updateCarveButtons();
     if(carveFrequencyA_){
         const auto bounds=surgery::precision::rootBounds(
             pval(processor_.apvts,PRISMVSTAudioProcessor::rootsNodeId(node_/2*2,"hz")),

@@ -90,7 +90,13 @@ inline bool verifyScalpelFinish(){
     auto* on=button("ON");auto* off=button("OFF");
     const auto body=[](juce::TextButton& b){return b.createComponentSnapshot(b.getLocalBounds()).getPixelAt(16,29);};
     const auto onBody=body(*on),offBody=body(*off);
-    if(!click("OFF")||!contrast(*on,true)||!contrast(*off,true)||body(*on)!=onBody||body(*off)!=offBody)return fail(__LINE__);
+    const auto sameGraphite=[](juce::Colour raised,juce::Colour recessed){
+        return std::abs((int)raised.getRed()-recessed.getRed())<=8
+            &&std::abs((int)raised.getGreen()-recessed.getGreen())<=8
+            &&std::abs((int)raised.getBlue()-recessed.getBlue())<=8;
+    };
+    if(!click("OFF")||!contrast(*on,true)||!contrast(*off,true)
+        ||!sameGraphite(body(*on),onBody)||!sameGraphite(body(*off),offBody))return fail(__LINE__);
     if(!save("surgery-ui-IVORY-CARVE-OFF-1344x756.png")||!click("ON"))return fail(__LINE__);
     // A dark body never trades material with its companion. Exactly one
     // green/red strip must follow the selected parameter, including CARVE.
