@@ -153,6 +153,7 @@ private:
     int mode_=0,slot_=0;
     surgery::LiveSpectrumEnvelope<PRISMVSTAudioProcessor::labBars> spectrumEnvelope_;
     int displayDomain_=0;
+    std::array<float,surgery::kRoots> peakReadouts_ {};
     bool hover_=false,frozen_=false,xrayActive_=false;
     juce::Point<float> mouse_;
     struct ResponseCache {

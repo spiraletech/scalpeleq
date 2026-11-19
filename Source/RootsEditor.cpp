@@ -51,6 +51,7 @@ RootsGraph::RootsGraph(PRISMVSTAudioProcessor& owner):processor_(owner) {
     bands_.fill(-144.0f);peaks_.fill(-144.0f);
     setMouseCursor(juce::MouseCursor::CrosshairCursor);
     bindCarveRepaints();
+    peakReadouts_.fill(-144.f);
 }
 RootsGraph::~RootsGraph(){
     for(auto& attachment:carveRepaintAttachments_)attachment.reset();
@@ -202,6 +203,14 @@ void RootsGraph::updateAnalyzer(
         repaint();
     }
     if(frozen_)return;
+    bool peakChanged=false;
+    for(int root=0;root<surgery::kRoots;++root){
+        const auto peak=juce::roundToInt(processor_.getRootBandPeakDb(root)*10.0f)*0.1f;
+        auto& shown=peakReadouts_[(size_t)root];
+        peakChanged|=shown!=peak;
+        shown=peak;
+    }
+
     // Analyzer worker owns the FFT. Only 256 display values arrive here.
     // Message-thread smoothing is fast-attack with calibrated decay; never
     // change the underlying audio or the diagnostic measurement data.
@@ -212,7 +221,7 @@ void RootsGraph::updateAnalyzer(
     bands_=spectrumEnvelope_.frame();
     peaks_=pk;
     // Retain 60 Hz decay semantics; settled/unchanged frames need no paint.
-    if(previous!=bands_||previousPeaks!=peaks_)repaint();
+    if(previous!=bands_||previousPeaks!=peaks_||peakChanged)repaint();
 }
 void RootsGraph::updateWeather(const surgery::weather::Snapshot* snapshot,double elapsed,bool active,bool reduced,double memory,int style){
     style=style>0?7:0; // All retained legacy values resolve to Standard+.
@@ -831,7 +840,7 @@ void RootsGraph::paint(juce::Graphics& g){
     scalpel::ui105::drawAnalyzerPanel(g,full,processor_.getPeakHoldDb(),
         processor_.getChannelPeakDb(0),processor_.getChannelPeakDb(1),polished);
     const auto domain=displayDomain_;
-    const auto peak=processor_.getRootBandPeakDb(selectedRoot);
+    const auto peak=peakReadouts_[(size_t)selectedRoot];
     const juce::String output=domain==1?"MID OUT":domain==2?"SIDE OUT":"STEREO OUT";
     const juce::String info=output+"  /  BAND "+juce::String(selectedRoot+1)+
         " PEAK "+(peak<=-140.f?juce::String("--"):juce::String(peak,1)+" dBFS");
