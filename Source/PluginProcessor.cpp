@@ -103,6 +103,7 @@ bool PRISMVSTAudioProcessor::resetCarveNode(int root,int slot)
     };
     assign("hz",frequency);
     assign("depth",0.0f);
+    assign("gain_db",0.0f);
     assign("q",surgery::precision::defaultCarveQ);
     assign("threshold",-24.0f);
     assign("dynamic",0.0f);
@@ -263,6 +264,12 @@ PRISMVSTAudioProcessor::PRISMVSTAudioProcessor()
         for (int slot = 0; slot < 4; ++slot)
             for (int field = 0; field < 7; ++field)
                 carveParameters[(size_t)(root * 4 + slot)][(size_t)field] = apvts.getRawParameterValue(carveId(root, slot, carveNames[field]));
+    for(int root=0;root<numSections;++root){
+        dynamicsModeParameters[(size_t)root]=apvts.getRawParameterValue(rootsRootControlId(root,"dynamics_mode"));
+        dynamicsOffsetParameters[(size_t)root]=apvts.getRawParameterValue(rootsRootControlId(root,"comp_offset"));
+        for(int slot=0;slot<4;++slot)
+            carveGainParameters[(size_t)(root*4+slot)]=apvts.getRawParameterValue(carveId(root,slot,"gain_db"));
+    }
     engineMode = apvts.getRawParameterValue("roots_engine_mode");
     bypassValue = apvts.getRawParameterValue("surgery_bypass");
     trimValue = apvts.getRawParameterValue("surgery_output_db");
@@ -811,6 +818,20 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
             juce::ParameterID{rootsRootControlId(root,"right_link"),1},
             label+"Right Magnetic Link",-1,13,-1));
     }
+    for(int root=0;root<numSections;++root){
+        const auto label="BAND "+juce::String(root+1)+" ";
+        p.push_back(std::make_unique<juce::AudioParameterChoice>(
+            juce::ParameterID{rootsRootControlId(root,"dynamics_mode"),1},
+            label+"Dynamics Mode",juce::StringArray{"Saved Profile","Off","176E","CE1B"},0));
+        p.push_back(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID{rootsRootControlId(root,"comp_offset"),1},label+"Comp Calibration",
+            juce::NormalisableRange<float>(-9.0f,9.0f,0.1f),0.0f));
+        for(int slot=0;slot<4;++slot)
+            p.push_back(std::make_unique<juce::AudioParameterFloat>(
+                juce::ParameterID{carveId(root,slot,"gain_db"),1},
+                "CARVE "+juce::String(root+1)+"/"+juce::String(slot+1)+" Gain",
+                juce::NormalisableRange<float>(-40.0f,40.0f,0.01f),0.0f));
+    }
     return { p.begin(), p.end() };
 }
 
@@ -836,6 +857,7 @@ void PRISMVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     rootsEngine.prepare(sampleRate);
     for(auto& state:onyxFinish)state={};
     carveEngine.prepare(sampleRate);
+    signedCarveEngine.prepare(sampleRate);
     sanitizeCrossovers();
 
     for (auto& section : sectionStates)
@@ -896,6 +918,8 @@ void PRISMVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     for (auto& v : spectrum)
         v.store(kFloorDb);
     labAnalyzer.reset();
+    lastAnalyzerDomain_=analyzerDomain_.load();
+    measuredAnalyzerDomain_.store(lastAnalyzerDomain_);
     prepareWeatherAnalysis();
     for (auto& v : labDb) v.store(prism::analysis::LabBands::floorDb);
     for (auto& v : labPeakDb) v.store(prism::analysis::LabBands::floorDb);
@@ -1156,28 +1180,32 @@ void PRISMVSTAudioProcessor::consumeAnalyzerSample(float left, float right)
 
 void PRISMVSTAudioProcessor::renderSpectrumFrame()
 {
-    for (int i = 0; i < fftSize; ++i)
-    {
-        const int source = (fftWritePos + i) % fftSize;
-        fftData[(size_t)i] = fftFifo[(size_t)source];
+    const int domain=analyzerDomain_.load();
+    if(domain!=lastAnalyzerDomain_){
+        labAnalyzer.reset();
+        lastAnalyzerDomain_=domain;
     }
-
-    for (int i = fftSize; i < fftSize * 2; ++i)
-        fftData[(size_t)i] = 0.0f;
-
-    fftWindow.multiplyWithWindowingTable(fftData.data(), fftSize);
+    for (int i = 0; i < fftSize; ++i){
+        const size_t source=(size_t)((fftWritePos+i)%fftSize);
+        const float left=fftFifo[source],right=fftRightFifo[source];
+        fftData[(size_t)i]=domain==1?(left+right)*0.5f:domain==2?(left-right)*0.5f:left;
+    }
+    std::fill(fftData.begin()+fftSize,fftData.end(),0.0f);
+    fftWindow.multiplyWithWindowingTable(fftData.data(),fftSize);
     fft.performFrequencyOnlyForwardTransform(fftData.data());
-    for (int bin = 0; bin <= fftSize / 2; ++bin)
-        leftSpectralPower[(size_t)bin] = fftData[(size_t)bin] * fftData[(size_t)bin];
-    for (int i = 0; i < fftSize; ++i)
-        fftData[(size_t)i] = fftRightFifo[(size_t)((fftWritePos + i) % fftSize)];
-    std::fill(fftData.begin() + fftSize, fftData.end(), 0.0f);
-    fftWindow.multiplyWithWindowingTable(fftData.data(), fftSize);
-    fft.performFrequencyOnlyForwardTransform(fftData.data());
-    // Stereo power average preserves mono calibration and cannot phase-cancel.
-    for (int bin = 0; bin <= fftSize / 2; ++bin)
-        fftData[(size_t)bin] = std::sqrt(0.5f * (leftSpectralPower[(size_t)bin]
-                                             + fftData[(size_t)bin] * fftData[(size_t)bin]));
+    if(domain==0){
+        for(int bin=0;bin<=fftSize/2;++bin)
+            leftSpectralPower[(size_t)bin]=fftData[(size_t)bin]*fftData[(size_t)bin];
+        for(int i=0;i<fftSize;++i)
+            fftData[(size_t)i]=fftRightFifo[(size_t)((fftWritePos+i)%fftSize)];
+        std::fill(fftData.begin()+fftSize,fftData.end(),0.0f);
+        fftWindow.multiplyWithWindowingTable(fftData.data(),fftSize);
+        fft.performFrequencyOnlyForwardTransform(fftData.data());
+        // Stereo power averaging preserves mono level and anti-phase tones.
+        for(int bin=0;bin<=fftSize/2;++bin)
+            fftData[(size_t)bin]=std::sqrt(0.5f*(leftSpectralPower[(size_t)bin]+
+                fftData[(size_t)bin]*fftData[(size_t)bin]));
+    }
 
     // PRISM Analysis 256-bar field, Hann-coherent-gain calibrated.
     // Kept exclusively on the analyzer worker; no audio DSP interaction.
@@ -1190,6 +1218,7 @@ void PRISMVSTAudioProcessor::renderSpectrumFrame()
         labPeakDb[(size_t)i].store(labFrame[(size_t)i].peakDb);
     }
 
+    measuredAnalyzerDomain_.store(domain);
     const int maxBin = fftSize / 2;
     const double sr = juce::jmax(1.0, currentSampleRate);
 
@@ -1346,6 +1375,11 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
         c.comp=(Compressor)juce::roundToInt(rootParameters[(size_t)root].values[4]->load());
         c.detector=(Detector)juce::roundToInt(rootParameters[(size_t)root].values[5]->load());
         c.thresholdDb=rootParameters[(size_t)root].values[6]->load();
+        const int mode=juce::roundToInt(dynamicsModeParameters[(size_t)root]->load());
+        if(mode>0){
+            c.comp=mode==2?Compressor::dynamics176E:mode==3?Compressor::dynamicsCE1B:Compressor::off;
+            c.compOffsetDb=dynamicsOffsetParameters[(size_t)root]->load();
+        }
         c.sparkle=juce::jlimit(0.0f,1.0f,rootParameters[(size_t)root].values[7]->load()*0.01f);
         c.shine=juce::jlimit(0.0f,1.0f,rootParameters[(size_t)root].values[8]->load()*0.01f);
         c.smooth=juce::jlimit(0.0f,1.0f,rootParameters[(size_t)root].values[9]->load()*0.01f);
@@ -1361,17 +1395,15 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
             (amount<=0.001f?0.35f:juce::jlimit(0.0f,1.0f,amount*0.01f)):0.0f;
         rootsEngine.config(i,c);
     }
-    if(buffer.getNumChannels()>=2)
-        rootsEngine.process(buffer.getWritePointer(0),
-                            buffer.getWritePointer(1),
-                            (size_t)buffer.getNumSamples());
     // Bounds come from actual ROOT handle positions, with smooth acoustic tails.
     for(int root=0;root<surgery::kRoots;++root) {
         const auto& band=layout.bands[(size_t)root];
-        carveEngine.bounds(root,(float)band.left,(float)band.right);
-        carveEngine.rootEnabled(root,band.present&&
-            rootParameters[(size_t)root].values[2]->load()>=0.5f);
-        carveEngine.rootDomain(root,static_cast<surgery::Channel>(band.domain));
+        const bool enabled=band.present&&rootParameters[(size_t)root].values[2]->load()>=0.5f;
+        for(auto* engine:{&carveEngine,&signedCarveEngine}){
+            engine->bounds(root,(float)band.left,(float)band.right);
+            engine->rootEnabled(root,enabled);
+            engine->rootDomain(root,static_cast<surgery::Channel>(band.domain));
+        }
         for(int slot=0;slot<surgery::kSlots;++slot) {
             const auto& values = carveParameters[(size_t)(root*4+slot)];
             surgery::CarveConfig c;
@@ -1382,9 +1414,20 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
             c.thresholdDb=values[4]->load();
             c.dynamic=values[5]->load()>=0.5f;
             c.channel=(surgery::Channel)juce::roundToInt(values[6]->load());
+            const double signedGain=carveGainParameters[(size_t)(root*4+slot)]->load();
+            const bool enabled=c.enabled;
+            c.enabled=enabled&&signedGain==0.0;
             carveEngine.configure(root,slot,c);
+            c.enabled=enabled&&signedGain!=0.0;
+            c.gainDb=signedGain;
+            c.depthDb=0.0;
+            c.channel=static_cast<surgery::Channel>(band.domain);
+            signedCarveEngine.configure(root,slot,c);
         }
     }
+    if(buffer.getNumChannels()>=2)
+        rootsEngine.process(buffer.getWritePointer(0),buffer.getWritePointer(1),
+                            (size_t)buffer.getNumSamples(),&signedCarveEngine);
     if(buffer.getNumChannels()>=2)
         carveEngine.process(buffer.getWritePointer(0),buffer.getWritePointer(1),
                             (size_t)buffer.getNumSamples(),soloRoot);
@@ -1543,6 +1586,17 @@ void PRISMVSTAudioProcessor::setStateInformation(const void* data, int size)
             if(previousFactory)
                 for(size_t node=0;node<frequencies.size();++node)
                     frequencies[node]->setAttribute("value",scalpel::bands::Model::factoryBoundaries[node]);
+            const auto addDefault=[&](const juce::String& id){
+                if(xml->getChildByAttribute("id",id)!=nullptr)return;
+                auto* parameter=xml->createNewChildElement("PARAM");
+                parameter->setAttribute("id",id);
+                parameter->setAttribute("value",0.0);
+            };
+            for(int root=0;root<numSections;++root){
+                addDefault(rootsRootControlId(root,"dynamics_mode"));
+                addDefault(rootsRootControlId(root,"comp_offset"));
+                for(int slot=0;slot<4;++slot)addDefault(carveId(root,slot,"gain_db"));
+            }
             apvts.replaceState(juce::ValueTree::fromXml(*xml));
             sanitizeCrossovers();
             // Resolve old sessions that persisted more than one SOLO flag.

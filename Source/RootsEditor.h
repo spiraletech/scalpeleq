@@ -20,6 +20,42 @@
 #include <functional>
 #include <memory>
 
+// The legacy cut remains readable/automatable until this point is edited.
+class ScalpelCarveGainAttachment final : private juce::Slider::Listener {
+public:
+    ScalpelCarveGainAttachment(juce::RangedAudioParameter& gain,
+                               juce::RangedAudioParameter& depth,juce::Slider& slider)
+        : slider_(slider),
+          signedGain_(gain,[this](float value){gain_=value;refresh();},nullptr),
+          legacyCut_(depth,[this](float value){cut_=value;refresh();},nullptr) {
+        slider_.setRange(-40.0,40.0,0.01);
+        legacyCut_.sendInitialUpdate();
+        signedGain_.sendInitialUpdate();
+        slider_.addListener(this);
+    }
+    ~ScalpelCarveGainAttachment() override {
+        slider_.removeListener(this);
+        if(dragging_)signedGain_.endGesture();
+    }
+private:
+    void refresh() {
+        if(!writing_)slider_.setValue(gain_!=0.0f?gain_:-cut_,juce::dontSendNotification);
+    }
+    void sliderValueChanged(juce::Slider*) override {
+        const juce::ScopedValueSetter<bool> writing(writing_,true);
+        const float value=(float)slider_.getValue();
+        if(dragging_)signedGain_.setValueAsPartOfGesture(value);
+        else signedGain_.setValueAsCompleteGesture(value);
+        if(cut_!=0.0f)legacyCut_.setValueAsCompleteGesture(0.0f);
+    }
+    void sliderDragStarted(juce::Slider*) override {dragging_=true;signedGain_.beginGesture();}
+    void sliderDragEnded(juce::Slider*) override {signedGain_.endGesture();dragging_=false;}
+    juce::Slider& slider_;
+    bool dragging_=false,writing_=false;
+    float gain_=0.0f,cut_=0.0f;
+    juce::ParameterAttachment signedGain_,legacyCut_;
+};
+
 class RootSelectorButton final : public juce::TextButton {
 public:
     std::function<void()> onContext;
@@ -116,6 +152,7 @@ private:
     bool fineDragging_=false;
     int mode_=0,slot_=0;
     surgery::LiveSpectrumEnvelope<PRISMVSTAudioProcessor::labBars> spectrumEnvelope_;
+    int displayDomain_=0;
     bool hover_=false,frozen_=false,xrayActive_=false;
     juce::Point<float> mouse_;
     struct ResponseCache {
@@ -196,7 +233,7 @@ private:
     std::array<double,7> peakWarningUntilMs_{};
     std::uint64_t lastPeakRevision_=0;
     juce::Slider gain_,limitAmount_,analyzerSlope_,analyzerMemory_;
-    SurgeryThresholdSlider threshold_;
+    juce::Slider threshold_;
     juce::ComboBox analyzerDepth_,weatherMode_,jukeMode_;
     juce::Label jukeModeLabel_;
     juce::TextButton reducedMotion_{"REDUCED MOTION"};
@@ -220,7 +257,7 @@ private:
     juce::TextButton carveOn_{"ON"},carveOff_{"OFF"},carveDynamic_{"DYNAMIC"};
     juce::Label carveFrequencyLabel_,carveDepthLabel_,carveQLabel_;
     std::unique_ptr<SurgeryLogSliderAttachment> carveFrequencyA_,carveQA_;
-    std::unique_ptr<SliderA> carveDepthA_;
+    std::unique_ptr<ScalpelCarveGainAttachment> carveDepthA_;
     std::unique_ptr<ButtonA> carveOnA_,carveDynamicA_;
     juce::Label title_,selection_,status_,gainLabel_,thresholdLabel_,
         analyzerDepthLabel_,analyzerSlopeLabel_,analyzerMemoryLabel_,analyzerLegend_;

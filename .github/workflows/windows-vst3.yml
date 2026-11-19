@@ -2,7 +2,7 @@ name: Scalpel EQ Windows VST3
 
 on:
   push:
-    branches: [ main, 'ui-fidelity/**', 'fix/scalpel-1.0.7.8-dsp-only', 'fix/scalpel-1.0.7.8-magnetic-final', 'fix/scalpel-1.0.7.8-interaction-corrections' ]
+    branches: [ main, 'ui-fidelity/**', 'fix/scalpel-1.0.7.8-dsp-only', 'fix/scalpel-1.0.7.8-magnetic-final', 'fix/scalpel-1.0.7.8-interaction-corrections', 'release/scalpel-1.0.7.9-dsp-pre-ui' ]
   pull_request:
     branches: [ main, design/scalpel-vintage-hardware, feature/xray-3d-fluid ]
   workflow_dispatch:
@@ -66,7 +66,7 @@ jobs:
       - name: Upload VST3
         uses: actions/upload-artifact@v4
         with:
-          name: SCALPEL-EQ-1.0.7.8-MAGNETIC-PATCH-R4-Windows-x64-VST3
+          name: SCALPEL-EQ-1.0.7.9-DSP-PRE-UI-Windows-x64-VST3
           path: dist
           if-no-files-found: error
 

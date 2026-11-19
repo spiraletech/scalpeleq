@@ -21,6 +21,7 @@ struct CarveConfig {
     double hz=1000.0, depthDb=0.0, q=2.0, thresholdDb=-24.0;
     Channel channel=Channel::stereo;
     bool enabled=false, dynamic=false;
+    double gainDb=0.0; // Signed EQ; legacy depth stays positive for old automation.
 };
 class Biquad final {
 public:
@@ -55,9 +56,10 @@ public:
         attack_=std::exp(-1.0/(0.003*sr_));
         release_=std::exp(-1.0/(0.065*sr_));
         blendAlpha_=std::exp(-1.0/(0.004*sr_));
+        coefficientAlpha_=1.0-std::exp(-32.0/(0.008*sr_));
         for(auto& n:nodes_){
             n.env=0.0;n.mix=0.0;n.countdown=0;
-            n.hz=n.config.hz;n.q=n.config.q;n.depth=n.config.depthDb;
+            n.hz=n.config.hz;n.q=n.config.q;n.depth=gain(n.config);
             for(auto& f:n.eq)f.reset();
             for(auto& f:n.detector)f.reset();
             update(n);
@@ -81,10 +83,11 @@ public:
         const double upper=std::clamp(high_[(size_t)root],lower,std::min(20000.0,sr_*0.45));
         c.hz=std::clamp(c.hz,lower,upper);
         c.depthDb=std::clamp(c.depthDb,0.0,36.0);
+        c.gainDb=std::clamp(c.gainDb,-40.0,40.0);
         c.q=std::clamp(c.q,0.3,96.0);
         c.thresholdDb=std::clamp(c.thresholdDb,-60.0,0.0);
         auto& n=nodes_[(size_t)(root*kSlots+slot)];
-        const bool changed=n.config.hz!=c.hz||n.config.q!=c.q||n.config.depthDb!=c.depthDb;
+        const bool changed=n.config.hz!=c.hz||n.config.q!=c.q||n.config.depthDb!=c.depthDb||n.config.gainDb!=c.gainDb;
         n.config=c;
         if(changed)n.countdown=0;
     }
@@ -99,68 +102,78 @@ public:
         const auto smooth=[](double v){v=std::clamp(v,0.0,1.0);return v*v*(3.0-2.0*v);};
         return smooth((x-l+spread)/spread)*smooth((h+spread-x)/spread);
     }
-    void process(float* left,float* right,std::size_t samples,int soloRoot=-1) noexcept {
-        if(!left||!right)return;
+    void beginBlock(int soloRoot=-1) noexcept {
         for(int root=0;root<kRoots;++root){
             const bool rootActive=enabled_[(size_t)root]&&(soloRoot<0||root==soloRoot);
             for(int slot=0;slot<kSlots;++slot){
                 auto& n=nodes_[(size_t)(root*kSlots+slot)];
                 const auto& c=n.config;
-                const Channel channel=domain_[(size_t)root]==Channel::stereo?
-                    c.channel:domain_[(size_t)root];
-                const bool active=rootActive&&c.enabled&&c.depthDb>=0.001;
-                if(!active&&n.mix<1e-8){
-                    // Fully dry nodes cannot replay stale ringing or detector state.
-                    n.mix=0;n.env=0;
+                const bool active=rootActive&&c.enabled&&std::abs(gain(c))>=0.001;
+                n.running=active||n.mix>=1e-8;
+                n.weight=active?boundaryWeight(c.hz,low_[(size_t)root],high_[(size_t)root]):0.0;
+                if(!n.running&&n.mix>0.0){
+                    n.mix=0.0;n.env=0.0;
                     for(auto& f:n.eq)f.reset();
                     for(auto& f:n.detector)f.reset();
-                    n.hz=c.hz;n.q=c.q;n.depth=c.depthDb;
-                    update(n);continue;
-                }
-                const double weight=boundaryWeight(c.hz,low_[(size_t)root],high_[(size_t)root]);
-
-                for(std::size_t i=0;i<samples;++i){
-                    if(n.countdown--<=0){
-                        const double alpha=1.0-std::exp(-32.0/(0.008*sr_));
-                        n.hz+=alpha*(c.hz-n.hz);n.q+=alpha*(c.q-n.q);
-                        n.depth+=alpha*(c.depthDb-n.depth);
-                        update(n);n.countdown=31;
-                    }
-                    const double l=left[i],r=right[i],mid=0.5*(l+r),side=0.5*(l-r);
-                    const double dl=channel==Channel::mid?mid:channel==Channel::side?side:l;
-                    const double dr=channel==Channel::stereo?r:dl;
-                    if(c.dynamic){
-                        const double detected=std::max(std::abs(n.detector[0].sample(dl)),
-                                                        std::abs(n.detector[1].sample(dr)));
-                        const double a=detected>n.env?attack_:release_;
-                        n.env=a*n.env+(1.0-a)*detected;
-                    }
-                    const double levelDb=20.0*std::log10(std::max(1e-12,n.env));
-                    const double target=active?weight*(c.dynamic?std::clamp((levelDb-c.thresholdDb)/12.0,0.0,1.0):1.0):0.0;
-                    n.mix=blendAlpha_*n.mix+(1.0-blendAlpha_)*target;
-                    const double y1=dl+n.mix*(n.eq[0].sample(dl)-dl);
-                    const double y2=channel==Channel::stereo?
-                        dr+n.mix*(n.eq[1].sample(dr)-dr):0.0;
-                    if(channel==Channel::mid){
-                        left[i]=(float)(y1+side);right[i]=(float)(y1-side);
-                    }else if(channel==Channel::side){
-                        left[i]=(float)(mid+y1);right[i]=(float)(mid-y1);
-                    }else{
-                        left[i]=(float)y1;right[i]=(float)y2;
-                    }
                 }
             }
+        }
+    }
+    void processRootSample(int root,double& mid,double& side) noexcept {
+        for(int slot=0;slot<kSlots;++slot){
+            auto& n=nodes_[(size_t)(root*kSlots+slot)];
+            if(!n.running) continue;
+            const auto& c=n.config;
+            if(n.countdown--<=0){
+                n.hz+=coefficientAlpha_*(c.hz-n.hz);
+                n.q+=coefficientAlpha_*(c.q-n.q);
+                n.depth+=coefficientAlpha_*(gain(c)-n.depth);
+                update(n);n.countdown=31;
+            }
+            const Channel channel=domain_[(size_t)root]==Channel::stereo?c.channel:domain_[(size_t)root];
+            const double dl=channel==Channel::mid?mid:channel==Channel::side?side:mid+side;
+            const double dr=channel==Channel::stereo?mid-side:dl;
+            double target=n.weight;
+            if(c.dynamic){
+                const double detected=std::max(std::abs(n.detector[0].sample(dl)),
+                                               std::abs(n.detector[1].sample(dr)));
+                const double a=detected>n.env?attack_:release_;
+                n.env=a*n.env+(1.0-a)*detected;
+                const double db=20.0*std::log10(std::max(1e-12,n.env));
+                target*=std::clamp((db-c.thresholdDb)/12.0,0.0,1.0);
+            }
+            n.mix=blendAlpha_*n.mix+(1.0-blendAlpha_)*target;
+            const double yl=dl+n.mix*(n.eq[0].sample(dl)-dl);
+            if(channel==Channel::mid)mid=yl;
+            else if(channel==Channel::side)side=yl;
+            else{
+                const double yr=dr+n.mix*(n.eq[1].sample(dr)-dr);
+                mid=(yl+yr)*0.5;side=(yl-yr)*0.5;
+            }
+        }
+    }
+    void process(float* left,float* right,std::size_t samples,int soloRoot=-1) noexcept {
+        if(!left||!right)return;
+        beginBlock(soloRoot);
+        for(std::size_t i=0;i<samples;++i){
+            double mid=((double)left[i]+right[i])*0.5,side=((double)left[i]-right[i])*0.5;
+            for(int root=0;root<kRoots;++root)processRootSample(root,mid,side);
+            left[i]=(float)(mid+side);right[i]=(float)(mid-side);
         }
     }
 private:
     struct Node {
         CarveConfig config{};
         std::array<Biquad,2> eq,detector;
-        double env=0,mix=0,hz=1000,q=2,depth=0;
+        double env=0,mix=0,hz=1000,q=2,depth=0,weight=0;
+        bool running=false;
         int countdown=0;
     };
+    static double gain(const CarveConfig& config) noexcept {
+        return config.gainDb!=0.0?config.gainDb:-config.depthDb;
+    }
     void update(Node& n) noexcept {
-        for(auto& f:n.eq)f.notch(sr_,n.hz,n.q,-n.depth);
+        for(auto& f:n.eq)f.notch(sr_,n.hz,n.q,n.depth);
         for(auto& f:n.detector)f.bandpass(sr_,n.hz,n.q);
     }
     std::array<Node,kCarves> nodes_{};
@@ -168,6 +181,6 @@ private:
     std::array<double,kRoots> high_{60,120,250,500,2000,6000,20000};
     std::array<bool,kRoots> enabled_{true,true,true,true,true,true,true};
     std::array<Channel,kRoots> domain_{};
-    double sr_=48000,attack_=0.99,release_=0.999,blendAlpha_=0.99;
+    double sr_=48000,attack_=0.99,release_=0.999,blendAlpha_=0.99,coefficientAlpha_=0.08;
 };
 } // namespace surgery

@@ -24,6 +24,12 @@ constexpr float carveY(float centre,float depthDb) noexcept {
 constexpr float depthFromY(float centre,float y) noexcept {
     return std::clamp((y-centre-23.0f)/1.10f,0.0f,36.0f);
 }
+constexpr float signedCarveY(float centre,float gainDb) noexcept {
+    return centre+23.0f-std::clamp(gainDb,-40.0f,40.0f)*1.10f;
+}
+constexpr float gainFromY(float centre,float y) noexcept {
+    return std::clamp((centre+23.0f-y)/1.10f,-40.0f,40.0f);
+}
 constexpr bool showForegroundCarve(int selectedRoot,int ownerRoot,bool enabled) noexcept {
     return selectedRoot>=0&&selectedRoot<7&&ownerRoot==selectedRoot&&enabled;
 }

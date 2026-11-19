@@ -101,6 +101,13 @@ public:
         return { rootMeters[0].load(), rootMeters[1].load(), rootMeters[2].load(),
                  rootMeters[3].load(), rootMeters[4].load() };
     }
+    void setAnalyzerDomain(int domain) noexcept { analyzerDomain_.store(juce::jlimit(0,2,domain)); }
+    int getAnalyzerDomain() const noexcept { return measuredAnalyzerDomain_.load(); }
+    float getCarveGainDb(int root,int slot) const noexcept {
+        const auto index=(size_t)(root*4+slot);
+        const auto signedGain=carveGainParameters[index]->load();
+        return signedGain!=0.f?signedGain:-carveParameters[index][2]->load();
+    }
     float getRootBandPeakDb(int root) const noexcept {
         return root>=0&&root<numSections?rootBandPeakDb[(size_t)root].load():-144.f;
     }
@@ -176,6 +183,8 @@ private:
     };
     std::array<RootParameters, numSections> rootParameters;
     std::array<std::array<std::atomic<float>*, 2>, 14> nodeParameters {};
+    std::array<std::atomic<float>*,28> carveGainParameters {};
+    std::array<std::atomic<float>*,numSections> dynamicsModeParameters {}, dynamicsOffsetParameters {};
     std::array<std::array<std::atomic<float>*, 7>, 28> carveParameters {};
     std::atomic<float>* engineMode = nullptr;
     std::atomic<float>* bypassValue = nullptr;
@@ -186,7 +195,7 @@ private:
     juce::SmoothedValue<float> outputTrimSmoother, bypassMix;
     juce::AudioBuffer<float> dryScratch;
     prism::roots::v2::Engine rootsEngine;
-    surgery::CarveEngine carveEngine;
+    surgery::CarveEngine carveEngine, signedCarveEngine;
     std::array<std::atomic<float>, numSections> stereoActivity {};
     std::array<juce::String, numSections> soloParameterIds {};
     std::array<juce::String, numSections> rootsSoloParameterIds {};
@@ -235,6 +244,8 @@ private:
     std::array<std::atomic<float>, spectrumBins> spectrum {};
     // Written only by the existing analyzer worker; read by GUI via atomics.
     prism::analysis::LabBands labAnalyzer;
+    std::atomic<int> analyzerDomain_ { 0 }, measuredAnalyzerDomain_ { 0 };
+    int lastAnalyzerDomain_ = 0; // worker only once prepared
     std::array<std::atomic<float>, labBars> labDb {};
     std::array<std::atomic<float>, labBars> labPeakDb {};
 

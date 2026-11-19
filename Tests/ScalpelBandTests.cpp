@@ -130,7 +130,66 @@ double soloMonoResidual(){
     return maximum;
 }
 }
+// Run the same CARVE-before-dynamics path used by the production adapter.
+double preUiRender(double gain,prism::roots::v2::Compressor comp,double offset,
+                   double level,bool side,bool solo,double* other=nullptr) {
+    using namespace prism::roots::v2;
+    constexpr int rate=48000;
+    Engine engine(rate);
+    surgery::CarveEngine carve;
+    carve.prepare(rate);
+    carve.bounds(4,500,2000);
+    const auto channel=side?surgery::Channel::side:surgery::Channel::mid;
+    carve.rootDomain(4,channel);
+    surgery::CarveConfig eq;
+    eq.enabled=true;eq.hz=1000;eq.q=2;eq.gainDb=gain;
+    carve.configure(4,0,eq);
+    auto band=engine.get(8);
+    band.comp=comp;band.compOffsetDb=offset;
+    band.domain=side?Domain::side:Domain::mid;
+    engine.config(8,band);
+    if(solo)engine.setSoloRoot(4);
+    std::vector<float> left(rate),right(rate);
+    for(int i=0;i<rate;++i){
+        const double x=level*std::sin(2*std::numbers::pi*i*1000/rate);
+        left[(size_t)i]=(float)x;
+        right[(size_t)i]=(float)(side?-x:x);
+    }
+    engine.process(left.data(),right.data(),left.size(),&carve);
+    double energy=0.0,leak=0.0;
+    for(int i=rate/2;i<rate;++i){
+        const double l=left[(size_t)i],r=right[(size_t)i];
+        const double processed=(side?l-r:l+r)*0.5;
+        const double untouched=(side?l+r:l-r)*0.5;
+        energy+=processed*processed;
+        leak+=untouched*untouched;
+    }
+    if(other)*other=std::sqrt(leak/(rate/2));
+    return 10.0*std::log10(energy/(level*level*rate/4));
+}
+
 int main(){
+    using prism::roots::v2::Compressor;
+    for(const double gain:{-40.,-12.,0.,12.,40.}){
+        double leakage=1.0;
+        const double measured=preUiRender(gain,Compressor::off,0.0,.001,true,false,&leakage);
+        if(!std::isfinite(measured)||std::abs(measured-gain)>.03||leakage>1e-8){
+            std::cerr<<"Signed CARVE mismatch: "<<gain<<" -> "<<measured<<" leakage "<<leakage<<"\n";
+            return 80;
+        }
+    }
+    const double clean=preUiRender(0,Compressor::dynamics176E,0,.35,false,false);
+    const double dense=preUiRender(0,Compressor::dynamicsCE1B,0,.35,false,false);
+    const double driven=preUiRender(0,Compressor::dynamics176E,9,.35,false,false);
+    const double quiet=preUiRender(0,Compressor::dynamics176E,0,.015,false,false);
+    const double carved=preUiRender(12,Compressor::dynamics176E,0,.08,false,false);
+    const double audition=preUiRender(12,Compressor::off,0,.005,true,true);
+    if(!(clean<0&&dense<clean&&driven<clean&&quiet>0.5&&carved<11.5&&audition>9.0)){
+        std::cerr<<"Pre-UI dynamics/solo: "<<clean<<' '<<dense<<' '<<driven<<' '<<quiet<<' '<<carved<<' '<<audition<<"\n";
+        return 81;
+    }
+    std::cout<<"1.0.7.9: signed endpoints, domain isolation, upward/downward profiles, offset, CARVE-before-detector and Solo PASS\n";
+
     // PHASE CORRECTION must reduce a measured L/R phase offset without
     // achieving the result by attenuating stereo energy.
     const auto phaseDry=phaseAlignment(false);
