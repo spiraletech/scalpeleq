@@ -19,6 +19,16 @@ inline float safeFrequency(double sampleRate, float frequency)
     return juce::jlimit(20.0f, (float)(sampleRate * 0.45), frequency);
 }
 
+// Hosts may send fractional normalized values even for a boolean parameter.
+class BandPresenceParameter final : public juce::AudioParameterBool
+{
+public:
+    using juce::AudioParameterBool::AudioParameterBool;
+
+private:
+    float getValue() const override { return get() ? 1.0f : 0.0f; }
+};
+
 bool finiteParameterState(const juce::XmlElement& xml,
                           const juce::AudioProcessorValueTreeState& parameters)
 {
@@ -809,7 +819,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
     // factory band remains present, matching the approved seven-band graph.
     for(int root=0;root<numSections;++root){
         const auto label=juce::String("BAND ")+juce::String(root+1)+" ";
-        p.push_back(std::make_unique<juce::AudioParameterBool>(
+        p.push_back(std::make_unique<BandPresenceParameter>(
             juce::ParameterID{rootsRootControlId(root,"present"),1},
             label+"Present",true));
         p.push_back(std::make_unique<juce::AudioParameterInt>(

@@ -87,6 +87,20 @@ int main(int argc,char** argv)
         PRISMVSTAudioProcessor recalled;recalled.setStateInformation(saved.getData(),(int)saved.getSize());
         if(std::abs(recalled.apvts.getRawParameterValue(id)->load()-2.f)>.001f)return 75;
     }
+    // Hosts can send fractions to discrete parameters before a state recall.
+    {
+        PRISMVSTAudioProcessor p;
+        auto* band = p.apvts.getParameter(PRISMVSTAudioProcessor::rootsRootControlId(2,"present"));
+        juce::MemoryBlock saved;
+        p.getStateInformation(saved);
+        band->setValueNotifyingHost(0.67142f);
+        p.setStateInformation(saved.getData(), (int)saved.getSize());
+        if (!band->isBoolean() || band->getValue() != 1.0f)
+        {
+            std::cerr << "Band presence failed to restore as a canonical host boolean\n";
+            return 77;
+        }
+    }
     // Keep ROOTS distinct in FL Studio's plugin database / VST3 identity.
     {
         PRISMVSTAudioProcessor p;

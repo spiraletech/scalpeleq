@@ -383,6 +383,10 @@ public:
     }
     void drawLabel(juce::Graphics& g,juce::Label& label) override {
         if(finish_){
+            if(label.getComponentID()=="master-caption"){
+                juce::LookAndFeel_V4::drawLabel(g,label);
+                return;
+            }
             if(dynamic_cast<juce::Slider*>(label.getParentComponent())){
                 const auto r=label.getLocalBounds().toFloat().reduced(.5f);
                 scalpel::formidable::draw(g,scalpel::formidable::Art::readout_idle,r);

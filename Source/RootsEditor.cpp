@@ -1250,9 +1250,10 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         b.onClick=[this,i]{setMode(scalpel::reference::modePages[(size_t)i]);};
         addAndMakeVisible(b);
     }
+    masterLabel_.setComponentID("master-caption");
     masterLabel_.setText("MASTER",juce::dontSendNotification);
     masterLabel_.setJustificationType(juce::Justification::centred);
-    masterLabel_.setFont(juce::Font(juce::FontOptions("Segoe UI",9.f,juce::Font::bold)));
+    masterLabel_.setFont(juce::Font(juce::FontOptions("Segoe UI",13.f,juce::Font::bold)));
     masterLabel_.setColour(juce::Label::textColourId,juce::Colour(0xffd1c0a8));
     addAndMakeVisible(masterLabel_);
     const char* domains[]{"STEREO","MID","SIDE"};
