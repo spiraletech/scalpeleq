@@ -147,7 +147,7 @@ inline bool captureScalpelModule(const juce::String& modulePath){
     ok=ok&&setText("ROOT 1 ROOT Gain","24")&&setText("BAND 1 Dynamics Mode","176E")
         &&setText("BAND 1 Comp Calibration","-9");
     pump(65);
-    ok=ok&&capture("surgery-ui-VST3-1083-SIGNED-RESPONSE.png",hover);
+    ok=ok&&capture("scalpel-VST3-10842-UNIFIED-GRAPH.png",hover);
     ok=ok&&setText("ROOT 1 ROOT Gain","0")&&setText("BAND 1 Dynamics Mode","Off")
         &&setText("BAND 1 Comp Calibration","0");
     ok=ok&&hit(tab(3))&&capture("surgery-ui-VST3-ANALYZE-1344x756.png");

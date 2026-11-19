@@ -5,7 +5,7 @@
 
 int main(){
     using namespace scalpel::dbaxis;
-    constexpr std::array<float,11> expectedNativeY{183,200,217,234,251,268,285,302,319,353,387};
+    constexpr std::array<float,7> expectedNativeY{183,217,251,285,319,353,387};
     for(size_t i=0;i<labels.size();++i){
         if(std::abs(toY((float)labels[i],183,204)-expectedNativeY[i])>.0001f)return 1;
         if(i&&labels[i]>=labels[i-1])return 2;
@@ -40,5 +40,5 @@ int main(){
         if(std::abs(responseDb(y,183,204)-db)>.0001f)return 9;
     }
     if(responseY(0,183,204)!=toY(-30,183,204)||responseY(60,183,204)!=toY(0,183,204))return 10;
-    std::cout<<"dB axis: all 11 reference rows, -30 midpoint, -35 uniqueness, 6 scales, amplitude calibration, tilt and floor passed\n";
+    std::cout<<"dB axis: single 7-label 0..-60 dBFS ruler, -30 midpoint, 6 scales, amplitude calibration, tilt and floor passed\n";
 }

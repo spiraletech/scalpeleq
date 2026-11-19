@@ -13,9 +13,18 @@ inline juce::Rectangle<int> bounds(float x,float y,float w,float h){return rect(
 inline juce::Rectangle<float> header(){return rect(36,8,1570,95);}
 inline juce::Rectangle<float> enclosure(){return {0,0,1120,630};}
 inline juce::Rectangle<float> analyzer(){return rect(41,200,1581,298);}
-// Measured illuminated plot, excluding its frequency labels and inner bezel.
-// The crop's 106,235..1219,475 includes the bevel and axis, not just the plot.
-inline juce::Rectangle<float> plot(){return rect(194,243,1019,207);}
+// 1.0.8.4.2 analyzer masters are authored on 2172 x 436. Every visual,
+// interaction and readout is registered through this one transform so the
+// DSP trace, grid, polycarbonate and hit targets cannot drift apart.
+inline juce::Rectangle<float> analyzerAssetLocal(float x,float y,float w,float h){
+    const auto a=analyzer();
+    return {x*a.getWidth()/2172.f,y*a.getHeight()/436.f,
+            w*a.getWidth()/2172.f,h*a.getHeight()/436.f};
+}
+inline juce::Rectangle<float> analyzerAsset(float x,float y,float w,float h){
+    return analyzerAssetLocal(x,y,w,h).translated(analyzer().getX(),analyzer().getY());
+}
+inline juce::Rectangle<float> plot(){return analyzerAsset(208,70,1408,290);}
 // New 1637x961 kit: extend the faceplate to 917/961 of client height.
 // Keep its top and width anchored; this does not resize the editor.
 inline juce::Rectangle<float> deck(){auto r=rect(34,578,1588,258);return r.withBottom(630.f*917.f/961.f);}
@@ -33,8 +42,13 @@ inline juce::Rectangle<int> tab(int mode){
     if(pos==modePages.end())return {};
     return bounds(45+522*(float)(pos-modePages.begin()),506,514,62);
 }
-inline juce::Rectangle<int> masterCaption(){return bounds(87,251,92,22);}
-inline juce::Rectangle<int> masterButton(int i){return bounds(87,280+52*i,92,42);}
+inline juce::Rectangle<int> masterCaption(){return analyzerAsset(65,75,114,30).toNearestInt();}
+inline juce::Rectangle<int> masterButton(int i){
+    constexpr std::array<float,3> y{122,196,268};
+    return analyzerAsset(63,y[(size_t)i],118,50).toNearestInt();
+}
+inline juce::Rectangle<int> analyzerXray(){return analyzerAsset(1748,55,244,81).toNearestInt();}
+inline juce::Rectangle<int> analyzerReset(){return analyzerAsset(1765,306,228,76).toNearestInt();}
 // Flush kit positions are local to its 32,567,1574,312 lower panel.
 // Uniformly register them to the verified deck; never move the screw anchors
 // or scale the whole editor to reconcile differing screenshot/host chrome.
@@ -65,7 +79,7 @@ inline juce::Rectangle<int> analyzeButton(bool freeze){const float side=190.f*sc
 inline juce::Rectangle<int> decayDial(){return juce::Rectangle<float>{columnCentre(1,3)-83.f*scale,deck().getY()+43.f,166.f*scale,199.f*scale}.toNearestInt();}
 inline juce::Rectangle<int> analyzeCaption(int i){return juce::Rectangle<float>{columnCentre(i,3)-140.f*scale,deck().getY()+14.f,280.f*scale,36.f*scale}.toNearestInt();}
 inline constexpr int decayReadoutWidth=106,decayReadoutHeight=30;
-inline juce::Rectangle<float> plotLocal(){return plot().translated(-analyzer().toNearestInt().getX(),-analyzer().toNearestInt().getY());}
+inline juce::Rectangle<float> plotLocal(){return analyzerAssetLocal(208,70,1408,290);}
 inline std::array<juce::Point<float>,4> screwCentres(juce::Rectangle<float> panel,float xInset,float yInset){
     const auto r=panel.reduced(xInset*scale,yInset*scale);
     return {r.getTopLeft(),r.getTopRight(),r.getBottomLeft(),r.getBottomRight()};

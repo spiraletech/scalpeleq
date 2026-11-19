@@ -1,0 +1,736 @@
+{
+  "version": "1.0.8.4.2",
+  "design_canvas_px": [
+    2172,
+    436
+  ],
+  "alpha": "straight sRGB RGBA",
+  "rect_order": [
+    "x",
+    "y",
+    "width",
+    "height"
+  ],
+  "layout_px": {
+    "module": [
+      0,
+      0,
+      2172,
+      436
+    ],
+    "lens": [
+      189,
+      24,
+      1529,
+      392
+    ],
+    "plot": [
+      208,
+      70,
+      1408,
+      290
+    ],
+    "axis": [
+      1631,
+      70,
+      62,
+      290
+    ],
+    "master_caption": [
+      65,
+      75,
+      114,
+      30
+    ],
+    "master_stereo": [
+      63,
+      122,
+      118,
+      50
+    ],
+    "master_mid": [
+      63,
+      196,
+      118,
+      50
+    ],
+    "master_side": [
+      63,
+      268,
+      118,
+      50
+    ],
+    "xray": [
+      1748,
+      55,
+      244,
+      81
+    ],
+    "xray_lamp": [
+      1765,
+      80,
+      34,
+      34
+    ],
+    "peak_readout": [
+      1766,
+      190,
+      226,
+      66
+    ],
+    "peak_caption": [
+      1766,
+      155,
+      226,
+      28
+    ],
+    "reset": [
+      1765,
+      306,
+      228,
+      76
+    ],
+    "meter_left": [
+      2018,
+      71,
+      39,
+      280
+    ],
+    "meter_right": [
+      2074,
+      71,
+      39,
+      280
+    ],
+    "screw_nw": [
+      21,
+      23,
+      33,
+      35
+    ],
+    "screw_ne": [
+      2118,
+      23,
+      33,
+      35
+    ],
+    "screw_sw": [
+      21,
+      377,
+      33,
+      35
+    ],
+    "screw_se": [
+      2118,
+      377,
+      33,
+      35
+    ],
+    "frequency_labels": [
+      208,
+      365,
+      1408,
+      32
+    ]
+  },
+  "layout_normalized": {
+    "module": [
+      0.0,
+      0.0,
+      1.0,
+      1.0
+    ],
+    "lens": [
+      0.08701657,
+      0.05504587,
+      0.70395948,
+      0.89908257
+    ],
+    "plot": [
+      0.09576427,
+      0.16055046,
+      0.64825046,
+      0.66513761
+    ],
+    "axis": [
+      0.75092081,
+      0.16055046,
+      0.02854512,
+      0.66513761
+    ],
+    "master_caption": [
+      0.02992634,
+      0.17201835,
+      0.05248619,
+      0.06880734
+    ],
+    "master_stereo": [
+      0.02900552,
+      0.27981651,
+      0.05432781,
+      0.1146789
+    ],
+    "master_mid": [
+      0.02900552,
+      0.44954128,
+      0.05432781,
+      0.1146789
+    ],
+    "master_side": [
+      0.02900552,
+      0.6146789,
+      0.05432781,
+      0.1146789
+    ],
+    "xray": [
+      0.80478821,
+      0.12614679,
+      0.11233886,
+      0.18577982
+    ],
+    "xray_lamp": [
+      0.8126151,
+      0.18348624,
+      0.01565378,
+      0.07798165
+    ],
+    "peak_readout": [
+      0.81307551,
+      0.43577982,
+      0.10405157,
+      0.15137615
+    ],
+    "peak_caption": [
+      0.81307551,
+      0.35550459,
+      0.10405157,
+      0.06422018
+    ],
+    "reset": [
+      0.8126151,
+      0.70183486,
+      0.10497238,
+      0.17431193
+    ],
+    "meter_left": [
+      0.92909761,
+      0.16284404,
+      0.0179558,
+      0.64220183
+    ],
+    "meter_right": [
+      0.95488029,
+      0.16284404,
+      0.0179558,
+      0.64220183
+    ],
+    "screw_nw": [
+      0.00966851,
+      0.05275229,
+      0.01519337,
+      0.08027523
+    ],
+    "screw_ne": [
+      0.97513812,
+      0.05275229,
+      0.01519337,
+      0.08027523
+    ],
+    "screw_sw": [
+      0.00966851,
+      0.8646789,
+      0.01519337,
+      0.08027523
+    ],
+    "screw_se": [
+      0.97513812,
+      0.8646789,
+      0.01519337,
+      0.08027523
+    ],
+    "frequency_labels": [
+      0.09576427,
+      0.83715596,
+      0.64825046,
+      0.0733945
+    ]
+  },
+  "module": "Map independently to the analyzer component bounds. Preserve aspect for lamps, nodes, meter segments, and screws.",
+  "draw_order": [
+    "graphite_faceplate",
+    "champagne_bezel",
+    "smoked_polycarbonate",
+    "lens_gasket",
+    "display_pixel_mask",
+    "live grid and band tint",
+    "live emission masked to plot",
+    "live spectrum crest, EQ response and nodes",
+    "polycarbonate_reflection",
+    "control faces, lamps and meter segments",
+    "live labels and values"
+  ],
+  "meter": {
+    "segments_per_channel": 16,
+    "segment_size_px": [
+      21,
+      13
+    ],
+    "segment_step_px": 17,
+    "well_inset_px": [
+      9,
+      5
+    ]
+  },
+  "right_axis": {
+    "heading": "dBFS",
+    "ticks_dbfs": [
+      0,
+      -10,
+      -20,
+      -30,
+      -40,
+      -50,
+      -60
+    ],
+    "vertical_mapping": "top + height * clamp(-dbfs / 60, 0, 1)",
+    "frequency_hz": [
+      20,
+      40,
+      80,
+      160,
+      315,
+      630,
+      1250,
+      2500,
+      5000,
+      10000,
+      20000
+    ],
+    "frequency_mapping": "left + width * log(frequencyHz/20) / log(1000)"
+  },
+  "eq": {
+    "display": "Inline signed BAND EQ readout and existing response contour",
+    "gain_range_db": [
+      -60,
+      60
+    ],
+    "right_side_tick_labels": false
+  },
+  "atlas": {
+    "file": "02_runtime/control_atlas.png",
+    "size_px": [
+      1024,
+      512
+    ],
+    "rects_px": {
+      "command_hover": [
+        4,
+        4,
+        228,
+        76
+      ],
+      "command_idle": [
+        240,
+        4,
+        228,
+        76
+      ],
+      "command_pressed": [
+        476,
+        4,
+        228,
+        76
+      ],
+      "master_disabled": [
+        712,
+        4,
+        118,
+        50
+      ],
+      "master_hover": [
+        838,
+        4,
+        118,
+        50
+      ],
+      "master_idle": [
+        4,
+        88,
+        118,
+        50
+      ],
+      "master_pressed": [
+        130,
+        88,
+        118,
+        50
+      ],
+      "master_selected": [
+        256,
+        88,
+        118,
+        50
+      ],
+      "meter_segment_active": [
+        382,
+        88,
+        21,
+        13
+      ],
+      "meter_segment_clip": [
+        411,
+        88,
+        21,
+        13
+      ],
+      "meter_segment_off": [
+        440,
+        88,
+        21,
+        13
+      ],
+      "meter_well": [
+        469,
+        88,
+        39,
+        280
+      ],
+      "peak_display_window": [
+        516,
+        88,
+        226,
+        66
+      ],
+      "screw_ne": [
+        750,
+        88,
+        33,
+        35
+      ],
+      "screw_nw": [
+        791,
+        88,
+        33,
+        35
+      ],
+      "screw_se": [
+        832,
+        88,
+        33,
+        35
+      ],
+      "screw_sw": [
+        873,
+        88,
+        33,
+        35
+      ],
+      "xray_face": [
+        4,
+        376,
+        244,
+        81
+      ],
+      "xray_lamp_off": [
+        256,
+        376,
+        34,
+        34
+      ],
+      "xray_lamp_on": [
+        298,
+        376,
+        34,
+        34
+      ]
+    }
+  },
+  "assets": {
+    "graphite_faceplate": {
+      "file": "02_runtime/plates/graphite_faceplate.png",
+      "size_px": [
+        2172,
+        436
+      ],
+      "sha256": "b6386fb35090ffb3750635528a2d7745b20a8bb5ff0aaf460a4871e49908a229",
+      "description": "Fine matte molded graphite backplate.",
+      "target": "module"
+    },
+    "champagne_bezel": {
+      "file": "02_runtime/plates/champagne_bezel.png",
+      "size_px": [
+        2172,
+        436
+      ],
+      "sha256": "3186b77752e9db6570c33849d7503b61ea375a7e1b8ef2ea87a588f28e34f109",
+      "description": "Metal perimeter and inset edge, transparent center.",
+      "target": "module"
+    },
+    "lens_gasket": {
+      "file": "02_runtime/plates/lens_gasket.png",
+      "size_px": [
+        1529,
+        392
+      ],
+      "sha256": "c8adf3efa325fcc3c6e508af647dc1e8d39add9039a7c6d3f684149858914624",
+      "description": "Outer gasket and molded inner lip, transparent window.",
+      "target": "lens"
+    },
+    "smoked_polycarbonate": {
+      "file": "02_runtime/plates/smoked_polycarbonate.png",
+      "size_px": [
+        1529,
+        392
+      ],
+      "sha256": "73e362c6a9eb961146ff6714ff40cd49c5902b6f241fb37eb0dfbaf8b07a0968",
+      "description": "Opaque smoked substrate beneath the live plot.",
+      "target": "lens"
+    },
+    "polycarbonate_reflection": {
+      "file": "02_runtime/lighting/polycarbonate_reflection.png",
+      "size_px": [
+        1529,
+        392
+      ],
+      "sha256": "8c14805cfe36556ddba636dc2d86663377f4a52179aa83db8e1ec79e20ff170e",
+      "description": "Clear top-edge reflection pass above the spectrum and below text.",
+      "target": "lens"
+    },
+    "display_pixel_mask": {
+      "file": "02_runtime/lighting/display_pixel_mask.png",
+      "size_px": [
+        1408,
+        290
+      ],
+      "sha256": "a9cfa68bec96fd9862b321c98a398f39fe2363c00fc5c1beb5c246be9f6ccc0f",
+      "description": "Fine transparent display texture with no graph grid.",
+      "target": "plot"
+    },
+    "master_idle": {
+      "file": "02_runtime/controls/master_idle.png",
+      "size_px": [
+        118,
+        50
+      ],
+      "sha256": "e06eb978a8935b8fcc72128583ab4c46649304809ff359cd110a12cd9622a1ea",
+      "description": "Unlabeled molded control face.",
+      "target": "master_mid",
+      "preserve_corner_px": 12
+    },
+    "master_hover": {
+      "file": "02_runtime/controls/master_hover.png",
+      "size_px": [
+        118,
+        50
+      ],
+      "sha256": "2d19d3968c4a2594af19f5e09047f57e4342b235e37eb371ecd96926f5cdbb26",
+      "description": "Unlabeled hover control face.",
+      "target": "master_mid",
+      "preserve_corner_px": 12
+    },
+    "master_pressed": {
+      "file": "02_runtime/controls/master_pressed.png",
+      "size_px": [
+        118,
+        50
+      ],
+      "sha256": "9fbcabc01ca86f73fc7854515c1207e398055bda58e77552af01d28917e4c12d",
+      "description": "Unlabeled pressed control face.",
+      "target": "master_mid",
+      "preserve_corner_px": 12
+    },
+    "master_selected": {
+      "file": "02_runtime/controls/master_selected.png",
+      "size_px": [
+        118,
+        50
+      ],
+      "sha256": "4919694485f81f97f64405ad2820551e77526f41d6696d133b7c48e61921b164",
+      "description": "Unlabeled selected control face.",
+      "target": "master_mid",
+      "preserve_corner_px": 12
+    },
+    "master_disabled": {
+      "file": "02_runtime/controls/master_disabled.png",
+      "size_px": [
+        118,
+        50
+      ],
+      "sha256": "a993b0cb59341e66582c164e4cbc2a8c55aed62b7f8443c77ab667bc60b824ec",
+      "description": "Unlabeled disabled control face.",
+      "target": "master_mid",
+      "preserve_corner_px": 12
+    },
+    "command_idle": {
+      "file": "02_runtime/controls/command_idle.png",
+      "size_px": [
+        228,
+        76
+      ],
+      "sha256": "0fae45719b979298eeff833ae827fd38947623ac1ba75b9d1cac07e605c92bb3",
+      "description": "Unlabeled molded control face.",
+      "target": "reset",
+      "preserve_corner_px": 12
+    },
+    "command_hover": {
+      "file": "02_runtime/controls/command_hover.png",
+      "size_px": [
+        228,
+        76
+      ],
+      "sha256": "0299d9ae9a1c23ac90a2e219e9d9821a617ea17a7331b8b7cf1e86a0d19d4ae0",
+      "description": "Unlabeled hover control face.",
+      "target": "reset",
+      "preserve_corner_px": 12
+    },
+    "command_pressed": {
+      "file": "02_runtime/controls/command_pressed.png",
+      "size_px": [
+        228,
+        76
+      ],
+      "sha256": "75bc8faad11d8cfd59dc8842216f0944024a997435956559a27b2f6ac9cd3b73",
+      "description": "Unlabeled pressed control face.",
+      "target": "reset",
+      "preserve_corner_px": 12
+    },
+    "xray_face": {
+      "file": "02_runtime/controls/xray_face.png",
+      "size_px": [
+        244,
+        81
+      ],
+      "sha256": "b8f4021483ed18a735e50136103ec5ff0317bc35d08515b10bd14f108fdb12cd",
+      "description": "Unlabeled X-RAY housing with unlit indicator recess.",
+      "target": "xray",
+      "preserve_corner_px": 12
+    },
+    "peak_display_window": {
+      "file": "02_runtime/controls/peak_display_window.png",
+      "size_px": [
+        226,
+        66
+      ],
+      "sha256": "533b97b1b1f13526bd0992aba8db8779fd8d5e42a1346c4d2b14162f9c58bc4d",
+      "description": "Empty smoked peak readout; all digits are live.",
+      "target": "peak_readout",
+      "preserve_corner_px": 12
+    },
+    "screw_nw": {
+      "file": "02_runtime/controls/screw_nw.png",
+      "size_px": [
+        33,
+        35
+      ],
+      "sha256": "ea47ec4886b3add9be3f48d9c0f157f2d08ed0d92271e1056b44f1fd68dade57",
+      "description": "Champagne Phillips-head fastener.",
+      "target": "screw_nw"
+    },
+    "screw_ne": {
+      "file": "02_runtime/controls/screw_ne.png",
+      "size_px": [
+        33,
+        35
+      ],
+      "sha256": "391df32451d91740613e8ff04b9173efd27306b0b916ca38ead3064d6a800c91",
+      "description": "Champagne Phillips-head fastener.",
+      "target": "screw_ne"
+    },
+    "screw_sw": {
+      "file": "02_runtime/controls/screw_sw.png",
+      "size_px": [
+        33,
+        35
+      ],
+      "sha256": "d72bd7690c9d12a8591bbd9e93ff508da09690299fe6e4207460a9137759d0d9",
+      "description": "Champagne Phillips-head fastener.",
+      "target": "screw_sw"
+    },
+    "screw_se": {
+      "file": "02_runtime/controls/screw_se.png",
+      "size_px": [
+        33,
+        35
+      ],
+      "sha256": "c8f6db5360444d6ae774264fc562e31eac7c8bd037a3c8275317c540344d887b",
+      "description": "Champagne Phillips-head fastener.",
+      "target": "screw_se"
+    },
+    "meter_well": {
+      "file": "02_runtime/controls/meter_well.png",
+      "size_px": [
+        39,
+        280
+      ],
+      "sha256": "fd716f1978a85daeb677d2bb4b4cc0cf4b7dbe6a6de24681c7a73a48b7225cad",
+      "description": "Empty dual-use meter extrusion with separate segments.",
+      "target": "meter_left"
+    },
+    "meter_segment_off": {
+      "file": "02_runtime/lighting/meter_segment_off.png",
+      "size_px": [
+        21,
+        13
+      ],
+      "sha256": "2c39bf7624add7798fc1805f8dc460dd5b447dbb6f2b2c184a4f9fd1aa04c70a",
+      "description": "One off meter segment."
+    },
+    "meter_segment_active": {
+      "file": "02_runtime/lighting/meter_segment_active.png",
+      "size_px": [
+        21,
+        13
+      ],
+      "sha256": "012e1048bf736345519e6f7b5473c66b8d486cdf8a46c6ad210d09aeff524400",
+      "description": "One active meter segment."
+    },
+    "meter_segment_clip": {
+      "file": "02_runtime/lighting/meter_segment_clip.png",
+      "size_px": [
+        21,
+        13
+      ],
+      "sha256": "d0e49bba257c12bd5899bcaa469101303a07ed1c79e0c34a2f9715f97cbdfc6c",
+      "description": "One clip meter segment."
+    },
+    "xray_lamp_off": {
+      "file": "02_runtime/lighting/xray_lamp_off.png",
+      "size_px": [
+        34,
+        34
+      ],
+      "sha256": "67bc943fb6f5fec651ff6c502e078a1c8415adbc1669c7567b24b6818cdc7821",
+      "description": "Standalone X-RAY lamp off.",
+      "target": "xray_lamp"
+    },
+    "xray_lamp_on": {
+      "file": "02_runtime/lighting/xray_lamp_on.png",
+      "size_px": [
+        34,
+        34
+      ],
+      "sha256": "ab202816df88bac18f22eb15504f18f7d82153bad5a4fd5e7d0bfc166bd6833b",
+      "description": "Standalone X-RAY lamp on.",
+      "target": "xray_lamp"
+    },
+    "spectrum_falloff": {
+      "file": "02_runtime/lighting/spectrum_falloff.png",
+      "size_px": [
+        8,
+        256
+      ],
+      "sha256": "c6a1d1a1e23434aafcd8c9e3806ea3a8e27b2453395d2f25412cd6c82065e56d",
+      "description": "White emission falloff. Tint and multiply by signal strength in the renderer."
+    },
+    "plot_clip_mask": {
+      "file": "02_runtime/lighting/plot_clip_mask.png",
+      "size_px": [
+        1408,
+        290
+      ],
+      "sha256": "ef4464a501eb0b2ee4752024aaf2564ebb806d6b99a8a4c7a11b8f3c070a72fb",
+      "description": "Rectangular overdraw mask. Clip every signal pass to the calibrated plot.",
+      "target": "plot"
+    }
+  }
+}

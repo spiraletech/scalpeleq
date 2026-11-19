@@ -311,10 +311,7 @@ void RootsGraph::showRootMenu(int root,juce::Component& button){
 }
 void RootsGraph::paintStaticFrame(juce::Graphics& g) const {
     const auto full=getLocalBounds().toFloat(),r=area();
-    scalpel::finish::analyzerHousing(g,full.reduced(.5f));
-    // Four screws belong to the full display housing, beyond the meter bay.
-    for(const auto c:scalpel::reference::housingScrews(false))scalpel::finish::screw(g,c);
-    scalpel::formidable::draw(g,scalpel::formidable::Art::plot_glass,r);
+    scalpel::finish::analyzerHousing(g,full);
     g.setFont(scalpel::finish::font(14,false));
     g.setColour(scalpel::finish::text);
     // No inherited cyan spectrum title, old SONAR weather image or C1-C4
@@ -619,11 +616,16 @@ void RootsGraph::paint(juce::Graphics& g){
     // independent objects or fabricated motion is introduced during silence.
     const float luminous=surgery::spectrum::brightness(*std::max_element(bands_.begin(),bands_.end()));
     if(luminous>0){
-        juce::ColourGradient foil(juce::Colour(0xffd3ae8c).withAlpha(.10f*luminous),r.getX(),r.getY(),
-                                  juce::Colour(0xffa08d85).withAlpha(.12f*luminous),r.getRight(),r.getY(),false);
-        g.setGradientFill(foil);g.strokePath(spectrumPath,juce::PathStrokeType(4.2f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
-        g.setColour(juce::Colour(0xffd9c6ae).withAlpha(.13f*luminous));
-        g.strokePath(spectrumPath,juce::PathStrokeType(2.4f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+        // The optical emission is generated from the exact measured contour,
+        // not a second decorative waveform. Floor bins therefore emit zero.
+        juce::ColourGradient emission(juce::Colour(0xff84dcff).withAlpha(.24f*luminous),
+            r.getCentreX(),r.getY(),juce::Colour(0xff102a66).withAlpha(.035f*luminous),
+            r.getCentreX(),r.getBottom(),false);
+        g.setGradientFill(emission);g.fillPath(filledPath);
+        g.setColour(juce::Colour(0xff8bdfff).withAlpha(.18f*luminous));
+        g.strokePath(spectrumPath,juce::PathStrokeType(5.2f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+        g.setColour(juce::Colour(0xffd9f5ff).withAlpha(.34f*luminous));
+        g.strokePath(spectrumPath,juce::PathStrokeType(2.1f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
     }
     // A single fine readout follows the spectrum edge, never a 2D waterfall.
     g.setColour(juce::Colour(xrayActive_?0xffd9ddd6:0xffc1b2a3));
@@ -734,20 +736,7 @@ void RootsGraph::paint(juce::Graphics& g){
         responseOverlayKey_=overlayKey;
         responseOverlayValid_=true;
     }
-    if(showResponse){
-        g.setOpacity(1.f);g.drawImage(responseOverlay_,full);
-        g.setColour(scalpel::finish::ice.withAlpha(.85f));
-        g.setFont(juce::Font(juce::FontOptions("Segoe UI",8.5f,juce::Font::bold)));
-        // Both rulers fit in the meter gutter. The signed EQ ruler is
-        // nearest the plot and leaves the outer ruler for measured dBFS.
-        const float axisX=r.getRight()+1.f,axisWidth=14.f;
-        g.drawText("dB",axisX,r.getY()-19.f,axisWidth,10.f,juce::Justification::centredRight);
-        for(const int db:{60,30,0,-30,-60}){
-            const auto y=responseY((float)db);
-            g.drawText((db>0?"+":"")+juce::String(db),axisX,y-5.f,axisWidth,10.f,
-                       juce::Justification::centredRight);
-        }
-    }
+    if(showResponse){g.setOpacity(1.f);g.drawImage(responseOverlay_,full);}
     const bool compActive=bandEnabled&&pval(processor_.apvts,rid("dynamics_mode"))>=2.f;
     const auto threshold=scalpel::dynamics::threshold(pval(processor_.apvts,rid("comp_offset")));
     if(mode_==0&&compActive){
@@ -886,6 +875,9 @@ void RootsGraph::paint(juce::Graphics& g){
         // Identification is available on hover and in the CARVE shelf;
         // the reference X-RAY lens has clean nodes, never black C1-C4 tabs.
     }
+    // Real polycarbonate reflection sits above signal light and nodes, while
+    // native labels/readouts remain crisp above the optical layer.
+    scalpel::finish::analyzerReflection(g,full);
     scalpel::ui105::drawAnalyzerPanel(g,full,processor_.getPeakHoldDb(),
         processor_.getChannelPeakDb(0),processor_.getChannelPeakDb(1),polished);
     const auto domain=displayDomain_;
@@ -897,12 +889,22 @@ void RootsGraph::paint(juce::Graphics& g){
     g.setFont(juce::Font(juce::FontOptions("Segoe UI",11.0f,juce::Font::bold)));
     g.drawText(info,r.reduced(12.f).removeFromTop(15.f),juce::Justification::centredLeft);
     if(showResponse){
-        const auto graphLabel=mode_==0&&compActive
-            ? "THR "+juce::String(threshold,1)+" dBFS   /   GR "+juce::String(-dynamicsReadout_[1],1)
-                +" dB   /   LIFT +"+juce::String(dynamicsReadout_[2],1)+" dB"
-            : juce::String(bandEnabled?"BAND EQ (dB)":"BAND OFF");
-        g.setColour((mode_==0&&compActive?scalpel::finish::accent:scalpel::finish::ice).withAlpha(.9f));
+        const auto graphLabel=bandEnabled
+            ? "BAND EQ  "+juce::String(gain>=0.0?"+":"")+juce::String(gain,1)+" dB"
+            : juce::String("BAND OFF");
+        g.setColour(scalpel::finish::ice.withAlpha(.9f));
         g.drawText(graphLabel,r.reduced(10.f).removeFromTop(15.f),juce::Justification::centredRight);
+        if(mode_==0&&compActive){
+            static constexpr std::array<const char*,8> ratioText{
+                "AUTO","2:1","3:1","4:1","6:1","8:1","12:1","20:1"};
+            const int ratioIndex=juce::jlimit(0,7,juce::roundToInt(pval(processor_.apvts,rid("comp_ratio"))));
+            const auto dynamics="COMP "+juce::String(ratioText[(size_t)ratioIndex])+"  /  THR "+
+                juce::String(threshold,1)+" dBFS  /  GR "+juce::String(-dynamicsReadout_[1],1)+" dB";
+            g.setColour(scalpel::finish::accent.withAlpha(.82f));
+            g.setFont(juce::Font(juce::FontOptions("Segoe UI",9.0f,juce::Font::bold)));
+            auto status=r.reduced(10.f).removeFromTop(30.f);status.removeFromTop(15.f);
+            g.drawText(dynamics,status,juce::Justification::centredRight);
+        }
     }
     if(hover_&&r.contains(mouse_)){
         const int bar=prism::analysis::LabBands::indexForFrequency(xToFreq(mouse_.x));
@@ -1842,8 +1844,8 @@ void RootsEditor::layoutRack(){
         masterButtons_[(size_t)i].setBounds(masterButton(i));
     }
     masterLabel_.setBounds(masterCaption());
-    xrayButton_.setBounds(bounds(1317,233,176,58));
-    peakHold_.setBounds(bounds(1328,412,165,54));
+    xrayButton_.setBounds(analyzerXray());
+    peakHold_.setBounds(analyzerReset());
 
     on_.setBounds(switchBounds(false));off_.setBounds(switchBounds(true));
     gainLabel_.setBounds(bounds(344,595,180,28));gain_.setBounds(bounds(352,624,164,199));

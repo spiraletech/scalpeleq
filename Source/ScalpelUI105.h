@@ -76,6 +76,26 @@ inline void drawRackFace(juce::Graphics& g,int width,int height,int mode)
 
 inline void drawMeter(juce::Graphics& g, juce::Rectangle<float> r, float db, const juce::String& label,bool polished=false)
 {
+    if(polished){
+        using A=scalpel::formidable::Art;
+        scalpel::formidable::draw(g,A::meter_well_10842,r);
+        constexpr int segments=16;
+        const float normalized=juce::jlimit(0.0f,1.0f,(db+60.0f)/60.0f);
+        const int active=juce::roundToInt(normalized*segments);
+        const float segmentW=21.f*r.getWidth()/39.f;
+        const float segmentH=13.f*r.getHeight()/280.f;
+        const float step=17.f*r.getHeight()/280.f;
+        const float bottomInset=5.f*r.getHeight()/280.f;
+        for(int i=0;i<segments;++i){
+            const auto cell=juce::Rectangle<float>{r.getCentreX()-segmentW*.5f,
+                r.getBottom()-bottomInset-segmentH-i*step,segmentW,segmentH};
+            const auto art=i<active?(i==segments-1?A::meter_clip_10842:A::meter_active_10842):A::meter_off_10842;
+            scalpel::formidable::draw(g,art,cell);
+        }
+        g.setColour(ivory);g.setFont(juce::Font(juce::FontOptions("Segoe UI",12.f,juce::Font::plain)));
+        g.drawText(label,(int)r.getX(),(int)r.getBottom()+2,(int)r.getWidth(),14,juce::Justification::centred);
+        return;
+    }
     g.setColour(juce::Colour(0xff050505));
     g.fillRoundedRectangle(r, 3.0f);
     constexpr int segments = 15;
@@ -105,18 +125,19 @@ inline void drawMeter(juce::Graphics& g, juce::Rectangle<float> r, float db, con
 inline void drawAnalyzerPanel(juce::Graphics& g,juce::Rectangle<float> full,
     float peakHold,float leftPeak,float rightPeak,bool polished=false)
 {
-    // Absolute reference positions translated into the analyzer component.
-    const auto origin=scalpel::reference::analyzer().toNearestInt().getPosition().toFloat();
-    const auto local=[&](float x,float y,float w,float h){return scalpel::reference::rect(x,y,w,h).translated(-origin.x,-origin.y);};
-    const auto display=local(1330,332,161,43);
-    g.setColour(juce::Colour(0xff0a0907));g.fillRoundedRectangle(display,4);
-    g.setColour(juce::Colour(0xffa89a89));g.drawRoundedRectangle(display,4,.6f);
+    const auto local=[](float x,float y,float w,float h){return scalpel::reference::analyzerAssetLocal(x,y,w,h);};
+    const auto display=local(1766,190,226,66);
+    if(polished)scalpel::formidable::draw(g,scalpel::formidable::Art::peak_window_10842,display);
+    else{
+        g.setColour(juce::Colour(0xff0a0907));g.fillRoundedRectangle(display,4);
+        g.setColour(juce::Colour(0xffa89a89));g.drawRoundedRectangle(display,4,.6f);
+    }
     g.setColour(scalpel::finish::text);g.setFont(scalpel::finish::font(12,false));
-    g.drawText("PEAK (dBFS)",local(1330,302,161,24).toNearestInt(),juce::Justification::centred);
+    g.drawText("PEAK (dBFS)",local(1766,155,226,28).toNearestInt(),juce::Justification::centred);
     g.setColour(juce::Colour(0xffcde8e5));
     scalpel::finish::number(g,peakHold<=-143?juce::String("-inf"):juce::String(peakHold,2),display,20);
-    drawMeter(g,local(1512,250,26,192),leftPeak,"L",polished);
-    drawMeter(g,local(1552,250,26,192),rightPeak,"R",polished);
+    drawMeter(g,local(2018,71,39,280),leftPeak,"L",polished);
+    drawMeter(g,local(2074,71,39,280),rightPeak,"R",polished);
     (void)full;
 }
 } // namespace scalpel::ui105

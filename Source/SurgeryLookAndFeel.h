@@ -146,15 +146,19 @@ public:
                 }
                 return;
             }
-            if(reset){scalpel::finish::darkButton(g,r,deckSwitch&&button.getToggleState(),over,deckSwitch,button.getButtonText()=="OFF"?scalpel::finish::offRed:scalpel::finish::onGreen);return;}
+            if(reset){
+                using A=scalpel::formidable::Art;
+                scalpel::formidable::draw(g,down?A::command_pressed:over?A::command_hover:A::command_idle,r);
+                return;
+            }
             if(xray){
-                scalpel::finish::darkButton(g,r,false,over);
-                const float lamp=r.getHeight()*.18f;
-                if(button.getToggleState()){
-                    g.setColour(juce::Colour(0xffff4145).withAlpha(.17f));g.fillEllipse(r.getX()+5,r.getCentreY()-lamp-3,2*lamp+6,2*lamp+6);
-                }
-                g.setColour(juce::Colour(button.getToggleState()?0xffff4145:0xff702126));
-                g.fillEllipse(r.getX()+8,r.getCentreY()-lamp,lamp*2,lamp*2);
+                using A=scalpel::formidable::Art;
+                scalpel::formidable::draw(g,A::xray_face_10842,r);
+                const float side=34.f*r.getHeight()/81.f;
+                const juce::Rectangle<float> lamp{r.getX()+17.f*r.getWidth()/244.f,
+                    r.getY()+25.f*r.getHeight()/81.f,side,side};
+                scalpel::formidable::draw(g,button.getToggleState()?A::xray_lamp_on_10842:A::xray_lamp_off_10842,lamp);
+                if(over){g.setColour(juce::Colours::white.withAlpha(.035f));g.fillRoundedRectangle(r.reduced(3),5);}
                 return;
             }
         }

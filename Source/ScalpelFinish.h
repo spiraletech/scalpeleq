@@ -81,7 +81,7 @@ inline void flushCap(juce::Graphics& g,juce::Rectangle<float> r,bool graphiteCap
                      bool selected,bool hover,bool pressed,bool off=false){
     if(!graphiteCap){
         using A=formidable::Art;
-        formidable::draw(g,pressed?A::command_pressed:A::command_idle,r);
+        formidable::draw(g,pressed?A::command_pressed:hover?A::command_hover:A::command_idle,r);
         roughness(g,r.reduced(3),4.0f,.25f);
         if(selected){
             g.setColour(accent.withAlpha(.8f));
@@ -140,7 +140,21 @@ inline void screws(juce::Graphics& g,juce::Rectangle<float> r,float xInset,float
     for(auto c:scalpel::reference::screwCentres(r,xInset,yInset))screw(g,c);
 }
 inline void analyzerHousing(juce::Graphics& g,juce::Rectangle<float> r){
-    formidable::draw(g,formidable::Art::analyzer,r);
+    const auto mapped=[r](float x,float y,float w,float h){
+        return juce::Rectangle<float>{r.getX()+x*r.getWidth()/2172.f,
+            r.getY()+y*r.getHeight()/436.f,w*r.getWidth()/2172.f,h*r.getHeight()/436.f};
+    };
+    formidable::draw(g,formidable::Art::analyzer_faceplate_10842,r);
+    formidable::draw(g,formidable::Art::analyzer_bezel_10842,r);
+    const auto lens=mapped(189,24,1529,392);
+    formidable::draw(g,formidable::Art::analyzer_smoked_10842,lens);
+    formidable::draw(g,formidable::Art::analyzer_gasket_10842,lens);
+    formidable::draw(g,formidable::Art::analyzer_pixels_10842,mapped(208,70,1408,290));
+}
+inline void analyzerReflection(juce::Graphics& g,juce::Rectangle<float> r){
+    formidable::draw(g,formidable::Art::analyzer_reflection_10842,
+        {r.getX()+189.f*r.getWidth()/2172.f,r.getY()+24.f*r.getHeight()/436.f,
+         1529.f*r.getWidth()/2172.f,392.f*r.getHeight()/436.f});
 }
 // 154px diameter on the master canvas, uniformly scaled with the editor.
 inline constexpr float knobDiameter=154.f*scalpel::reference::scale;
