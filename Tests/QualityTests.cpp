@@ -471,39 +471,59 @@ bool runQualityTests(){
         juce::ComboBox* ratio=nullptr;
         for(auto* child:ui->getChildren())
             if(auto* c=dynamic_cast<juce::ComboBox*>(child);c&&c->isVisible()&&c->getItemText(0)=="AUTO")ratio=c;
-        if(!ratio||ratio->getNumItems()!=8||ratio->getSelectedId()!=1)return false;
+        if(!ratio||ratio->getNumItems()!=8||ratio->getSelectedId()!=1){
+            std::cerr<<"1.0.8.2: per-band ratio selector or AUTO default missing\n";return false;
+        }
         ratio->setSelectedId(7,juce::sendNotificationSync); // 12:1
         const auto ratioId=PRISMVSTAudioProcessor::rootsRootControlId(3,"comp_ratio");
-        if(fresh->apvts.getRawParameterValue(ratioId)->load()!=6.f)return false;
-        if(!click(*ui,"BAND 5")||ratio->getSelectedId()!=1)return false;
-        if(!click(*ui,"BAND 4")||ratio->getSelectedId()!=7)return false;
+        if(fresh->apvts.getRawParameterValue(ratioId)->load()!=6.f){
+            std::cerr<<"1.0.8.2: 12:1 ratio did not bind or recall\n";return false;
+        }
+        if(!click(*ui,"BAND 5")||ratio->getSelectedId()!=1
+            ||!click(*ui,"BAND 4")||ratio->getSelectedId()!=7){
+            std::cerr<<"1.0.8.2: ratio did not track selected band\n";return false;
+        }
         juce::MemoryBlock ratioState;
         fresh->getStateInformation(ratioState);
         set(*fresh,ratioId,0);
         fresh->setStateInformation(ratioState.getData(),(int)ratioState.getSize());
-        if(fresh->apvts.getRawParameterValue(ratioId)->load()!=6.f)return false;
+        if(fresh->apvts.getRawParameterValue(ratioId)->load()!=6.f){
+            std::cerr<<"1.0.8.2: 12:1 ratio did not bind or recall\n";return false;
+        }
         // A stopped transport and quiet blocks must retain every band's high-water mark.
         juce::AudioBuffer<float> peakBlock(2,512);
         for(int i=0;i<32;++i){
             tone(peakBlock,i*512);
+            // Fade the source to silence before checking hold. A discontinuity
+            // from a running tone to zero creates valid peaks in other bands.
+            if(i>=28)
+                peakBlock.applyGainRamp(0,512,(32-i)/4.f,(31-i)/4.f);
             fresh->processBlock(peakBlock,midi);
         }
         std::array<float,7> held{};
         const auto high=fresh->getPeakHoldDb();
         for(int root=0;root<7;++root){
             held[(size_t)root]=fresh->getHeldRootBandPeakDb(root);
-            if(held[(size_t)root]<=-140.f)return false;
+            if(held[(size_t)root]<=-140.f){
+                std::cerr<<"1.0.8.2: no held signal in band "<<root+1<<'\n';return false;
+            }
         }
         for(int i=0;i<32;++i){
             peakBlock.clear();
             fresh->processBlock(peakBlock,midi);
         }
         for(int root=0;root<7;++root)
-            if(held[(size_t)root]!=fresh->getHeldRootBandPeakDb(root))return false;
-        if(high!=fresh->getPeakHoldDb()||!click(*ui,"RESET"))return false;
-        if(fresh->getPeakHoldDb()!=-144.f)return false;
+            if(held[(size_t)root]!=fresh->getHeldRootBandPeakDb(root)){
+                std::cerr<<"1.0.8.2: band hold changed in silence in band "<<root+1<<'\n';return false;
+            }
+        if(high!=fresh->getPeakHoldDb()||!click(*ui,"RESET")||fresh->getPeakHoldDb()!=-144.f){
+            std::cerr<<"1.0.8.2: output hold or RESET failed\n";return false;
+        }
         for(int root=0;root<7;++root)
-            if(fresh->getHeldRootBandPeakDb(root)!=-144.f)return false;
+            if(fresh->getHeldRootBandPeakDb(root)!=-144.f){
+                std::cerr<<"1.0.8.2: RESET left a held peak in band "<<root+1<<'\n';return false;
+            }
+        std::cout<<"1.0.8.2: per-band ratio binding and recall, seven-band peak hold, and master RESET passed\n";
         click(*ui,"BAND 1");
         if(!click(*ui,"CARVE"))return false;
         for(auto* child:ui->getChildren())if(auto* b=dynamic_cast<juce::TextButton*>(child))
