@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include <algorithm>
 #include <array>
 
 // Formidable kit, 1670 x 942 artwork; no host chrome in these coordinates.
@@ -14,7 +15,7 @@ inline juce::Rectangle<float> enclosure(){return {0,0,1120,630};}
 inline juce::Rectangle<float> analyzer(){return rect(41,200,1581,298);}
 // Measured illuminated plot, excluding its frequency labels and inner bezel.
 // The crop's 106,235..1219,475 includes the bevel and axis, not just the plot.
-inline juce::Rectangle<float> plot(){return rect(136,243,1077,207);}
+inline juce::Rectangle<float> plot(){return rect(194,243,1019,207);}
 // New 1637x961 kit: extend the faceplate to 917/961 of client height.
 // Keep its top and width anchored; this does not resize the editor.
 inline juce::Rectangle<float> deck(){auto r=rect(34,578,1588,258);return r.withBottom(630.f*917.f/961.f);}
@@ -26,10 +27,14 @@ inline juce::Rectangle<int> band(int i){
     // Equal manufactured keys; the crop widths include unequal contact shadows.
     return bounds(65+i*221,116,214,68);
 }
-inline juce::Rectangle<int> tab(int i){
-    constexpr std::array<float,4> x{42,469,841,1225},w{425,360,380,384};
-    return bounds(x[(size_t)i],506,w[(size_t)i],62);
+inline constexpr std::array<int,3> modePages{0,1,3};
+inline juce::Rectangle<int> tab(int mode){
+    const auto pos=std::find(modePages.begin(),modePages.end(),mode);
+    if(pos==modePages.end())return {};
+    return bounds(45+522*(float)(pos-modePages.begin()),506,514,62);
 }
+inline juce::Rectangle<int> masterCaption(){return bounds(87,251,92,22);}
+inline juce::Rectangle<int> masterButton(int i){return bounds(87,280+52*i,92,42);}
 // Flush kit positions are local to its 32,567,1574,312 lower panel.
 // Uniformly register them to the verified deck; never move the screw anchors
 // or scale the whole editor to reconcile differing screenshot/host chrome.

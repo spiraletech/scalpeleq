@@ -1,4 +1,4 @@
-Scalpel EQ 1.0.7.9 — pre-UI DSP test candidate — Windows x64 VST3
+Scalpel EQ 1.0.8.1 — Formidable master output candidate — Windows x64 VST3
 
 Close FL Studio and other DAWs before replacing the plugin.
 Extract this ZIP. Copy the COMPLETE “Scalpel EQ.vst3” folder to:
@@ -41,10 +41,11 @@ is not a substitute for FL Studio project recall/playback/removal testing.
 
 
 
-1.0.7.9 DSP check
-- Set COMP OFF, enable a CARVE, and sweep -40 to +40 dB at its center.
-- Select 176E or CE1B and sweep COMP THRESHOLD from -9 to +9 dB.
+1.0.8.1 checks
+- MASTER STEREO plays the full mix, MID plays the center, and SIDE plays the
+  difference signal. EQ DOMAIN still controls only the selected band.
+- COMPRESSION offers OFF, 176E and CE1B. New instances start in OFF.
+- The COLOR page and its sound coloration are removed. Legacy parameter IDs
+  still load so existing projects retain a readable state.
+- Set COMP OFF and enable a CARVE to test real cut and boost from -40 to +40 dB.
 - BAND OFF mutes the assigned frequency region. BAND SOLO auditions it.
-- The existing BAND domain selector sets the output spectrum view.
-- SAVED PROFILE retains legacy compressor settings. Existing CARVE cuts
-  keep their original processing until the signed gain is edited.

@@ -273,6 +273,7 @@ PRISMVSTAudioProcessor::PRISMVSTAudioProcessor()
     engineMode = apvts.getRawParameterValue("roots_engine_mode");
     bypassValue = apvts.getRawParameterValue("surgery_bypass");
     trimValue = apvts.getRawParameterValue("surgery_output_db");
+    masterDomainValue_ = apvts.getRawParameterValue("master_output_domain");
     weatherModeValue_=apvts.getRawParameterValue("sonar_weather_mode");
     visualStyleValue_=apvts.getRawParameterValue("sonar_visual_style");jukeModeValue_=apvts.getRawParameterValue("juke_mode");
     weatherFillValue_=apvts.getRawParameterValue("aura_color");
@@ -822,7 +823,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
         const auto label="BAND "+juce::String(root+1)+" ";
         p.push_back(std::make_unique<juce::AudioParameterChoice>(
             juce::ParameterID{rootsRootControlId(root,"dynamics_mode"),1},
-            label+"Dynamics Mode",juce::StringArray{"Saved Profile","Off","176E","CE1B"},0));
+            label+"Dynamics Mode",juce::StringArray{"Disabled","Off","176E","CE1B"},1));
         p.push_back(std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID{rootsRootControlId(root,"comp_offset"),1},label+"Comp Calibration",
             juce::NormalisableRange<float>(-9.0f,9.0f,0.1f),0.0f));
@@ -832,6 +833,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout PRISMVSTAudioProcessor::crea
                 "CARVE "+juce::String(root+1)+"/"+juce::String(slot+1)+" Gain",
                 juce::NormalisableRange<float>(-40.0f,40.0f,0.01f),0.0f));
     }
+    p.push_back(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID{"master_output_domain",1},"Master Output Domain",
+        juce::StringArray{"Stereo","Mid","Side"},0));
     return { p.begin(), p.end() };
 }
 
@@ -847,6 +851,11 @@ void PRISMVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     currentSampleRate = sampleRate;
     dryScratch.setSize(2, juce::jmax(1, samplesPerBlock));
     outputTrimSmoother.reset(sampleRate, 0.02);
+    masterMidGain_.reset(sampleRate,0.008);
+    masterSideGain_.reset(sampleRate,0.008);
+    const int masterDomain=getMasterDomain();
+    masterMidGain_.setCurrentAndTargetValue(masterDomain==2?0.f:1.f);
+    masterSideGain_.setCurrentAndTargetValue(masterDomain==1?0.f:1.f);
     outputTrimSmoother.setCurrentAndTargetValue(toGain(trimValue->load()));
     bypassMix.reset(sampleRate, 0.005);
     bypassMix.setCurrentAndTargetValue(bypassValue->load() >= 0.5f ? 1.0f : 0.0f);
@@ -855,7 +864,6 @@ void PRISMVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     rootMeters[0].store(1); rootMeters[1].store(0); rootMeters[2].store(0); rootMeters[3].store(1); rootMeters[4].store(0);
     for(auto& peak:rootBandPeakDb)peak.store(-144.f);
     rootsEngine.prepare(sampleRate);
-    for(auto& state:onyxFinish)state={};
     carveEngine.prepare(sampleRate);
     signedCarveEngine.prepare(sampleRate);
     sanitizeCrossovers();
@@ -864,7 +872,6 @@ void PRISMVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     {
         section.envelope = 0.0f;
         section.gainReductionDb = 0.0f;
-        section.onyxLow.fill(0.0f);
     }
     for (auto& v : stereoActivity)
         v.store(0.0f);
@@ -958,7 +965,7 @@ void PRISMVSTAudioProcessor::processSevenSectionEngine(juce::AudioBuffer<float>&
     const int activeSolo = getActiveSoloSection();
 
     std::array<float, numSections> inputGain {}, outputGain {}, attackCoeff {}, releaseCoeff {};
-    std::array<float, numSections> width {}, onyx {}, threshold {}, ratio {}, curve {};
+    std::array<float, numSections> width {}, threshold {}, ratio {}, curve {};
 
     const float sr = (float)currentSampleRate;
 
@@ -978,7 +985,6 @@ void PRISMVSTAudioProcessor::processSevenSectionEngine(juce::AudioBuffer<float>&
         // Old values outside that territory never narrow or over-expand.
         width[(size_t)s] = juce::jlimit(1.0f, 1.5f,
             read(apvts, sectionId(s, "width_pct")) * 0.01f);
-        onyx[(size_t)s] = juce::jlimit(0.0f, 1.0f, read(apvts, sectionId(s, "onyx_pct")) * 0.01f);
         threshold[(size_t)s] = read(apvts, sectionId(s, "threshold_db"));
         ratio[(size_t)s] = juce::jlimit(1.0f, 20.0f, read(apvts, sectionId(s, "ratio")));
         curve[(size_t)s] = juce::jlimit(-1.0f, 1.0f, read(apvts, sectionId(s, "curve")));
@@ -987,9 +993,6 @@ void PRISMVSTAudioProcessor::processSevenSectionEngine(juce::AudioBuffer<float>&
     float maxReduction = 0.0f;
     std::array<double, numSections> midEnergy {};
     std::array<double, numSections> sideEnergy {};
-    // One-pole split for a very small input-derived high-frequency sheen.
-    const float onyxToneCoeff = 1.0f - std::exp(
-        -2.0f * juce::MathConstants<float>::pi * 1800.0f / sr);
     float* left = buffer.getWritePointer(0);
     float* right = buffer.getWritePointer(1);
 
@@ -1054,28 +1057,6 @@ void PRISMVSTAudioProcessor::processSevenSectionEngine(juce::AudioBuffer<float>&
             const float dynamicGain = toGain(-state.gainReductionDb);
             xL *= dynamicGain;
             xR *= dynamicGain;
-
-            const float a = onyx[(size_t)s];
-            // Resonant Wax: gentle differential soft clipping gives fine,
-            // input-dependent harmonics without a loud saturation jump.
-            // The high-passed component adds restrained musical sparkle
-            // from signal content, never noise or an oscillator.
-            const float drive = 1.0f + 0.9f * a;
-            const float bias = 0.065f * a;
-            const float zero = std::tanh(bias * drive);
-            auto wax = [&](float sample, float& low)
-            {
-                low += onyxToneCoeff * (sample - low);
-                if (a <= 0.0001f)
-                    return sample; // bit-exact ONYX bypass
-
-                const float coloured = (std::tanh((sample + bias) * drive) - zero) / drive;
-                const float sheen = (sample - low) * (0.045f * a);
-                const float mix = 0.40f * a;
-                return (sample + mix * (coloured - sample) + sheen) * (1.0f - 0.015f * a);
-            };
-            xL = wax(xL, state.onyxLow[0]);
-            xR = wax(xR, state.onyxLow[1]);
 
             const float mid = 0.5f * (xL + xR);
             const float side = 0.5f * (xL - xR) * width[(size_t)s];
@@ -1180,7 +1161,8 @@ void PRISMVSTAudioProcessor::consumeAnalyzerSample(float left, float right)
 
 void PRISMVSTAudioProcessor::renderSpectrumFrame()
 {
-    const int domain=analyzerDomain_.load();
+    const int masterDomain=getMasterDomain();
+    const int domain=masterDomain!=0?masterDomain:analyzerDomain_.load();
     if(domain!=lastAnalyzerDomain_){
         labAnalyzer.reset();
         lastAnalyzerDomain_=domain;
@@ -1372,19 +1354,9 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
         c.solo=false; // only root-level SOLO is authoritative
         c.domain=static_cast<Domain>(band.domain);
         c.space=50.0; // deprecated invisible ROOT SPACE neutralized
-        c.comp=(Compressor)juce::roundToInt(rootParameters[(size_t)root].values[4]->load());
-        c.detector=(Detector)juce::roundToInt(rootParameters[(size_t)root].values[5]->load());
-        c.thresholdDb=rootParameters[(size_t)root].values[6]->load();
         const int mode=juce::roundToInt(dynamicsModeParameters[(size_t)root]->load());
-        if(mode>0){
-            c.comp=mode==2?Compressor::dynamics176E:mode==3?Compressor::dynamicsCE1B:Compressor::off;
-            c.compOffsetDb=dynamicsOffsetParameters[(size_t)root]->load();
-        }
-        c.sparkle=juce::jlimit(0.0f,1.0f,rootParameters[(size_t)root].values[7]->load()*0.01f);
-        c.shine=juce::jlimit(0.0f,1.0f,rootParameters[(size_t)root].values[8]->load()*0.01f);
-        c.smooth=juce::jlimit(0.0f,1.0f,rootParameters[(size_t)root].values[9]->load()*0.01f);
-        c.tape=juce::jlimit(0.0f,1.0f,rootParameters[(size_t)root].values[10]->load()*0.01f);
-        c.dynamic=juce::jlimit(0.0f,1.0f,rootParameters[(size_t)root].values[12]->load()*0.01f);
+        c.comp=mode==2?Compressor::dynamics176E:mode==3?Compressor::dynamicsCE1B:Compressor::off;
+        c.compOffsetDb=dynamicsOffsetParameters[(size_t)root]->load();
         c.phase=rootParameters[(size_t)root].values[13]->load()>=0.5f;
         // The front panel has a dedicated LIMIT switch but no third rotary.
         // A previously neutral 0% hidden amount must not turn LIMIT into a
@@ -1443,35 +1415,6 @@ void PRISMVSTAudioProcessor::processRootsEngine(juce::AudioBuffer<float>& buffer
     gainReductionDb.store((float)meters.largestGrDb);
 }
 
-void PRISMVSTAudioProcessor::processOnyxFinish(juce::AudioBuffer<float>& b) noexcept
-{
-    const float sparkle=juce::jlimit(0.0f,1.0f,read(apvts,"surgery_onyx_sparkle")*0.01f);
-    const float shine=juce::jlimit(0.0f,1.0f,read(apvts,"surgery_onyx_shine")*0.01f);
-    const float smooth=juce::jlimit(0.0f,1.0f,read(apvts,"surgery_onyx_smooth")*0.01f);
-    const float tape=juce::jlimit(0.0f,1.0f,read(apvts,"surgery_onyx_tape")*0.01f);
-    if(sparkle+shine+smooth+tape<0.00001f)return;
-    const float sr=(float)juce::jmax(8000.0,currentSampleRate);
-    const auto alpha=[sr](float hz){return 1.0f-std::exp(-2.0f*juce::MathConstants<float>::pi*hz/sr);};
-    const float a1=alpha(4200.0f),a2=alpha(1600.0f),a3=alpha(juce::jmap(smooth,16000.0f,2600.0f)),a4=alpha(8.0f);
-    for(int c=0;c<juce::jmin(2,b.getNumChannels());++c){
-        auto& s=onyxFinish[(size_t)c];auto* x=b.getWritePointer(c);
-        for(int i=0;i<b.getNumSamples();++i){
-            float y=x[i];
-            s.air+=a1*(y-s.air);
-            if(sparkle>0)y+=0.20f*sparkle*std::tanh((y-s.air)*(1.0f+sparkle));
-            s.presence+=a2*(y-s.presence);
-            if(shine>0)y+=0.30f*shine*(y-s.presence);
-            s.smooth+=a3*(y-s.smooth);
-            if(smooth>0)y+=0.88f*smooth*(s.smooth-y);
-            if(tape>0){
-                const float d=1.0f+3.5f*tape;
-                y+=tape*(std::tanh(d*y)/std::tanh(d)-y);
-                s.dc+=a4*(y-s.dc);y-=s.dc;
-            }
-            x[i]=y;
-        }
-    }
-}
 void PRISMVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
 {
     juce::ScopedNoDenormals noDenormals;
@@ -1491,6 +1434,9 @@ void PRISMVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
     inputPeakDb.store(toDb(inputPeak + 1.0e-9f));
 
     outputTrimSmoother.setTargetValue(toGain(trimValue->load()));
+    const int masterDomain=getMasterDomain();
+    masterMidGain_.setTargetValue(masterDomain==2?0.f:1.f);
+    masterSideGain_.setTargetValue(masterDomain==1?0.f:1.f);
     bypassMix.setTargetValue(bypassValue->load() >= 0.5f ? 1.0f : 0.0f);
     const int capacity = dryScratch.getNumSamples();
     if (capacity <= 0) return;
@@ -1505,14 +1451,18 @@ void PRISMVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
         else processSevenSectionEngine(chunk);
         for (int i = 0; i < count; ++i)
         {
-            const float gain = outputTrimSmoother.getNextValue();
-            const float bypass = bypassMix.getNextValue();
-            for (int c = 0; c < 2; ++c)
-            {
-                const float dry = dryScratch.getSample(c, i);
-                const float wet = channels[c][i] * gain;
-                channels[c][i] = bypass >= 1.0f ? dry : wet + bypass * (dry - wet);
+            const float gain=outputTrimSmoother.getNextValue();
+            const float bypass=bypassMix.getNextValue();
+            const float midGain=masterMidGain_.getNextValue(),sideGain=masterSideGain_.getNextValue();
+            float wetL=channels[0][i]*gain,wetR=channels[1][i]*gain;
+            if(midGain!=1.f||sideGain!=1.f){
+                const float mid=(wetL+wetR)*0.5f*midGain;
+                const float side=(wetL-wetR)*0.5f*sideGain;
+                wetL=mid+side;wetR=mid-side;
             }
+            const float dryL=dryScratch.getSample(0,i),dryR=dryScratch.getSample(1,i);
+            channels[0][i]=bypass>=1.f?dryL:wetL+bypass*(dryL-wetL);
+            channels[1][i]=bypass>=1.f?dryR:wetR+bypass*(dryR-wetR);
         }
     }
     pushAnalyzerSamples(buffer);
@@ -1586,17 +1536,18 @@ void PRISMVSTAudioProcessor::setStateInformation(const void* data, int size)
             if(previousFactory)
                 for(size_t node=0;node<frequencies.size();++node)
                     frequencies[node]->setAttribute("value",scalpel::bands::Model::factoryBoundaries[node]);
-            const auto addDefault=[&](const juce::String& id){
+            const auto addDefault=[&](const juce::String& id,double value=0.0){
                 if(xml->getChildByAttribute("id",id)!=nullptr)return;
                 auto* parameter=xml->createNewChildElement("PARAM");
                 parameter->setAttribute("id",id);
-                parameter->setAttribute("value",0.0);
+                parameter->setAttribute("value",value);
             };
             for(int root=0;root<numSections;++root){
-                addDefault(rootsRootControlId(root,"dynamics_mode"));
+                addDefault(rootsRootControlId(root,"dynamics_mode"),1.0);
                 addDefault(rootsRootControlId(root,"comp_offset"));
                 for(int slot=0;slot<4;++slot)addDefault(carveId(root,slot,"gain_db"));
             }
+            addDefault("master_output_domain");
             apvts.replaceState(juce::ValueTree::fromXml(*xml));
             sanitizeCrossovers();
             // Resolve old sessions that persisted more than one SOLO flag.

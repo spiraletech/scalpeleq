@@ -206,7 +206,7 @@ private:
                             scalpel::bands::Anchor movingAnchor);
     int hitCarveNode(juce::Point<float>) const;
     int hitCarveTab(juce::Point<float>) const;
-    void popup(juce::Component* bandButton=nullptr);
+    void popup(juce::Component* bandButton=nullptr,juce::Point<int> screenPoint={});
     void clampCarvesToRoot(int root);
     juce::Colour colour(int territory) const;
 };
@@ -248,13 +248,11 @@ private:
     juce::TextButton mono_{"MONO"},on_{"ON"},off_{"OFF"},solo_{"SOLO"},
         phase_{"PHASE CORRECTION"},limit_{"LIMIT"};
     int mode_=0,carveSlot_=0;
-    std::array<juce::TextButton,4> modeButtons_;
+    std::array<juce::TextButton,3> modeButtons_,masterButtons_;
+    juce::Label masterLabel_;
     std::array<juce::TextButton,4> carveSlotButtons_;
     juce::Slider carveFrequency_,carveDepth_;
     SurgeryFineWheelSlider carveQ_;
-    std::array<juce::Slider,5> onyxSliders_;
-    std::array<juce::Label,5> onyxLabels_;
-    std::array<std::unique_ptr<SliderA>,5> onyxAttachments_;
     juce::TextButton xrayButton_{"X-RAY"};
     std::unique_ptr<ButtonA> xrayAttachment_;
     juce::TextButton carveOn_{"ON"},carveOff_{"OFF"},carveDynamic_{"DYNAMIC"};
@@ -275,7 +273,8 @@ private:
     juce::Slider output_;
     juce::Label outputLabel_,compLabel_,domainLabel_,detectorLabel_;
     juce::ComboBox compressor_,domain_,detector_;
-    std::unique_ptr<ComboA> compressorA_,domainA_,detectorA_;
+    std::unique_ptr<juce::ParameterAttachment> compressorA_;
+    std::unique_ptr<ComboA> domainA_,detectorA_;
     std::unique_ptr<SliderA> outputA_;
     std::unique_ptr<ButtonA> bypassA_;
     std::unique_ptr<juce::FileChooser> presetChooser_;

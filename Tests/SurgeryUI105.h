@@ -29,12 +29,12 @@ inline bool verifyUI105(PRISMVSTAudioProcessor& processor, juce::AudioProcessorE
         if(auto* candidate=dynamic_cast<RootsGraph*>(child))graph=candidate;
         if(auto* button=dynamic_cast<juce::TextButton*>(child)){
             const auto text=button->getButtonText();
-            if(text=="BAND MODE"||text=="CARVE"||text=="COLOR"||text=="ANALYZE")++tabs;
+            if(text=="BAND MODE"||text=="CARVE"||text=="ANALYZE")++tabs;
             if(text.startsWith("BAND ")&&text!="BAND MODE"&&button->isVisible())++visibleBandButtons;
         }
     }
-    if(tabs!=4||visibleBandButtons!=7||graph==nullptr){
-        std::cerr<<"UI105: four pages or canonical BAND 1-7 rail is missing\n";return false;
+    if(tabs!=3||visibleBandButtons!=7||graph==nullptr){
+        std::cerr<<"UI105: three pages or canonical BAND 1-7 rail is missing\n";return false;
     }
     for(int band=0;band<7;++band){
         if(!click("BAND "+juce::String(band+1))||graph->selectedNode()!=band*2){
@@ -42,6 +42,16 @@ inline bool verifyUI105(PRISMVSTAudioProcessor& processor, juce::AudioProcessorE
         }
     }
     if(!click("BAND MODE"))return false;
+    const auto masterMode=processor.apvts.getRawParameterValue("master_output_domain");
+    for(int mode=0;mode<3;++mode){
+        const char* names[]{"STEREO","MID","SIDE"};
+        auto* key=findButton(names[mode]);
+        if(key==nullptr||!key->isVisible()||key->getBounds()!=scalpel::reference::masterButton(mode))
+            return false;
+        key->onClick();
+        if(masterMode->load()!=(float)mode||!key->getToggleState())return false;
+    }
+    if(!click("STEREO"))return false;
     auto* phase=findButton("PHASE CORRECTION");
     auto* reset=findButton("RESET");
     if(phase==nullptr||!phase->isVisible()||reset==nullptr||!reset->isVisible()){
@@ -74,7 +84,7 @@ inline bool verifyUI105(PRISMVSTAudioProcessor& processor, juce::AudioProcessorE
         std::cerr<<"UI105: RESET did not clear peak hold\n";return false;
     }
 
-    for(const auto* page:{"CARVE","COLOR","ANALYZE"})
+    for(const auto* page:{"CARVE","ANALYZE"})
         if(!click(page))return false;
     click("BAND MODE");
     std::cout<<"SCALPEL UI 1.0.6: BAND 1-7 routing, phase label, measured stereo meters and reset passed\n";

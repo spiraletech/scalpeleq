@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(SCALPELEQ VERSION 1.0.7.9 LANGUAGES C CXX)
+project(SCALPELEQ VERSION 1.0.8.1 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -74,6 +74,33 @@ juce_add_binary_data(SurgeryRackAssets SOURCES
   "${SCALPEL_ART_DIR}/approved-reference.png"
   Assets/Scalpel/Formidable/FormidableShell.png
   Assets/Scalpel/Formidable/UnifiedIvoryRelief.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_shell.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_control_deck.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_analyzer.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_band_well.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_page_well.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_plot_glass.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_master_idle.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_master_selected.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_master_hover.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_master_pressed.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_master_disabled.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_tab_idle.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_tab_selected.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_tab_hover.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_tab_pressed.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_band_idle.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_band_selected.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_band_pressed.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_command_idle.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_command_pressed.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_knob_face.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_knob_pointer.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_dropdown_idle.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_dropdown_hover.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_screw.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_readout_idle.png
+  Assets/Scalpel/Formidable/1.0.8.1/f1081_champagne_header.png
   Assets/Scalpel/scalpel-knob.png
   Assets/Scalpel/scalpel-freeze.png
   Assets/Scalpel/scalpel-heatmap.png)

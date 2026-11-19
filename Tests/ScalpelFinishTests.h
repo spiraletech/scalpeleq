@@ -42,7 +42,7 @@ inline bool verifyScalpelFinish(){
     const auto record=[&](const char* page,juce::Component& component,const juce::String& name){
         const auto r=component.getBounds();geometry<<page<<','<<name<<','<<r.getX()<<','<<r.getY()<<','<<r.getWidth()<<','<<r.getHeight()<<'\n';
     };
-    for(const char* page:{"CARVE","COLOR"}){
+    for(const char* page:{"CARVE","ANALYZE"}){
         if(!click(page))return fail(__LINE__);
         juce::MessageManager::getInstance()->runDispatchLoopUntil(25);
         if(editor->getWidth()!=1344||editor->getHeight()!=756)return fail(__LINE__);
@@ -58,10 +58,10 @@ inline bool verifyScalpelFinish(){
             if(!b||b->getBounds()!=scalpel::reference::band(i)||!contrast(*b,false))return fail(__LINE__);
             record(page,*b,b->getButtonText());
         }
-        int active=0;const char* tabs[]{"BAND MODE","CARVE","COLOR","ANALYZE"};
-        for(int i=0;i<4;++i){
+        int active=0;const char* tabs[]{"BAND MODE","CARVE","ANALYZE"};
+        for(int i=0;i<3;++i){
             auto* b=button(tabs[i]);
-            if(!b||b->getBounds()!=scalpel::reference::tab(i))return fail(__LINE__);
+            if(!b||b->getBounds()!=scalpel::reference::tab(scalpel::reference::modePages[(size_t)i]))return fail(__LINE__);
             active+=b->getToggleState()?1:0;record(page,*b,tabs[i]);
         }
         if(active!=1||!button(page)->getToggleState())return fail(__LINE__);
@@ -77,11 +77,8 @@ inline bool verifyScalpelFinish(){
             if(!button("C4")->getToggleState()||!button("ON")->getToggleState()||button("OFF")->getToggleState())return fail(__LINE__);
             if(!contrast(*button("ON"),true)||!contrast(*button("OFF"),true))return fail(__LINE__);
         }else{
-            if(dials.size()!=5)return fail(__LINE__);
-            for(int i=0;i<5;++i){
-                if(dials[(size_t)i]->getBounds()!=scalpel::reference::colorDial(i))return fail(__LINE__);
-                record(page,*dials[(size_t)i],"dial"+juce::String(i));
-            }
+            if(dials.size()!=1||dials.front()->getBounds()!=scalpel::reference::decayDial())return fail(__LINE__);
+            record(page,*dials.front(),"visual decay");
         }
         if(!save("surgery-ui-IVORY-"+juce::String(page)+"-1344x756.png"))return fail(__LINE__);
         editor->setSize(1792,1008);if(!save("surgery-ui-IVORY-"+juce::String(page)+"-1792x1008.png"))return fail(__LINE__);

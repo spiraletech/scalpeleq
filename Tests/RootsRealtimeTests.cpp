@@ -143,7 +143,7 @@ int main(){
         }
         std::cout<<"D PASS compressor gain reduction and mono/phase\n";
     }
-    // PROOF E: ONYX changes only the selected spectral ROOT, and threshold
+    // PROOF E: retired COLOR stays inert, and threshold
     // produces measurably more gain reduction at a lower setting.
     {
         auto render=[](double frequency,double sparkle,double threshold,bool comp) {
@@ -164,8 +164,8 @@ int main(){
         const double wetOut=render(8000.0,1.0,-30.0,false);
         const double deltaIn=std::abs(wetIn-dryIn);
         const double deltaOut=std::abs(wetOut-dryOut);
-        if(!(deltaIn>0.0001 && deltaIn>deltaOut*2.0)){
-            std::cerr<<"E FAIL ONYX territory isolation "<<deltaIn<<","<<deltaOut<<"\n";
+        if(deltaIn>1e-10||deltaOut>1e-10){
+            std::cerr<<"E FAIL retired COLOR changed audio "<<deltaIn<<","<<deltaOut<<"\n";
             return 5;
         }
         const double light=render(1000.0,0.0,-5.0,true);
@@ -174,7 +174,7 @@ int main(){
             std::cerr<<"E FAIL threshold ineffective "<<heavy<<","<<light<<"\n";
             return 6;
         }
-        std::cout<<"E PASS per-ROOT ONYX isolation and threshold reduction\n";
+        std::cout<<"E PASS retired COLOR is inert and threshold reduces gain\n";
     }
     // PROOF F: deleting an OFF band fades its removal processing back to dry;
     // absence is not another spelling of BAND OFF.

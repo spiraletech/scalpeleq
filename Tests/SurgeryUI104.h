@@ -123,7 +123,7 @@ inline bool verifyUI104(PRISMVSTAudioProcessor& processor,juce::AudioProcessorEd
         csv<<instances<<','<<scale<<','<<frames[frames.size()/2]<<','<<frames[(frames.size()*95)/100]<<','<<frames.back()<<','<<mean<<','<<mean*6<<','<<cpuMs/frames.size()<<','<<cpuMs/frames.size()*6<<'\n';
         std::cout<<"GUI104: "<<instances<<" instance(s), scale "<<scale<<", graph paint median "<<frames[frames.size()/2]<<" ms p95 "<<frames[(frames.size()*95)/100]<<" ms\n";
     }
-    for(const char* mode:{"BAND MODE","CARVE","COLOR","ANALYZE"}){
+    for(const char* mode:{"BAND MODE","CARVE","ANALYZE"}){
         if(!clickMode(mode))return false;
         for(float scale:{1.f,1.25f,1.5f}){
             auto capture=editor.createComponentSnapshot(editor.getLocalBounds(),true,scale);

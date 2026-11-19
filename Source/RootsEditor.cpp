@@ -303,9 +303,7 @@ void RootsGraph::paintStaticFrame(juce::Graphics& g) const {
     scalpel::finish::analyzerHousing(g,full.reduced(.5f));
     // Four screws belong to the full display housing, beyond the meter bay.
     for(const auto c:scalpel::reference::housingScrews(false))scalpel::finish::screw(g,c);
-    juce::ColourGradient glass(juce::Colour(0xff11100e),r.getX(),r.getY(),
-                               scalpel::finish::analyzer,r.getRight(),r.getBottom(),false);
-    glass.addColour(.4,juce::Colour(0xff090908));g.setGradientFill(glass);g.fillRect(r);
+    scalpel::formidable::draw(g,scalpel::formidable::Art::plot_glass,r);
     g.setFont(scalpel::finish::font(14,false));
     g.setColour(scalpel::finish::text);
     // No inherited cyan spectrum title, old SONAR weather image or C1-C4
@@ -858,8 +856,7 @@ void RootsGraph::paint(juce::Graphics& g){
         if(mode_==3)
             g.drawHorizontalLine(juce::roundToInt(mouse_.y),r.getX(),r.getRight());
         juce::String text=hzText(freq)+" Hz ~"+pitchText(freq)+" / "+
-                juce::String(bands_[(size_t)bar],1)+" dBFS / HOLD "+
-                juce::String(peaks_[(size_t)bar],1)+" dBFS";
+                juce::String(bands_[(size_t)bar],1)+" dBFS";
         const int hoveredCarve=hitCarveNode(mouse_);
         if(hoveredCarve>=0) {
             const int root=selected_/2;
@@ -942,7 +939,7 @@ void RootsGraph::mouseDown(const juce::MouseEvent& e){
     if(hit>=0)selectNode(hit);
     if(e.mods.isPopupMenu()){
         const int interior=hit>=0?hit/2:hitBandInterior(e.position);
-        if(interior>=0){selectNode(interior*2);popup();}
+        if(interior>=0){selectNode(interior*2);popup(nullptr,e.getScreenPosition());}
         return;
     }
     dragging_=hit;
@@ -1133,7 +1130,7 @@ void RootsGraph::clampCarvesToRoot(int root){
         if(std::abs(raw-bound)>0.005f)change(processor_,id,bound);
     }
 }
-void RootsGraph::popup(juce::Component* bandButton){
+void RootsGraph::popup(juce::Component* bandButton,juce::Point<int> screenPoint){
     const int root=selected_/2;
     auto model=loadBandModel();
     juce::PopupMenu menu;
@@ -1150,8 +1147,16 @@ void RootsGraph::popup(juce::Component* bandButton){
         menu.addItem(6,"ADD BAND",model.restore(root));
     }
     const juce::Component::SafePointer<RootsGraph> safe(this);
-    menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(
-        bandButton!=nullptr?bandButton:this),[safe,root](int id){
+    auto options=juce::PopupMenu::Options().withTargetComponent(
+        bandButton!=nullptr?bandButton:this);
+    if(bandButton==nullptr){
+        const auto bounds=getScreenBounds();
+        options=options.withTargetScreenArea({screenPoint.x,screenPoint.y,1,1})
+            .withPreferredPopupDirection(screenPoint.y>bounds.getCentreY()
+                ?juce::PopupMenu::Options::PopupDirection::upwards
+                :juce::PopupMenu::Options::PopupDirection::downwards);
+    }
+    menu.showMenuAsync(options,[safe,root](int id){
             if(safe==nullptr||id<=0)return;
             auto& graph=*safe;
             auto layout=graph.loadBandModel();
@@ -1238,12 +1243,38 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     off_.setClickingTogglesState(false);
     off_.setTriggeredOnMouseDown(true);
     off_.onClick=[this]{setSelectedEnabled(false,false);};
-    static constexpr const char* labels[]{"BAND MODE","CARVE","COLOR","ANALYZE"};
-    for(int i=0;i<4;++i){
+    static constexpr const char* labels[]{"BAND MODE","CARVE","ANALYZE"};
+    for(int i=0;i<3;++i){
         auto& b=modeButtons_[(size_t)i];
         b.setButtonText(labels[i]);
-        b.onClick=[this,i]{setMode(i);};
+        b.onClick=[this,i]{setMode(scalpel::reference::modePages[(size_t)i]);};
         addAndMakeVisible(b);
+    }
+    masterLabel_.setText("MASTER",juce::dontSendNotification);
+    masterLabel_.setJustificationType(juce::Justification::centred);
+    masterLabel_.setFont(juce::Font(juce::FontOptions("Segoe UI",9.f,juce::Font::bold)));
+    masterLabel_.setColour(juce::Label::textColourId,juce::Colour(0xffd1c0a8));
+    addAndMakeVisible(masterLabel_);
+    const char* domains[]{"STEREO","MID","SIDE"};
+    for(int i=0;i<3;++i){
+        auto& button=masterButtons_[(size_t)i];
+        button.setButtonText(domains[i]);
+        button.setComponentID("master-output-"+juce::String(i));
+        button.setTooltip(i==0?"Master output: full stereo mix":
+            i==1?"Master output: Mid (center) only":"Master output: Side (difference) only");
+        button.setColour(juce::TextButton::buttonColourId,juce::Colour(0xff22201c));
+        button.setColour(juce::TextButton::buttonOnColourId,juce::Colour(0xff3f3222));
+        button.setColour(juce::TextButton::textColourOffId,juce::Colour(0xffd1c0a8));
+        button.setColour(juce::TextButton::textColourOnId,juce::Colour(0xffffcb81));
+        button.onClick=[this,i]{
+            if(auto* parameter=processor_.apvts.getParameter("master_output_domain")){
+                parameter->beginChangeGesture();
+                change(processor_,"master_output_domain",(float)i);
+                parameter->endChangeGesture();
+                timerCallback();
+            }
+        };
+        addAndMakeVisible(button);
     }
     for(int i=0;i<4;++i){
         auto& b=carveSlotButtons_[(size_t)i];
@@ -1279,20 +1310,6 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     carveOff_.setClickingTogglesState(false);
     carveOff_.setTriggeredOnMouseDown(true);
     carveOff_.onClick=[this]{setSelectedEnabled(true,false);};
-    const std::array<const char*,5> names{"DYNAMIC","SPARKLE","SHINE","SMOOTHENING","VINTAGE TAPE"};
-    for(int i=0;i<5;++i){
-        auto& s=onyxSliders_[(size_t)i];
-        rotary(s," %",0.0);s.setRange(0.0,100.0,0.1);
-        s.setMouseDragSensitivity(1200);
-        static const char* tips[]{"Independent 3 ms / 75 ms transient contrast, +3 dB / -2 dB bounded.","Transient harmonic shimmer; zero is neutral.","Smooth bounded linear presence shelf, max +2.5 dB.","Dynamic HF edge taming; max about -3 dB.","Gentle ADAA tape warmth and high-frequency rounding."};
-        s.setTooltip(tips[i]);
-        s.setDoubleClickReturnValue(true,0.0);
-        addAndMakeVisible(s);
-        onyxLabels_[(size_t)i].setText(names[(size_t)i],juce::dontSendNotification);
-        onyxLabels_[(size_t)i].setJustificationType(juce::Justification::centred);
-        onyxLabels_[(size_t)i].setColour(juce::Label::textColourId,juce::Colours::white);
-        addAndMakeVisible(onyxLabels_[(size_t)i]);
-    }
     mono_.setTooltip("Frequency-selective MONO on the selected BAND only");
     phase_.setTooltip("Automatic per-band L/R phase alignment. Estimates the phase offset and rotates the right-channel band toward the left reference without reducing stereo width.");
     limit_.setTooltip("Enable fixed-depth LA-2A-inspired optical leveling for the selected band. The hidden automation amount remains compatible with saved sessions.");
@@ -1338,7 +1355,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     reducedMotion_.setTooltip("Suppresses weather drift and lightning. Enabled by default. Full motion still limits local flashes to one per 0.75 seconds.");
     reducedMotionA_=std::make_unique<ButtonA>(processor_.apvts,"sonar_reduced_motion",reducedMotion_);
     analyzerLegend_.setText("SONAR 2.1 / VISUAL MODE",juce::dontSendNotification);
-    compressor_.addItemList({ "SAVED PROFILE", "COMP OFF", "176E", "CE1B" },1);
+    compressor_.addItemList({ "OFF", "176E", "CE1B" },1);
     domain_.addItemList({ "STEREO", "MID", "SIDE" },1);
     detector_.addItemList({ "LINKED", "DUAL M/S", "MID ONLY", "SIDE ONLY" },1);
     for(auto* box:{&compressor_,&domain_,&detector_})addAndMakeVisible(*box);
@@ -1412,20 +1429,21 @@ void RootsEditor::choosePreset(bool saving){
 }
 void RootsEditor::bindNode(int n){
     node_=juce::jlimit(0,prism::roots::v2::kNodes-1,n);
-    for(auto& a:onyxAttachments_)a.reset();
-    const std::array<const char*,5> names{"color_dynamic","onyx_sparkle","onyx_shine","onyx_smooth","onyx_tape"};
-    for(int i=0;i<5;++i)
-        onyxAttachments_[(size_t)i]=std::make_unique<SliderA>(
-            processor_.apvts,
-            PRISMVSTAudioProcessor::rootsRootControlId(node_/2,names[(size_t)i]),
-            onyxSliders_[(size_t)i]);
     compressorA_.reset();domainA_.reset();detectorA_.reset();
     gainA_.reset();thresholdA_.reset();limitAmountA_.reset();monoA_.reset();
     onA_.reset();soloA_.reset();phaseA_.reset();limitA_.reset();
     const auto rid=[this](const char* suffix){
         return PRISMVSTAudioProcessor::rootsRootControlId(node_/2,suffix);
     };
-    compressorA_=std::make_unique<ComboA>(processor_.apvts,rid("dynamics_mode"),compressor_);
+    compressorA_=std::make_unique<juce::ParameterAttachment>(
+        *processor_.apvts.getParameter(rid("dynamics_mode")),[this](float mode){
+            compressor_.setSelectedId(juce::jlimit(1,3,juce::roundToInt(mode)),juce::dontSendNotification);
+        },nullptr);
+    compressor_.onChange=[this]{
+        if(compressorA_&&compressor_.getSelectedId()>0)
+            compressorA_->setValueAsCompleteGesture((float)compressor_.getSelectedId());
+    };
+    compressorA_->sendInitialUpdate();
     domainA_=std::make_unique<ComboA>(processor_.apvts,rid("domain"),domain_);
     detectorA_=std::make_unique<ComboA>(processor_.apvts,rid("detector"),detector_);
     gainA_=std::make_unique<SliderA>(processor_.apvts,
@@ -1491,11 +1509,11 @@ void RootsEditor::bindCarve(){
     graph_.setPresentation(mode_,carveSlot_);
 }
 void RootsEditor::setMode(int next){
-    mode_=juce::jlimit(0,3,next);
+    mode_=next==1||next==3?next:0;
     lookAndFeel_.setFinishEnabled(scalpel::finish::enabledForMode(mode_));
-    for(int i=0;i<4;++i){
+    for(int i=0;i<3;++i){
         auto& b=modeButtons_[(size_t)i];
-        b.setToggleState(i==mode_,juce::dontSendNotification);
+        b.setToggleState(scalpel::reference::modePages[(size_t)i]==mode_,juce::dontSendNotification);
         b.setColour(juce::TextButton::buttonColourId,juce::Colour(0xff182a38));
         b.setColour(juce::TextButton::buttonOnColourId,juce::Colour(0xff274960));
         b.setColour(juce::TextButton::textColourOffId,juce::Colour(0xffb7c9d8));
@@ -1506,8 +1524,6 @@ void RootsEditor::setMode(int next){
     for(auto* l:{&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_})l->setVisible(carve);
     for(auto& b:carveSlotButtons_)b.setVisible(carve);
     carveOn_.setVisible(carve);carveOff_.setVisible(carve);
-    // COLOR DYNAMIC is the sole visible transient-contrast control. Keep the
-    // historical CARVE dynamic parameter for preset compatibility only.
     carveDynamic_.setVisible(false);
     // Legacy SONAR / JUKE settings stay automatable and preset-compatible,
     // but aren't injected into the redesigned 3-control ANALYZE shelf.
@@ -1525,10 +1541,6 @@ void RootsEditor::setMode(int next){
     limitAmount_.setVisible(false);
     phase_.setVisible(mode_==0);
     limit_.setVisible(mode_==0);
-    for(int i=0;i<5;++i){
-        onyxSliders_[(size_t)i].setVisible(mode_==2);
-        onyxLabels_[(size_t)i].setVisible(mode_==2);
-    }
     on_.setVisible(mode_==0);
     off_.setVisible(mode_==0);
     solo_.setVisible(mode_==0);
@@ -1606,7 +1618,6 @@ void RootsEditor::timerCallback(){
                     &analyzerDepthLabel_,&analyzerSlopeLabel_,&analyzerMemoryLabel_,&analyzerLegend_,
                     &compLabel_,&domainLabel_,&detectorLabel_,&outputLabel_})
         label->setColour(juce::Label::textColourId,labelColour);
-    for(auto& label:onyxLabels_)label.setColour(juce::Label::textColourId,labelColour);
     // Threshold remains editable while OFF without activating compression.
     threshold_.setEnabled(true);
 thresholdLabel_.setText("COMP THRESHOLD",
@@ -1631,6 +1642,9 @@ thresholdLabel_.setText("COMP THRESHOLD",
     heatToggle_.setButtonText("HEAT MAP");
     graph_.setPresentation(mode_,carveSlot_);
     std::array<float,PRISMVSTAudioProcessor::labBars> bars{},peaks{};
+    const int masterMode=processor_.getMasterDomain();
+    for(int i=0;i<3;++i)
+        masterButtons_[(size_t)i].setToggleState(i==masterMode,juce::dontSendNotification);
     processor_.setAnalyzerDomain(juce::roundToInt(pval(processor_.apvts,
         PRISMVSTAudioProcessor::rootsRootControlId(node_/2,"domain"))));
     processor_.copyPrismLabBars(bars,peaks);
@@ -1708,7 +1722,11 @@ void RootsEditor::layoutRack(){
     using namespace scalpel::reference;
     for(int root=0;root<7;++root){auto& button=rootButtons_[(size_t)root];button.setVisible(true);button.setBounds(band(root));}
     graph_.setBounds(analyzer().toNearestInt());
-    for(int i=0;i<4;++i)modeButtons_[(size_t)i].setBounds(tab(i));
+    for(int i=0;i<3;++i){
+        modeButtons_[(size_t)i].setBounds(tab(modePages[(size_t)i]));
+        masterButtons_[(size_t)i].setBounds(masterButton(i));
+    }
+    masterLabel_.setBounds(masterCaption());
     xrayButton_.setBounds(bounds(1317,233,176,58));
     peakHold_.setBounds(bounds(1328,412,165,54));
 
@@ -1731,11 +1749,6 @@ void RootsEditor::layoutRack(){
         cl[(size_t)i]->setBounds(cs[(size_t)i]->getX()-20,bounds(0,589,1,28).getY(),cs[(size_t)i]->getWidth()+40,bounds(0,589,1,28).getHeight());
     }
     for(int i=0;i<4;++i)carveSlotButtons_[(size_t)i].setBounds(carveSlot(i));
-    for(int i=0;i<5;++i){
-        auto caption=bounds(0,589,280,28);caption.setCentre(colorDial(i).getCentreX(),caption.getCentreY());
-        onyxLabels_[(size_t)i].setBounds(caption);
-        onyxSliders_[(size_t)i].setBounds(colorDial(i));
-    }
     // ANALYZE headings use measured reference hierarchy and remain clear of
     // the knob canvas; do not alter typography on unrelated pages.
     for(auto* label:{&analyzerDepthLabel_,&analyzerMemoryLabel_,&analyzerSlopeLabel_})

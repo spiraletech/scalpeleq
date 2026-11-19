@@ -102,6 +102,7 @@ public:
                  rootMeters[3].load(), rootMeters[4].load() };
     }
     void setAnalyzerDomain(int domain) noexcept { analyzerDomain_.store(juce::jlimit(0,2,domain)); }
+    int getMasterDomain() const noexcept { return juce::roundToInt(masterDomainValue_->load()); }
     int getAnalyzerDomain() const noexcept { return measuredAnalyzerDomain_.load(); }
     float getCarveGainDb(int root,int slot) const noexcept {
         const auto index=(size_t)(root*4+slot);
@@ -162,16 +163,12 @@ private:
     {
         float envelope = 0.0f;
         float gainReductionDb = 0.0f;
-        std::array<float, 2> onyxLow {}; // independent audio-channel texture memory
     };
 
     std::array<std::array<LR6Splitter, 2>, numCrossovers> splitters;
     std::array<std::array<std::array<ThirdOrderAllPass, 2>, numSections>, numCrossovers> compensators;
     std::array<juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative>, numCrossovers> crossoverSmoothers;
     std::array<SectionState, numSections> sectionStates;
-    struct OnyxState { float air=0.0f,presence=0.0f,smooth=0.0f,dc=0.0f; };
-    std::array<OnyxState,2> onyxFinish {};
-    void processOnyxFinish(juce::AudioBuffer<float>&) noexcept;
     std::array<juce::MemoryBlock, 2> comparisonStates;
     int comparisonSlot_ = 0;
     struct RootParameters {
@@ -189,10 +186,11 @@ private:
     std::atomic<float>* engineMode = nullptr;
     std::atomic<float>* bypassValue = nullptr;
     std::atomic<float>* trimValue = nullptr;
+    std::atomic<float>* masterDomainValue_ = nullptr;
     std::array<std::atomic<double>, 5> rootMeters { 1.0, 0.0, 0.0, 1.0, 0.0 };
     std::array<std::atomic<float>,numSections> rootBandPeakDb {};
     std::atomic<std::uint64_t> rootBandPeakRevision_ {0};
-    juce::SmoothedValue<float> outputTrimSmoother, bypassMix;
+    juce::SmoothedValue<float> outputTrimSmoother, bypassMix, masterMidGain_, masterSideGain_;
     juce::AudioBuffer<float> dryScratch;
     prism::roots::v2::Engine rootsEngine;
     surgery::CarveEngine carveEngine, signedCarveEngine;

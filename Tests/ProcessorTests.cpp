@@ -435,16 +435,17 @@ int main(int argc,char** argv)
         }
     }
 
-    std::cerr << "TEST 8 ONYX sonic safety and silence" << std::endl;
+    std::cerr << "TEST 8 retired coloration is sonically inert" << std::endl;
     {
-        const auto measure = [](float onyx, bool silence)
+        const auto measure = [](float onyx, bool silence, bool legacy)
         {
             auto p = std::make_unique<PRISMVSTAudioProcessor>();
-        // These established regression proofs deliberately exercise the protected 1.2 DSP path.
-        setActual(*p, "roots_engine_mode", 0.0f);
-            p->prepareToPlay(48000.0, 512);
-            setActual(*p, PRISMVSTAudioProcessor::sectionId(4, "solo"), 1.0f);
-            setActual(*p, PRISMVSTAudioProcessor::sectionId(4, "onyx_pct"), onyx);
+            setActual(*p,"roots_engine_mode",legacy?0.0f:1.0f);
+            p->prepareToPlay(48000.0,512);
+            setActual(*p,PRISMVSTAudioProcessor::sectionId(4,"solo"),1.0f);
+            setActual(*p,PRISMVSTAudioProcessor::sectionId(4,"onyx_pct"),onyx);
+            for(const auto* color:{"color_dynamic","onyx_sparkle","onyx_shine","onyx_smooth","onyx_tape"})
+                setActual(*p,PRISMVSTAudioProcessor::rootsRootControlId(4,color),onyx);
             juce::AudioBuffer<float> b(2, 512);
             juce::MidiBuffer midi;
             for (int block = 0; block < 24; ++block)
@@ -456,14 +457,40 @@ int main(int argc,char** argv)
             return rms(b);
         };
 
-        const double dry = measure(0.0f, false);
-        const double onyx = measure(100.0f, false);
-        const double silence = measure(100.0f, true);
-        if (dry < 0.005 || onyx / dry < 0.75 || onyx / dry > 1.15
-            || std::abs(onyx / dry - 1.0) < 0.0005 || silence > 1.0e-7)
-        {
-            std::cerr << "ONYX became excessively loud, ineffective or generated noise\n";
-            return 14;
+        for(bool legacy:{false,true}){
+            const double dry=measure(0.f,false,legacy);
+            const double retired=measure(100.f,false,legacy);
+            const double silence=measure(100.f,true,legacy);
+            if(dry<0.005||std::abs(retired-dry)>1e-8||silence>1e-7){
+                std::cerr<<"Retired COLOR parameter changed the output or silence\n";
+                return 14;
+            }
+        }
+    }
+
+    // Master projection follows the post-band stereo sum and leaves per-band routing intact.
+    {
+        auto p=std::make_unique<PRISMVSTAudioProcessor>();
+        const auto master="master_output_domain";
+        const auto domain=PRISMVSTAudioProcessor::rootsRootControlId(0,"domain");
+        setActual(*p,domain,2.f);
+        p->prepareToPlay(48000,512);
+        juce::AudioBuffer<float> audio(2,512);
+        juce::MidiBuffer midi;
+        const auto verify=[&](int mode,float expectedL,float expectedR){
+            setActual(*p,master,(float)mode);
+            audio.clear();
+            for(int i=0;i<512;++i){
+                audio.setSample(0,i,.3f);audio.setSample(1,i,.1f);
+            }
+            p->processBlock(audio,midi);
+            return std::abs(audio.getSample(0,511)-expectedL)<1e-5f
+                &&std::abs(audio.getSample(1,511)-expectedR)<1e-5f;
+        };
+        if(!verify(0,.3f,.1f)||!verify(1,.2f,.2f)||!verify(2,.1f,-.1f)
+            ||!verify(0,.3f,.1f)||p->apvts.getRawParameterValue(domain)->load()!=2.f){
+            std::cerr<<"Master output projection or per-band domain independence failed\n";
+            return 74;
         }
     }
 

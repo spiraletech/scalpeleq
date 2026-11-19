@@ -46,18 +46,14 @@ inline void drawRackFace(juce::Graphics& g,int width,int height,int mode)
     auto subtitle=word;subtitle.setHeight(20);subtitle.setExtraKerningFactor(.14f);
     engraved("SURGICAL EQUALIZER",bounds(1000,26,590,68),subtitle,juce::Justification::centredRight);
     // Recesses are manufactured wells, not extra decorative outline layers.
-    const auto well=[&](juce::Rectangle<float> area,float radius){
-        g.setColour(juce::Colour(0xff55483c));g.fillRoundedRectangle(area.expanded(1),radius+1);
-        g.setColour(juce::Colour(0xff1b1713));g.fillRoundedRectangle(area,radius);
-        g.setColour(scalpel::finish::silver.withAlpha(.65f));g.drawRoundedRectangle(area,radius,.8f);
-    };
-    well(rect(45,104,1564,92),14);well(rect(40,495,1568,78),10);
+    scalpel::formidable::draw(g,scalpel::formidable::Art::band_well,rect(45,104,1564,92));
+    scalpel::formidable::draw(g,scalpel::formidable::Art::page_well,rect(40,495,1568,78));
     const auto shadow=[&](juce::Rectangle<float> area,float radius){
         juce::Path path;path.addRoundedRectangle(area.reduced(1.5f),radius);
         juce::DropShadow(juce::Colours::black.withAlpha(.32f),3,{0,1}).drawForPath(g,path);
     };
     for(int i=0;i<7;++i)shadow(band(i).toFloat(),7);
-    for(int i=0;i<4;++i)shadow(tab(i).toFloat(),5);
+    for(int page:modePages)shadow(tab(page).toFloat(),5);
     scalpel::finish::panel(g,deck(),19);
     for(const auto c:housingScrews(true))scalpel::finish::screw(g,c);
     if(mode==0||mode==1){
@@ -71,10 +67,9 @@ inline void drawRackFace(juce::Graphics& g,int width,int height,int mode)
     std::array<float,4> dividers{};int count=4;
     if(mode==0)dividers={313,560,805,1164};
     else if(mode==1)for(int i=0;i<4;++i)dividers[(size_t)i]=carveDividerX(i);
-    else if(mode==2)dividers={375,685,995,1305};
     else {dividers={570,1100,0,0};count=2;}
     for(int i=0;i<count;++i){auto line=(mode==1?juce::Rectangle<float>{dividers[(size_t)i],rect(0,622,1,187).getY(),2.f*scale,rect(0,622,1,187).getHeight()}:rect(dividers[(size_t)i],622,2,187)).withBottom(deck().getBottom()-28.f*scale);
-        if(mode==2||mode==3){const int columns=mode==2?5:3;line.setX(deck().getX()+deck().getWidth()*(i+1)/columns);}
+        if(mode==3)line.setX(deck().getX()+deck().getWidth()*(i+1)/3);
         g.setColour(scalpel::finish::silver);g.fillRect(line.translated(1,0));
         g.setColour(juce::Colour(0xff55463a));g.fillRect(line);}
 }

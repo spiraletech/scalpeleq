@@ -33,7 +33,7 @@ inline bool verifyDualKnobCalibration(){
     if(!click("ON"))return fail(__LINE__);
     juce::AudioBuffer<float> audio(2,256);juce::MidiBuffer midi;int sampleTime=0;
     const auto runAudio=[&](){for(int block=0;block<120;++block){for(int i=0;i<256;++i){const float value=.50f*std::sin(juce::MathConstants<float>::twoPi*40.f*(sampleTime++)/48000.f);audio.setSample(0,i,value);audio.setSample(1,i,value);}processor->processBlock(audio,midi);}};
-    for(int mode=1;mode<4;++mode){bool found=false;for(auto* child:editor->getChildren())if(auto* box=dynamic_cast<juce::ComboBox*>(child);box&&box->isVisible()&&box->getNumItems()==4){box->setSelectedId(mode+1,juce::sendNotificationSync);found=true;}
+    for(int mode=1;mode<4;++mode){bool found=false;for(auto* child:editor->getChildren())if(auto* box=dynamic_cast<juce::ComboBox*>(child);box&&box->isVisible()&&box->getNumItems()==3&&box->getItemText(0)=="OFF"){box->setSelectedId(mode,juce::sendNotificationSync);found=true;}
         if(!found||raw(cid)!=mode||raw(tid)!=0)return fail(__LINE__);
         runAudio();const float gr=processor->getGainReductionDb();
         csv<<"profile_gain_reduction,"<<mode<<','<<raw(tid)<<','<<gr<<'\n';

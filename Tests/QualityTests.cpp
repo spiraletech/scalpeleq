@@ -364,7 +364,7 @@ bool runQualityTests(){
             if(fresh->apvts.getRawParameterValue(comp)->load()!=0)return false;
         }
         std::unique_ptr<juce::AudioProcessorEditor> ui(fresh->createEditor());
-        // Scalpel launches in COLOR intentionally. Exercise the BAND MODE threshold
+        // Exercise the BAND MODE threshold
         // only after opening the panel that owns that control.
         if(!click(*ui,"BAND MODE")){
             std::cerr<<"QUALITY: BAND MODE control unavailable\n";
@@ -714,9 +714,9 @@ bool runQualityTests(){
     juce::Thread::sleep(40); // bounded analyzer handoff for deterministic screenshot data
     set(*p,"aura_color",1);set(*p,"sonar_weather_mode",0);
     std::unique_ptr<juce::AudioProcessorEditor> editor(p->createEditor());
-    const char* modes[]={"BAND MODE","CARVE","COLOR","ANALYZE"};
+    const char* modes[]={"BAND MODE","CARVE","ANALYZE"};
     for(int theme=0;theme<1;++theme){
-        for(int mode=0;mode<4;++mode){
+        for(int mode=0;mode<3;++mode){
             if(!click(*editor,modes[mode]))return false;
             const int width=theme==0?1120:840;
             editor->setSize(width,theme==0?755:610);
@@ -724,7 +724,7 @@ bool runQualityTests(){
             auto file=juce::File::getCurrentWorkingDirectory().getChildFile("surgery-ui-"+juce::String(theme)+"-"+modes[mode]+".png");
             juce::FileOutputStream stream(file);stream.setPosition(0);stream.truncate();
             if(!juce::PNGImageFormat().writeImageToStream(snapshot,stream))return false;
-            if(theme==0&&mode==3){
+            if(theme==0&&mode==2){
                 juce::TextButton* sonar=nullptr;
                 for(auto* child:editor->getChildren())if(auto* button=dynamic_cast<juce::TextButton*>(child))
                     if(button->getButtonText()=="HEAT MAP")sonar=button;
@@ -745,7 +745,7 @@ bool runQualityTests(){
                 if(p->apvts.getRawParameterValue("aura_color")->load()<.5f)return false;
                 std::cout<<"QUALITY 1.0.3: SONAR button enables visible full-spectrum fill ("<<changed<<" pixels), OFF hides it\n";
             }
-            if(theme==0&&mode==2){
+            if(theme==0&&mode==0){
                 juce::TextButton* xray=nullptr;
                 for(auto* child:editor->getChildren())
                     if(auto* b=dynamic_cast<juce::TextButton*>(child))
@@ -788,9 +788,8 @@ bool runQualityTests(){
     set(*p,"scalpel_xray",1);
     editor->setSize(1344,756);
     juce::Thread::sleep(40);juce::Timer::callPendingTimersSynchronously();
-    // Each hardware menu gets a real native-size regression photograph, not
-    // just COLOR: missing buttons and extra rotaries become reviewable.
-    for(const auto* tab:{"BAND MODE","CARVE","COLOR","ANALYZE"}){
+    // Each hardware menu gets a native-size regression photograph.
+    for(const auto* tab:{"BAND MODE","CARVE","ANALYZE"}){
         if(!click(*editor,tab))return false;
         juce::Timer::callPendingTimersSynchronously();
         const auto native=editor->createComponentSnapshot(editor->getLocalBounds());
@@ -800,15 +799,15 @@ bool runQualityTests(){
         if(!juce::PNGImageFormat().writeImageToStream(native,stream))return false;
     }
     // Recovery comparison uses a fresh, silent instance, with no mutated
-    // CARVE or COLOR fixture parameters. The analyzer remains genuinely live.
+    // CARVE fixture parameters. The analyzer remains genuinely live.
     {
         std::unique_ptr<juce::AudioProcessor> fresh(createPluginFilter());
         std::unique_ptr<juce::AudioProcessorEditor> review(fresh->createEditor());
         review->setSize(1344,756);
-        if(!click(*review,"COLOR"))return false;
+        if(!click(*review,"ANALYZE"))return false;
         juce::Timer::callPendingTimersSynchronously();
         const auto capture=review->createComponentSnapshot(review->getLocalBounds());
-        juce::FileOutputStream out(juce::File::getCurrentWorkingDirectory().getChildFile("scalpel-ui-recovery-COLOR-1344x756.png"));
+        juce::FileOutputStream out(juce::File::getCurrentWorkingDirectory().getChildFile("scalpel-ui-recovery-ANALYZE-1344x756.png"));
         if(!juce::PNGImageFormat().writeImageToStream(capture,out))return false;
         // Switching a page must never change the editor or shared chrome.
         // Check actual component bounds/transforms, not authored constants.
@@ -821,12 +820,12 @@ bool runQualityTests(){
                 bool shared=dynamic_cast<RootsGraph*>(child)!=nullptr;
                 if(auto* b=dynamic_cast<juce::TextButton*>(child)){
                     const auto name=b->getButtonText();
-                    shared=name.startsWith("BAND ")||name=="CARVE"||name=="COLOR"||
+                    shared=name.startsWith("BAND ")||name=="CARVE"||
                         name=="ANALYZE"||name=="X-RAY"||name=="RESET";
                 }
                 if(shared)chrome.push_back({child,child->getBounds(),child->getTransform()});
             }
-            for(const auto* tab:{"CARVE","COLOR","ANALYZE","COLOR","BAND MODE"}){
+            for(const auto* tab:{"CARVE","ANALYZE","BAND MODE"}){
                 if(!click(*review,tab))return false;
                 if(review->getWidth()!=size.x||review->getHeight()!=size.y)return false;
                 for(const auto& frame:chrome)
@@ -837,7 +836,7 @@ bool runQualityTests(){
         }
         std::cout<<"Page-switch geometry invariant passed at minimum, native and maximum sizes\n";
     }
-    click(*editor,"COLOR");
+    click(*editor,"ANALYZE");
     editor->setSize(1120,755);
     // Old host/state theme values must never switch away from the current rack.
     if(!click(*editor,"FREEZE"))return false;
@@ -870,7 +869,7 @@ bool runQualityTests(){
     if(!verifyUI104(*p,*editor))return false;
     if(!verifyUI105(*p,*editor))return false;
     if(!verifyUI106(*p,*editor))return false;
-    std::cout<<"QUALITY: all four modes rendered; legacy theme values preserve Scalpel COLOR UI\n";
+    std::cout<<"QUALITY: all three modes rendered; legacy theme values preserve the rack\n";
     return true;
 }
 

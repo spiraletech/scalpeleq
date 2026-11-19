@@ -122,7 +122,6 @@ inline bool captureScalpelModule(const juce::String& modulePath){
     bool ok=hit(band(2))&&hit(tab(1))&&hit(carveSlot(3))&&capture("surgery-ui-VST3-CARVE-1344x756.png");
     ok=ok&&hit(switchBounds(false))&&capture("surgery-ui-VST3-CARVE-ON.png");
     ok=ok&&hit(switchBounds(true))&&capture("surgery-ui-VST3-CARVE-OFF.png");
-    ok=ok&&hit(tab(2))&&capture("surgery-ui-VST3-COLOR-1344x756.png");
     ok=ok&&hit(tab(0))&&capture("surgery-ui-VST3-BAND-1344x756.png");
     ok=ok&&hit(switchBounds(false))&&capture("surgery-ui-VST3-BAND-ON.png");
     ok=ok&&hit(switchBounds(true))&&capture("surgery-ui-VST3-BAND-OFF.png");
@@ -157,7 +156,7 @@ inline bool captureScalpelModule(const juce::String& modulePath){
     evidence<<"version,"<<types[0]->version<<"\n";
     evidence<<"module,"<<modulePath<<"\neditor,1344x756\nfrequency,"<<parameter("CARVE 3/4 Frequency")->getCurrentValueAsText()<<"\nq,"<<parameter("CARVE 3/4 Q")->getCurrentValueAsText()<<"\n";
     editor->setVisible(false);editor->removeFromDesktop();editor.reset();plugin->releaseResources();
-    if(ok)std::cout<<"MODULE CAPTURE: built VST3 loaded in JUCE host; native CARVE/COLOR/BAND/ANALYZE captured at 1344x756; fixture preserved\n";
+    if(ok)std::cout<<"MODULE CAPTURE: built VST3 loaded in JUCE host; native CARVE/BAND/ANALYZE captured at 1344x756; fixture preserved\n";
     return ok;
 }
 #endif

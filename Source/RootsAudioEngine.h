@@ -9,7 +9,6 @@
 #include <numbers>
 #include "RootsSpectrumColours.h"
 #include "ScalpelBandModel.h"
-#include "SurgeryOnyx.h"
 #include "SurgeryCarveEngine.h"
 #include "Experimental/ScalpelBandStop.h"
 
@@ -138,8 +137,6 @@ public:
             node.phaseReal=node.phaseImag=node.phaseLeftPower=
                 node.phaseRightPower=node.phaseAngle=0.0;
             node.muteMidActive=node.muteSideActive=false;
-            node.onyxMid.prepare(sr_);node.onyxSide.prepare(sr_);
-            node.fx={node.config.dynamic,node.config.sparkle,node.config.shine,node.config.smooth,node.config.tape};
             node.presenceMix=node.config.present?1.0:0.0;
             node.enableMix=node.config.enabled?1.0:0.0;
             node.monoMix=rootMono_[(size_t)(i/2)]?1.0:0.0;
@@ -383,7 +380,6 @@ public:
             meter_.rootPeakDb[(size_t)root]=20.0*std::log10(std::max(1.0e-12,blockRootPeak[(size_t)root]));
     }
 private:
-    using OnyxMemory=surgery::Onyx;
     struct Node {
         Config config{};
         double attack=0.99,release=0.999;
@@ -394,8 +390,6 @@ private:
         double optoEnvelope=0.0,phaseMix=0.0,limitAmount=0.0;
         double phaseReal=0.0,phaseImag=0.0,phaseLeftPower=0.0,
                phaseRightPower=0.0,phaseAngle=0.0;
-        OnyxMemory onyxMid{},onyxSide{};
-        std::array<double,5> fx{};
         double presenceMix=1,enableMix=1,monoMix=0,compMix=0,threshold=0;
         bool muteMidActive=false,muteSideActive=false;
         Compressor profile=Compressor::optical3;
@@ -406,8 +400,6 @@ private:
         const auto& c=node.config;
         const double originalM=m,originalS=s;
         const double a=1.0-gainSmoothingAlpha_;
-        const std::array<double,5> targets{c.dynamic,c.sparkle,c.shine,c.smooth,c.tape};
-        for(size_t i=0;i<5;++i)node.fx[i]+=a*(targets[i]-node.fx[i]);
         node.presenceMix+=a*((c.present?1.0:0.0)-node.presenceMix);
         node.enableMix+=a*((c.enabled?1.0:0.0)-node.enableMix);
         node.monoMix+=a*((rootMono_[(size_t)root]?1.0:0.0)-node.monoMix);
@@ -454,13 +446,6 @@ private:
             const double correctedS=(bandL-correctedR)*0.5;
             m+=node.phaseMix*(correctedM-bandMid);
             s+=node.phaseMix*(correctedS-bandSide);
-        }
-        // Process spectral colour on the selected ROOT only, never master.
-        {
-            const double processedM=onyxSample(tapM,node.onyxMid,node);
-            const double processedS=onyxSample(tapS,node.onyxSide,node);
-            m+=processedM-tapM;
-            s+=processedS-tapS;
         }
         if(node.profile==Compressor::dynamics176E||node.profile==Compressor::dynamicsCE1B){
             const bool dense=node.profile==Compressor::dynamicsCE1B;
@@ -526,13 +511,10 @@ private:
                                              node.presenceMix);
         }
         // The final frequency-selective SIDE suppression is applied after
-        // root gain and all per-root colour effects in process().
+        // root gain and dynamics in process().
         const double active=node.presenceMix*node.enableMix;
         m=originalM+active*(m-originalM);
         s=originalS+active*(s-originalS);
-    }
-    double onyxSample(double x,OnyxMemory& state,const Node& node) const noexcept {
-        return state.sampleColor(x,node.fx);
     }
     // Each root's two boundary handles determine the exact frequency
     // interval for BOTH the palette and the audible bandpass.
@@ -540,12 +522,11 @@ private:
         const auto a=nodes_[(size_t)(2*root)].config.hz;
         const auto b=nodes_[(size_t)(2*root+1)].config.hz;
         const double low=std::min(a,b),high=std::max(a,b);
-        auto& colour=nodes_[(size_t)(2*root)];
-        colour.onyxMid.setRootBand(low,high);colour.onyxSide.setRootBand(low,high);
         const double phaseCenter=std::sqrt(std::max(20.0,low)*
                                            std::max(low+0.01,high));
-        colour.phaseLeft.set(sr_,phaseCenter);
-        colour.phaseRight.set(sr_,phaseCenter);
+        auto& node=nodes_[(size_t)(root*2)];
+        node.phaseLeft.set(sr_,phaseCenter);
+        node.phaseRight.set(sr_,phaseCenter);
         auto& tap=soloBands_[(size_t)root].filters;
         tap[0].setEdge(sr_,low,true); tap[1].setEdge(sr_,high,false);
         tap[2].setEdge(sr_,low,true); tap[3].setEdge(sr_,high,false);

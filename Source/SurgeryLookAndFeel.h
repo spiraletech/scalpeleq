@@ -118,9 +118,20 @@ public:
         const bool heat=button.getButtonText().startsWith("SONAR ")||button.getButtonText()=="HEAT MAP";
         const auto text=button.getButtonText();
         const bool bandSelector=text.startsWith("BAND ");
-        const bool pageTab=text=="BAND MODE"||text=="CARVE"||text=="COLOR"||text=="ANALYZE";
+        const bool pageTab=text=="BAND MODE"||text=="CARVE"||text=="ANALYZE";
+        if(button.getComponentID().startsWith("master-output-")){
+            using A=scalpel::formidable::Art;
+            const auto face=!button.isEnabled()?A::master_disabled:down?A::master_pressed:
+                button.getToggleState()?A::master_selected:over?A::master_hover:A::master_idle;
+            scalpel::formidable::draw(g,face,r);
+            if(button.hasKeyboardFocus(false)){
+                g.setColour(scalpel::finish::text.withAlpha(.8f));
+                g.drawRoundedRectangle(r.reduced(.5f),4.f,1.f);
+            }
+            return;
+        }
         if(finish_){
-            if(pageTab){scalpel::finish::tab(g,r,button.getToggleState(),over);return;}
+            if(pageTab){scalpel::finish::tab(g,r,button.getToggleState(),over,down);return;}
             if(deckSwitch||actionSwitch||carveSelector){
                 scalpel::finish::flushCap(g,button.getLocalBounds().toFloat().reduced(.5f),deckSwitch,
                     button.getToggleState(),over,down,text=="OFF");return;
@@ -301,9 +312,17 @@ public:
     }
     void drawButtonText(juce::Graphics& g,juce::TextButton& b,bool,bool) override {
         if(b.getButtonText()=="FREEZE"||b.getButtonText()=="RESUME"||b.getButtonText().startsWith("SONAR ")||b.getButtonText()=="HEAT MAP")return;
+        if(b.getComponentID().startsWith("master-output-")){
+            g.setColour(b.findColour(b.getToggleState()?juce::TextButton::textColourOnId:
+                                                       juce::TextButton::textColourOffId));
+            g.setFont(scalpel::finish::font(11.5f,b.getToggleState()));
+            g.drawFittedText(b.getButtonText(),b.getLocalBounds().reduced(4),
+                             juce::Justification::centred,1);
+            return;
+        }
         if(finish_){
             const auto label=b.getButtonText();
-            const bool tab=label=="BAND MODE"||label=="CARVE"||label=="COLOR"||label=="ANALYZE";
+            const bool tab=label=="BAND MODE"||label=="CARVE"||label=="ANALYZE";
             const bool hardware=label.startsWith("BAND ")&&!tab||label=="C1"||label=="C2"||label=="C3"||label=="C4"||
                 label=="MONO"||label=="SOLO"||label.startsWith("PHASE")||label=="LIMIT";
             g.setColour(!b.isEnabled()?scalpel::finish::secondary:hardware?scalpel::finish::ink:
@@ -322,7 +341,7 @@ public:
         const bool xray=b.getButtonText()=="X-RAY";
         const bool reset=b.getButtonText()=="RESET";
         const auto tabText=b.getButtonText();
-        const bool pageTab=tabText=="BAND MODE"||tabText=="CARVE"||tabText=="COLOR"||tabText=="ANALYZE";
+        const bool pageTab=tabText=="BAND MODE"||tabText=="CARVE"||tabText=="ANALYZE";
         if(pageTab){
             g.setColour(b.getToggleState()?juce::Colour(0xffedf7ff):juce::Colour(0xff9eb4c5));
             g.setFont(juce::Font(juce::FontOptions("Segoe UI",18.0f,juce::Font::bold)));
@@ -349,10 +368,9 @@ public:
     void drawComboBox(juce::Graphics& g,int w,int h,bool,int,int,int,int,juce::ComboBox& box) override {
         auto r=juce::Rectangle<float>(1,1,(float)w-2,(float)h-2);
         if(finish_){
-            scalpel::finish::darkButton(g,r,false,box.isMouseOver());
-            g.setColour(scalpel::finish::text);
-            juce::Path arrow;arrow.startNewSubPath((float)w-20,h*.42f);arrow.lineTo((float)w-15,h*.6f);arrow.lineTo((float)w-10,h*.42f);
-            g.strokePath(arrow,juce::PathStrokeType(1.6f));return;
+            using A=scalpel::formidable::Art;
+            scalpel::formidable::draw(g,box.isMouseOver()?A::dropdown_hover:A::dropdown_idle,r);
+            return;
         }
         g.setColour(juce::Colour(0xff02070b));g.fillRoundedRectangle(r.expanded(.8f),3.f);
         juce::ColourGradient inset(juce::Colour(0xff25292e),0,0,
@@ -367,9 +385,7 @@ public:
         if(finish_){
             if(dynamic_cast<juce::Slider*>(label.getParentComponent())){
                 const auto r=label.getLocalBounds().toFloat().reduced(.5f);
-                juce::ColourGradient glass(juce::Colour(0xff24201a),r.getX(),r.getY(),juce::Colour(0xff0a0907),r.getX(),r.getBottom(),false);
-                g.setGradientFill(glass);g.fillRoundedRectangle(r,3);
-                g.setColour(scalpel::finish::titanium.withAlpha(.65f));g.drawRoundedRectangle(r,3,.8f);
+                scalpel::formidable::draw(g,scalpel::formidable::Art::readout_idle,r);
                 if(!label.isBeingEdited()){
                     g.setColour(label.isEnabled()?scalpel::finish::ice:scalpel::finish::secondary);
                     scalpel::finish::number(g,label.getText(),r.reduced(3,1));
