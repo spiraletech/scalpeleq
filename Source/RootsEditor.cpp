@@ -4,6 +4,7 @@
 #include "ScalpelXRayChroma.h"
 #include "ScalpelUI105.h"
 #include "ScalpelDbAxis.h"
+#include "SurgerySpectralColours.h"
 #include <BinaryData.h>
 #include <cmath>
 #include <numbers>
