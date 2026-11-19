@@ -125,9 +125,10 @@ public:
         sideAlpha_=std::exp(-1.0/(0.008*sr_));
         gainSmoothingAlpha_=std::exp(-1.0/(0.010*sr_));
         phaseAnalysisAlpha_=std::exp(-1.0/(0.060*sr_));
-        denseRelease_=std::exp(-1.0/(0.32*sr_));
+        denseRelease_=std::exp(-1.0/(0.50*sr_));
         fastProfileSustainRelease_=std::exp(-1.0/(0.155*sr_));
-        opticalMemoryAlpha_=std::exp(-1.0/(0.080*sr_));
+        releaseMemoryAttack_=std::exp(-1.0/(0.080*sr_));
+        releaseMemoryDecay_=std::exp(-1.0/(0.400*sr_));
         bandGainAlpha_=std::exp(-32.0/(0.010*sr_));
         optoAttackAlpha_=std::exp(-1.0/(0.010*sr_));
         optoReleaseAlpha_=std::exp(-1.0/(0.350*sr_));
@@ -141,7 +142,7 @@ public:
             if(!haveConfig_) {node.config.hz=defaults[(size_t)i];}
             node.midEq.reset();node.sideEq.reset();
             node.midTap.reset();node.sideTap.reset();
-            node.g1=node.g2=node.opticalMemory=0.0;
+            node.g1=node.g2=node.releaseMemory=0.0;
             node.detectorDb=-144.0;
             node.e1=node.e2=node.sideEnergy=node.midEnergy=0.0;
             node.optoEnvelope=0.0;node.phaseMix=0.0;node.limitAmount=0.0;
@@ -381,7 +382,7 @@ private:
         double attack=0.99,release=0.999;
         Filter midEq,sideEq,midTap,sideTap;
         Quadrature phaseLeft,phaseRight;
-        double g1=0,g2=0,compOffset=0,ratioSlope=0.75,opticalMemory=0.0,detectorDb=-144.0;
+        double g1=0,g2=0,compOffset=0,ratioSlope=0.75,releaseMemory=0.0,detectorDb=-144.0;
         double e1=0.0,e2=0.0,midEnergy=0.0,sideEnergy=0.0;
         double optoEnvelope=0.0,phaseMix=0.0,limitAmount=0.0;
         double phaseReal=0.0,phaseImag=0.0,phaseLeftPower=0.0,
@@ -463,10 +464,13 @@ private:
             const double ratio=c.compRatio>=1.0?c.compRatio:(dense?6.0:4.0);
             node.ratioSlope+=a*((1.0-1.0/ratio)-node.ratioSlope);
             const auto target=scalpel::dynamics::transfer(node.detectorDb,node.compOffset,node.ratioSlope,dense);
-            node.opticalMemory=opticalMemoryAlpha_*node.opticalMemory+
-                (1.0-opticalMemoryAlpha_)*std::clamp(target.reductionDb/6.0,0.0,1.0);
+            // Key release memory from the incoming level, before the slower
+            // peak envelope. A short hit cannot charge it during the tail.
+            constexpr double referenceAmplitude=0.125892541179; // -18 dBFS
+            const double activity=std::clamp((level/referenceAmplitude-1.0)*2.0,0.0,1.0);
+            node.releaseMemory=follow(node.releaseMemory,activity,releaseMemoryAttack_,releaseMemoryDecay_);
             const double release=std::lerp(node.release,
-                dense?denseRelease_:fastProfileSustainRelease_,node.opticalMemory);
+                dense?denseRelease_:fastProfileSustainRelease_,node.releaseMemory);
             node.g2=follow(node.g2,target.reductionDb,node.attack,release);
             node.g1=follow(node.g1,target.liftDb,gainSmoothingAlpha_,gainSmoothingAlpha_);
             const double delta=node.compMix*(std::pow(10.0,(node.g1-node.g2)/20.0)-1.0);
@@ -615,7 +619,8 @@ private:
     std::array<double,kTerritories> rootGainDb_{};
     std::array<bool,kTerritories> rootMono_{};
     int gainCountdown_=0;
-    double gainSmoothingAlpha_=0.99,bandGainAlpha_=0.99,opticalMemoryAlpha_=0.99;
+    double gainSmoothingAlpha_=0.99,bandGainAlpha_=0.99;
+    double releaseMemoryAttack_=0.99,releaseMemoryDecay_=0.99;
     double optoAttackAlpha_=0.998,optoReleaseAlpha_=0.9999,optoReleaseDeepAlpha_=0.99998;
     int soloRoot_=-1;
     double denseRelease_=0.99,fastProfileSustainRelease_=0.99;

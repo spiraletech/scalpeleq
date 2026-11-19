@@ -210,6 +210,31 @@ bool verifyBandGain(){
     return true;
 }
 
+double halfReleaseMs(prism::roots::v2::Compressor profile,int burstMs,double& firstDb){
+    using namespace prism::roots::v2;
+    constexpr int rate=48000,frame=48,root=4;
+    Engine engine(rate);
+    auto c=engine.get(root*2);
+    c.comp=profile;
+    c.compOffsetDb=-9;
+    engine.config(root*2,c);
+    std::array<float,frame> left{},right{};
+    for(int t=0;t<500;++t)engine.process(left.data(),right.data(),frame);
+    double endDb=0.0;
+    for(int t=0;t<burstMs+500;++t){
+        for(int i=0;i<frame;++i){
+            const auto phase=2*std::numbers::pi*1000*(t*frame+i)/rate;
+            left[(size_t)i]=right[(size_t)i]=t<burstMs?(float)(.35*std::sin(phase)):0.f;
+        }
+        engine.process(left.data(),right.data(),frame);
+        const auto gr=engine.meter().dynamics[root].reductionDb;
+        if(t==0)firstDb=gr;
+        if(t==burstMs-1)endDb=gr;
+        if(t>=burstMs&&endDb>0.0&&gr<=endDb*.5)return t-burstMs+1;
+    }
+    return 0.0;
+}
+
 int main(){
     using prism::roots::v2::Compressor;
     if(!verifyBandGain())return 86;
@@ -246,7 +271,17 @@ int main(){
                 <<quietNeg<<' '<<quietCenter<<' '<<quietPos<<" / "<<silenceFloor<<"\n";return 85;
         }
     }
-    std::cout<<"Signed CARVE endpoints and signed compressor threshold verified for both profiles\n";
+    double fastAttack=0.0,opticalAttack=0.0;
+    const auto fastRelease=halfReleaseMs(Compressor::dynamics176E,500,fastAttack);
+    const auto shortRelease=halfReleaseMs(Compressor::dynamicsCE1B,10,opticalAttack);
+    const auto sustainedRelease=halfReleaseMs(Compressor::dynamicsCE1B,500,opticalAttack);
+    if(!(fastRelease>0.0&&shortRelease>0.0&&fastAttack>opticalAttack
+        &&sustainedRelease>shortRelease*1.25)){
+        std::cerr<<"Dynamics timing: "<<fastAttack<<' '<<opticalAttack<<' '
+            <<shortRelease<<' '<<sustainedRelease<<"\n";
+        return 87;
+    }
+    std::cout<<"Signed CARVE endpoints, threshold polarity, peak attack and optical release memory verified\n";
 
     // PHASE CORRECTION must reduce a measured L/R phase offset without
     // achieving the result by attenuating stereo energy.

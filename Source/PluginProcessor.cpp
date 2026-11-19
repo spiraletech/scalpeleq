@@ -296,6 +296,7 @@ PRISMVSTAudioProcessor::PRISMVSTAudioProcessor()
     {
         stereoActivity[(size_t)s].store(0.0f);
         rootBandPeakDb[(size_t)s].store(-144.0f);
+        bandDynamics_[(size_t)s][0].store(-144.0f);
         soloParameterIds[(size_t)s] = sectionId(s, "solo");
         apvts.addParameterListener(soloParameterIds[(size_t)s], this);
     }
