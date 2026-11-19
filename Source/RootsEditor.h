@@ -233,7 +233,7 @@ private:
     std::array<double,7> peakWarningUntilMs_{};
     std::uint64_t lastPeakRevision_=0;
     juce::Slider gain_,limitAmount_,analyzerSlope_,analyzerMemory_;
-    juce::Slider threshold_;
+    SurgeryFineWheelSlider threshold_;
     juce::ComboBox analyzerDepth_,weatherMode_,jukeMode_;
     juce::Label jukeModeLabel_;
     juce::TextButton reducedMotion_{"REDUCED MOTION"};

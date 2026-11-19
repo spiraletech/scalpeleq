@@ -467,6 +467,37 @@ int main(int argc,char** argv)
         }
     }
 
+    // The selected analyzer domain is taken from the actual output samples.
+    {
+        auto p=std::make_unique<PRISMVSTAudioProcessor>();
+        p->prepareToPlay(48000,512);
+        juce::AudioBuffer<float> audio(2,512);
+        juce::MidiBuffer midi;
+        int sample=0;
+        const auto measure=[&](int domain){
+            p->setAnalyzerDomain(domain);
+            for(int block=0;block<32;++block){
+                for(int i=0;i<512;++i){
+                    const float x=0.25f*std::sin(2.0*juce::MathConstants<double>::pi*
+                        1000.0*sample++/48000.0);
+                    audio.setSample(0,i,x);audio.setSample(1,i,-x);
+                }
+                p->processBlock(audio,midi);
+                juce::Thread::sleep(2);
+            }
+            for(int i=0;i<50&&p->getAnalyzerDomain()!=domain;++i)juce::Thread::sleep(2);
+            std::array<float,PRISMVSTAudioProcessor::labBars> bars{},peaks{};
+            p->copyPrismLabBars(bars,peaks);
+            return *std::max_element(bars.begin(),bars.end());
+        };
+        const auto side=measure(2);
+        const auto mid=measure(1);
+        if(side<-24.f||mid>-100.f||p->getAnalyzerDomain()!=1){
+            std::cerr<<"1.0.7.9 output analyzer domain mismatch: "<<side<<" / "<<mid<<"\n";
+            return 73;
+        }
+    }
+
     // Exact R3 factory layouts migrate. Edited frequencies and removed slots recall as saved.
     {
         using namespace scalpel::bands;
