@@ -102,18 +102,19 @@ inline bool captureScalpelModule(const juce::String& modulePath){
         // A native child that did not paint produces a blank capture.
         int lit=0;for(int y=0;y<height;y+=4)for(int x=0;x<width;x+=4)
             if(image.getPixelAt(x,y).getPerceivedBrightness()>.18f)++lit;
-        // A single pixel at 1200,118 intersects the larger BAND7 glyphs.
-        // Require a substantial painted ivory key surface, independent of text.
-        int paintedKey=0;
+        // The 1.0.8.6 keys are black glass rather than the retired ivory
+        // material. Require substantial visible edge/text detail inside BAND7
+        // so a blank or clipped hosted HWND still fails deterministically.
+        int bandDetail=0;
         const auto key=scalpel::reference::band(6).toFloat().transformedBy(juce::AffineTransform::scale(1.2f)).toNearestInt().reduced(6);
         for(int y=key.getY();y<key.getBottom();++y)for(int x=key.getX();x<key.getRight();++x){
             const auto c=image.getPixelAt(x,y);
-            if(c.getRed()>140&&c.getGreen()>120&&c.getBlue()>100&&c.getRed()>c.getBlue()+8)++paintedKey;
+            if(c.getPerceivedBrightness()>.12f)++bandDetail;
         }
-        if(lit<1500||paintedKey<1600){
+        if(lit<1500||bandDetail<400){
             juce::FileOutputStream failure(juce::File::getCurrentWorkingDirectory().getChildFile("surgery-ui-VST3-capture-failure.png"));
             juce::PNGImageFormat().writeImageToStream(image,failure);
-            std::cerr<<"MODULE CAPTURE: blank/clipped native window; lit="<<lit<<" ivory key="<<paintedKey<<'\n';return false;
+            std::cerr<<"MODULE CAPTURE: blank/clipped native window; lit="<<lit<<" BAND7 detail="<<bandDetail<<'\n';return false;
         }
         juce::FileOutputStream out(juce::File::getCurrentWorkingDirectory().getChildFile(name));out.setPosition(0);out.truncate();
         return juce::PNGImageFormat().writeImageToStream(image,out);
