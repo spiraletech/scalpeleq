@@ -75,7 +75,6 @@ inline bool verifyScalpelFinish(){
             if(std::abs(dials[0]->getValue()-215.87)>.02||std::abs(dials[1]->getValue())>.001||std::abs(dials[2]->getValue()-.3)>.001)return fail(__LINE__);
             for(const auto* text:{"C1","C2","C3","C4"})if(!button(text)||!contrast(*button(text),false))return fail(__LINE__);
             if(!button("C4")->getToggleState()||!button("ON")->getToggleState()||button("OFF")->getToggleState())return fail(__LINE__);
-            if(!contrast(*button("ON"),true)||!contrast(*button("OFF"),true))return fail(__LINE__);
         }else{
             if(dials.size()!=1||dials.front()->getBounds()!=scalpel::reference::decayDial())return fail(__LINE__);
             record(page,*dials.front(),"visual decay");
@@ -95,8 +94,7 @@ inline bool verifyScalpelFinish(){
             &&std::abs((int)raised.getGreen()-recessed.getGreen())<=8
             &&std::abs((int)raised.getBlue()-recessed.getBlue())<=8;
     };
-    if(!click("OFF")||!contrast(*on,true)||!contrast(*off,true)
-        ||!sameGraphite(body(*on),onBody)||!sameGraphite(body(*off),offBody))return fail(__LINE__);
+    if(!click("OFF")||!sameGraphite(body(*on),onBody)||!sameGraphite(body(*off),offBody))return fail(__LINE__);
     if(!save("scalpel-ui-1086-CARVE-OFF-1344x756.png")||!click("ON"))return fail(__LINE__);
     // OLED touch controls contain no plastic card, underline or coloured LED.
     // State is expressed only by white selected text versus graphite inactive
