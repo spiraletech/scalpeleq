@@ -212,7 +212,8 @@ inline bool verifyScalpelFinish(){
         const auto visible=opaqueBounds(*b);
         const float centerError=visible.getCentre().toFloat().getDistanceFrom(b->getBounds().getCentre().toFloat());
         fill<<name<<','<<visible.getHeight()<<','<<centerError<<','<<editor->getWidth()<<','<<editor->getHeight()<<'\n';
-        if(visible.getHeight()<60||visible.getHeight()>100||centerError>3.f)return fail(__LINE__);
+        const int expectedGlyphHeight=juce::roundToInt((b->getHeight()-3.f)*.62f);
+        if(std::abs(visible.getHeight()-expectedGlyphHeight)>2||centerError>3.f)return fail(__LINE__);
     }
     juce::Slider* decay=nullptr;
     for(auto* child:editor->getChildren())if(auto* slider=dynamic_cast<juce::Slider*>(child);slider&&slider->isVisible())decay=slider;
