@@ -1,0 +1,20 @@
+{
+  "version": "1.0.8.5",
+  "alpha": "straight sRGB RGBA",
+  "design_canvas": [1670, 942],
+  "surfaces": {
+    "shell": {"file": "f1085_lacquer_shell.png", "size": [1670, 942]},
+    "graph_glass": {"file": "f1085_graph_glass.png", "size": [1529, 392], "map": "analyzer lens"},
+    "control_glass": {"file": "f1085_control_glass.png", "size": [1570, 317], "map": "lower deck"}
+  },
+  "states": {
+    "band": ["idle", "hover", "selected", "pressed"],
+    "tab": ["idle", "hover", "selected", "pressed"]
+  },
+  "rules": [
+    "No baked text or DSP state",
+    "Graph and lower screen use independent reflections",
+    "Selected touch content is white; inactive touch content is graphite",
+    "Ruby red is reserved for selected hardware and measurement energy"
+  ]
+}

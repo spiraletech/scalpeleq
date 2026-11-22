@@ -9,10 +9,10 @@
 namespace scalpel::finish {
 inline constexpr bool validatedAllPages=true;
 inline bool enabledForMode(int) noexcept {return true;}
-inline const juce::Colour chassis{0xffbea894},faceplate{0xff24211f},deck{0xffc4ad98};
-inline const juce::Colour analyzer{0xff0d0d0c},graphite{0xff24211f},titanium{0xffa78d78};
-inline const juce::Colour silver{0xffe1cfbb},text{0xffede4d7},secondary{0xffb8a794};
-inline const juce::Colour ice{0xfff6f3eb},accent{0xffeda958},ink{0xff181717};
+inline const juce::Colour chassis{0xff08090a},faceplate{0xff121416},deck{0xff050607};
+inline const juce::Colour analyzer{0xff050607},graphite{0xff25282b},titanium{0xff777b7e};
+inline const juce::Colour silver{0xffb7b9ba},text{0xfff2f2ef},secondary{0xff62666a};
+inline const juce::Colour ice{0xfffafaf7},accent{0xffe31b27},ink{0xff08090a};
 inline const juce::Colour onGreen{0xff8fdb51},offRed{0xffe64e49},pointerWhite{0xfff6f3eb};
 inline juce::Font font(float size,bool bold=false){return juce::Font(juce::FontOptions("Segoe UI",size,bold?juce::Font::bold:juce::Font::plain));}
 // Software-backed immutable microtexture, created once, safe at DLL unload.
@@ -50,26 +50,25 @@ inline void scratches(juce::Graphics& g,juce::Rectangle<float> r,float radius){
 inline void panel(juce::Graphics& g,juce::Rectangle<float> r,float radius,bool outer=false){
     g.setColour(juce::Colours::black.withAlpha(.70f));g.fillRoundedRectangle(r.expanded(1.5f).translated(0,3),radius+1);
     formidable::draw(g,outer?formidable::Art::shell:formidable::Art::control_deck,r);
-    roughness(g,r.reduced(1),radius-1,.72f);
-    g.setColour(juce::Colour(0xffeadaca));g.drawRoundedRectangle(r.reduced(1),radius-1,.8f);
-    g.setColour(juce::Colour(0xff594c40));g.drawRoundedRectangle(r,radius,.8f);
-    g.setColour(juce::Colour(0xffeee3d5).withAlpha(.55f));g.drawRoundedRectangle(r.reduced(2.8f),radius-2.5f,.5f);
+    if(outer)roughness(g,r.reduced(1),radius-1,.18f);
+    g.setColour(juce::Colour(0xffd8d9d7).withAlpha(.48f));g.drawRoundedRectangle(r.reduced(1),radius-1,.8f);
+    g.setColour(juce::Colour(0xff050607));g.drawRoundedRectangle(r,radius,.8f);
+    g.setColour(juce::Colours::white.withAlpha(.10f));g.drawRoundedRectangle(r.reduced(2.8f),radius-2.5f,.5f);
 }
 inline void shell(juce::Graphics& g,juce::Rectangle<float> r){
     g.setColour(juce::Colour(0xff100f0d));g.fillRect(r);
     const auto outer=scalpel::reference::enclosure().reduced(1.5f);
     panel(g,outer,39,true);
-    g.setColour(juce::Colour(0xfff0e5d8));g.drawRoundedRectangle(outer.reduced(4),35,1.2f);
-    g.setColour(juce::Colour(0xff5e5347));g.drawRoundedRectangle(outer.reduced(7),32,.8f);
+    g.setColour(juce::Colour(0xffdadbd9).withAlpha(.65f));g.drawRoundedRectangle(outer.reduced(4),35,1.2f);
+    g.setColour(juce::Colour(0xff111315));g.drawRoundedRectangle(outer.reduced(7),32,.8f);
     // Rejected footer plaque and perforations are deliberately absent.
 }
 inline void hardware(juce::Graphics& g,juce::Rectangle<float> r,bool selected,bool hover,bool pressed){
     using A=formidable::Art;
     const auto face=(selected||pressed)?r.reduced(.5f).translated(0,1.f):r;
-    formidable::draw(g,pressed&&!selected?A::band_pressed:selected?A::band_selected:A::band_idle,face);
-    roughness(g,face.reduced(3),4.0f,.45f);
+    formidable::draw(g,pressed&&!selected?A::band_pressed:selected?A::band_selected:hover?A::band_hover_1086:A::band_idle,face);
     if(selected||pressed){
-        g.setColour(juce::Colour(0xff372315).withAlpha(.76f));
+        g.setColour(juce::Colour(0xff151719).withAlpha(.76f));
         g.drawHorizontalLine(juce::roundToInt(r.getY()+1.f),r.getX()+7.f,r.getRight()-7.f);
     }
     if(hover){g.setColour(juce::Colours::white.withAlpha(.055f));g.fillRoundedRectangle(r.reduced(3),4.5f);}
@@ -152,7 +151,7 @@ inline void analyzerHousing(juce::Graphics& g,juce::Rectangle<float> r){
     formidable::draw(g,formidable::Art::analyzer_pixels_10842,mapped(208,70,1408,290));
 }
 inline void analyzerReflection(juce::Graphics& g,juce::Rectangle<float> r){
-    formidable::draw(g,formidable::Art::analyzer_reflection_10842,
+    formidable::draw(g,formidable::Art::graph_glass_1086,
         {r.getX()+189.f*r.getWidth()/2172.f,r.getY()+24.f*r.getHeight()/436.f,
          1529.f*r.getWidth()/2172.f,392.f*r.getHeight()/436.f});
 }
@@ -160,14 +159,23 @@ inline void analyzerReflection(juce::Graphics& g,juce::Rectangle<float> r){
 inline constexpr float knobDiameter=154.f*scalpel::reference::scale;
 inline void knob(juce::Graphics& g,int x,int y,int w,int h,float position,float start,float end,const juce::Slider&){
     const float cx=x+w*.5f,cy=y+h*.5f,radius=juce::jmin(knobDiameter*.5f,.485f*(float)std::min(w,h));
-    const auto r=juce::Rectangle<float>(cx-radius,cy-radius,2*radius,2*radius);
-    const auto faceBounds=r.expanded(.85f);
-    formidable::draw(g,formidable::Art::knob_face,faceBounds);
-    juce::Graphics::ScopedSaveState scoped(g);
-    g.addTransform(juce::AffineTransform::rotation(start+position*(end-start),cx,cy));
-    // Both 2× layers share the kit's [152,148] pointer pivot.
-    formidable::draw(g,formidable::Art::knob_pointer,
-                    faceBounds.translated(0,4.f*faceBounds.getHeight()/304.f));
+    constexpr int segments=38;
+    const float active=juce::jlimit(0.f,1.f,position);
+    for(int i=0;i<segments;++i){
+        const float u=i/(float)(segments-1),angle=start+u*(end-start);
+        const float cs=std::cos(angle),sn=std::sin(angle);
+        const auto a=juce::Point<float>{cx+cs*(radius-2.f),cy+sn*(radius-2.f)};
+        const auto b=juce::Point<float>{cx+cs*(radius+3.f),cy+sn*(radius+3.f)};
+        g.setColour(u<=active?juce::Colour(0xffe31b27):juce::Colour(0xff3a3d40));
+        g.drawLine({a,b},u<=active?2.2f:1.5f);
+    }
+    const float angle=start+active*(end-start);
+    const auto& pointer=formidable::image(formidable::Art::dial_pointer_1086);
+    const auto target=juce::Rectangle<float>{cx-2.1f,cy-radius+2.f,4.2f,radius*.42f};
+    const auto map=juce::RectanglePlacement(juce::RectanglePlacement::stretchToFit)
+        .getTransformToFit(pointer.getBounds().toFloat(),target);
+    g.setOpacity(1.f);
+    g.drawImageTransformed(pointer,map.followedBy(juce::AffineTransform::rotation(angle,cx,cy)),false);
 }
 // Explicit tabular digit advances, retaining the same font as the labels.
 inline void number(juce::Graphics& g,const juce::String& value,juce::Rectangle<float> r,float size=20){

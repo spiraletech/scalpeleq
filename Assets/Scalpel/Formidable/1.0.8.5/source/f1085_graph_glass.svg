@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1529" height="392" viewBox="0 0 1529 392">
+  <defs>
+    <linearGradient id="top" x1="0" y1="0" x2="1" y2=".72">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".18"/><stop offset=".18" stop-color="#ffffff" stop-opacity=".035"/>
+      <stop offset=".49" stop-color="#ffffff" stop-opacity="0"/><stop offset="1" stop-color="#ffffff" stop-opacity=".028"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".28"/><stop offset=".09" stop-color="#ffffff" stop-opacity=".015"/>
+      <stop offset=".89" stop-color="#000000" stop-opacity="0"/><stop offset="1" stop-color="#ffffff" stop-opacity=".12"/>
+    </linearGradient>
+    <clipPath id="c"><rect x="2" y="2" width="1525" height="388" rx="22"/></clipPath>
+  </defs>
+  <g clip-path="url(#c)">
+    <path d="M-80 -10 L650 -10 L240 230 L-80 320Z" fill="url(#top)"/>
+    <path d="M1040 392 L1529 212 L1529 392Z" fill="#ffffff" fill-opacity=".035"/>
+    <path d="M395 -10 L660 -10 L535 392 L390 392Z" fill="#ffffff" fill-opacity=".012"/>
+    <rect x="0" y="0" width="1529" height="392" fill="url(#edge)"/>
+  </g>
+  <rect x="1.5" y="1.5" width="1526" height="389" rx="22" fill="none" stroke="#f8f8f6" stroke-opacity=".30" stroke-width="1.5"/>
+  <rect x="5" y="5" width="1519" height="382" rx="18" fill="none" stroke="#000" stroke-opacity=".65" stroke-width="2"/>
+</svg>

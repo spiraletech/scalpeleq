@@ -37,9 +37,9 @@ inline void drawRackFace(juce::Graphics& g,int width,int height,int mode)
     // Engraved native type on the shared shell; the kit's italic crop is not
     // a shipping wordmark and its rejected footer art is never loaded.
     const auto engraved=[&](const juce::String& text,juce::Rectangle<int> box,juce::Font font,juce::Justification align=juce::Justification::centredLeft){
-        g.setFont(font);g.setColour(juce::Colour(0xffeee0cd).withAlpha(.8f));
-        g.drawFittedText(text,box.translated(0,1),align,1);
-        g.setColour(scalpel::finish::ink);g.drawFittedText(text,box,align,1);
+        g.setFont(font);g.setColour(juce::Colours::black.withAlpha(.82f));
+        g.drawFittedText(text,box.translated(0,2),align,1);
+        g.setColour(scalpel::finish::ice.withAlpha(.92f));g.drawFittedText(text,box,align,1);
     };
     auto word=scalpel::finish::font(44,true);word.setExtraKerningFactor(.32f);
     engraved("SCALPEL EQ",bounds(110,26,590,68),word);
@@ -64,14 +64,9 @@ inline void drawRackFace(juce::Graphics& g,int width,int height,int mode)
             shadow(bounds(837,732,296,55).toFloat(),5);
         }else for(int i=0;i<4;++i)shadow(carveSlot(i).toFloat(),12.f*flushScale());
     }
-    std::array<float,4> dividers{};int count=4;
-    if(mode==0)dividers={313,560,805,1164};
-    else if(mode==1)for(int i=0;i<4;++i)dividers[(size_t)i]=carveDividerX(i);
-    else {dividers={570,1100,0,0};count=2;}
-    for(int i=0;i<count;++i){auto line=(mode==1?juce::Rectangle<float>{dividers[(size_t)i],rect(0,622,1,187).getY(),2.f*scale,rect(0,622,1,187).getHeight()}:rect(dividers[(size_t)i],622,2,187)).withBottom(deck().getBottom()-28.f*scale);
-        if(mode==3)line.setX(deck().getX()+deck().getWidth()*(i+1)/3);
-        g.setColour(scalpel::finish::silver);g.fillRect(line.translated(1,0));
-        g.setColour(juce::Colour(0xff55463a));g.fillRect(line);}
+    // The lower module is one laminated OLED surface. Layout is carried by
+    // typography and spacing; physical divider bars would fracture the glass.
+    juce::ignoreUnused(mode);
 }
 
 inline void drawMeter(juce::Graphics& g, juce::Rectangle<float> r, float db, const juce::String& label,bool polished=false)

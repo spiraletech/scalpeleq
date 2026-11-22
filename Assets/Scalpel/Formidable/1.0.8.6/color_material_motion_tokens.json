@@ -1,0 +1,22 @@
+{
+  "colors": {
+    "oled_black": "#030405",
+    "lacquer_highlight": "#25282B",
+    "graphite_idle": "#62666A",
+    "active_white": "#FAFAF7",
+    "satin_silver": "#B7B9BA",
+    "ruby_energy": "#E31B27",
+    "warning_red": "#FF3540"
+  },
+  "materials": {
+    "chassis": "deep black automotive lacquer with physically plausible broad reflections",
+    "graph_glass": "neutral low-reflection smoked glass; no cyan cast",
+    "control_glass": "laminated OLED black with sparse neutral reflection",
+    "hardware_keys": "semi-gloss graphite with satin silver edge",
+    "touch_controls": "emissive typography only; no plastic button card"
+  },
+  "motion": {
+    "carousel": "one option centered; previous/next move horizontally with opacity falloff",
+    "press": "2-4 px inward optical response; no red LED underline on touchscreen options"
+  }
+}

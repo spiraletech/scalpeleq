@@ -30,9 +30,15 @@ public:
     juce::Font getComboBoxFont(juce::ComboBox&) override {return juce::Font(juce::FontOptions("Segoe UI",16.0f,juce::Font::plain));}
     juce::Font getPopupMenuFont() override {return juce::Font(juce::FontOptions("Segoe UI",13.0f,juce::Font::plain));}
     void positionComboBoxText(juce::ComboBox& box,juce::Label& label) override {
-        label.setBounds(12,-2,juce::jmax(0,box.getWidth()-38),box.getHeight()-2);
-        label.setFont(getComboBoxFont(box));
-        label.setJustificationType(juce::Justification::centredLeft);
+        if(finish_){
+            label.setBounds(42,0,juce::jmax(0,box.getWidth()-84),box.getHeight());
+            label.setFont(scalpel::finish::font(19.f,false));
+            label.setJustificationType(juce::Justification::centred);
+        }else{
+            label.setBounds(12,-2,juce::jmax(0,box.getWidth()-38),box.getHeight()-2);
+            label.setFont(getComboBoxFont(box));
+            label.setJustificationType(juce::Justification::centredLeft);
+        }
     }
     juce::PopupMenu::Options getOptionsForComboBoxPopupMenu(juce::ComboBox& box,juce::Label&) override {
         // Target component carries host DPI and our uniform editor transform.
@@ -131,12 +137,24 @@ public:
             return;
         }
         if(finish_){
+            if(snow||heat){
+                using A=scalpel::formidable::Art;
+                const auto art=heat?A::heat_map_flame_1086:A::freeze_snowflake_1086;
+                const auto& glyph=scalpel::formidable::image(art);
+                const float height=r.getHeight()*.62f;
+                const float width=height*(float)glyph.getWidth()/(float)glyph.getHeight();
+                const auto target=juce::Rectangle<float>{r.getCentreX()-width*.5f,r.getCentreY()-height*.5f,width,height};
+                juce::Graphics::ScopedSaveState saved(g);
+                g.setOpacity(active?1.f:over?.62f:.30f);
+                g.drawImage(glyph,target,juce::RectanglePlacement::centred);
+                return;
+            }
             if(pageTab){scalpel::finish::tab(g,r,button.getToggleState(),over,down);return;}
             if(deckSwitch){
-                scalpel::finish::flushCap(g,button.getLocalBounds().toFloat().reduced(.5f),true,
-                    button.getToggleState(),over,active,text=="OFF");return;
+                if(over){g.setColour(juce::Colours::white.withAlpha(.035f));g.fillRoundedRectangle(r,6.f);}
+                return;
             }
-            if(actionSwitch||carveSelector||bandSelector){
+            if(bandSelector){
                 const bool carveActive=carveSelector&&(bool)button.getProperties().getWithDefault("carve-active",false);
                 scalpel::finish::hardware(g,r,button.getToggleState()||carveActive,over,down);
                 const auto warning=button.findColour(juce::TextButton::buttonColourId);
@@ -144,6 +162,10 @@ public:
                     g.setColour(juce::Colour(0xffed1919).withAlpha(.28f+warning.getFloatAlpha()*.62f));
                     g.fillRoundedRectangle(r.reduced(2),3);
                 }
+                return;
+            }
+            if(actionSwitch||carveSelector){
+                if(over){g.setColour(juce::Colours::white.withAlpha(.035f));g.fillRoundedRectangle(r,6.f);}
                 return;
             }
             if(reset){
@@ -328,27 +350,25 @@ public:
         if(finish_){
             const auto label=b.getButtonText();
             const bool tab=label=="BAND MODE"||label=="CARVE"||label=="ANALYZE";
-            const bool hardware=label.startsWith("BAND ")&&!tab||label=="C1"||label=="C2"||label=="C3"||label=="C4"||
-                label=="MONO"||label=="SOLO"||label.startsWith("PHASE")||label=="LIMIT";
-            g.setColour(!b.isEnabled()?scalpel::finish::secondary:hardware?scalpel::finish::ink:
-                label=="X-RAY"?scalpel::finish::text:tab?(b.getToggleState()?juce::Colour(0xffedbb78):scalpel::finish::secondary):
-                ((label=="ON"||label=="OFF")&&!b.getToggleState())?scalpel::finish::secondary:scalpel::finish::text);
-            auto buttonFont=scalpel::finish::font(hardware?(label.startsWith("PHASE")?15.f:19.f):tab?22.f:18.f,hardware||tab||label=="ON"||label=="OFF");
+            const bool hardware=label.startsWith("BAND ")&&!tab;
+            const bool touch=label=="C1"||label=="C2"||label=="C3"||label=="C4"||
+                label=="MONO"||label=="SOLO"||label.startsWith("PHASE")||label=="LIMIT"||
+                label=="ON"||label=="OFF";
+            const bool carveActive=(bool)b.getProperties().getWithDefault("carve-active",false);
+            const bool lit=b.getToggleState()||b.isDown()||carveActive;
+            g.setColour(!b.isEnabled()?scalpel::finish::secondary:hardware?scalpel::finish::text:
+                label=="X-RAY"?scalpel::finish::text:tab?(b.getToggleState()?scalpel::finish::ice:scalpel::finish::secondary):
+                touch?(lit?scalpel::finish::ice:scalpel::finish::secondary):scalpel::finish::text);
+            auto buttonFont=scalpel::finish::font(hardware?19.f:tab?22.f:18.f,tab||hardware);
             if(hardware)buttonFont.setHorizontalScale(.955f);
             g.setFont(buttonFont);
             auto bounds=label=="X-RAY"?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2);
             if(tab)bounds=bounds.withTrimmedBottom(4).translated(juce::roundToInt(b.getWidth()*.022f),-1);
             // Flush cap text shares its true center; no menu-specific offsets.
             if(hardware&&label.startsWith("BAND "))bounds=bounds.translated(0,-2);
-            const bool carveActive=(bool)b.getProperties().getWithDefault("carve-active",false);
             if((hardware||label=="ON"||label=="OFF")&&(b.getToggleState()||b.isDown()||carveActive))
                 bounds=bounds.translated(0,1);
-            if(carveActive&&!b.getToggleState()){
-                g.setColour(juce::Colour(0xff9c5f1a));
-                g.fillEllipse((float)bounds.getRight()-9.f,(float)bounds.getCentreY()-2.f,4.f,4.f);
-                g.setColour(scalpel::finish::ink);
-            }
-            g.drawFittedText(label.startsWith("PHASE")?juce::String("PHASE\nCORRECTION"):label,bounds,juce::Justification::centred,label.startsWith("PHASE")?2:1);
+            g.drawFittedText(label.startsWith("PHASE")?juce::String("PHASE"):label,bounds,juce::Justification::centred,1);
             return;
         }
         const bool xray=b.getButtonText()=="X-RAY";
@@ -382,7 +402,14 @@ public:
         auto r=juce::Rectangle<float>(1,1,(float)w-2,(float)h-2);
         if(finish_){
             using A=scalpel::formidable::Art;
-            scalpel::formidable::draw(g,box.isMouseOver()?A::dropdown_hover:A::dropdown_idle,r);
+            const float chevronH=juce::jmin(22.f,r.getHeight()*.38f);
+            const float chevronW=chevronH*2.f/3.f;
+            const auto left=juce::Rectangle<float>{r.getX()+13.f,r.getCentreY()-chevronH*.5f,chevronW,chevronH};
+            const auto right=juce::Rectangle<float>{r.getRight()-13.f-chevronW,r.getCentreY()-chevronH*.5f,chevronW,chevronH};
+            juce::Graphics::ScopedSaveState saved(g);
+            g.setOpacity(box.isMouseOver()?.86f:.58f);
+            g.drawImage(scalpel::formidable::image(A::chevron_left_1086),left,juce::RectanglePlacement::centred);
+            g.drawImage(scalpel::formidable::image(A::chevron_right_1086),right,juce::RectanglePlacement::centred);
             return;
         }
         g.setColour(juce::Colour(0xff02070b));g.fillRoundedRectangle(r.expanded(.8f),3.f);

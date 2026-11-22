@@ -68,6 +68,41 @@ public:
     }
 };
 
+// A touch-first rotary carousel: arrows, wheel, keyboard and horizontal swipe
+// all edit the existing ComboBox selection without opening a dropdown.  The
+// APVTS attachment remains authoritative, so automation and preset recall are
+// unchanged while the control behaves like the approved OLED interface.
+class ScalpelCarouselComboBox final : public juce::ComboBox {
+public:
+    ScalpelCarouselComboBox(){setWantsKeyboardFocus(true);}
+    void mouseDown(const juce::MouseEvent& event) override {
+        grabKeyboardFocus();
+        dragOrigin_=event.position.x;dragIndex_=getSelectedItemIndex();lastDragStep_=0;
+        if(event.position.x<getWidth()*.24f)step(-1);
+        else if(event.position.x>getWidth()*.76f)step(1);
+        dragIndex_=getSelectedItemIndex();
+    }
+    void mouseDrag(const juce::MouseEvent& event) override {
+        const int dragStep=juce::roundToInt((dragOrigin_-event.position.x)/32.f);
+        if(dragStep!=lastDragStep_){setIndex(dragIndex_+dragStep);lastDragStep_=dragStep;}
+    }
+    void mouseWheelMove(const juce::MouseEvent&,const juce::MouseWheelDetails& wheel) override {
+        const float delta=std::abs(wheel.deltaX)>std::abs(wheel.deltaY)?wheel.deltaX:wheel.deltaY;
+        if(std::abs(delta)>.001f)step(delta>0.f?-1:1);
+    }
+    bool keyPressed(const juce::KeyPress& key) override {
+        if(key==juce::KeyPress::leftKey||key==juce::KeyPress::upKey){step(-1);return true;}
+        if(key==juce::KeyPress::rightKey||key==juce::KeyPress::downKey){step(1);return true;}
+        return juce::ComboBox::keyPressed(key);
+    }
+private:
+    void setIndex(int index){
+        if(getNumItems()>0)setSelectedItemIndex(juce::jlimit(0,getNumItems()-1,index),juce::sendNotificationSync);
+    }
+    void step(int direction){setIndex(getSelectedItemIndex()+direction);}
+    float dragOrigin_=0.f;int dragIndex_=0,lastDragStep_=0;
+};
+
 // Retained parameter values preserve host/project compatibility. The only
 // visible choice and active presentation are Standard+.
 class SurgeryVisualChoiceAttachment final {
@@ -269,7 +304,8 @@ private:
     juce::TextButton peakHold_{"PEAK HOLD"};
     juce::Slider output_;
     juce::Label outputLabel_,compLabel_,ratioLabel_,detectorLabel_;
-    juce::ComboBox compressor_,ratio_,detector_;
+    ScalpelCarouselComboBox compressor_,ratio_;
+    juce::ComboBox detector_;
     std::unique_ptr<juce::ParameterAttachment> compressorA_;
     std::unique_ptr<ComboA> ratioA_,detectorA_;
     std::unique_ptr<SliderA> outputA_;

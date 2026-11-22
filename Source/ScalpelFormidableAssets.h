@@ -14,15 +14,17 @@ enum class Art { shell, control_deck, analyzer, band_well, page_well, plot_glass
     analyzer_reflection_10842, spectrum_falloff_10842, meter_well_10842,
     meter_active_10842, meter_clip_10842, meter_off_10842,
     peak_window_10842, xray_face_10842, xray_lamp_off_10842,
-    xray_lamp_on_10842, count };
+    xray_lamp_on_10842, graph_glass_1086, band_hover_1086,
+    heat_map_flame_1086, freeze_snowflake_1086,
+    chevron_left_1086, chevron_right_1086, dial_pointer_1086, count };
 
 inline const juce::Image& image(Art asset){
     static const auto images=[] {
         std::array<juce::Image,static_cast<size_t>(Art::count)> result {};
         result[static_cast<size_t>(Art::shell)]=juce::ImageFileFormat::loadFrom(
-            BinaryData::f1081_shell_png,BinaryData::f1081_shell_pngSize);
+            BinaryData::f1086_lacquer_shell_png,BinaryData::f1086_lacquer_shell_pngSize);
         result[static_cast<size_t>(Art::control_deck)]=juce::ImageFileFormat::loadFrom(
-            BinaryData::f1081_control_deck_png,BinaryData::f1081_control_deck_pngSize);
+            BinaryData::f1086_control_glass_png,BinaryData::f1086_control_glass_pngSize);
         result[static_cast<size_t>(Art::analyzer)]=juce::ImageFileFormat::loadFrom(
             BinaryData::f1081_analyzer_png,BinaryData::f1081_analyzer_pngSize);
         result[static_cast<size_t>(Art::band_well)]=juce::ImageFileFormat::loadFrom(
@@ -42,19 +44,19 @@ inline const juce::Image& image(Art asset){
         result[static_cast<size_t>(Art::master_disabled)]=juce::ImageFileFormat::loadFrom(
             BinaryData::master_disabled_png,BinaryData::master_disabled_pngSize);
         result[static_cast<size_t>(Art::tab_idle)]=juce::ImageFileFormat::loadFrom(
-            BinaryData::f1081_tab_idle_png,BinaryData::f1081_tab_idle_pngSize);
+            BinaryData::f1086_tab_idle_png,BinaryData::f1086_tab_idle_pngSize);
         result[static_cast<size_t>(Art::tab_selected)]=juce::ImageFileFormat::loadFrom(
-            BinaryData::f1081_tab_selected_png,BinaryData::f1081_tab_selected_pngSize);
+            BinaryData::f1086_tab_selected_png,BinaryData::f1086_tab_selected_pngSize);
         result[static_cast<size_t>(Art::tab_hover)]=juce::ImageFileFormat::loadFrom(
-            BinaryData::f1081_tab_hover_png,BinaryData::f1081_tab_hover_pngSize);
+            BinaryData::f1086_tab_hover_png,BinaryData::f1086_tab_hover_pngSize);
         result[static_cast<size_t>(Art::tab_pressed)]=juce::ImageFileFormat::loadFrom(
-            BinaryData::f1081_tab_pressed_png,BinaryData::f1081_tab_pressed_pngSize);
+            BinaryData::f1086_tab_pressed_png,BinaryData::f1086_tab_pressed_pngSize);
         result[static_cast<size_t>(Art::band_idle)]=juce::ImageFileFormat::loadFrom(
-            BinaryData::f1081_band_idle_png,BinaryData::f1081_band_idle_pngSize);
+            BinaryData::f1086_band_idle_png,BinaryData::f1086_band_idle_pngSize);
         result[static_cast<size_t>(Art::band_selected)]=juce::ImageFileFormat::loadFrom(
-            BinaryData::f1081_band_selected_png,BinaryData::f1081_band_selected_pngSize);
+            BinaryData::f1086_band_selected_png,BinaryData::f1086_band_selected_pngSize);
         result[static_cast<size_t>(Art::band_pressed)]=juce::ImageFileFormat::loadFrom(
-            BinaryData::f1081_band_pressed_png,BinaryData::f1081_band_pressed_pngSize);
+            BinaryData::f1086_band_pressed_png,BinaryData::f1086_band_pressed_pngSize);
         result[static_cast<size_t>(Art::command_idle)]=juce::ImageFileFormat::loadFrom(
             BinaryData::command_idle_png,BinaryData::command_idle_pngSize);
         result[static_cast<size_t>(Art::command_hover)]=juce::ImageFileFormat::loadFrom(
@@ -105,6 +107,20 @@ inline const juce::Image& image(Art asset){
             BinaryData::xray_lamp_off_png,BinaryData::xray_lamp_off_pngSize);
         result[static_cast<size_t>(Art::xray_lamp_on_10842)]=juce::ImageFileFormat::loadFrom(
             BinaryData::xray_lamp_on_png,BinaryData::xray_lamp_on_pngSize);
+        result[static_cast<size_t>(Art::graph_glass_1086)]=juce::ImageFileFormat::loadFrom(
+            BinaryData::f1086_graph_glass_png,BinaryData::f1086_graph_glass_pngSize);
+        result[static_cast<size_t>(Art::band_hover_1086)]=juce::ImageFileFormat::loadFrom(
+            BinaryData::f1086_band_hover_png,BinaryData::f1086_band_hover_pngSize);
+        result[static_cast<size_t>(Art::heat_map_flame_1086)]=juce::ImageFileFormat::loadFrom(
+            BinaryData::f1086_heat_map_flame_png,BinaryData::f1086_heat_map_flame_pngSize);
+        result[static_cast<size_t>(Art::freeze_snowflake_1086)]=juce::ImageFileFormat::loadFrom(
+            BinaryData::f1086_freeze_snowflake_png,BinaryData::f1086_freeze_snowflake_pngSize);
+        result[static_cast<size_t>(Art::chevron_left_1086)]=juce::ImageFileFormat::loadFrom(
+            BinaryData::f1086_chevron_left_png,BinaryData::f1086_chevron_left_pngSize);
+        result[static_cast<size_t>(Art::chevron_right_1086)]=juce::ImageFileFormat::loadFrom(
+            BinaryData::f1086_chevron_right_png,BinaryData::f1086_chevron_right_pngSize);
+        result[static_cast<size_t>(Art::dial_pointer_1086)]=juce::ImageFileFormat::loadFrom(
+            BinaryData::f1086_dial_pointer_png,BinaryData::f1086_dial_pointer_pngSize);
         const juce::SoftwareImageType software;
         for(auto& frame:result)frame=software.convert(frame);
         return result;

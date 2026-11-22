@@ -1466,9 +1466,9 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     ratio_.addItemList({"AUTO","2:1","3:1","4:1","6:1","8:1","12:1","20:1"},1);
     ratio_.setTooltip("Selected band compressor ratio. AUTO uses 4:1 for 176E or 6:1 for CE1B.");
     detector_.addItemList({ "LINKED", "DUAL M/S", "MID ONLY", "SIDE ONLY" },1);
-    for(auto* box:{&compressor_,&ratio_,&detector_})addAndMakeVisible(*box);
+    for(auto* box:std::array<juce::ComboBox*,3>{&compressor_,&ratio_,&detector_})addAndMakeVisible(*box);
     compLabel_.setText("COMPRESSION",juce::dontSendNotification);
-    ratioLabel_.setText("COMPRESSOR RATIO",juce::dontSendNotification);
+    ratioLabel_.setText("RATIO",juce::dontSendNotification);
     detectorLabel_.setText("DYNAMIC",juce::dontSendNotification);
     for(auto* label:{&compLabel_,&ratioLabel_,&detectorLabel_,&outputLabel_}){
         label->setFont(juce::Font(juce::FontOptions("Segoe UI",11.0f,juce::Font::plain)));
@@ -1726,7 +1726,7 @@ void RootsEditor::timerCallback(){
     juce::ignoreUnused(held);
     peakHold_.setButtonText("RESET");
     peakHold_.setToggleState(false,juce::dontSendNotification);
-    const auto labelColour=juce::Colour(0xffe8f2fa);
+    const auto labelColour=scalpel::finish::text;
     for(auto* label:{&title_,&selection_,&status_,&gainLabel_,&thresholdLabel_,
                     &carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_,
                     &analyzerDepthLabel_,&analyzerSlopeLabel_,&analyzerMemoryLabel_,&analyzerLegend_,

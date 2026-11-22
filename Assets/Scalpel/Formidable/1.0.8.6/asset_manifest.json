@@ -1,0 +1,45 @@
+{
+  "version": "1.0.8.6",
+  "design_canvas": [1670, 942],
+  "alpha": "straight sRGB RGBA",
+  "compiled": {
+    "surfaces": [
+      "f1086_lacquer_shell.png",
+      "f1086_graph_glass.png",
+      "f1086_control_glass.png"
+    ],
+    "band_states": [
+      "f1086_band_idle.png",
+      "f1086_band_hover.png",
+      "f1086_band_pressed.png",
+      "f1086_band_selected.png"
+    ],
+    "mode_states": [
+      "f1086_tab_idle.png",
+      "f1086_tab_hover.png",
+      "f1086_tab_pressed.png",
+      "f1086_tab_selected.png"
+    ],
+    "glyphs": [
+      "f1086_heat_map_flame.png",
+      "f1086_freeze_snowflake.png",
+      "f1086_chevron_left.png",
+      "f1086_chevron_right.png",
+      "f1086_dial_pointer.png"
+    ]
+  },
+  "reference_only": [
+    "reference_band_state_atlas.png",
+    "reference_mode_state_atlas.png"
+  ],
+  "live_native_layers": [
+    "typography",
+    "spectrum",
+    "frequency and dB axes",
+    "band and carve nodes",
+    "response curve",
+    "meters and held peaks",
+    "parameter values and interaction state"
+  ]
+}
+
