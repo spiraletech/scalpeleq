@@ -54,17 +54,24 @@ inline bool verifyUI106(PRISMVSTAudioProcessor&, juce::AudioProcessorEditor& edi
     // ANALYZE geometry is host-transformed; the visual snapshot is the source of truth.
     // Keep the functional freeze color assertion below.
 
-    freeze->setToggleState(true,juce::sendNotificationSync);
-    const auto freezeImage=freeze->createComponentSnapshot(freeze->getLocalBounds());
-    int icePixels=0;
-    for(int y=0;y<freezeImage.getHeight();++y)for(int x=0;x<freezeImage.getWidth();++x){
-        const auto pixel=freezeImage.getPixelAt(x,y);
-        if(pixel.getBlue()>180&&pixel.getGreen()>145&&pixel.getBlue()>pixel.getRed()+35)
-            ++icePixels;
-    }
+    const auto glyphPixels=[](const juce::Image& image){
+        int white=0,coloured=0;
+        for(int y=0;y<image.getHeight();++y)for(int x=0;x<image.getWidth();++x){
+            const auto pixel=image.getPixelAt(x,y);
+            const int hi=juce::jmax((int)pixel.getRed(),(int)pixel.getGreen(),(int)pixel.getBlue());
+            const int lo=juce::jmin((int)pixel.getRed(),(int)pixel.getGreen(),(int)pixel.getBlue());
+            white+=pixel.getPerceivedBrightness()>.72f?1:0;
+            coloured+=hi>120&&hi-lo>35?1:0;
+        }
+        return std::array<int,2>{white,coloured};
+    };
     freeze->setToggleState(false,juce::sendNotificationSync);
-    if(icePixels<80){
-        std::cerr<<"UI106: active FREEZE lost its ice-blue lamp\n";return false;
+    const auto inactive=glyphPixels(freeze->createComponentSnapshot(freeze->getLocalBounds()));
+    freeze->setToggleState(true,juce::sendNotificationSync);
+    const auto active=glyphPixels(freeze->createComponentSnapshot(freeze->getLocalBounds()));
+    freeze->setToggleState(false,juce::sendNotificationSync);
+    if(active[0]<40||active[0]<=inactive[0]||active[1]!=0||inactive[1]!=0){
+        std::cerr<<"UI106: FREEZE lost its monochrome OLED state contrast\n";return false;
     }
 
     auto image=editor.createComponentSnapshot(editor.getLocalBounds());
