@@ -212,7 +212,7 @@ inline bool verifyScalpelFinish(){
     for(const auto* name:{"HEAT MAP","FREEZE"}){
         auto* b=button(name);if(!b||!lockedDeck.contains(b->getBounds().toFloat()))return fail(__LINE__);
         const auto visible=opaqueBounds(*b);
-        const float centerError=visible.getCentre().getDistanceFrom(b->getBounds().getCentre().toFloat());
+        const float centerError=visible.getCentre().toFloat().getDistanceFrom(b->getBounds().getCentre().toFloat());
         fill<<name<<','<<visible.getHeight()<<','<<centerError<<','<<editor->getWidth()<<','<<editor->getHeight()<<'\n';
         if(visible.getHeight()<60||visible.getHeight()>100||centerError>3.f)return fail(__LINE__);
     }
@@ -274,8 +274,8 @@ inline bool verifyScalpelFinish(){
     if(carousels.size()!=2)return fail(__LINE__);
     for(auto* carousel:carousels){
         const int before=carousel->getSelectedItemIndex();
-        if(!carousel->keyPressed(juce::KeyPress::rightKey)||carousel->getSelectedItemIndex()!=juce::jmin(before+1,carousel->getNumItems()-1))return fail(__LINE__);
-        if(before<carousel->getNumItems()-1&&!carousel->keyPressed(juce::KeyPress::leftKey))return fail(__LINE__);
+        if(!carousel->keyPressed(juce::KeyPress(juce::KeyPress::rightKey))||carousel->getSelectedItemIndex()!=juce::jmin(before+1,carousel->getNumItems()-1))return fail(__LINE__);
+        if(before<carousel->getNumItems()-1&&!carousel->keyPressed(juce::KeyPress(juce::KeyPress::leftKey)))return fail(__LINE__);
         if(carousel->getSelectedItemIndex()!=before)return fail(__LINE__);
     }
     std::cout<<"FORMIDABLE 1.0.8.6 REVIEW: black/red dual glass, white OLED touch states, asset glyphs, bounded carousels, BAND/CARVE geometry and live DSP bindings passed\n";
