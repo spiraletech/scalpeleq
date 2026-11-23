@@ -1,5 +1,5 @@
 {
-  "version": "1.0.8.4.2",
+  "version": "1.0.8.5",
   "design_canvas_px": [
     2172,
     436
@@ -316,421 +316,326 @@
     ],
     "right_side_tick_labels": false
   },
-  "atlas": {
-    "file": "02_runtime/control_atlas.png",
-    "size_px": [
-      1024,
-      512
-    ],
-    "rects_px": {
-      "command_hover": [
-        4,
-        4,
-        228,
-        76
-      ],
-      "command_idle": [
-        240,
-        4,
-        228,
-        76
-      ],
-      "command_pressed": [
-        476,
-        4,
-        228,
-        76
-      ],
-      "master_disabled": [
-        712,
-        4,
-        118,
-        50
-      ],
-      "master_hover": [
-        838,
-        4,
-        118,
-        50
-      ],
-      "master_idle": [
-        4,
-        88,
-        118,
-        50
-      ],
-      "master_pressed": [
-        130,
-        88,
-        118,
-        50
-      ],
-      "master_selected": [
-        256,
-        88,
-        118,
-        50
-      ],
-      "meter_segment_active": [
-        382,
-        88,
-        21,
-        13
-      ],
-      "meter_segment_clip": [
-        411,
-        88,
-        21,
-        13
-      ],
-      "meter_segment_off": [
-        440,
-        88,
-        21,
-        13
-      ],
-      "meter_well": [
-        469,
-        88,
-        39,
-        280
-      ],
-      "peak_display_window": [
-        516,
-        88,
-        226,
-        66
-      ],
-      "screw_ne": [
-        750,
-        88,
-        33,
-        35
-      ],
-      "screw_nw": [
-        791,
-        88,
-        33,
-        35
-      ],
-      "screw_se": [
-        832,
-        88,
-        33,
-        35
-      ],
-      "screw_sw": [
-        873,
-        88,
-        33,
-        35
-      ],
-      "xray_face": [
-        4,
-        376,
-        244,
-        81
-      ],
-      "xray_lamp_off": [
-        256,
-        376,
-        34,
-        34
-      ],
-      "xray_lamp_on": [
-        298,
-        376,
-        34,
-        34
-      ]
-    }
-  },
   "assets": {
     "graphite_faceplate": {
-      "file": "02_runtime/plates/graphite_faceplate.png",
+      "file": "graphite_faceplate.png",
       "size_px": [
         2172,
         436
       ],
-      "sha256": "b6386fb35090ffb3750635528a2d7745b20a8bb5ff0aaf460a4871e49908a229",
+      "sha256": "fe87aa7907b7e27896e9b4845acba1b46b99307cf5e057deea7a02cc005004b6",
       "description": "Fine matte molded graphite backplate.",
-      "target": "module"
+      "target": "module",
+      "revision": "silver"
     },
     "champagne_bezel": {
-      "file": "02_runtime/plates/champagne_bezel.png",
+      "file": "champagne_bezel.png",
       "size_px": [
         2172,
         436
       ],
-      "sha256": "3186b77752e9db6570c33849d7503b61ea375a7e1b8ef2ea87a588f28e34f109",
-      "description": "Metal perimeter and inset edge, transparent center.",
-      "target": "module"
+      "sha256": "79c6c1c1cfe0e031087eadc20ca841cdd6e2bf8b05f5a6bca5c99663d46f1ef5",
+      "description": "Satin silver perimeter and inset edge with the original relief and alpha.",
+      "target": "module",
+      "revision": "silver"
     },
     "lens_gasket": {
-      "file": "02_runtime/plates/lens_gasket.png",
+      "file": "lens_gasket.png",
       "size_px": [
         1529,
         392
       ],
-      "sha256": "c8adf3efa325fcc3c6e508af647dc1e8d39add9039a7c6d3f684149858914624",
+      "sha256": "048875078977e247d8ec67a36da370a9587d1714309d1805c7f593da10d6b1ae",
       "description": "Outer gasket and molded inner lip, transparent window.",
-      "target": "lens"
+      "target": "lens",
+      "revision": "silver"
     },
     "smoked_polycarbonate": {
-      "file": "02_runtime/plates/smoked_polycarbonate.png",
+      "file": "smoked_polycarbonate.png",
       "size_px": [
         1529,
         392
       ],
-      "sha256": "73e362c6a9eb961146ff6714ff40cd49c5902b6f241fb37eb0dfbaf8b07a0968",
+      "sha256": "6178586e96c3cc5b6721e90f3128dd1960fc3783930c15dddd6a2b5175d54b33",
       "description": "Opaque smoked substrate beneath the live plot.",
-      "target": "lens"
+      "target": "lens",
+      "revision": "silver"
     },
     "polycarbonate_reflection": {
-      "file": "02_runtime/lighting/polycarbonate_reflection.png",
+      "file": "polycarbonate_reflection.png",
       "size_px": [
         1529,
         392
       ],
-      "sha256": "8c14805cfe36556ddba636dc2d86663377f4a52179aa83db8e1ec79e20ff170e",
+      "sha256": "cc54efde4d7b0d1bcb6b29d71f8320cdc597025745b901e1ce96e91e4cfb8236",
       "description": "Clear top-edge reflection pass above the spectrum and below text.",
-      "target": "lens"
+      "target": "lens",
+      "revision": "silver"
     },
     "display_pixel_mask": {
-      "file": "02_runtime/lighting/display_pixel_mask.png",
+      "file": "display_pixel_mask.png",
       "size_px": [
         1408,
         290
       ],
-      "sha256": "a9cfa68bec96fd9862b321c98a398f39fe2363c00fc5c1beb5c246be9f6ccc0f",
+      "sha256": "a2b1082227a89a240d1d8f1978683d0a6ac638001487ef6dea71329fc084e7fd",
       "description": "Fine transparent display texture with no graph grid.",
-      "target": "plot"
+      "target": "plot",
+      "revision": "silver"
     },
     "master_idle": {
-      "file": "02_runtime/controls/master_idle.png",
+      "file": "master_idle.png",
       "size_px": [
         118,
         50
       ],
-      "sha256": "e06eb978a8935b8fcc72128583ab4c46649304809ff359cd110a12cd9622a1ea",
+      "sha256": "d13611c974a1dd6c2a0c34b52fbc195cc30f4cde0ca14d6c9dc5c55822e591da",
       "description": "Unlabeled molded control face.",
       "target": "master_mid",
-      "preserve_corner_px": 12
+      "preserve_corner_px": 12,
+      "revision": "silver"
     },
     "master_hover": {
-      "file": "02_runtime/controls/master_hover.png",
+      "file": "master_hover.png",
       "size_px": [
         118,
         50
       ],
-      "sha256": "2d19d3968c4a2594af19f5e09047f57e4342b235e37eb371ecd96926f5cdbb26",
+      "sha256": "489676b7196a696da4acd60b2a14af67e596ecf8fc65ad4eda51065c319dbd79",
       "description": "Unlabeled hover control face.",
       "target": "master_mid",
-      "preserve_corner_px": 12
+      "preserve_corner_px": 12,
+      "revision": "silver"
     },
     "master_pressed": {
-      "file": "02_runtime/controls/master_pressed.png",
+      "file": "master_pressed.png",
       "size_px": [
         118,
         50
       ],
-      "sha256": "9fbcabc01ca86f73fc7854515c1207e398055bda58e77552af01d28917e4c12d",
+      "sha256": "07e8a273924b88ef15431b536aebd4327df73e2faee009e463f3a37374db0b6b",
       "description": "Unlabeled pressed control face.",
       "target": "master_mid",
-      "preserve_corner_px": 12
+      "preserve_corner_px": 12,
+      "revision": "silver"
     },
     "master_selected": {
-      "file": "02_runtime/controls/master_selected.png",
+      "file": "master_selected.png",
       "size_px": [
         118,
         50
       ],
-      "sha256": "4919694485f81f97f64405ad2820551e77526f41d6696d133b7c48e61921b164",
+      "sha256": "8859fac5e734f15af924f10789d0102ddd21d1ed1d17f704259e2cb1f40c52b5",
       "description": "Unlabeled selected control face.",
       "target": "master_mid",
-      "preserve_corner_px": 12
+      "preserve_corner_px": 12,
+      "revision": "silver"
     },
     "master_disabled": {
-      "file": "02_runtime/controls/master_disabled.png",
+      "file": "master_disabled.png",
       "size_px": [
         118,
         50
       ],
-      "sha256": "a993b0cb59341e66582c164e4cbc2a8c55aed62b7f8443c77ab667bc60b824ec",
+      "sha256": "0fcd387838d2efb45a2f1bff944eb11f20000f13e47660b5cbe42d5b2bdb3549",
       "description": "Unlabeled disabled control face.",
       "target": "master_mid",
-      "preserve_corner_px": 12
+      "preserve_corner_px": 12,
+      "revision": "silver"
     },
     "command_idle": {
-      "file": "02_runtime/controls/command_idle.png",
+      "file": "command_idle.png",
       "size_px": [
         228,
         76
       ],
-      "sha256": "0fae45719b979298eeff833ae827fd38947623ac1ba75b9d1cac07e605c92bb3",
+      "sha256": "7c314aee01a7afd2482866f11007ce9f59b39d70d5b357982ef09acee595947f",
       "description": "Unlabeled molded control face.",
       "target": "reset",
-      "preserve_corner_px": 12
+      "preserve_corner_px": 12,
+      "revision": "silver"
     },
     "command_hover": {
-      "file": "02_runtime/controls/command_hover.png",
+      "file": "command_hover.png",
       "size_px": [
         228,
         76
       ],
-      "sha256": "0299d9ae9a1c23ac90a2e219e9d9821a617ea17a7331b8b7cf1e86a0d19d4ae0",
+      "sha256": "9528c57a3696b9bbd4f35f127ac18a36ba709307a61e63fe9f4cc5e145e26846",
       "description": "Unlabeled hover control face.",
       "target": "reset",
-      "preserve_corner_px": 12
+      "preserve_corner_px": 12,
+      "revision": "silver"
     },
     "command_pressed": {
-      "file": "02_runtime/controls/command_pressed.png",
+      "file": "command_pressed.png",
       "size_px": [
         228,
         76
       ],
-      "sha256": "75bc8faad11d8cfd59dc8842216f0944024a997435956559a27b2f6ac9cd3b73",
+      "sha256": "ebecc6b0c01fc5f5bcd205cc6273b1ec1d8388285cb335f26bd823b66d59ddd0",
       "description": "Unlabeled pressed control face.",
       "target": "reset",
-      "preserve_corner_px": 12
+      "preserve_corner_px": 12,
+      "revision": "silver"
     },
     "xray_face": {
-      "file": "02_runtime/controls/xray_face.png",
+      "file": "xray_face.png",
       "size_px": [
         244,
         81
       ],
-      "sha256": "b8f4021483ed18a735e50136103ec5ff0317bc35d08515b10bd14f108fdb12cd",
+      "sha256": "10786e40b5875c86f5fe3c45a3bdf13c6d3c7ff7da9605fa17db723f91973152",
       "description": "Unlabeled X-RAY housing with unlit indicator recess.",
       "target": "xray",
-      "preserve_corner_px": 12
+      "preserve_corner_px": 12,
+      "revision": "silver"
     },
     "peak_display_window": {
-      "file": "02_runtime/controls/peak_display_window.png",
+      "file": "peak_display_window.png",
       "size_px": [
         226,
         66
       ],
-      "sha256": "533b97b1b1f13526bd0992aba8db8779fd8d5e42a1346c4d2b14162f9c58bc4d",
+      "sha256": "98e34421d09fb799d34f9cb320edf3f09bdad1c8bcc1affea51487887b1fc77a",
       "description": "Empty smoked peak readout; all digits are live.",
       "target": "peak_readout",
-      "preserve_corner_px": 12
+      "preserve_corner_px": 12,
+      "revision": "silver"
     },
     "screw_nw": {
-      "file": "02_runtime/controls/screw_nw.png",
+      "file": "screw_nw.png",
       "size_px": [
         33,
         35
       ],
-      "sha256": "ea47ec4886b3add9be3f48d9c0f157f2d08ed0d92271e1056b44f1fd68dade57",
+      "sha256": "792e26dff289c53f50db43753b00631a4c314b8558d6243d9cd8b05c3aca6642",
       "description": "Champagne Phillips-head fastener.",
-      "target": "screw_nw"
+      "target": "screw_nw",
+      "revision": "silver"
     },
     "screw_ne": {
-      "file": "02_runtime/controls/screw_ne.png",
+      "file": "screw_ne.png",
       "size_px": [
         33,
         35
       ],
-      "sha256": "391df32451d91740613e8ff04b9173efd27306b0b916ca38ead3064d6a800c91",
+      "sha256": "872fccf2fe6b3b6789aa4f512acf442cd077e75fa86a3b487f619a8e63303521",
       "description": "Champagne Phillips-head fastener.",
-      "target": "screw_ne"
+      "target": "screw_ne",
+      "revision": "silver"
     },
     "screw_sw": {
-      "file": "02_runtime/controls/screw_sw.png",
+      "file": "screw_sw.png",
       "size_px": [
         33,
         35
       ],
-      "sha256": "d72bd7690c9d12a8591bbd9e93ff508da09690299fe6e4207460a9137759d0d9",
+      "sha256": "78ebd70036ab03283461bdc705cf9d070fa647b9a763316df7606f420986f74b",
       "description": "Champagne Phillips-head fastener.",
-      "target": "screw_sw"
+      "target": "screw_sw",
+      "revision": "silver"
     },
     "screw_se": {
-      "file": "02_runtime/controls/screw_se.png",
+      "file": "screw_se.png",
       "size_px": [
         33,
         35
       ],
-      "sha256": "c8f6db5360444d6ae774264fc562e31eac7c8bd037a3c8275317c540344d887b",
+      "sha256": "134e6b472cfed3b93708f5f583b8b6b86879ecd1cf6cc8ffe9055a3b8dd4c9a6",
       "description": "Champagne Phillips-head fastener.",
-      "target": "screw_se"
+      "target": "screw_se",
+      "revision": "silver"
     },
     "meter_well": {
-      "file": "02_runtime/controls/meter_well.png",
+      "file": "meter_well.png",
       "size_px": [
         39,
         280
       ],
-      "sha256": "fd716f1978a85daeb677d2bb4b4cc0cf4b7dbe6a6de24681c7a73a48b7225cad",
+      "sha256": "d788b484b37b19304b7588f68165021dd32e6e9ed326a076bc0bf34436824453",
       "description": "Empty dual-use meter extrusion with separate segments.",
-      "target": "meter_left"
+      "target": "meter_left",
+      "revision": "silver"
     },
     "meter_segment_off": {
-      "file": "02_runtime/lighting/meter_segment_off.png",
+      "file": "meter_segment_off.png",
       "size_px": [
         21,
         13
       ],
-      "sha256": "2c39bf7624add7798fc1805f8dc460dd5b447dbb6f2b2c184a4f9fd1aa04c70a",
-      "description": "One off meter segment."
+      "sha256": "b5e4f65d2a08fbf2df6e2e8f3afee8d4dd84edae3c452c4fbb002ed042555c8b",
+      "description": "One off meter segment.",
+      "revision": "silver"
     },
     "meter_segment_active": {
-      "file": "02_runtime/lighting/meter_segment_active.png",
+      "file": "meter_segment_active.png",
       "size_px": [
         21,
         13
       ],
-      "sha256": "012e1048bf736345519e6f7b5473c66b8d486cdf8a46c6ad210d09aeff524400",
-      "description": "One active meter segment."
+      "sha256": "e258ef8a23584f2ca18ddd6225d833774920f2c2e7ce38265c9c81b55a73c0a5",
+      "description": "One active meter segment.",
+      "revision": "silver"
     },
     "meter_segment_clip": {
-      "file": "02_runtime/lighting/meter_segment_clip.png",
+      "file": "meter_segment_clip.png",
       "size_px": [
         21,
         13
       ],
       "sha256": "d0e49bba257c12bd5899bcaa469101303a07ed1c79e0c34a2f9715f97cbdfc6c",
-      "description": "One clip meter segment."
+      "description": "One clip meter segment.",
+      "revision": "original"
     },
     "xray_lamp_off": {
-      "file": "02_runtime/lighting/xray_lamp_off.png",
+      "file": "xray_lamp_off.png",
       "size_px": [
         34,
         34
       ],
-      "sha256": "67bc943fb6f5fec651ff6c502e078a1c8415adbc1669c7567b24b6818cdc7821",
+      "sha256": "f18c70fc0943550a189a1f0cbf838af33d535e918ec63e1712a7be0c784415a8",
       "description": "Standalone X-RAY lamp off.",
-      "target": "xray_lamp"
+      "target": "xray_lamp",
+      "revision": "silver"
     },
     "xray_lamp_on": {
-      "file": "02_runtime/lighting/xray_lamp_on.png",
+      "file": "xray_lamp_on.png",
       "size_px": [
         34,
         34
       ],
       "sha256": "ab202816df88bac18f22eb15504f18f7d82153bad5a4fd5e7d0bfc166bd6833b",
       "description": "Standalone X-RAY lamp on.",
-      "target": "xray_lamp"
+      "target": "xray_lamp",
+      "revision": "original"
     },
     "spectrum_falloff": {
-      "file": "02_runtime/lighting/spectrum_falloff.png",
+      "file": "spectrum_falloff.png",
       "size_px": [
         8,
         256
       ],
       "sha256": "c6a1d1a1e23434aafcd8c9e3806ea3a8e27b2453395d2f25412cd6c82065e56d",
-      "description": "White emission falloff. Tint and multiply by signal strength in the renderer."
+      "description": "White emission falloff. Tint and multiply by signal strength in the renderer.",
+      "revision": "original"
     },
     "plot_clip_mask": {
-      "file": "02_runtime/lighting/plot_clip_mask.png",
+      "file": "plot_clip_mask.png",
       "size_px": [
         1408,
         290
       ],
       "sha256": "ef4464a501eb0b2ee4752024aaf2564ebb806d6b99a8a4c7a11b8f3c070a72fb",
       "description": "Rectangular overdraw mask. Clip every signal pass to the calibrated plot.",
-      "target": "plot"
+      "target": "plot",
+      "revision": "original"
     }
+  },
+  "finish": "Satin Silver",
+  "base_runtime": "1.0.8.4.2",
+  "runtime_scope": "Analyzer appearance",
+  "legacy_filenames": {
+    "champagne_bezel.png": "Retained for existing BinaryData symbol. This file contains the satin silver bezel."
   }
 }

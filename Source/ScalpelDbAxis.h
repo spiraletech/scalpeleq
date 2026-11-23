@@ -8,7 +8,7 @@ inline void draw(juce::Graphics& g,juce::Rectangle<float> plot){
     const float right=plot.getRight()+gutterGap+labelRightOffset;
     // Native production treatment of the old gutter; never blit a reference
     // composite or cover the plot. Nodes are painted afterwards, unchanged.
-    g.setColour(juce::Colour(0xff0b0b0a));
+    g.setColour(juce::Colour(0xff0b0d10));
     g.fillRect(plot.getRight()+gutterGap,plot.getY()-6.f*logicalPerNativePixel,
                gutterWidth,plot.getHeight()+11.f*logicalPerNativePixel);
     auto labelFont=juce::Font(juce::FontOptions("Arial",labelFontHeight,juce::Font::bold));
@@ -28,10 +28,10 @@ inline void draw(juce::Graphics& g,juce::Rectangle<float> plot){
         const auto ink=outline.getBounds();
         glyphs.draw(g,juce::AffineTransform::translation(x-(centred?advance.getCentreX():advance.getRight()),y-ink.getCentreY()));
     };
-    g.setColour(juce::Colour(0xffc9bcaf));
+    g.setColour(juce::Colour(0xffafb8c3));
     text("dBFS",unitFont,right,plot.getY()-unitElevation,true);
     for(const int db:labels){
-        g.setColour(juce::Colour(db==0?0xfff6efe7:0xffe6e0d8));
+        g.setColour(juce::Colour(db==0?0xfff2f5f7:0xffe1e5e9));
         text(juce::String(db),labelFont,right,toY((float)db,plot.getY(),plot.getHeight()),false);
     }
 }

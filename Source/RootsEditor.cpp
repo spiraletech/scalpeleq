@@ -323,7 +323,7 @@ void RootsGraph::paintStaticFrame(juce::Graphics& g) const {
     for(const float f:freqs){
         const float x=freqToX(f);
         g.setFont(scalpel::finish::font(13.5f,false));
-        g.setColour(juce::Colour(0xff958875).withAlpha(.20f));
+        g.setColour(juce::Colour(0xff707b86).withAlpha(.20f));
         g.drawVerticalLine(juce::roundToInt(x),r.getY(),r.getBottom());
         g.setColour(scalpel::finish::text);
         g.drawText(hzText(f),juce::roundToInt(x-25),juce::roundToInt(r.getBottom()+5),
@@ -331,7 +331,7 @@ void RootsGraph::paintStaticFrame(juce::Graphics& g) const {
     }
     for(const int db:scalpel::dbaxis::labels){
         const float y=scalpel::dbaxis::toY((float)db,r.getY(),r.getHeight());
-        g.setColour(juce::Colour(0xff9e8c75).withAlpha(db==-30?.34f:.19f));
+        g.setColour(juce::Colour(0xff78818b).withAlpha(db==-30?.34f:.19f));
         g.drawHorizontalLine(juce::roundToInt(y),r.getX(),r.getRight());
     }
     scalpel::dbaxis::draw(g,r);
@@ -362,7 +362,7 @@ void RootsGraph::paint(juce::Graphics& g){
         const float x2=freqToX((float)band.right);
         const auto warning=peakWarnings_[(size_t)root];
         const auto accent=warning>0.f?juce::Colour(0xffd71916):
-            (root==selected_/2?colour(root):juce::Colour(0xff9b7b68));
+            (root==selected_/2?colour(root):juce::Colour(0xff85909b));
         g.setColour(accent.withAlpha(warning>0.f?warning*.33f:
             root==selected_/2?.095f:.017f));
         g.fillRect(x1,r.getY(),juce::jmax(0.0f,x2-x1),r.getHeight());
@@ -426,8 +426,8 @@ void RootsGraph::paint(juce::Graphics& g){
     if(!xrayActive_){
         // Standard Scalpel graph is smoked graphite, never Surgery's bright
         // cyan/blue filled histogram. HEAT MAP adds frequency-locked spectral colour.
-        juce::ColourGradient graphite(juce::Colour(0xff35302b).withAlpha(.64f),
-            r.getX(),r.getY(),juce::Colour(0xff0b0a09).withAlpha(.9f),
+        juce::ColourGradient graphite(juce::Colour(0xff282d33).withAlpha(.64f),
+            r.getX(),r.getY(),juce::Colour(0xff0a0c0f).withAlpha(.9f),
             r.getX(),r.getBottom(),false);
         g.setGradientFill(graphite);g.fillPath(filledPath);
     } else {
@@ -618,21 +618,21 @@ void RootsGraph::paint(juce::Graphics& g){
     if(luminous>0){
         // The optical emission is generated from the exact measured contour,
         // not a second decorative waveform. Floor bins therefore emit zero.
-        juce::ColourGradient emission(juce::Colour(0xff84dcff).withAlpha(.24f*luminous),
-            r.getCentreX(),r.getY(),juce::Colour(0xff102a66).withAlpha(.035f*luminous),
+        juce::ColourGradient emission(juce::Colour(0xff9cafc2).withAlpha(.24f*luminous),
+            r.getCentreX(),r.getY(),juce::Colour(0xff222c38).withAlpha(.035f*luminous),
             r.getCentreX(),r.getBottom(),false);
         g.setGradientFill(emission);g.fillPath(filledPath);
-        g.setColour(juce::Colour(0xff8bdfff).withAlpha(.18f*luminous));
+        g.setColour(juce::Colour(0xff9cafc2).withAlpha(.18f*luminous));
         g.strokePath(spectrumPath,juce::PathStrokeType(5.2f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
-        g.setColour(juce::Colour(0xffd9f5ff).withAlpha(.34f*luminous));
+        g.setColour(juce::Colour(0xffe6edf4).withAlpha(.34f*luminous));
         g.strokePath(spectrumPath,juce::PathStrokeType(2.1f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
     }
     // A single fine readout follows the spectrum edge, never a 2D waterfall.
-    g.setColour(juce::Colour(xrayActive_?0xffd9ddd6:0xffc1b2a3));
+    g.setColour(juce::Colour(xrayActive_?0xffe6edf4:0xffe6edf4));
     g.strokePath(spectrumPath,juce::PathStrokeType(weatherStyle_==7?1.7f:1.3f,
         juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
     // A restrained peak-hold readout; the audio measurements are unchanged.
-    g.setColour(juce::Colour(0xffdfd5c7).withAlpha(0.24f));
+    g.setColour(juce::Colour(0xffd0d7e0).withAlpha(0.24f));
     g.strokePath(peakPath,juce::PathStrokeType(0.8f));
     // Intentionally no outlined "heat bubbles": they obscured the true
     // contour and made HEAT MAP resemble a trail of rigid copper coins.
@@ -1360,7 +1360,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     masterLabel_.setText("MASTER",juce::dontSendNotification);
     masterLabel_.setJustificationType(juce::Justification::centred);
     masterLabel_.setFont(juce::Font(juce::FontOptions("Segoe UI",13.f,juce::Font::bold)));
-    masterLabel_.setColour(juce::Label::textColourId,juce::Colour(0xffd1c0a8));
+    masterLabel_.setColour(juce::Label::textColourId,juce::Colour(0xffcdd3da));
     addAndMakeVisible(masterLabel_);
     const char* domains[]{"STEREO","MID","SIDE"};
     for(int i=0;i<3;++i){
@@ -1369,10 +1369,10 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         button.setComponentID("master-output-"+juce::String(i));
         button.setTooltip(i==0?"Master output: full stereo mix":
             i==1?"Master output: Mid (center) only":"Master output: Side (difference) only");
-        button.setColour(juce::TextButton::buttonColourId,juce::Colour(0xff22201c));
-        button.setColour(juce::TextButton::buttonOnColourId,juce::Colour(0xff3f3222));
-        button.setColour(juce::TextButton::textColourOffId,juce::Colour(0xffd1c0a8));
-        button.setColour(juce::TextButton::textColourOnId,juce::Colour(0xffffcb81));
+        button.setColour(juce::TextButton::buttonColourId,juce::Colour(0xff222327));
+        button.setColour(juce::TextButton::buttonOnColourId,juce::Colour(0xff393b3f));
+        button.setColour(juce::TextButton::textColourOffId,juce::Colour(0xffcdd3da));
+        button.setColour(juce::TextButton::textColourOnId,juce::Colour(0xffecf0f3));
         button.onClick=[this,i]{
             if(auto* parameter=processor_.apvts.getParameter("master_output_domain")){
                 parameter->beginChangeGesture();

@@ -16,7 +16,7 @@ enum class Art { shell, control_deck, analyzer, band_well, page_well, plot_glass
     peak_window_10842, xray_face_10842, xray_lamp_off_10842,
     xray_lamp_on_10842, graph_glass_1086, band_hover_1086,
     heat_map_flame_1086, freeze_snowflake_1086,
-    chevron_left_1086, chevron_right_1086, dial_pointer_1086, count };
+    chevron_left_1086, chevron_right_1086, dial_pointer_1086, band_keys_1087, mode_keys_1087, count };
 
 inline const juce::Image& image(Art asset){
     static const auto images=[] {
@@ -28,9 +28,9 @@ inline const juce::Image& image(Art asset){
         result[static_cast<size_t>(Art::analyzer)]=juce::ImageFileFormat::loadFrom(
             BinaryData::f1081_analyzer_png,BinaryData::f1081_analyzer_pngSize);
         result[static_cast<size_t>(Art::band_well)]=juce::ImageFileFormat::loadFrom(
-            BinaryData::f1081_band_well_png,BinaryData::f1081_band_well_pngSize);
+            BinaryData::f1087_band_well_png,BinaryData::f1087_band_well_pngSize);
         result[static_cast<size_t>(Art::page_well)]=juce::ImageFileFormat::loadFrom(
-            BinaryData::f1081_page_well_png,BinaryData::f1081_page_well_pngSize);
+            BinaryData::f1087_page_well_png,BinaryData::f1087_page_well_pngSize);
         result[static_cast<size_t>(Art::plot_glass)]=juce::ImageFileFormat::loadFrom(
             BinaryData::f1081_plot_glass_png,BinaryData::f1081_plot_glass_pngSize);
         result[static_cast<size_t>(Art::master_idle)]=juce::ImageFileFormat::loadFrom(
@@ -123,6 +123,10 @@ inline const juce::Image& image(Art asset){
             BinaryData::f1086_dial_pointer_png,BinaryData::f1086_dial_pointer_pngSize);
         const juce::SoftwareImageType software;
         for(auto& frame:result)frame=software.convert(frame);
+        result[static_cast<size_t>(Art::band_keys_1087)]=juce::ImageFileFormat::loadFrom(
+            BinaryData::f1087_band_keys_png,BinaryData::f1087_band_keys_pngSize);
+        result[static_cast<size_t>(Art::mode_keys_1087)]=juce::ImageFileFormat::loadFrom(
+            BinaryData::f1087_mode_keys_png,BinaryData::f1087_mode_keys_pngSize);
         return result;
     }();
     return images[static_cast<size_t>(asset)];

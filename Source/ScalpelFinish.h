@@ -63,15 +63,24 @@ inline void shell(juce::Graphics& g,juce::Rectangle<float> r){
     g.setColour(juce::Colour(0xff111315));g.drawRoundedRectangle(outer.reduced(7),32,.8f);
     // Rejected footer plaque and perforations are deliberately absent.
 }
-inline void hardware(juce::Graphics& g,juce::Rectangle<float> r,bool selected,bool hover,bool pressed){
-    using A=formidable::Art;
-    const auto face=(selected||pressed)?r.reduced(.5f).translated(0,1.f):r;
-    formidable::draw(g,pressed&&!selected?A::band_pressed:selected?A::band_selected:hover?A::band_hover_1086:A::band_idle,face);
-    if(selected||pressed){
-        g.setColour(juce::Colour(0xff151719).withAlpha(.76f));
-        g.drawHorizontalLine(juce::roundToInt(r.getY()+1.f),r.getX()+7.f,r.getRight()-7.f);
+inline int bandKeyIndex(const juce::String& label){
+    if(label.length()!=6||!label.startsWith("BAND "))return -1;
+    const auto digit=label[5];
+    return digit>='1'&&digit<='7'?static_cast<int>(digit-'1'):-1;
+}
+inline void drawPageOrBandKey(juce::Graphics& g,juce::Rectangle<float> bounds,
+                              const juce::Button& button,int column,bool page,bool over,bool down){
+    // Atlas rows match the art handoff: disabled, pressed, selected, hover, idle.
+    const int row=!button.isEnabled()?0:down?1:button.getToggleState()?2:over?3:4;
+    const int width=page?1028:408;
+    const int height=page?112:124;
+    const auto& atlas=formidable::image(page?formidable::Art::mode_keys_1087:formidable::Art::band_keys_1087);
+    const auto cell=atlas.getClippedImage({column*width,row*height,width,height});
+    g.drawImage(cell,bounds,juce::RectanglePlacement::stretchToFit);
+    if(button.hasKeyboardFocus(false)){
+        g.setColour(juce::Colours::white.withAlpha(.72f));
+        g.drawRoundedRectangle(bounds.reduced(2.f),4.f,.8f);
     }
-    if(hover){g.setColour(juce::Colours::white.withAlpha(.055f));g.fillRoundedRectangle(r.reduced(3),4.5f);}
 }
 // Native reconstruction of the kit's no-text SVG cap masters. One physical
 // cap/bevel family for lower-deck controls; no baked labels or sprite margin
@@ -126,11 +135,6 @@ inline void darkButton(juce::Graphics& g,juce::Rectangle<float> r,bool selected,
         g.setColour(selected?lampColour:lampColour.darker(.82f));g.fillRoundedRectangle(light,2);}
     if(hover){g.setColour(juce::Colours::white.withAlpha(.04f));g.fillRoundedRectangle(r.reduced(2),4);}
 }
-inline void tab(juce::Graphics& g,juce::Rectangle<float> r,bool selected,bool hover,bool pressed){
-    using A=formidable::Art;
-    formidable::draw(g,selected?A::tab_selected:pressed?A::tab_pressed:hover?A::tab_hover:A::tab_idle,r);
-    roughness(g,r.reduced(2),4,.48f);
-}
 inline void screw(juce::Graphics& g,juce::Point<float> c){
     constexpr float side=16.f;
     formidable::draw(g,formidable::Art::screw,{c.x-side*.5f,c.y-side*.5f,side,side});
@@ -151,7 +155,7 @@ inline void analyzerHousing(juce::Graphics& g,juce::Rectangle<float> r){
     formidable::draw(g,formidable::Art::analyzer_pixels_10842,mapped(208,70,1408,290));
 }
 inline void analyzerReflection(juce::Graphics& g,juce::Rectangle<float> r){
-    formidable::draw(g,formidable::Art::graph_glass_1086,
+    formidable::draw(g,formidable::Art::analyzer_reflection_10842,
         {r.getX()+189.f*r.getWidth()/2172.f,r.getY()+24.f*r.getHeight()/436.f,
          1529.f*r.getWidth()/2172.f,392.f*r.getHeight()/436.f});
 }

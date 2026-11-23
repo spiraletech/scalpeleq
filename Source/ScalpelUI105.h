@@ -10,7 +10,7 @@ namespace scalpel::ui105 {
 inline const juce::Colour champagne{0xff0d1720};
 inline const juce::Colour ivory{0xffece0d5};
 inline const juce::Colour ink{0xff070d13};
-inline const juce::Colour amber{0xffcde8e5};
+inline const juce::Colour amber{0xffdce5ec};
 inline const juce::Colour chassisEdge{0xff4e83a5};
 
 inline void roundedPanel(juce::Graphics& g, juce::Rectangle<float> r, bool dark, float radius=8.0f)
@@ -129,7 +129,7 @@ inline void drawAnalyzerPanel(juce::Graphics& g,juce::Rectangle<float> full,
     }
     g.setColour(scalpel::finish::text);g.setFont(scalpel::finish::font(12,false));
     g.drawText("PEAK (dBFS)",local(1766,155,226,28).toNearestInt(),juce::Justification::centred);
-    g.setColour(juce::Colour(0xffcde8e5));
+    g.setColour(juce::Colour(0xffdce5ec));
     scalpel::finish::number(g,peakHold<=-143?juce::String("-inf"):juce::String(peakHold,2),display,20);
     drawMeter(g,local(2018,71,39,280),leftPeak,"L",polished);
     drawMeter(g,local(2074,71,39,280),rightPeak,"R",polished);

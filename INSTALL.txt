@@ -1,4 +1,9 @@
-Scalpel EQ 1.0.8.4.2 — Formidable glass analyzer and unified DSP graph — Windows x64 VST3
+Scalpel EQ 1.0.8.7 — Button Update
+
+Matte black BAND and page keys have white raised lettering and a muted red reflection while pressed.
+The analyzer has a satin silver bezel and smoked glass.
+
+Windows x64 VST3
 
 Close FL Studio and other DAWs before replacing the plugin.
 Extract this ZIP. Copy the COMPLETE “Scalpel EQ.vst3” folder to:

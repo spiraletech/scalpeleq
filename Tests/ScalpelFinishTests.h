@@ -21,6 +21,26 @@ inline bool verifyScalpelFinish(){
         for(auto* child:editor->getChildren())if(auto* b=dynamic_cast<juce::TextButton*>(child);b&&b->isVisible()&&b->getButtonText()==text)return b;
         return nullptr;
     };
+    // Exercise the normal look-and-feel entry point for both button families.
+    const auto redPixels=[](juce::TextButton& key,bool pressed){
+        juce::Image frame(juce::Image::ARGB,key.getWidth(),key.getHeight(),true,juce::SoftwareImageType{});
+        juce::Graphics g(frame);
+        key.getLookAndFeel().drawButtonBackground(g,key,juce::Colours::black,false,pressed);
+        int count=0;
+        for(int y=0;y<frame.getHeight();++y)for(int x=0;x<frame.getWidth();++x){
+            const auto c=frame.getPixelAt(x,y);
+            if(c.getRed()>c.getGreen()+18&&c.getRed()>c.getBlue()+14)++count;
+        }
+        return count;
+    };
+    for(const auto* text:{"BAND 1","BAND 7","BAND MODE","CARVE","ANALYZE"}){
+        auto* key=button(text);
+        if(!key||redPixels(*key,false)!=0||redPixels(*key,true)==0)return fail(__LINE__);
+        key->setEnabled(false);
+        const auto disabledRed=redPixels(*key,true);
+        key->setEnabled(true);
+        if(disabledRed!=0)return fail(__LINE__);
+    }
     const auto click=[&](const juce::String& text){auto* b=button(text);if(!b||!b->onClick)return fail(__LINE__);b->onClick();return true;};
     if(!click("BAND 3")||!click("CARVE")||!click("C4"))return fail(__LINE__);
     juce::MessageManager::getInstance()->runDispatchLoopUntil(40);

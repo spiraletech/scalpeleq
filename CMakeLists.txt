@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 # CMake and Windows VERSIONINFO support four numeric fields. The human release
-# 1.0.8.6 promotes the complete black/red dual-glass control family.
-project(SCALPELEQ VERSION 1.0.8.6 LANGUAGES C CXX)
+# 1.0.8.7 updates button surfaces and analyzer materials.
+project(SCALPELEQ VERSION 1.0.8.7 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -75,6 +75,9 @@ file(GLOB SCALPEL_FORMIDABLE_10842_ASSETS CONFIGURE_DEPENDS
   Assets/Scalpel/Formidable/1.0.8.4.2/*.png)
 file(GLOB SCALPEL_FORMIDABLE_1086_ASSETS CONFIGURE_DEPENDS
   Assets/Scalpel/Formidable/1.0.8.6/f1086_*.png)
+file(GLOB SCALPEL_BUTTON_UPDATE_ASSETS CONFIGURE_DEPENDS
+  Assets/Scalpel/Formidable/1.0.8.7/f1087_*.png)
+
 juce_add_binary_data(SurgeryRackAssets SOURCES
   "${SCALPEL_ART_DIR}/chassis-1.0.3.png"
   "${SCALPEL_ART_DIR}/approved-reference.png"
@@ -109,6 +112,7 @@ juce_add_binary_data(SurgeryRackAssets SOURCES
   Assets/Scalpel/Formidable/1.0.8.1/f1081_champagne_header.png
   ${SCALPEL_FORMIDABLE_10842_ASSETS}
   ${SCALPEL_FORMIDABLE_1086_ASSETS}
+  ${SCALPEL_BUTTON_UPDATE_ASSETS}
   Assets/Scalpel/scalpel-knob.png
   Assets/Scalpel/scalpel-freeze.png
   Assets/Scalpel/scalpel-heatmap.png)
@@ -130,7 +134,7 @@ target_sources(PRISMVST PRIVATE
 )
 
 target_compile_definitions(PRISMVST PUBLIC
-  SCALPEL_RELEASE_VERSION="1.0.8.6"
+  SCALPEL_RELEASE_VERSION="1.0.8.7"
   JUCE_WEB_BROWSER=0
   JUCE_USE_CURL=0
   JUCE_VST3_CAN_REPLACE_VST2=0
@@ -203,7 +207,7 @@ if(PRISMVST_BUILD_TESTS)
   juce_generate_juce_header(prismvst_tests)
   target_link_libraries(prismvst_tests PRIVATE SurgeryRackAssets)
   target_compile_definitions(prismvst_tests PRIVATE
-    SCALPEL_RELEASE_VERSION="1.0.8.6"
+    SCALPEL_RELEASE_VERSION="1.0.8.7"
     JUCE_MODAL_LOOPS_PERMITTED=1
     JUCE_WEB_BROWSER=0
     JUCE_USE_CURL=0

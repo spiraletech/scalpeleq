@@ -149,18 +149,21 @@ public:
                 g.drawImage(glyph,target,juce::RectanglePlacement::centred);
                 return;
             }
-            if(pageTab){scalpel::finish::tab(g,r,button.getToggleState(),over,down);return;}
+            if(pageTab){
+                const int column=text=="BAND MODE"?0:text=="CARVE"?1:2;
+                scalpel::finish::drawPageOrBandKey(g,r,button,column,true,over,down);
+                return;
+            }
             if(deckSwitch){
                 if(over){g.setColour(juce::Colours::white.withAlpha(.035f));g.fillRoundedRectangle(r,6.f);}
                 return;
             }
-            if(bandSelector){
-                const bool carveActive=carveSelector&&(bool)button.getProperties().getWithDefault("carve-active",false);
-                scalpel::finish::hardware(g,r,button.getToggleState()||carveActive,over,down);
+            if(const int band=scalpel::finish::bandKeyIndex(text);band>=0){
+                scalpel::finish::drawPageOrBandKey(g,r,button,band,false,over,down);
                 const auto warning=button.findColour(juce::TextButton::buttonColourId);
-                if(bandSelector&&warning.getRed()>180&&warning.getGreen()<65&&warning.getBlue()<65){
+                if(warning.getRed()>180&&warning.getGreen()<65&&warning.getBlue()<65){
                     g.setColour(juce::Colour(0xffed1919).withAlpha(.28f+warning.getFloatAlpha()*.62f));
-                    g.fillRoundedRectangle(r.reduced(2),3);
+                    g.drawRoundedRectangle(r.reduced(2),3,1.2f);
                 }
                 return;
             }
@@ -350,23 +353,17 @@ public:
         if(finish_){
             const auto label=b.getButtonText();
             const bool tab=label=="BAND MODE"||label=="CARVE"||label=="ANALYZE";
-            const bool hardware=label.startsWith("BAND ")&&!tab;
+            if(tab||scalpel::finish::bandKeyIndex(label)>=0)return; // Legend is part of the registered atlas cell.
             const bool touch=label=="C1"||label=="C2"||label=="C3"||label=="C4"||
                 label=="MONO"||label=="SOLO"||label.startsWith("PHASE")||label=="LIMIT"||
                 label=="ON"||label=="OFF";
             const bool carveActive=(bool)b.getProperties().getWithDefault("carve-active",false);
             const bool lit=b.getToggleState()||b.isDown()||carveActive;
-            g.setColour(!b.isEnabled()?scalpel::finish::secondary:hardware?scalpel::finish::text:
-                label=="X-RAY"?scalpel::finish::text:tab?(b.getToggleState()?scalpel::finish::ice:scalpel::finish::secondary):
+            g.setColour(!b.isEnabled()?scalpel::finish::secondary:
                 touch?(lit?scalpel::finish::ice:scalpel::finish::secondary):scalpel::finish::text);
-            auto buttonFont=scalpel::finish::font(hardware?19.f:tab?22.f:18.f,tab||hardware);
-            if(hardware)buttonFont.setHorizontalScale(.955f);
-            g.setFont(buttonFont);
+            g.setFont(scalpel::finish::font(18.f,false));
             auto bounds=label=="X-RAY"?b.getLocalBounds().withTrimmedLeft(15):b.getLocalBounds().reduced(5,2);
-            if(tab)bounds=bounds.withTrimmedBottom(4).translated(juce::roundToInt(b.getWidth()*.022f),-1);
-            // Flush cap text shares its true center; no menu-specific offsets.
-            if(hardware&&label.startsWith("BAND "))bounds=bounds.translated(0,-2);
-            if((hardware||label=="ON"||label=="OFF")&&(b.getToggleState()||b.isDown()||carveActive))
+            if((label=="ON"||label=="OFF")&&(b.getToggleState()||b.isDown()||carveActive))
                 bounds=bounds.translated(0,1);
             g.drawFittedText(label.startsWith("PHASE")?juce::String("PHASE"):label,bounds,juce::Justification::centred,1);
             return;
