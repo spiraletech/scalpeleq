@@ -178,7 +178,7 @@ inline void knob(juce::Graphics& g,int x,int y,int w,int h,float position,float 
         const auto& atlas=formidable::image(formidable::Art::band_dial_rings_1087);
         const auto source=juce::Rectangle<int>{bandGain?0:304,0,304,304};
         const auto target=juce::Rectangle<float>{cx-radius-4.f,cy-radius-4.f,2.f*(radius+4.f),2.f*(radius+4.f)};
-        g.drawImage(atlas,target,source.toFloat(),false);
+        g.drawImage(atlas.getClippedImage(source),target,juce::RectanglePlacement::stretchToFit);
     }
     for(int i=0;i<segments;++i){
         const float u=i/(float)(segments-1),angle=start+u*(end-start);
@@ -252,13 +252,13 @@ inline void oledNumber(juce::Graphics& g,const juce::String& value,juce::Rectang
             const float drawW=index==11?glyphW*.42f:glyphW;
             const auto source=juce::Rectangle<int>{index*48,0,48,72};
             const auto target=juce::Rectangle<float>{x,y,drawW,glyphH};
-            g.drawImage(atlas,target,source.toFloat(),false);
+            g.drawImage(atlas.getClippedImage(source),target,juce::RectanglePlacement::stretchToFit);
             x+=drawW+gap;
         }else{
             const auto ch=juce::String::charToString(c);
             const float advance=unitFont.getStringWidthFloat(ch);
             g.setFont(unitFont);
-            g.drawText(ch,{x,r.getY(),advance,r.getHeight()},juce::Justification::centred,false);
+            g.drawText(ch,juce::Rectangle<float>{x,r.getY(),advance,r.getHeight()},juce::Justification::centred,false);
             x+=advance+gap;
         }
     }
