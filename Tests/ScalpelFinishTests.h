@@ -141,6 +141,33 @@ inline bool verifyScalpelFinish(){
             if(dials.size()!=1||dials.front()->getBounds()!=scalpel::reference::decayDial())return fail(__LINE__);
             record(page,*dials.front(),"visual decay");
         }
+        // Inspect the actual label rendering against the dark deck.
+        const bool carvePage=juce::String(page)=="CARVE";
+        const std::array<juce::String,3> expected=carvePage
+            ?std::array<juce::String,3>{"FREQUENCY Hz","CARVE GAIN dB","Q / TIGHTNESS"}
+            :std::array<juce::String,3>{"HEAT MAP","VISUAL DECAY","FREEZE"};
+        int readable=0;
+        for(auto* child:editor->getChildren()){
+            auto* label=dynamic_cast<juce::Label*>(child);
+            if(!label||!label->isVisible())continue;
+            const auto text=label->getText();
+            if(std::find(expected.begin(),expected.end(),text)==expected.end()&&
+               !(carvePage&&text.startsWith("Q / ")&&text.endsWith("% TIGHT")))continue;
+            const auto frame=label->createComponentSnapshot(label->getLocalBounds());
+            int bright=0;
+            for(int y=0;y<frame.getHeight();++y)for(int x=0;x<frame.getWidth();++x){
+                const auto c=frame.getPixelAt(x,y);
+                if(c.getAlpha()>140&&c.getPerceivedBrightness()>.70f)++bright;
+            }
+            if(bright<12)return fail(__LINE__);
+            ++readable;
+        }
+        if(readable!=3)return fail(__LINE__);
+        for(const auto* dial:dials){
+            const auto rotary=dial->getRotaryParameters();
+            if(std::abs(rotary.startAngleRadians-juce::MathConstants<float>::pi*1.25f)>.001f||
+               std::abs(rotary.endAngleRadians-juce::MathConstants<float>::pi*2.75f)>.001f)return fail(__LINE__);
+        }
         if(!save("scalpel-ui-1086-"+juce::String(page)+"-1344x756.png"))return fail(__LINE__);
         editor->setSize(1792,1008);if(!save("scalpel-ui-1086-"+juce::String(page)+"-1792x1008.png"))return fail(__LINE__);
         editor->setSize(1344,756);

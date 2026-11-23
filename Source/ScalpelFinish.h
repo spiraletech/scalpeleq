@@ -171,26 +171,19 @@ inline void knob(juce::Graphics& g,int x,int y,int w,int h,float position,float 
     const float cx=x+w*.5f,cy=y+h*.5f,radius=juce::jmin(knobDiameter*.5f,.485f*(float)std::min(w,h));
     const float active=juce::jlimit(0.f,1.f,position);
     const bool bandGain=slider.getComponentID()=="band-gain-dial";
-    const bool compThreshold=slider.getComponentID()=="band-threshold-dial";
-    const bool calibratedBandDial=bandGain||compThreshold;
-    const int segments=bandGain?49:compThreshold?37:38;
-    if(calibratedBandDial){
-        const auto& atlas=formidable::image(formidable::Art::band_dial_rings_1087);
-        const auto source=juce::Rectangle<int>{bandGain?0:304,0,304,304};
-        const auto target=juce::Rectangle<float>{cx-radius-4.f,cy-radius-4.f,2.f*(radius+4.f),2.f*(radius+4.f)};
-        g.drawImage(atlas.getClippedImage(source),target,juce::RectanglePlacement::stretchToFit);
-    }
+    const int segments=bandGain?49:37;
+    const auto& atlas=formidable::image(formidable::Art::band_dial_rings_1087);
+    const auto source=juce::Rectangle<int>{bandGain?0:304,0,304,304};
+    const auto targetRing=juce::Rectangle<float>{cx-radius-4.f,cy-radius-4.f,2.f*(radius+4.f),2.f*(radius+4.f)};
+    g.drawImage(atlas.getClippedImage(source),targetRing,juce::RectanglePlacement::stretchToFit);
+    g.setColour(accent);
     for(int i=0;i<segments;++i){
-        const float u=i/(float)(segments-1),angle=start+u*(end-start);
-        const float inner=calibratedBandDial?radius-6.f:radius-2.f;
-        const float outer=calibratedBandDial?radius+.25f:radius+3.f;
-        const auto a=calibratedBandDial?dialPoint(cx,cy,inner,angle):
-            juce::Point<float>{cx+std::cos(angle)*inner,cy+std::sin(angle)*inner};
-        const auto b=calibratedBandDial?dialPoint(cx,cy,outer,angle):
-            juce::Point<float>{cx+std::cos(angle)*outer,cy+std::sin(angle)*outer};
-        if(calibratedBandDial&&u>active)continue;
-        g.setColour(u<=active?juce::Colour(0xffe31b27):juce::Colour(0xff3a3d40));
-        g.drawLine({a,b},u<=active?2.2f:1.5f);
+        const float u=i/(float)(segments-1);
+        if(u>active)break;
+        const float angle=start+u*(end-start);
+        const auto a=dialPoint(cx,cy,radius-6.f,angle);
+        const auto b=dialPoint(cx,cy,radius+.25f,angle);
+        g.drawLine({a,b},2.2f);
     }
     const float angle=start+active*(end-start);
     const auto& pointer=formidable::image(formidable::Art::dial_pointer_1086);

@@ -145,7 +145,7 @@ public:
                 const float width=height*(float)glyph.getWidth()/(float)glyph.getHeight();
                 const auto target=juce::Rectangle<float>{r.getCentreX()-width*.5f,r.getCentreY()-height*.5f,width,height};
                 juce::Graphics::ScopedSaveState saved(g);
-                g.setOpacity(active?1.f:over?.62f:.30f);
+                g.setOpacity(active?1.f:over?.72f:.50f);
                 g.drawImage(glyph,target,juce::RectanglePlacement::centred);
                 return;
             }
@@ -433,14 +433,15 @@ public:
                 return;
             }
             if(!label.isBeingEdited()){
-                g.setColour(dynamic_cast<juce::ComboBox*>(label.getParentComponent())?scalpel::finish::text:label.isEnabled()?scalpel::finish::ink:scalpel::finish::ink.withAlpha(.55f));
-                const auto r=label.getBorderSize().subtractedFrom(label.getLocalBounds());
                 const bool combo=dynamic_cast<juce::ComboBox*>(label.getParentComponent())!=nullptr;
+                const auto caption=combo?scalpel::finish::text:label.findColour(juce::Label::textColourId);
+                g.setColour(label.isEnabled()?caption:caption.withMultipliedAlpha(.55f));
+                const auto r=label.getBorderSize().subtractedFrom(label.getLocalBounds());
                 const bool analyzeHeading=label.getText()=="HEAT MAP"||label.getText()=="VISUAL DECAY"||label.getText()=="FREEZE";
                 auto f=scalpel::finish::font(analyzeHeading?20.f:label.getText().startsWith("BAND ")&&label.getText().contains("CARVE")?12.f:14.5f,true);
                 if(!combo)f.setHorizontalScale(1.f);
                 g.setFont(f);
-                if(dynamic_cast<juce::ComboBox*>(label.getParentComponent()))
+                if(combo)
                     g.drawFittedText(label.getText(),r,label.getJustificationType(),1);
                 else {
                     const float width=f.getStringWidthFloat(label.getText());

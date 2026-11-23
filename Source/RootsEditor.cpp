@@ -39,6 +39,8 @@ juce::Colour territory(int i){
 }
 void rotary(juce::Slider& s,juce::String suffix,double resetValue) {
     s.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    s.setRotaryParameters(juce::MathConstants<float>::pi*1.25f,
+                          juce::MathConstants<float>::pi*2.75f,true);
     s.setTextBoxStyle(juce::Slider::TextBoxBelow,false,106,30);
     s.setColour(juce::Slider::textBoxTextColourId,scalpel::finish::ice);
     s.setColour(juce::Slider::textBoxBackgroundColourId,juce::Colours::transparentBlack);
@@ -1324,14 +1326,8 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         s->setColour(juce::Slider::textBoxBackgroundColourId,juce::Colours::transparentBlack);
         s->setColour(juce::Slider::textBoxOutlineColourId,juce::Colours::transparentBlack);
     }
-    // BAND MODE's two signed controls share an exact 270-degree scale:
-    // minimum at bottom-left, zero at twelve o'clock, maximum at bottom-right.
     gain_.setComponentID("band-gain-dial");
     threshold_.setComponentID("band-threshold-dial");
-    gain_.setRotaryParameters(juce::MathConstants<float>::pi*1.25f,
-                              juce::MathConstants<float>::pi*2.75f,true);
-    threshold_.setRotaryParameters(juce::MathConstants<float>::pi*1.25f,
-                                   juce::MathConstants<float>::pi*2.75f,true);
     gainLabel_.setText("BAND GAIN (dB)",juce::dontSendNotification);
     gain_.setTooltip("Selected BAND frequency range gain: -60 to +60 dB");
 

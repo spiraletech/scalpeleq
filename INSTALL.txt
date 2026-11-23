@@ -1,7 +1,7 @@
-Scalpel EQ 1.0.8.7 — Button Update
+Scalpel EQ 1.0.8.7 — CARVE and ANALYZE UI pass
 
 Matte black BAND and page keys have white raised lettering and a muted red reflection while pressed.
-The analyzer has a satin silver bezel and smoked glass.
+The analyzer has a satin silver bezel and smoked glass. CARVE and ANALYZE share BAND MODE’s translucent black deck, bright captions, and aligned 270° rotary scales.
 
 Windows x64 VST3
 
