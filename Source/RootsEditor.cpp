@@ -40,9 +40,9 @@ juce::Colour territory(int i){
 void rotary(juce::Slider& s,juce::String suffix,double resetValue) {
     s.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     s.setTextBoxStyle(juce::Slider::TextBoxBelow,false,106,30);
-    s.setColour(juce::Slider::textBoxTextColourId,scalpel::ui105::amber);
-    s.setColour(juce::Slider::textBoxBackgroundColourId,juce::Colour(0xff071018));
-    s.setColour(juce::Slider::textBoxOutlineColourId,juce::Colour(0xff567b96));
+    s.setColour(juce::Slider::textBoxTextColourId,scalpel::finish::ice);
+    s.setColour(juce::Slider::textBoxBackgroundColourId,juce::Colours::transparentBlack);
+    s.setColour(juce::Slider::textBoxOutlineColourId,juce::Colours::transparentBlack);
     s.setTextValueSuffix(suffix);
     s.setDoubleClickReturnValue(true,resetValue);
 }
@@ -1321,9 +1321,17 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         s->setColour(juce::Slider::rotarySliderFillColourId,juce::Colour::fromRGB(143,192,204));
         s->setColour(juce::Slider::rotarySliderOutlineColourId,juce::Colour::fromRGB(38,55,65));
         s->setColour(juce::Slider::textBoxTextColourId,juce::Colour::fromRGB(239,243,245));
-        s->setColour(juce::Slider::textBoxBackgroundColourId,juce::Colour::fromRGB(13,19,25));
-        s->setColour(juce::Slider::textBoxOutlineColourId,juce::Colour::fromRGB(38,55,65));
+        s->setColour(juce::Slider::textBoxBackgroundColourId,juce::Colours::transparentBlack);
+        s->setColour(juce::Slider::textBoxOutlineColourId,juce::Colours::transparentBlack);
     }
+    // BAND MODE's two signed controls share an exact 270-degree scale:
+    // minimum at bottom-left, zero at twelve o'clock, maximum at bottom-right.
+    gain_.setComponentID("band-gain-dial");
+    threshold_.setComponentID("band-threshold-dial");
+    gain_.setRotaryParameters(juce::MathConstants<float>::pi*1.25f,
+                              juce::MathConstants<float>::pi*2.75f,true);
+    threshold_.setRotaryParameters(juce::MathConstants<float>::pi*1.25f,
+                                   juce::MathConstants<float>::pi*2.75f,true);
     gainLabel_.setText("BAND GAIN (dB)",juce::dontSendNotification);
     gain_.setTooltip("Selected BAND frequency range gain: -60 to +60 dB");
 

@@ -17,6 +17,48 @@ inline bool verifyScalpelFinish(){
     set("scalpel_xray",1);
     std::unique_ptr<juce::AudioProcessorEditor> editor(processor->createEditor());
     editor->setSize(1344,756);
+    // 1.0.8.7: the lower glass uses transparent OLED digits. The legacy
+    // khaki LCD card is not merely recoloured; it is absent from the draw.
+    {
+        const auto& atlas=scalpel::formidable::image(scalpel::formidable::Art::oled_digits_1087);
+        if(!atlas.isValid()||atlas.getWidth()!=624||atlas.getHeight()!=72)return fail(__LINE__);
+        juce::Image frame(juce::Image::ARGB,106,30,true,juce::SoftwareImageType{});
+        juce::Graphics graphics(frame);
+        SurgeryLookAndFeel look;
+        look.setFinishEnabled(true);
+        juce::Slider parent;
+        juce::Label readout;
+        parent.addAndMakeVisible(readout);
+        readout.setBounds(0,0,106,30);
+        readout.setText("-9.0 dB",juce::dontSendNotification);
+        look.drawLabel(graphics,readout);
+        int ink=0,khaki=0;
+        for(int y=0;y<frame.getHeight();++y)for(int x=0;x<frame.getWidth();++x){
+            const auto c=frame.getPixelAt(x,y);
+            ink+=c.getAlpha()>20?1:0;
+            khaki+=c.getAlpha()>20&&c.getRed()>70&&c.getGreen()>50&&c.getBlue()<45?1:0;
+        }
+        if(ink<40||khaki||frame.getPixelAt(1,1).getAlpha()>0||
+           frame.getPixelAt(frame.getWidth()-2,frame.getHeight()-2).getAlpha()>0)return fail(__LINE__);
+    }
+    // BAND MODE owns a transparent-black substrate and two distinct calibrated
+    // dial scales. Asset alpha and the JUCE-angle kernel are locked here.
+    {
+        using A=scalpel::formidable::Art;
+        const auto& glass=scalpel::formidable::image(A::band_mode_glass_1087);
+        const auto& rings=scalpel::formidable::image(A::band_dial_rings_1087);
+        if(!glass.isValid()||glass.getWidth()!=1570||glass.getHeight()!=317||
+           !rings.isValid()||rings.getWidth()!=608||rings.getHeight()!=304)return fail(__LINE__);
+        const auto corner=glass.getPixelAt(0,0),centre=glass.getPixelAt(785,158);
+        if(corner.getAlpha()!=0||centre.getAlpha()<180||centre.getAlpha()>240||
+           centre.getRed()>16||centre.getGreen()>16||centre.getBlue()>16)return fail(__LINE__);
+        constexpr float cx=100.f,cy=80.f,r=40.f;
+        const auto start=scalpel::finish::dialPoint(cx,cy,r,juce::MathConstants<float>::pi*1.25f);
+        const auto zero=scalpel::finish::dialPoint(cx,cy,r,juce::MathConstants<float>::pi*2.f);
+        const auto end=scalpel::finish::dialPoint(cx,cy,r,juce::MathConstants<float>::pi*2.75f);
+        if(start.x>=cx||start.y<=cy||std::abs(zero.x-cx)>.01f||zero.y>=cy||
+           end.x<=cx||end.y<=cy)return fail(__LINE__);
+    }
     const auto button=[&](const juce::String& text)->juce::TextButton*{
         for(auto* child:editor->getChildren())if(auto* b=dynamic_cast<juce::TextButton*>(child);b&&b->isVisible()&&b->getButtonText()==text)return b;
         return nullptr;
@@ -299,7 +341,19 @@ inline bool verifyScalpelFinish(){
         if(before<carousel->getNumItems()-1&&!carousel->keyPressed(juce::KeyPress(juce::KeyPress::leftKey)))return fail(__LINE__);
         if(carousel->getSelectedItemIndex()!=before)return fail(__LINE__);
     }
-    std::cout<<"FORMIDABLE 1.0.8.6 REVIEW: black/red dual glass, white OLED touch states, asset glyphs, bounded carousels, BAND/CARVE geometry and live DSP bindings passed\n";
+    juce::Slider* gainDial=nullptr;juce::Slider* thresholdDial=nullptr;
+    for(auto* child:editor->getChildren())if(auto* slider=dynamic_cast<juce::Slider*>(child);slider&&slider->isVisible()){
+        if(slider->getComponentID()=="band-gain-dial")gainDial=slider;
+        if(slider->getComponentID()=="band-threshold-dial")thresholdDial=slider;
+    }
+    if(!gainDial||!thresholdDial||
+       std::abs(gainDial->valueToProportionOfLength(-60.0))>.0001||
+       std::abs(gainDial->valueToProportionOfLength(0.0)-.5)>.0001||
+       std::abs(gainDial->valueToProportionOfLength(60.0)-1.0)>.0001||
+       std::abs(thresholdDial->valueToProportionOfLength(-9.0))>.0001||
+       std::abs(thresholdDial->valueToProportionOfLength(0.0)-.5)>.0001||
+       std::abs(thresholdDial->valueToProportionOfLength(9.0)-1.0)>.0001)return fail(__LINE__);
+    std::cout<<"FORMIDABLE 1.0.8.7 REVIEW: black/red dual glass, transparent digital readouts, white OLED touch states, tactile keys, bounded carousels, BAND/CARVE geometry and live DSP bindings passed\n";
     return true;
 }
 

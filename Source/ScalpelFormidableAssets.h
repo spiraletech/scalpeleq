@@ -8,7 +8,7 @@ enum class Art { shell, control_deck, analyzer, band_well, page_well, plot_glass
     master_idle, master_selected, master_hover, master_pressed, master_disabled,
     tab_idle, tab_selected, tab_hover, tab_pressed, band_idle, band_selected,
     band_pressed, command_idle, command_hover, command_pressed, knob_face,
-    knob_pointer, dropdown_idle, dropdown_hover, screw, readout_idle,
+    knob_pointer, dropdown_idle, dropdown_hover, screw,
     champagne_header, analyzer_faceplate_10842, analyzer_bezel_10842,
     analyzer_smoked_10842, analyzer_gasket_10842, analyzer_pixels_10842,
     analyzer_reflection_10842, spectrum_falloff_10842, meter_well_10842,
@@ -16,7 +16,9 @@ enum class Art { shell, control_deck, analyzer, band_well, page_well, plot_glass
     peak_window_10842, xray_face_10842, xray_lamp_off_10842,
     xray_lamp_on_10842, graph_glass_1086, band_hover_1086,
     heat_map_flame_1086, freeze_snowflake_1086,
-    chevron_left_1086, chevron_right_1086, dial_pointer_1086, band_keys_1087, mode_keys_1087, count };
+    chevron_left_1086, chevron_right_1086, dial_pointer_1086, band_keys_1087,
+    mode_keys_1087, oled_digits_1087, band_mode_glass_1087,
+    band_dial_rings_1087, count };
 
 inline const juce::Image& image(Art asset){
     static const auto images=[] {
@@ -73,8 +75,6 @@ inline const juce::Image& image(Art asset){
             BinaryData::f1081_dropdown_hover_png,BinaryData::f1081_dropdown_hover_pngSize);
         result[static_cast<size_t>(Art::screw)]=juce::ImageFileFormat::loadFrom(
             BinaryData::f1081_screw_png,BinaryData::f1081_screw_pngSize);
-        result[static_cast<size_t>(Art::readout_idle)]=juce::ImageFileFormat::loadFrom(
-            BinaryData::f1081_readout_idle_png,BinaryData::f1081_readout_idle_pngSize);
         result[static_cast<size_t>(Art::champagne_header)]=juce::ImageFileFormat::loadFrom(
             BinaryData::f1081_champagne_header_png,BinaryData::f1081_champagne_header_pngSize);
         result[static_cast<size_t>(Art::analyzer_faceplate_10842)]=juce::ImageFileFormat::loadFrom(
@@ -121,12 +121,18 @@ inline const juce::Image& image(Art asset){
             BinaryData::f1086_chevron_right_png,BinaryData::f1086_chevron_right_pngSize);
         result[static_cast<size_t>(Art::dial_pointer_1086)]=juce::ImageFileFormat::loadFrom(
             BinaryData::f1086_dial_pointer_png,BinaryData::f1086_dial_pointer_pngSize);
-        const juce::SoftwareImageType software;
-        for(auto& frame:result)frame=software.convert(frame);
         result[static_cast<size_t>(Art::band_keys_1087)]=juce::ImageFileFormat::loadFrom(
             BinaryData::f1087_band_keys_png,BinaryData::f1087_band_keys_pngSize);
         result[static_cast<size_t>(Art::mode_keys_1087)]=juce::ImageFileFormat::loadFrom(
             BinaryData::f1087_mode_keys_png,BinaryData::f1087_mode_keys_pngSize);
+        result[static_cast<size_t>(Art::oled_digits_1087)]=juce::ImageFileFormat::loadFrom(
+            BinaryData::f1087_oled_digits_png,BinaryData::f1087_oled_digits_pngSize);
+        result[static_cast<size_t>(Art::band_mode_glass_1087)]=juce::ImageFileFormat::loadFrom(
+            BinaryData::f1087_band_mode_glass_png,BinaryData::f1087_band_mode_glass_pngSize);
+        result[static_cast<size_t>(Art::band_dial_rings_1087)]=juce::ImageFileFormat::loadFrom(
+            BinaryData::f1087_band_dial_rings_png,BinaryData::f1087_band_dial_rings_pngSize);
+        const juce::SoftwareImageType software;
+        for(auto& frame:result)frame=software.convert(frame);
         return result;
     }();
     return images[static_cast<size_t>(asset)];

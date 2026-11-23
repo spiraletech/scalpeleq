@@ -54,7 +54,9 @@ inline void drawRackFace(juce::Graphics& g,int width,int height,int mode)
     };
     for(int i=0;i<7;++i)shadow(band(i).toFloat(),7);
     for(int page:modePages)shadow(tab(page).toFloat(),5);
-    scalpel::finish::panel(g,deck(),19);
+    scalpel::finish::panel(g,deck(),19,false,mode==0?
+        scalpel::formidable::Art::band_mode_glass_1087:
+        scalpel::formidable::Art::control_deck);
     for(const auto c:housingScrews(true))scalpel::finish::screw(g,c);
     if(mode==0||mode==1){
         shadow(switchBounds(false).toFloat(),12.f*flushScale());shadow(switchBounds(true).toFloat(),12.f*flushScale());

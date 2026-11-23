@@ -108,7 +108,6 @@ juce_add_binary_data(SurgeryRackAssets SOURCES
   Assets/Scalpel/Formidable/1.0.8.1/f1081_dropdown_idle.png
   Assets/Scalpel/Formidable/1.0.8.1/f1081_dropdown_hover.png
   Assets/Scalpel/Formidable/1.0.8.1/f1081_screw.png
-  Assets/Scalpel/Formidable/1.0.8.1/f1081_readout_idle.png
   Assets/Scalpel/Formidable/1.0.8.1/f1081_champagne_header.png
   ${SCALPEL_FORMIDABLE_10842_ASSETS}
   ${SCALPEL_FORMIDABLE_1086_ASSETS}

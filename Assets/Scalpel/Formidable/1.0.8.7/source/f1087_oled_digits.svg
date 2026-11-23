@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="624" height="72" viewBox="0 0 624 72">
+  <!--
+    SCALPEL EQ 1.0.8.7 OLED digit atlas.
+    13 transparent 48x72 cells: 0 1 2 3 4 5 6 7 8 9 - . +
+    The atlas contains light only: no card, bezel, khaki fill, outline or glow.
+  -->
+  <defs>
+    <g id="a"><path d="M11 7h26l4 4-4 4H11l-4-4z"/></g>
+    <g id="b"><path d="M39 13l4 4v16l-4 4-4-4V17z"/></g>
+    <g id="c"><path d="M39 39l4 4v16l-4 4-4-4V43z"/></g>
+    <g id="d"><path d="M11 57h26l4 4-4 4H11l-4-4z"/></g>
+    <g id="e"><path d="M9 39l4 4v16l-4 4-4-4V43z"/></g>
+    <g id="f"><path d="M9 13l4 4v16l-4 4-4-4V17z"/></g>
+    <g id="g"><path d="M11 32h26l4 4-4 4H11l-4-4z"/></g>
+    <style>.seg{fill:#f2f5f7}</style>
+  </defs>
+  <g class="seg">
+    <!-- 0 --> <g transform="translate(0)"><use href="#a"/><use href="#b"/><use href="#c"/><use href="#d"/><use href="#e"/><use href="#f"/></g>
+    <!-- 1 --> <g transform="translate(48)"><use href="#b"/><use href="#c"/></g>
+    <!-- 2 --> <g transform="translate(96)"><use href="#a"/><use href="#b"/><use href="#g"/><use href="#e"/><use href="#d"/></g>
+    <!-- 3 --> <g transform="translate(144)"><use href="#a"/><use href="#b"/><use href="#g"/><use href="#c"/><use href="#d"/></g>
+    <!-- 4 --> <g transform="translate(192)"><use href="#f"/><use href="#g"/><use href="#b"/><use href="#c"/></g>
+    <!-- 5 --> <g transform="translate(240)"><use href="#a"/><use href="#f"/><use href="#g"/><use href="#c"/><use href="#d"/></g>
+    <!-- 6 --> <g transform="translate(288)"><use href="#a"/><use href="#f"/><use href="#g"/><use href="#e"/><use href="#c"/><use href="#d"/></g>
+    <!-- 7 --> <g transform="translate(336)"><use href="#a"/><use href="#b"/><use href="#c"/></g>
+    <!-- 8 --> <g transform="translate(384)"><use href="#a"/><use href="#b"/><use href="#c"/><use href="#d"/><use href="#e"/><use href="#f"/><use href="#g"/></g>
+    <!-- 9 --> <g transform="translate(432)"><use href="#a"/><use href="#b"/><use href="#c"/><use href="#d"/><use href="#f"/><use href="#g"/></g>
+    <!-- minus --> <g transform="translate(480)"><use href="#g"/></g>
+    <!-- decimal --> <circle cx="552" cy="61" r="4"/>
+    <!-- plus --> <g transform="translate(576)"><use href="#g"/><path d="M21 20h6v32h-6z"/></g>
+  </g>
+</svg>

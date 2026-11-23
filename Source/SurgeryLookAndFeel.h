@@ -426,10 +426,9 @@ public:
             }
             if(dynamic_cast<juce::Slider*>(label.getParentComponent())){
                 const auto r=label.getLocalBounds().toFloat().reduced(.5f);
-                scalpel::formidable::draw(g,scalpel::formidable::Art::readout_idle,r);
                 if(!label.isBeingEdited()){
-                    g.setColour(label.isEnabled()?scalpel::finish::ice:scalpel::finish::secondary);
-                    scalpel::finish::number(g,label.getText(),r.reduced(3,1));
+                    g.setOpacity(label.isEnabled()?1.f:.45f);
+                    scalpel::finish::oledNumber(g,label.getText(),r.reduced(4,1));
                 }
                 return;
             }

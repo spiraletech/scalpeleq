@@ -47,9 +47,10 @@ inline void scratches(juce::Graphics& g,juce::Rectangle<float> r,float radius){
     for(int i=0;i<70;++i){const float x=r.getX()+rng.nextFloat()*r.getWidth(),y=r.getY()+rng.nextFloat()*r.getHeight(),n=4+rng.nextFloat()*28;
         g.setColour((i%2?juce::Colours::white:ink).withAlpha(i%2?.10f:.045f));g.drawLine(x,y,x+n,y-n,.35f);}
 }
-inline void panel(juce::Graphics& g,juce::Rectangle<float> r,float radius,bool outer=false){
+inline void panel(juce::Graphics& g,juce::Rectangle<float> r,float radius,bool outer=false,
+                  formidable::Art innerFace=formidable::Art::control_deck){
     g.setColour(juce::Colours::black.withAlpha(.70f));g.fillRoundedRectangle(r.expanded(1.5f).translated(0,3),radius+1);
-    formidable::draw(g,outer?formidable::Art::shell:formidable::Art::control_deck,r);
+    formidable::draw(g,outer?formidable::Art::shell:innerFace,r);
     if(outer)roughness(g,r.reduced(1),radius-1,.18f);
     g.setColour(juce::Colour(0xffd8d9d7).withAlpha(.48f));g.drawRoundedRectangle(r.reduced(1),radius-1,.8f);
     g.setColour(juce::Colour(0xff050607));g.drawRoundedRectangle(r,radius,.8f);
@@ -161,15 +162,33 @@ inline void analyzerReflection(juce::Graphics& g,juce::Rectangle<float> r){
 }
 // 154px diameter on the master canvas, uniformly scaled with the editor.
 inline constexpr float knobDiameter=154.f*scalpel::reference::scale;
-inline void knob(juce::Graphics& g,int x,int y,int w,int h,float position,float start,float end,const juce::Slider&){
+// JUCE rotary angles are measured clockwise from twelve o'clock. Keeping this
+// conversion in one function prevents the former 90-degree tick/pointer drift.
+inline juce::Point<float> dialPoint(float cx,float cy,float radius,float angle) noexcept {
+    return {cx+std::sin(angle)*radius,cy-std::cos(angle)*radius};
+}
+inline void knob(juce::Graphics& g,int x,int y,int w,int h,float position,float start,float end,const juce::Slider& slider){
     const float cx=x+w*.5f,cy=y+h*.5f,radius=juce::jmin(knobDiameter*.5f,.485f*(float)std::min(w,h));
-    constexpr int segments=38;
     const float active=juce::jlimit(0.f,1.f,position);
+    const bool bandGain=slider.getComponentID()=="band-gain-dial";
+    const bool compThreshold=slider.getComponentID()=="band-threshold-dial";
+    const bool calibratedBandDial=bandGain||compThreshold;
+    const int segments=bandGain?49:compThreshold?37:38;
+    if(calibratedBandDial){
+        const auto& atlas=formidable::image(formidable::Art::band_dial_rings_1087);
+        const auto source=juce::Rectangle<int>{bandGain?0:304,0,304,304};
+        const auto target=juce::Rectangle<float>{cx-radius-4.f,cy-radius-4.f,2.f*(radius+4.f),2.f*(radius+4.f)};
+        g.drawImage(atlas,target,source.toFloat(),false);
+    }
     for(int i=0;i<segments;++i){
         const float u=i/(float)(segments-1),angle=start+u*(end-start);
-        const float cs=std::cos(angle),sn=std::sin(angle);
-        const auto a=juce::Point<float>{cx+cs*(radius-2.f),cy+sn*(radius-2.f)};
-        const auto b=juce::Point<float>{cx+cs*(radius+3.f),cy+sn*(radius+3.f)};
+        const float inner=calibratedBandDial?radius-6.f:radius-2.f;
+        const float outer=calibratedBandDial?radius+.25f:radius+3.f;
+        const auto a=calibratedBandDial?dialPoint(cx,cy,inner,angle):
+            juce::Point<float>{cx+std::cos(angle)*inner,cy+std::sin(angle)*inner};
+        const auto b=calibratedBandDial?dialPoint(cx,cy,outer,angle):
+            juce::Point<float>{cx+std::cos(angle)*outer,cy+std::sin(angle)*outer};
+        if(calibratedBandDial&&u>active)continue;
         g.setColour(u<=active?juce::Colour(0xffe31b27):juce::Colour(0xff3a3d40));
         g.drawLine({a,b},u<=active?2.2f:1.5f);
     }
@@ -194,6 +213,54 @@ inline void number(juce::Graphics& g,const juce::String& value,juce::Rectangle<f
     for(auto c:value){
         const auto ch=juce::String::charToString(c);const float advance=juce::CharacterFunctions::isDigit(c)?digit:f.getStringWidthFloat(ch);
         juce::GlyphArrangement glyph;glyph.addLineOfText(f,ch,x+(advance-f.getStringWidthFloat(ch))*.5f,baseline);glyph.draw(g);x+=advance;
+    }
+}
+
+// Transparent seven-segment OLED readout. Numeric glyphs come from the
+// formidable atlas; unit text is deliberately quiet and shares the glass.
+// No background is painted here: the lower display remains one continuous
+// black surface instead of a collection of inset khaki LCD cards.
+inline void oledNumber(juce::Graphics& g,const juce::String& value,juce::Rectangle<float> r,float height=21.f){
+    const auto& atlas=formidable::image(formidable::Art::oled_digits_1087);
+    constexpr float sourceW=48.f,sourceH=72.f;
+    const float glyphH=juce::jmin(height,r.getHeight()*.82f);
+    const float glyphW=glyphH*sourceW/sourceH;
+    const float gap=juce::jmax(1.f,glyphW*.10f);
+    auto unitFont=font(glyphH*.52f,true);
+    float width=0.f;
+    const auto cell=[](juce_wchar c){
+        if(c>='0'&&c<='9')return (int)(c-'0');
+        if(c=='-')return 10;if(c=='.')return 11;if(c=='+')return 12;
+        return -1;
+    };
+    for(auto c:value){
+        const int index=cell(c);
+        width+=index>=0?(index==11?glyphW*.42f:glyphW):unitFont.getStringWidthFloat(juce::String::charToString(c));
+        width+=gap;
+    }
+    if(!value.isEmpty())width-=gap;
+    if(width>r.getWidth()){
+        const float scale=r.getWidth()/width;
+        return oledNumber(g,value,r,height*scale);
+    }
+    float x=r.getCentreX()-width*.5f;
+    const float y=r.getCentreY()-glyphH*.5f;
+    g.setColour(ice);
+    for(auto c:value){
+        const int index=cell(c);
+        if(index>=0){
+            const float drawW=index==11?glyphW*.42f:glyphW;
+            const auto source=juce::Rectangle<int>{index*48,0,48,72};
+            const auto target=juce::Rectangle<float>{x,y,drawW,glyphH};
+            g.drawImage(atlas,target,source.toFloat(),false);
+            x+=drawW+gap;
+        }else{
+            const auto ch=juce::String::charToString(c);
+            const float advance=unitFont.getStringWidthFloat(ch);
+            g.setFont(unitFont);
+            g.drawText(ch,{x,r.getY(),advance,r.getHeight()},juce::Justification::centred,false);
+            x+=advance+gap;
+        }
     }
 }
 }
