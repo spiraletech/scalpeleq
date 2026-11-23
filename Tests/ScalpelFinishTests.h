@@ -264,6 +264,26 @@ inline bool verifyScalpelFinish(){
     for(auto* child:editor->getChildren())if(auto* slider=dynamic_cast<juce::Slider*>(child);slider&&slider->isVisible())carveDials.push_back(slider);
     std::sort(carveDials.begin(),carveDials.end(),[](auto* a,auto* b){return a->getX()<b->getX();});
     if(carveDials.size()!=3)return fail(__LINE__);
+    // Within one 49-tick interval, the red leading tick keeps changing.
+    for(auto* dial:carveDials){
+        const auto travel=dial->getRotaryParameters();
+        const auto redAmount=[&](float position){
+            constexpr int size=140;
+            juce::Image frame(juce::Image::ARGB,size,size,true,juce::SoftwareImageType{});
+            juce::Graphics g(frame);
+            dial->getLookAndFeel().drawRotarySlider(g,0,0,size,size,position,
+                travel.startAngleRadians,travel.endAngleRadians,*dial);
+            int red=0;
+            for(int y=0;y<size;++y)for(int x=0;x<size;++x){
+                const auto c=frame.getPixelAt(x,y);
+                red+=juce::jmax(0,int(c.getRed())-int(c.getGreen()))*c.getAlpha();
+            }
+            return red;
+        };
+        const auto before=redAmount(24.25f/48.f);
+        const auto after=redAmount(24.75f/48.f);
+        if(before<=0||after<=before)return fail(__LINE__);
+    }
     std::ofstream target("surgery-carve-1077-target.csv");
     target<<"control,logical_x,logical_y,logical_width,logical_height,target_screen_center_x\n";
     constexpr std::array<float,3> targetCentres{371.f,598.f,826.f};

@@ -283,8 +283,7 @@ private:
     std::array<juce::TextButton,3> modeButtons_,masterButtons_;
     juce::Label masterLabel_;
     std::array<juce::TextButton,4> carveSlotButtons_;
-    juce::Slider carveFrequency_,carveDepth_;
-    SurgeryFineWheelSlider carveQ_;
+    SurgeryFineWheelSlider carveFrequency_,carveDepth_,carveQ_;
     juce::TextButton xrayButton_{"X-RAY"};
     std::unique_ptr<ButtonA> xrayAttachment_;
     juce::TextButton carveOn_{"ON"},carveOff_{"OFF"},carveDynamic_{"DYNAMIC"};

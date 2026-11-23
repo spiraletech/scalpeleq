@@ -171,15 +171,24 @@ inline void knob(juce::Graphics& g,int x,int y,int w,int h,float position,float 
     const float cx=x+w*.5f,cy=y+h*.5f,radius=juce::jmin(knobDiameter*.5f,.485f*(float)std::min(w,h));
     const float active=juce::jlimit(0.f,1.f,position);
     const bool bandGain=slider.getComponentID()=="band-gain-dial";
-    const int segments=bandGain?49:37;
+    const bool carve=slider.getComponentID().startsWith("carve-");
+    // CARVE uses the same neutral ring artwork and tick density as BAND GAIN.
+    const bool fineRing=bandGain||carve;
+    const int segments=fineRing?49:37;
     const auto& atlas=formidable::image(formidable::Art::band_dial_rings_1087);
-    const auto source=juce::Rectangle<int>{bandGain?0:304,0,304,304};
+    const auto source=juce::Rectangle<int>{fineRing?0:304,0,304,304};
     const auto targetRing=juce::Rectangle<float>{cx-radius-4.f,cy-radius-4.f,2.f*(radius+4.f),2.f*(radius+4.f)};
     g.drawImage(atlas.getClippedImage(source),targetRing,juce::RectanglePlacement::stretchToFit);
     g.setColour(accent);
+    const float travel=active*(segments-1);
     for(int i=0;i<segments;++i){
         const float u=i/(float)(segments-1);
-        if(u>active)break;
+        if(carve){
+            // Fade in the next tick as the pointer closes the gap.
+            const float opacity=juce::jlimit(0.f,1.f,travel-i+1.f);
+            if(opacity<=0.f)break;
+            g.setColour(accent.withAlpha(opacity));
+        }else if(u>active)break;
         const float angle=start+u*(end-start);
         const auto a=dialPoint(cx,cy,radius-6.f,angle);
         const auto b=dialPoint(cx,cy,radius+.25f,angle);

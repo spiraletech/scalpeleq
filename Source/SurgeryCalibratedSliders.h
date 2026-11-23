@@ -2,8 +2,8 @@
 #include <JuceHeader.h>
 #include "SurgeryKnobCalibration.h"
 
-// Same LookAndFeel, bounds and raw values as ordinary sliders. Only the two
-// calibrated controls use this 225..495-degree travel and fine wheel policy.
+// Match the rotary travel of the Formidable dials and offer a finer
+// Shift+wheel gesture without changing the attached parameter range.
 class SurgeryFineWheelSlider : public juce::Slider {
 public:
     SurgeryFineWheelSlider(){setRotaryParameters(juce::MathConstants<float>::pi*1.25f,juce::MathConstants<float>::pi*2.75f,true);}

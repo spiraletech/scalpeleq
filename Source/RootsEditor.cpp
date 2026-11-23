@@ -1393,19 +1393,24 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         b.onClick=[this,i]{carveSlot_=i;bindCarve();graph_.setPresentation(mode_,carveSlot_);};
         addAndMakeVisible(b);
     }
-    for(auto* s:{&carveFrequency_,&carveDepth_,static_cast<juce::Slider*>(&carveQ_)}){
-        rotary(*s,"",0.0);addAndMakeVisible(*s);
+    const std::array<juce::Slider*,3> carveDials{&carveFrequency_,&carveDepth_,&carveQ_};
+    const std::array<const char*,3> carveDialIds{"carve-frequency-dial","carve-gain-dial","carve-q-dial"};
+    for(size_t i=0;i<carveDials.size();++i){
+        auto& dial=*carveDials[i];
+        rotary(dial,"",0.0);
+        dial.setComponentID(carveDialIds[i]);
+        dial.setMouseDragSensitivity(400);
+        addAndMakeVisible(dial);
     }
     carveDepth_.setDoubleClickReturnValue(true,0.0);
+    carveDepth_.setTooltip("Cut or boost the selected CARVE. Double-click for 0 dB. SHIFT+wheel for finer adjustment.");
     carveQ_.setDoubleClickReturnValue(true,surgery::precision::defaultCarveQ);
-    carveFrequency_.setMouseDragSensitivity(400);
-    carveQ_.setMouseDragSensitivity(600);
     carveQ_.onValueChange=[this]{updateCarveTightness();};
     // The slider/host still hold raw Q; only editable UI text is tightness.
     carveQ_.textFromValueFunction=[](double q){return juce::String(surgery::calibration::qPosition(q)*100.0,1);};
     carveQ_.valueFromTextFunction=[](const juce::String& text){return surgery::calibration::qFromPosition(text.getDoubleValue()/100.0);};
     carveQ_.setNumDecimalPlacesToDisplay(1);
-    carveFrequency_.setTooltip("Exact Hz value: type in the field. CTRL+drag a CARVE node for fine frequency scrubbing.");
+    carveFrequency_.setTooltip("Exact Hz value: type in the field. SHIFT+wheel for finer adjustment. CTRL+drag a CARVE node for fine frequency scrubbing.");
     carveQ_.setTooltip("Tightness 0-100% (type a percentage). Raw DSP/automation Q remains 0.300-96.000 on a logarithmic curve. Clockwise narrows the filter. SHIFT+wheel = fine adjustment.");
     carveFrequencyLabel_.setText("FREQUENCY Hz",juce::dontSendNotification);
     carveDepthLabel_.setText("CARVE GAIN dB",juce::dontSendNotification);
@@ -1628,7 +1633,7 @@ void RootsEditor::setMode(int next){
         b.setColour(juce::TextButton::textColourOnId,juce::Colour(0xffedf7ff));
     }
     const bool carve=mode_==1;
-    for(auto* s:{&carveFrequency_,&carveDepth_,static_cast<juce::Slider*>(&carveQ_)})s->setVisible(carve);
+    for(auto* s:{&carveFrequency_,&carveDepth_,&carveQ_})s->setVisible(carve);
     for(auto* l:{&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_})l->setVisible(carve);
     for(auto& b:carveSlotButtons_)b.setVisible(carve);
     carveOn_.setVisible(carve);carveOff_.setVisible(carve);
@@ -1863,7 +1868,7 @@ void RootsEditor::layoutRack(){
     selection_.setBounds(bounds(94,589,250,28));
     carveOn_.setBounds(switchBounds(false));carveOff_.setBounds(switchBounds(true));
     carveDynamic_.setBounds(0,0,1,1);
-    const std::array<juce::Slider*,3> cs{&carveFrequency_,&carveDepth_,static_cast<juce::Slider*>(&carveQ_)};
+    const std::array<juce::Slider*,3> cs{&carveFrequency_,&carveDepth_,&carveQ_};
     const std::array<juce::Label*,3> cl{&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_};
     for(int i=0;i<3;++i){
         cs[(size_t)i]->setBounds(carveDial(i));

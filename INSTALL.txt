@@ -1,7 +1,7 @@
-Scalpel EQ 1.0.8.7 — CARVE and ANALYZE UI pass
+Scalpel EQ 1.0.8.7 — CARVE Dial Refinement
 
 Matte black BAND and page keys have white raised lettering and a muted red reflection while pressed.
-The analyzer has a satin silver bezel and smoked glass. CARVE and ANALYZE share BAND MODE’s translucent black deck, bright captions, and aligned 270° rotary scales.
+The analyzer has a satin silver bezel and smoked glass. CARVE and ANALYZE share BAND MODE’s translucent black deck, bright captions, and aligned 270° rotary scales. CARVE’s three dials use BAND GAIN’s ring art, matched drag travel, and a fading leading tick.
 
 Windows x64 VST3
 
