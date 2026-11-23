@@ -145,7 +145,7 @@ public:
                 const float width=height*(float)glyph.getWidth()/(float)glyph.getHeight();
                 const auto target=juce::Rectangle<float>{r.getCentreX()-width*.5f,r.getCentreY()-height*.5f,width,height};
                 juce::Graphics::ScopedSaveState saved(g);
-                g.setOpacity(active?1.f:over?.72f:.50f);
+                g.setOpacity(active?1.f:over?.62f:.30f);
                 g.drawImage(glyph,target,juce::RectanglePlacement::centred);
                 return;
             }
