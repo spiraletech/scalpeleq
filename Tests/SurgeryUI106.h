@@ -57,7 +57,10 @@ inline bool verifyUI106(PRISMVSTAudioProcessor&, juce::AudioProcessorEditor& edi
     const auto glyphPixels=[](const juce::Image& image){
         int white=0,coloured=0;
         for(int y=0;y<image.getHeight();++y)for(int x=0;x<image.getWidth();++x){
-            const auto pixel=image.getPixelAt(x,y);
+            // Snapshot pixels retain white RGB even when the OLED glyph is
+            // dimmed through alpha. Measure its displayed contrast against
+            // black glass, including opacity, as the user actually sees it.
+            const auto pixel=juce::Colours::black.overlaidWith(image.getPixelAt(x,y));
             const int hi=juce::jmax((int)pixel.getRed(),(int)pixel.getGreen(),(int)pixel.getBlue());
             const int lo=juce::jmin((int)pixel.getRed(),(int)pixel.getGreen(),(int)pixel.getBlue());
             white+=pixel.getPerceivedBrightness()>.72f?1:0;
