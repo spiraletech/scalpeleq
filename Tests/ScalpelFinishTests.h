@@ -274,10 +274,10 @@ inline bool verifyScalpelFinish(){
         const auto visible=opaqueBounds(*b);
         const float centerError=visible.getCentre().toFloat().getDistanceFrom(b->getBounds().getCentre().toFloat());
         fill<<name<<','<<visible.getHeight()<<','<<centerError<<','<<editor->getWidth()<<','<<editor->getHeight()<<'\n';
-        // These are intentionally sparse OLED glyphs, not filled plastic
-        // buttons. Lock the rendered symbol envelope and centering without
-        // treating transparent source padding as visible control material.
-        if(visible.getHeight()<18||visible.getHeight()>34||centerError>3.f)return fail(__LINE__);
+        // B — COMMAND locks both sparse OLED symbols to a 56 px visible
+        // envelope. The 64 px transparent asset canvas remains centred in the
+        // larger touch target and must never regress to the old 20–30 px mark.
+        if(visible.getHeight()<53||visible.getHeight()>59||centerError>3.f)return fail(__LINE__);
     }
     juce::Slider* decay=nullptr;
     for(auto* child:editor->getChildren())if(auto* slider=dynamic_cast<juce::Slider*>(child);slider&&slider->isVisible())decay=slider;

@@ -139,13 +139,17 @@ public:
         if(finish_){
             if(snow||heat){
                 using A=scalpel::formidable::Art;
-                const auto art=heat?A::heat_map_flame_1086:A::freeze_snowflake_1086;
+                const auto art=heat?A::heat_map_flame_command_1087:A::freeze_snowflake_command_1087;
                 const auto& glyph=scalpel::formidable::image(art);
-                const float height=r.getHeight()*.62f;
-                const float width=height*(float)glyph.getWidth()/(float)glyph.getHeight();
-                const auto target=juce::Rectangle<float>{r.getCentreX()-width*.5f,r.getCentreY()-height*.5f,width,height};
+                // B — COMMAND: the asset canvas is tight and intentionally
+                // fixed at 64 logical px, producing a measured 56 px visible
+                // symbol. Button bounds remain generous touch targets but no
+                // longer determine the apparent size of the OLED glyph.
+                const float canvas=juce::jmin(64.0f,std::min(r.getWidth(),r.getHeight())-4.0f);
+                const auto target=juce::Rectangle<float>{r.getCentreX()-canvas*.5f,
+                    r.getCentreY()-canvas*.5f,canvas,canvas};
                 juce::Graphics::ScopedSaveState saved(g);
-                g.setOpacity(active?1.f:over?.62f:.30f);
+                g.setOpacity(active?1.f:over?.78f:.55f);
                 g.drawImage(glyph,target,juce::RectanglePlacement::centred);
                 return;
             }

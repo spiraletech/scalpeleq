@@ -1,0 +1,38 @@
+{
+  "release": "1.0.8.7",
+  "panel": "ANALYZE",
+  "direction": "B_COMMAND",
+  "reference_ui": {
+    "width": 1344,
+    "height": 789
+  },
+  "logical_canvas_px": 64,
+  "visible_glyph_target_px": 56,
+  "optical_stroke_px": 2.5,
+  "runtime_assets": [
+    {
+      "file": "f1087_heat_map_flame_command.png",
+      "pixels": [256, 256],
+      "alpha_bounds": [47, 10, 209, 233],
+      "sha256": "75f0b4d1595239c6a19491bf2c18c48f685f43eb318935d753c0c2980d4cfb49"
+    },
+    {
+      "file": "f1087_freeze_snowflake_command.png",
+      "pixels": [256, 256],
+      "alpha_bounds": [29, 15, 227, 241],
+      "sha256": "0bd1cc753b4c59686465fdced9bbc8da9530c811680d496bdaca371c0885b27c"
+    }
+  ],
+  "state_opacity": {
+    "idle": 0.55,
+    "hover": 0.78,
+    "selected": 1.0
+  },
+  "protected_geometry": [
+    "ANALYZE panel glass",
+    "HEAT MAP caption",
+    "VISUAL DECAY dial and readout",
+    "FREEZE caption",
+    "mode tab geometry"
+  ]
+}

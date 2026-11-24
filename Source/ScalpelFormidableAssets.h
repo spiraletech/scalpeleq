@@ -18,7 +18,8 @@ enum class Art { shell, control_deck, analyzer, band_well, page_well, plot_glass
     heat_map_flame_1086, freeze_snowflake_1086,
     chevron_left_1086, chevron_right_1086, dial_pointer_1086, band_keys_1087,
     mode_keys_1087, oled_digits_1087, band_mode_glass_1087,
-    band_dial_rings_1087, count };
+    band_dial_rings_1087, heat_map_flame_command_1087,
+    freeze_snowflake_command_1087, count };
 
 inline const juce::Image& image(Art asset){
     static const auto images=[] {
@@ -131,6 +132,10 @@ inline const juce::Image& image(Art asset){
             BinaryData::f1087_band_mode_glass_png,BinaryData::f1087_band_mode_glass_pngSize);
         result[static_cast<size_t>(Art::band_dial_rings_1087)]=juce::ImageFileFormat::loadFrom(
             BinaryData::f1087_band_dial_rings_png,BinaryData::f1087_band_dial_rings_pngSize);
+        result[static_cast<size_t>(Art::heat_map_flame_command_1087)]=juce::ImageFileFormat::loadFrom(
+            BinaryData::f1087_heat_map_flame_command_png,BinaryData::f1087_heat_map_flame_command_pngSize);
+        result[static_cast<size_t>(Art::freeze_snowflake_command_1087)]=juce::ImageFileFormat::loadFrom(
+            BinaryData::f1087_freeze_snowflake_command_png,BinaryData::f1087_freeze_snowflake_command_pngSize);
         const juce::SoftwareImageType software;
         for(auto& frame:result)frame=software.convert(frame);
         return result;
