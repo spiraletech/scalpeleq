@@ -192,6 +192,7 @@ public:
         repaint();
     }
     bool isFrozen() const noexcept {return frozen_;}
+    void setDisplayVisibility(double v){if(displayVisible_!=v){displayVisible_=v;repaint();}}
     void releaseVisualResources() noexcept {mercury3D_.reset();mercury3DImage_={};}
     void setXray(bool active) {
         if(xrayActive_!=active){
@@ -210,6 +211,10 @@ public:
 private:
     std::uint64_t paintedFrames_=0;
     void paintStaticFrame(juce::Graphics&) const;
+    void paintSignal(juce::Graphics&);
+    void paintRails(juce::Graphics&) const;
+    double displayVisible_=1;
+    juce::Image signalFrame_;
     juce::Image staticFrame_;
     float staticFrameScale_=0;
     PRISMVSTAudioProcessor& processor_;
@@ -284,10 +289,20 @@ public:
     ~RootsEditor() override;
     void paint(juce::Graphics&) override;
     void resized() override;
+    void paintOverChildren(juce::Graphics&) override;
     juce::Point<int> backgroundRasterSize() const noexcept {return {rackBackground_.getWidth(),rackBackground_.getHeight()};}
 private:
     using SliderA=juce::AudioProcessorValueTreeState::SliderAttachment;
     bool closing_=false;
+    juce::TextButton graphPower_{"GRAPH POWER"};
+    scalpel::omnis::Trajectory ignition_;
+    scalpel::omnis::Shear transition_;
+    juce::Image outgoing_,incoming_;
+    juce::Component transitionShield_;
+    juce::Image captureLower();
+    void drawTransition(juce::Graphics&,double);
+    bool reducedMotion() const;
+
     void paintRack(juce::Graphics&);
     void layoutRack();
     void setSelectedEnabled(bool carve,bool enabled);

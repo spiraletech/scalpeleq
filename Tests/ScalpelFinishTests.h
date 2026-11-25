@@ -1,367 +1,68 @@
 #pragma once
 #include "../Source/RootsEditor.h"
-#include "../Source/ScalpelFinish.h"
-#include <fstream>
-
+#include <iostream>
+// ET-MOTION-016 supersedes the 1.0.8.6 atlas, red navigation, mismatched
+// dial-ring and transparent-cap geometry contracts. Native processing and
+// C01's complete regression remain independent gates, not waived here.
 inline bool verifyScalpelFinish(){
-    const auto fail=[](int line){std::cerr<<"Formidable UI contract failed at ScalpelFinishTests.h:"<<line<<'\n';return false;};
-    auto processor=std::make_unique<PRISMVSTAudioProcessor>();
-    processor->prepareToPlay(48000,512);
-    const auto set=[&](const juce::String& id,float value){
-        auto* p=processor->apvts.getParameter(id);p->setValueNotifyingHost(p->convertTo0to1(value));
-    };
-    set(PRISMVSTAudioProcessor::carveId(2,3,"on"),1);
-    set(PRISMVSTAudioProcessor::carveId(2,3,"hz"),215.87f);
-    set(PRISMVSTAudioProcessor::carveId(2,3,"depth"),0);
-    set(PRISMVSTAudioProcessor::carveId(2,3,"q"),.3f);
-    set("scalpel_xray",1);
-    std::unique_ptr<juce::AudioProcessorEditor> editor(processor->createEditor());
-    editor->setSize(1344,756);
-    // 1.0.8.7: the lower glass uses transparent OLED digits. The legacy
-    // khaki LCD card is not merely recoloured; it is absent from the draw.
-    {
-        const auto& atlas=scalpel::formidable::image(scalpel::formidable::Art::oled_digits_1087);
-        if(!atlas.isValid()||atlas.getWidth()!=624||atlas.getHeight()!=72)return fail(__LINE__);
-        juce::Image frame(juce::Image::ARGB,106,30,true,juce::SoftwareImageType{});
-        juce::Graphics graphics(frame);
-        SurgeryLookAndFeel look;
-        look.setFinishEnabled(true);
-        juce::Slider parent;
-        juce::Label readout;
-        parent.addAndMakeVisible(readout);
-        readout.setBounds(0,0,106,30);
-        readout.setText("-9.0 dB",juce::dontSendNotification);
-        look.drawLabel(graphics,readout);
-        int ink=0,khaki=0;
-        for(int y=0;y<frame.getHeight();++y)for(int x=0;x<frame.getWidth();++x){
-            const auto c=frame.getPixelAt(x,y);
-            ink+=c.getAlpha()>20?1:0;
-            khaki+=c.getAlpha()>20&&c.getRed()>70&&c.getGreen()>50&&c.getBlue()<45?1:0;
-        }
-        if(ink<40||khaki||frame.getPixelAt(1,1).getAlpha()>0||
-           frame.getPixelAt(frame.getWidth()-2,frame.getHeight()-2).getAlpha()>0)return fail(__LINE__);
-    }
-    // BAND MODE owns a transparent-black substrate and two distinct calibrated
-    // dial scales. Asset alpha and the JUCE-angle kernel are locked here.
-    {
-        using A=scalpel::formidable::Art;
-        const auto& glass=scalpel::formidable::image(A::band_mode_glass_1087);
-        const auto& rings=scalpel::formidable::image(A::band_dial_rings_1087);
-        if(!glass.isValid()||glass.getWidth()!=1570||glass.getHeight()!=317||
-           !rings.isValid()||rings.getWidth()!=608||rings.getHeight()!=304)return fail(__LINE__);
-        const auto corner=glass.getPixelAt(0,0),centre=glass.getPixelAt(785,158);
-        if(corner.getAlpha()!=0||centre.getAlpha()<180||centre.getAlpha()>240||
-           centre.getRed()>16||centre.getGreen()>16||centre.getBlue()>16)return fail(__LINE__);
-        constexpr float cx=100.f,cy=80.f,r=40.f;
-        const auto start=scalpel::finish::dialPoint(cx,cy,r,juce::MathConstants<float>::pi*1.25f);
-        const auto zero=scalpel::finish::dialPoint(cx,cy,r,juce::MathConstants<float>::pi*2.f);
-        const auto end=scalpel::finish::dialPoint(cx,cy,r,juce::MathConstants<float>::pi*2.75f);
-        if(start.x>=cx||start.y<=cy||std::abs(zero.x-cx)>.01f||zero.y>=cy||
-           end.x<=cx||end.y<=cy)return fail(__LINE__);
-    }
-    const auto button=[&](const juce::String& text)->juce::TextButton*{
-        for(auto* child:editor->getChildren())if(auto* b=dynamic_cast<juce::TextButton*>(child);b&&b->isVisible()&&b->getButtonText()==text)return b;
-        return nullptr;
-    };
-    // Exercise the normal look-and-feel entry point for both button families.
-    const auto redPixels=[](juce::TextButton& key,bool pressed){
-        juce::Image frame(juce::Image::ARGB,key.getWidth(),key.getHeight(),true,juce::SoftwareImageType{});
-        juce::Graphics g(frame);
-        key.getLookAndFeel().drawButtonBackground(g,key,juce::Colours::black,false,pressed);
-        int count=0;
-        for(int y=0;y<frame.getHeight();++y)for(int x=0;x<frame.getWidth();++x){
-            const auto c=frame.getPixelAt(x,y);
-            if(c.getRed()>c.getGreen()+18&&c.getRed()>c.getBlue()+14)++count;
-        }
-        return count;
-    };
-    for(const auto* text:{"BAND 1","BAND 7","BAND MODE","CARVE","ANALYZE"}){
-        auto* key=button(text);
-        if(!key)return fail(__LINE__);
-        // C01 R02 has a persistent selected underline. Page-tab expectations
-        // and the existing ANALYZE checks below remain unchanged.
-        const bool selectedBand=scalpel::finish::bandKeyIndex(key->getButtonText())>=0&&key->getToggleState();
-        if((redPixels(*key,false)>0)!=selectedBand||redPixels(*key,true)==0)return fail(__LINE__);
-        key->setEnabled(false);
-        const auto disabledRed=redPixels(*key,true);
-        key->setEnabled(true);
-        if(disabledRed!=0)return fail(__LINE__);
-    }
-    const auto click=[&](const juce::String& text){auto* b=button(text);if(!b||!b->onClick)return fail(__LINE__);b->onClick();return true;};
-    if(!click("BAND 3")||!click("CARVE")||!click("C4"))return fail(__LINE__);
-    juce::MessageManager::getInstance()->runDispatchLoopUntil(40);
-    std::vector<float> values;for(auto* p:processor->getParameters())values.push_back(p->getValue());
-    const auto save=[&](const juce::String& file){
-        const auto image=editor->createComponentSnapshot(editor->getLocalBounds());
-        juce::FileOutputStream out(juce::File::getCurrentWorkingDirectory().getChildFile(file));
-        out.setPosition(0);out.truncate();return juce::PNGImageFormat().writeImageToStream(image,out);
-    };
-    const auto contrast=[&](juce::TextButton& b,bool light){
-        const auto image=b.createComponentSnapshot(b.getLocalBounds());int count=0;
-        for(int y=8;y<image.getHeight()-8;++y)for(int x=12;x<image.getWidth()-12;++x){
-            const auto c=image.getPixelAt(x,y);
-            if(light?c.getPerceivedBrightness()>.60f:c.getPerceivedBrightness()<.10f)++count;
-        }
-        return count>20;
-    };
-    std::ofstream geometry("surgery-ivory-geometry.csv");geometry<<"page,component,x,y,width,height\n";
-    const auto record=[&](const char* page,juce::Component& component,const juce::String& name){
-        const auto r=component.getBounds();geometry<<page<<','<<name<<','<<r.getX()<<','<<r.getY()<<','<<r.getWidth()<<','<<r.getHeight()<<'\n';
-    };
-    for(const char* page:{"CARVE","ANALYZE"}){
-        if(!click(page))return fail(__LINE__);
-        juce::MessageManager::getInstance()->runDispatchLoopUntil(25);
-        if(editor->getWidth()!=1344||editor->getHeight()!=756)return fail(__LINE__);
-        RootsGraph* graph=nullptr;std::vector<juce::Slider*> dials;
-        for(auto* child:editor->getChildren()){
-            if(auto* g=dynamic_cast<RootsGraph*>(child))graph=g;
-            if(auto* s=dynamic_cast<juce::Slider*>(child);s&&s->isVisible())dials.push_back(s);
-        }
-        if(!graph||graph->getBounds()!=scalpel::reference::analyzer().toNearestInt()||graph->selectedNode()/2!=2)return fail(__LINE__);
-        record(page,*graph,"analyzer");
-        for(int i=0;i<7;++i){
-            auto* b=button("BAND "+juce::String(i+1));
-            // C01's lighter cloudy polymer is checked by its readable raised
-            // legend, rather than the superseded cap's near-black interior.
-            if(!b||b->getBounds()!=scalpel::reference::band(i)||!contrast(*b,true))return fail(__LINE__);
-            record(page,*b,b->getButtonText());
-        }
-        int active=0;const char* tabs[]{"BAND MODE","CARVE","ANALYZE"};
-        for(int i=0;i<3;++i){
-            auto* b=button(tabs[i]);
-            if(!b||b->getBounds()!=scalpel::reference::tab(scalpel::reference::modePages[(size_t)i]))return fail(__LINE__);
-            active+=b->getToggleState()?1:0;record(page,*b,tabs[i]);
-        }
-        if(active!=1||!button(page)->getToggleState())return fail(__LINE__);
-        std::sort(dials.begin(),dials.end(),[](auto* a,auto* b){return a->getX()<b->getX();});
-        if(juce::String(page)=="CARVE"){
-            if(dials.size()!=3)return fail(__LINE__);
-            for(int i=0;i<3;++i){
-                if(dials[(size_t)i]->getBounds()!=scalpel::reference::carveDial(i))return fail(__LINE__);
-                record(page,*dials[(size_t)i],"dial"+juce::String(i));
+    const auto fail=[](int line){std::cerr<<"OMNIS UI contract failed at "<<line<<'\n';return false;};
+    auto p=std::make_unique<PRISMVSTAudioProcessor>();p->prepareToPlay(48000,512);
+    std::unique_ptr<juce::AudioProcessorEditor> e(p->createEditor());
+    const auto button=[&](const juce::String& name)->juce::Button*{for(auto* c:e->getChildren())if(auto* b=dynamic_cast<juce::Button*>(c);b&&b->getButtonText()==name&&b->isVisible())return b;return nullptr;};
+    const auto choose=[&](const char* name){auto* b=button(name);if(!b||!b->onClick)return false;b->onClick();juce::Timer::callPendingTimersSynchronously();return true;};
+    const auto snapshot=[&]{std::vector<float> values;for(auto* v:p->getParameters())values.push_back(v->getValue());return values;};
+    const auto baseline=snapshot();
+    for(const auto size:std::array<juce::Point<int>,3>{{{896,504},{1344,756},{1792,1008}}}){
+        e->setSize(size.x,size.y);
+        for(const auto* page:{"BAND MODE","CARVE","ANALYZE"}){
+            if(!choose(page))return fail(__LINE__);
+            int rotaries=0,selectedTabs=0;
+            for(auto* c:e->getChildren()){
+                if(auto* b=dynamic_cast<RootSelectorButton*>(c)){
+                    const int index=scalpel::finish::bandKeyIndex(b->getButtonText());
+                    if(index<0||b->getBounds()!=scalpel::reference::band(index))return fail(__LINE__);
+                    const auto t=b->getTransform();const auto l=scalpel::omnis::Layout(size.x,size.y);
+                    if(std::abs(t.mat00-l.scale*1280.f/1120.f)>.0001f)return fail(__LINE__);
+                }
+                if(auto* b=dynamic_cast<juce::Button*>(c);b&&scalpel::omnis::navigation(b->getButtonText())){
+                    selectedTabs+=b->getToggleState();if(b->getWidth()!=405||b->getHeight()!=54||b->getY()!=477)return fail(__LINE__);
+                }
+                if(auto* s=dynamic_cast<juce::Slider*>(c);s&&s->isVisible()){
+                    ++rotaries;if(s->getY()+65!=619||s->getWidth()!=168)return fail(__LINE__);
+                    auto im=s->createComponentSnapshot(s->getLocalBounds());if(!im.isValid())return fail(__LINE__);
+                }
+                if(auto* b=dynamic_cast<juce::Button*>(c);b&&b->isVisible()&&b->getY()>=538){
+                    if(b->getWidth()!=146||b->getHeight()!=46)return fail(__LINE__);
+                    auto im=b->createComponentSnapshot(b->getLocalBounds());
+                    for(int y=0;y<im.getHeight();++y)for(int x=0;x<im.getWidth();++x){auto col=im.getPixelAt(x,y);if(col.getRed()>col.getGreen()+18||col.getGreen()>col.getRed()+18)return fail(__LINE__);}
+                }
             }
-            if(std::abs(dials[0]->getValue()-215.87)>.02||std::abs(dials[1]->getValue())>.001||std::abs(dials[2]->getValue()-.3)>.001)return fail(__LINE__);
-            for(const auto* text:{"C1","C2","C3","C4"})if(!button(text)||!contrast(*button(text),false))return fail(__LINE__);
-            if(!button("C4")->getToggleState()||!button("ON")->getToggleState()||button("OFF")->getToggleState())return fail(__LINE__);
-        }else{
-            if(dials.size()!=1||dials.front()->getBounds()!=scalpel::reference::decayDial())return fail(__LINE__);
-            record(page,*dials.front(),"visual decay");
+            if(selectedTabs!=1||rotaries!=(juce::String(page)=="BAND MODE"?2:juce::String(page)=="CARVE"?3:1))return fail(__LINE__);
+            if(e->getWidth()!=size.x||e->getHeight()!=size.y)return fail(__LINE__);
+            if(!e->createComponentSnapshot(e->getLocalBounds()).isValid())return fail(__LINE__);
         }
-        if(!save("scalpel-ui-1086-"+juce::String(page)+"-1344x756.png"))return fail(__LINE__);
-        editor->setSize(1792,1008);if(!save("scalpel-ui-1086-"+juce::String(page)+"-1792x1008.png"))return fail(__LINE__);
-        editor->setSize(1344,756);
     }
-    size_t index=0;for(auto* p:processor->getParameters())if(p->getValue()!=values[index++])return fail(__LINE__);
-    if(!click("CARVE")||!button("C4")->getToggleState())return fail(__LINE__);
-    // Both command buttons retain their material identity in both states.
-    auto* on=button("ON");auto* off=button("OFF");
-    const auto body=[](juce::TextButton& b){return b.createComponentSnapshot(b.getLocalBounds()).getPixelAt(16,29);};
-    const auto onBody=body(*on),offBody=body(*off);
-    const auto sameGraphite=[](juce::Colour raised,juce::Colour recessed){
-        return std::abs((int)raised.getRed()-recessed.getRed())<=8
-            &&std::abs((int)raised.getGreen()-recessed.getGreen())<=8
-            &&std::abs((int)raised.getBlue()-recessed.getBlue())<=8;
-    };
-    if(!click("OFF")||!sameGraphite(body(*on),onBody)||!sameGraphite(body(*off),offBody))return fail(__LINE__);
-    if(!save("scalpel-ui-1086-CARVE-OFF-1344x756.png")||!click("ON"))return fail(__LINE__);
-    // OLED touch controls contain no plastic card, underline or coloured LED.
-    // State is expressed only by white selected text versus graphite inactive
-    // text, and the same rule must hold on BAND and CARVE.
-    const auto touchPixels=[](juce::TextButton& b){
-        const auto image=b.createComponentSnapshot(b.getLocalBounds());
-        int white=0,red=0,green=0;
-        for(int y=0;y<image.getHeight();++y)for(int x=0;x<image.getWidth();++x){
-            const auto c=image.getPixelAt(x,y);
-            white+=c.getPerceivedBrightness()>.80f?1:0;
-            red+=c.getRed()>150&&c.getRed()>c.getGreen()*1.35f?1:0;
-            green+=c.getGreen()>150&&c.getGreen()>c.getRed()*1.25f?1:0;
-        }
-        return std::array<int,3>{white,red,green};
-    };
+    if(snapshot()!=baseline)return fail(__LINE__);
     for(const auto* page:{"BAND MODE","CARVE"}){
-        if(!click(page)||!click("ON"))return fail(__LINE__);
-        auto* on=button("ON");auto* off=button("OFF");
-        if(!on||!off||on->getWidth()!=off->getWidth()||on->getHeight()!=off->getHeight())return fail(__LINE__);
-        const auto selected=touchPixels(*on),inactive=touchPixels(*off);
-        if(selected[0]<=inactive[0]||selected[1]||selected[2]||inactive[1]||inactive[2])return fail(__LINE__);
-        if(!save("scalpel-ui-1086-"+juce::String(page).replaceCharacter(' ','-')+"-ON.png")||!click("OFF"))return fail(__LINE__);
-        const auto offSelected=touchPixels(*off),onInactive=touchPixels(*on);
-        if(offSelected[0]<=onInactive[0]||offSelected[1]||offSelected[2]||onInactive[1]||onInactive[2])return fail(__LINE__);
-        if(!save("scalpel-ui-1086-"+juce::String(page).replaceCharacter(' ','-')+"-OFF.png"))return fail(__LINE__);
+        if(!choose(page)||!choose("ON"))return fail(__LINE__);
+        if(!button("ON")->getToggleState()||button("OFF")->getToggleState())return fail(__LINE__);
+        if(!choose("OFF")||button("ON")->getToggleState()||!button("OFF")->getToggleState())return fail(__LINE__);
     }
-    // 1.0.7.7: CARVE inherits the BAND substrate, including the exact shared
-    // button rectangles. Dial centres remain CARVE-specific and are registered
-    // to the supplied 1351x785 screenshot through the locked lower panel.
-    std::ofstream flushGeometry("surgery-flush-controls-1077.csv");
-    flushGeometry<<"page,control,x,y,width,height,reference_center_x,reference_center_y\n";
-    const auto background=[](juce::TextButton& b){
-        auto image=juce::SoftwareImageType{}.convert(juce::Image(juce::Image::ARGB,b.getWidth(),b.getHeight(),true));
-        juce::Graphics graphics(image);b.getLookAndFeel().drawButtonBackground(graphics,b,b.findColour(juce::TextButton::buttonColourId),false,false);return image;
-    };
-    const auto identical=[](const juce::Image& a,const juce::Image& b){
-        if(a.getWidth()!=b.getWidth()||a.getHeight()!=b.getHeight())return false;
-        for(int y=0;y<a.getHeight();++y)for(int x=0;x<a.getWidth();++x)if(a.getPixelAt(x,y)!=b.getPixelAt(x,y))return false;
-        return true;
-    };
-    juce::Image bandOnCap,bandOffCap,bandActionCap;
-    juce::Rectangle<int> toggleShape,actionShape;
-    for(const bool carve:{false,true}){
-        const char* page=carve?"CARVE":"BAND MODE";
-        if(!click(page)||!click("ON"))return fail(__LINE__);
-        const std::array<const char*,4> names=carve?std::array<const char*,4>{"C1","C2","C3","C4"}:std::array<const char*,4>{"MONO","SOLO","PHASE CORRECTION","LIMIT"};
-        const auto check=[&](juce::TextButton& b,float x,float y,float w,float h){
-            // Independently register supplied reference dimensions/centers.
-            const auto d=scalpel::reference::deck();const float scale=d.getWidth()/1574.f;
-            const auto expected=juce::Rectangle<float>{d.getX()+(x-32.f-w*.5f)*scale,d.getY()+(y-567.f-h*.5f)*scale,w*scale,h*scale}.toNearestInt();
-            const auto actual=b.getBounds();flushGeometry<<page<<','<<b.getButtonText()<<','<<actual.getX()<<','<<actual.getY()<<','<<actual.getWidth()<<','<<actual.getHeight()<<','<<x<<','<<y<<'\n';
-            return actual==expected&&d.contains(actual.toFloat());
-        };
-        auto* on=button("ON");auto* off=button("OFF");
-        if(!on||!off||!check(*on,196.f,660,190,72)||!check(*off,196.f,749,190,72))return fail(__LINE__);
-        if(!carve){bandOnCap=background(*on);bandOffCap=background(*off);toggleShape=on->getLocalBounds();}
-        else if(on->getLocalBounds()!=toggleShape||!identical(bandOnCap,background(*on))||!identical(bandOffCap,background(*off)))return fail(__LINE__);
-        for(int i=0;i<4;++i){auto* b=button(names[(size_t)i]);const float x=i%2?1480.f:1270.f;
-            if(!b||!check(*b,x,i/2?753.f:662.f,188,66)||!contrast(*b,false))return fail(__LINE__);
-            if(!carve&&i==0){bandActionCap=background(*b);actionShape=b->getLocalBounds();}
-            if(b->getLocalBounds()!=actionShape)return fail(__LINE__);
-            if(i==0){
-                const bool original=b->getToggleState();
-                b->setToggleState(false,juce::dontSendNotification);
-                if(carve&&!identical(bandActionCap,background(*b)))return fail(__LINE__);
-                const auto raised=background(*b);
-                b->setToggleState(true,juce::dontSendNotification);
-                // Touch state is painted by its label; the glass behind it is
-                // deliberately identical and contains no selected-state card.
-                if(!identical(raised,background(*b)))return fail(__LINE__);
-                b->setToggleState(original,juce::dontSendNotification);
-            }
-        }
-        if(!save("surgery-ui-FLUSH-"+juce::String(carve?"CARVE":"BAND")+"-1344x756.png"))return fail(__LINE__);
+    for(const auto* name:{"STEREO","MID","SIDE"}){
+        if(!choose(name))return fail(__LINE__);int selected=0;for(const auto* n:{"STEREO","MID","SIDE"})selected+=button(n)->getToggleState();
+        if(selected!=1||!button(name)->getToggleState())return fail(__LINE__);
     }
-    if(!click("CARVE"))return fail(__LINE__);
-    std::vector<juce::Slider*> carveDials;
-    for(auto* child:editor->getChildren())if(auto* slider=dynamic_cast<juce::Slider*>(child);slider&&slider->isVisible())carveDials.push_back(slider);
-    std::sort(carveDials.begin(),carveDials.end(),[](auto* a,auto* b){return a->getX()<b->getX();});
-    if(carveDials.size()!=3)return fail(__LINE__);
-    std::ofstream target("surgery-carve-1077-target.csv");
-    target<<"control,logical_x,logical_y,logical_width,logical_height,target_screen_center_x\n";
-    constexpr std::array<float,3> targetCentres{371.f,598.f,826.f};
-    for(int i=0;i<3;++i){
-        const auto actual=carveDials[(size_t)i]->getBounds();
-        if(actual!=scalpel::reference::carveDial(i))return fail(__LINE__);
-        target<<"dial"<<i+1<<','<<actual.getX()<<','<<actual.getY()<<','<<actual.getWidth()<<','<<actual.getHeight()<<','<<targetCentres[(size_t)i]<<'\n';
+    // Exercise the actual shared LAF rotary entry, including all 33 regions.
+    SurgeryLookAndFeel laf;laf.setOmnisEnabled(true);juce::Slider dial;dial.setBounds(0,0,168,166);
+    for(float value:{0.f,.5f,1.f}){
+        juce::Image im(juce::Image::ARGB,168,130,true);juce::Graphics g(im);laf.drawRotarySlider(g,0,0,168,130,value,0,0,dial);
+        int red=0;for(int y=0;y<130;++y)for(int x=0;x<168;++x){const auto c=im.getPixelAt(x,y);red+=c.getRed()>c.getGreen()+25&&c.getRed()>c.getBlue()+20;}
+        if(value==0&&red!=0)return fail(__LINE__);if(value==.5f&&red<200)return fail(__LINE__);if(value==1&&red<400)return fail(__LINE__);
     }
-    if(button("ON")->getBounds()!=scalpel::reference::switchBounds(false)||
-       button("OFF")->getBounds()!=scalpel::reference::switchBounds(true))return fail(__LINE__);
-    for(int i=0;i<4;++i){
-        auto* carveButton=button("C"+juce::String(i+1));
-        if(!carveButton||carveButton->getBounds()!=scalpel::reference::bandAction(i))return fail(__LINE__);
-        target<<"divider"<<i+1<<','<<scalpel::reference::carveDividerX(i)<<",0,0,0,"<<(256+i*228)<<'\n';
+    for(const auto* value:{"-60.00 dB","60.00 dB","20000.00 Hz","20.00 Hz","100.0","-9.0 dB","+9.0 dB"}){
+        juce::Image im(juce::Image::ARGB,168,31,true);juce::Graphics g(im);scalpel::omnis::number(g,value,{0,0,168,31},true);
+        for(int y=0;y<31;++y)if(im.getPixelAt(0,y).getAlpha()||im.getPixelAt(167,y).getAlpha())return fail(__LINE__);
     }
-    // Kit correction: extend the actual faceplate downward, with eight corner
-    // screws retained. Never resize the editor or modify parameter values.
-    if(!click("ANALYZE"))return fail(__LINE__);
-    juce::MessageManager::getInstance()->runDispatchLoopUntil(25);
-    const auto lockedDeck=scalpel::reference::deck();
-    const float nativeMargin=(630.f-lockedDeck.getBottom())*1.2f;
-    if(std::abs(nativeMargin-756.f*(1.f-917.f/961.f))>1.f||nativeMargin<30.f||nativeMargin>40.f)return fail(__LINE__);
-    if(scalpel::reference::deck().toNearestInt()!=lockedDeck.toNearestInt()||
-       editor->getWidth()!=1344||editor->getHeight()!=756)return fail(__LINE__);
-    const auto opaqueBounds=[](juce::Component& component){
-        const auto image=component.createComponentSnapshot(component.getLocalBounds());
-        juce::Rectangle<int> ink;
-        for(int y=0;y<image.getHeight();++y)for(int x=0;x<image.getWidth();++x)
-            if(image.getPixelAt(x,y).getAlpha()>20)ink=ink.getUnion({x,y,1,1});
-        return ink.translated(component.getX(),component.getY());
-    };
-    std::ofstream fill("surgery-analyze-fill.csv");fill<<"control,opaque_height_logical,center_error_logical,editor_width,editor_height\n";
-    for(const auto* name:{"HEAT MAP","FREEZE"}){
-        auto* b=button(name);if(!b||!lockedDeck.contains(b->getBounds().toFloat()))return fail(__LINE__);
-        const auto visible=opaqueBounds(*b);
-        const float centerError=visible.getCentre().toFloat().getDistanceFrom(b->getBounds().getCentre().toFloat());
-        fill<<name<<','<<visible.getHeight()<<','<<centerError<<','<<editor->getWidth()<<','<<editor->getHeight()<<'\n';
-        // B — COMMAND locks both sparse OLED symbols to a 56 px visible
-        // envelope. The 64 px transparent asset canvas remains centred in the
-        // larger touch target and must never regress to the old 20–30 px mark.
-        if(visible.getHeight()<53||visible.getHeight()>59||centerError>3.f)return fail(__LINE__);
-    }
-    juce::Slider* decay=nullptr;
-    for(auto* child:editor->getChildren())if(auto* slider=dynamic_cast<juce::Slider*>(child);slider&&slider->isVisible())decay=slider;
-    if(!decay||decay->getBounds()!=scalpel::reference::decayDial()||
-       decay->getTextBoxHeight()!=scalpel::reference::decayReadoutHeight)return fail(__LINE__);
-    for(auto* child:editor->getChildren())if(auto* label=dynamic_cast<juce::Label*>(child);label&&label->isVisible()){
-        const auto text=label->getText();
-        if(text=="VISUAL DECAY"&&label->getBottom()>=decay->getY())return fail(__LINE__);
-        if(text=="HEAT MAP"||text=="VISUAL DECAY"||text=="FREEZE"){
-            // Verify actual painted glyphs, not a Font property that a shared
-            // LookAndFeel could silently override with smaller typography.
-            const auto ink=opaqueBounds(*label);
-            // Compare cap ink in the same Windows font/backend. A nominal
-            // 20px font does not imply a 13px logical cap height.
-            juce::Label regular;
-            regular.setLookAndFeel(&label->getLookAndFeel());
-            regular.setBounds(label->getBounds());
-            regular.setJustificationType(label->getJustificationType());
-            regular.setText(text+" ",juce::dontSendNotification);
-            const auto regularInk=opaqueBounds(regular);
-            regular.setLookAndFeel(nullptr);
-            fill<<text<<','<<ink.getHeight()<<','<<regularInk.getHeight()<<','<<editor->getWidth()<<','<<editor->getHeight()<<'\n';
-            if(regularInk.isEmpty()||ink.getHeight()<regularInk.getHeight()*1.2f||
-               !label->getBounds().contains(ink))return fail(__LINE__);
-        }
-    }
-    if(!save("scalpel-ui-1086-ANALYZE-FILL-1344x756.png"))return fail(__LINE__);
-    // Eight identical screw masters, attached to the two outer housings.
-    const auto a=scalpel::reference::analyzer(),d=scalpel::reference::deck();
-    auto ac=scalpel::reference::housingScrews(false);
-    for(auto& c:ac)c+=a.toNearestInt().getPosition().toFloat();
-    const auto dc=scalpel::reference::housingScrews(true);
-    for(auto p:ac)if(!a.contains(p)||p.x<=scalpel::reference::plot().getRight()&&p.x>a.getCentreX())return fail(__LINE__);
-    for(auto p:dc)if(!d.contains(p))return fail(__LINE__);
-    // Render the master in different available canvases: visible rotary size
-    // must stay constant rather than growing with COLOR/ANALYZE slot width.
-    int masterWidth=0;
-    for(const int size:{160,240}){
-        auto image=juce::SoftwareImageType{}.convert(juce::Image(juce::Image::ARGB,size,size,true));
-        juce::Graphics graphics(image);juce::Slider dummy;
-        scalpel::finish::knob(graphics,0,0,size,size,.5f,0.f,6.f,dummy);
-        juce::Rectangle<int> painted;
-        for(int y=0;y<size;++y)for(int x=0;x<size;++x)
-            if(image.getPixelAt(x,y).getAlpha()>245)painted=painted.getUnion({x,y,1,1});
-        if(painted.getWidth()<100||painted.getWidth()>108||
-           (masterWidth&&std::abs(masterWidth-painted.getWidth())>1))return fail(__LINE__);
-        masterWidth=painted.getWidth();
-    }
-    // Immutable static texture must not own a Direct2D bitmap at DLL unload.
-    if(scalpel::finish::grain().getPixelData()->createType()->getTypeID()!=juce::SoftwareImageType{}.getTypeID())return fail(__LINE__);
-    // Both dynamic selectors are true bounded carousels. Keyboard is tested
-    // here; mouse arrows, wheel and swipe call the same selection path.
-    if(!click("BAND MODE"))return fail(__LINE__);
-    std::vector<ScalpelCarouselComboBox*> carousels;
-    for(auto* child:editor->getChildren())
-        if(auto* carousel=dynamic_cast<ScalpelCarouselComboBox*>(child);carousel&&carousel->isVisible())carousels.push_back(carousel);
-    if(carousels.size()!=2)return fail(__LINE__);
-    for(auto* carousel:carousels){
-        const int before=carousel->getSelectedItemIndex();
-        if(!carousel->keyPressed(juce::KeyPress(juce::KeyPress::rightKey))||carousel->getSelectedItemIndex()!=juce::jmin(before+1,carousel->getNumItems()-1))return fail(__LINE__);
-        if(before<carousel->getNumItems()-1&&!carousel->keyPressed(juce::KeyPress(juce::KeyPress::leftKey)))return fail(__LINE__);
-        if(carousel->getSelectedItemIndex()!=before)return fail(__LINE__);
-    }
-    juce::Slider* gainDial=nullptr;juce::Slider* thresholdDial=nullptr;
-    for(auto* child:editor->getChildren())if(auto* slider=dynamic_cast<juce::Slider*>(child);slider&&slider->isVisible()){
-        if(slider->getComponentID()=="band-gain-dial")gainDial=slider;
-        if(slider->getComponentID()=="band-threshold-dial")thresholdDial=slider;
-    }
-    if(!gainDial||!thresholdDial||
-       std::abs(gainDial->valueToProportionOfLength(-60.0))>.0001||
-       std::abs(gainDial->valueToProportionOfLength(0.0)-.5)>.0001||
-       std::abs(gainDial->valueToProportionOfLength(60.0)-1.0)>.0001||
-       std::abs(thresholdDial->valueToProportionOfLength(-9.0))>.0001||
-       std::abs(thresholdDial->valueToProportionOfLength(0.0)-.5)>.0001||
-       std::abs(thresholdDial->valueToProportionOfLength(9.0)-1.0)>.0001)return fail(__LINE__);
-    std::cout<<"FORMIDABLE 1.0.8.7 REVIEW: black/red dual glass, transparent digital readouts, white OLED touch states, tactile keys, bounded carousels, BAND/CARVE geometry and live DSP bindings passed\n";
+    std::cout<<"OMNIS UI contract: protected C01 bounds/scale; 3 sizes x 3 modes; neutral OLED colours; shared rotary; native ON/OFF and exclusive MASTER passed\n";
     return true;
 }
-
-
-

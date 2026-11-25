@@ -67,8 +67,8 @@ inline bool captureScalpelModule(const juce::String& modulePath){
     const auto window=(HWND)peer->getNativeHandle();SetForegroundWindow(window);pump(120);
     const auto click=[&](double x,double y){
         RECT rect{};GetClientRect(window,&rect);POINT origin{0,0};ClientToScreen(window,&origin);
-        SetCursorPos(origin.x+(int)std::lround(x*(rect.right-rect.left)/1120.),
-                     origin.y+(int)std::lround(y*(rect.bottom-rect.top)/630.));
+        const scalpel::omnis::Layout layout(rect.right-rect.left,rect.bottom-rect.top);
+        SetCursorPos(origin.x+(int)std::lround(layout.ox+x*layout.scale),origin.y+(int)std::lround(layout.oy+y*layout.scale));
         INPUT input[2]{};for(auto& i:input)i.type=INPUT_MOUSE;
         input[0].mi.dwFlags=MOUSEEVENTF_LEFTDOWN;input[1].mi.dwFlags=MOUSEEVENTF_LEFTUP;
         if(SendInput(2,input,sizeof(INPUT))!=2)return false;
@@ -106,7 +106,8 @@ inline bool captureScalpelModule(const juce::String& modulePath){
         // material. Require substantial visible edge/text detail inside BAND7
         // so a blank or clipped hosted HWND still fails deterministically.
         int bandDetail=0;
-        const auto key=scalpel::reference::band(6).toFloat().transformedBy(juce::AffineTransform::scale(1.2f)).toNearestInt().reduced(6);
+        const scalpel::omnis::Layout layout(1344,756);const float c01Scale=layout.scale*1280.f/1120.f;
+        const auto key=scalpel::reference::band(6).toFloat().transformedBy(juce::AffineTransform::scale(c01Scale).translated(layout.ox,layout.oy+111*layout.scale-100.5f*c01Scale)).toNearestInt().reduced(6);
         for(int y=key.getY();y<key.getBottom();++y)for(int x=key.getX();x<key.getRight();++x){
             const auto c=image.getPixelAt(x,y);
             if(c.getPerceivedBrightness()>.12f)++bandDetail;
@@ -119,16 +120,17 @@ inline bool captureScalpelModule(const juce::String& modulePath){
         juce::FileOutputStream out(juce::File::getCurrentWorkingDirectory().getChildFile(name));out.setPosition(0);out.truncate();
         return juce::PNGImageFormat().writeImageToStream(image,out);
     };
+    const auto hitBand=[&](int i){const auto c=scalpel::reference::band(i).getCentre().toFloat();return click(c.x*1280.f/1120.f,(c.y-100.5f)*1280.f/1120.f+111.f);};
     const auto hit=[&](juce::Rectangle<int> box){return click(box.getCentreX(),box.getCentreY());};
     using namespace scalpel::reference;
-    bool ok=hit(band(2))&&hit(tab(1))&&hit(carveSlot(3))&&capture("surgery-ui-VST3-CARVE-1344x756.png");
+    bool ok=hitBand(2)&&hit(tab(1))&&hit(carveSlot(3))&&capture("surgery-ui-VST3-CARVE-1344x756.png");
     ok=ok&&hit(switchBounds(false))&&capture("surgery-ui-VST3-CARVE-ON.png");
     ok=ok&&hit(switchBounds(true))&&capture("surgery-ui-VST3-CARVE-OFF.png");
     ok=ok&&hit(tab(0))&&capture("surgery-ui-VST3-BAND-1344x756.png");
     ok=ok&&hit(switchBounds(false))&&capture("surgery-ui-VST3-BAND-ON.png");
     ok=ok&&hit(switchBounds(true))&&capture("surgery-ui-VST3-BAND-OFF.png");
     // Reference BAND fixture: native client pixels, BAND1/ON, digital silence.
-    ok=ok&&hit(band(0))&&hit(switchBounds(false))&&capture("surgery-ui-VST3-IVORY-REFERENCE-BAND.png");
+    ok=ok&&hitBand(0)&&hit(switchBounds(false))&&capture("surgery-ui-VST3-IVORY-REFERENCE-BAND.png");
     // An additional known input proves that FFT and meters remain audio-driven.
     juce::Random noise(1071645);juce::AudioBuffer<float> block(2,512);juce::MidiBuffer midi;
     float bass=0;
@@ -154,7 +156,7 @@ inline bool captureScalpelModule(const juce::String& modulePath){
     ok=ok&&hit(tab(3))&&capture("surgery-ui-VST3-ANALYZE-1344x756.png");
     // Actual compiled pointer/readout calibration. These are live host values,
     // not artwork or replacement waveforms. Restore the capture fixture below.
-    ok=ok&&hit(band(2))&&hit(tab(0));
+    ok=ok&&hitBand(2)&&hit(tab(0));
     for(int p=0;p<=2;++p){
         ok=ok&&setText("ROOT 3 Compression Threshold",juce::String(-30*p));pump(80);
         ok=ok&&capture("surgery-ui-VST3-CALIBRATION-THRESHOLD-"+juce::String(p*50)+".png");

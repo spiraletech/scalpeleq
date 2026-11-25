@@ -431,15 +431,15 @@ bool runQualityTests(){
                 juce::Label* tightness=nullptr;
                 for(auto* child:ui->getChildren()){
                     if(auto* s=dynamic_cast<juce::Slider*>(child);s&&s->isVisible())dials.push_back(s);
-                    if(auto* label=dynamic_cast<juce::Label*>(child);label&&label->isVisible()&&label->getText().endsWith("% TIGHT"))tightness=label;
+                    if(auto* label=dynamic_cast<juce::Label*>(child);label&&label->isVisible()&&label->getText()=="Q WIDTH")tightness=label;
                 }
                 std::sort(dials.begin(),dials.end(),[](auto* a,auto* b){return a->getX()<b->getX();});
-                if(dials.size()!=3||!tightness||tightness->getText()!="Q / 0.0% TIGHT")return false;
+                if(dials.size()!=3||!tightness||(tightness->getText()!="Q WIDTH"||dials[2]->getTextFromValue(dials[2]->getValue())!="0.0"))return false;
                 // Verify the actual editor callback, without a timer tick.
                 dials[2]->setValue(96,juce::sendNotificationSync);
-                if(tightness->getText()!="Q / 100.0% TIGHT")return false;
+                if((tightness->getText()!="Q WIDTH"||dials[2]->getTextFromValue(dials[2]->getValue())!="100.0"))return false;
                 dials[2]->setValue(.3,juce::sendNotificationSync);
-                if(tightness->getText()!="Q / 0.0% TIGHT")return false;
+                if((tightness->getText()!="Q WIDTH"||dials[2]->getTextFromValue(dials[2]->getValue())!="0.0"))return false;
                 if(root==0&&slot==0){
                     auto image=ui->createComponentSnapshot(ui->getLocalBounds());
                     juce::FileOutputStream file(juce::File::getCurrentWorkingDirectory().getChildFile("surgery-ui-CARVE-Q-zero.png"));
@@ -903,3 +903,5 @@ bool runQualityTests(){
     return true;
 }
 
+
+bool runOmnisRailTests(){auto p=std::make_unique<PRISMVSTAudioProcessor>();p->prepareToPlay(48000,512);std::unique_ptr<juce::AudioProcessorEditor> e(p->createEditor());return verifyUI105(*p,*e)&&verifyUI106(*p,*e);}

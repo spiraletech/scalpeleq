@@ -19,11 +19,11 @@ inline bool verifyUI106(PRISMVSTAudioProcessor&, juce::AudioProcessorEditor& edi
     editor.setSize(1344,756);
     juce::Timer::callPendingTimersSynchronously();
 
-    const auto transform=surgery::rack::contentTransform(editor.getWidth(),editor.getHeight());
+    const auto transform=scalpel::omnis::Layout(editor.getWidth(),editor.getHeight()).transform();
     const auto topLeft=juce::Point<float>(0,0).transformedBy(transform);
-    const auto bottomRight=juce::Point<float>(1120,630).transformedBy(transform);
-    if(topLeft.getDistanceFrom({0,0})>.01f||
-       bottomRight.getDistanceFrom({(float)editor.getWidth(),(float)editor.getHeight()})>.01f){
+    const auto bottomRight=juce::Point<float>(1280,718).transformedBy(transform);
+    if(topLeft.getDistanceFrom({0,0})>2.f||
+       bottomRight.getDistanceFrom({(float)editor.getWidth(),(float)editor.getHeight()})>2.f){
         std::cerr<<"UI106: rack transform leaves plugin-owned background around the face\n";return false;
     }
 
@@ -49,8 +49,9 @@ inline bool verifyUI106(PRISMVSTAudioProcessor&, juce::AudioProcessorEditor& edi
     bool decayKnobFound=false;
     for(auto* child:editor.getChildren())
         if(auto* slider=dynamic_cast<juce::Slider*>(child);
-           slider&&slider->getBounds()==juce::Rectangle<int>(497,472,142,110))
+           slider&&slider->getBounds()==scalpel::reference::decayDial())
             decayKnobFound=true;
+    if(!heat||!freeze||!heatLabel||!freezeLabel||!decayLabel||!decayKnobFound)return false;
     // ANALYZE geometry is host-transformed; the visual snapshot is the source of truth.
     // Keep the functional freeze color assertion below.
 

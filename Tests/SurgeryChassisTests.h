@@ -19,8 +19,8 @@ inline bool verifyChassis105(){
         }
         for(auto* child:editor->getChildren())if(child->isVisible()&&dynamic_cast<juce::ResizableCornerComponent*>(child)==nullptr){
             const auto bounds=child->getBoundsInParent().toFloat();
-            if(!surgery::rack::instrumentArea(size.x,size.y).expanded(2).contains(bounds)){
-                std::cerr<<"Chassis: control overlaps frame "<<child->getName()<<'\n';return false;
+            if(!scalpel::omnis::Layout(size.x,size.y).physical({0,0,1280,718}).toFloat().expanded(2).contains(bounds)){
+                std::cerr<<"Chassis: control overlaps frame "<<child->getName()<<" bounds="<<bounds.toString()<<'\n';return false;
             }
         }
         for(int n=0;n<24;++n){
@@ -54,10 +54,10 @@ inline bool verifyChassis105(){
             // 1.0.5 is a strict 16:9 product face. Extreme host aspect ratios
             // letterbox instead of stretching the vent slots or circular knobs.
             // Validate the transformed console perimeter, not the host window edge.
-            const auto faceTransform=surgery::rack::contentTransform(size.x,size.y);
-            const auto enclosure=scalpel::reference::enclosure();
-            for(auto logical:{juce::Point<float>(2,enclosure.getCentreY()),juce::Point<float>(1117,enclosure.getCentreY()),
-                              juce::Point<float>(560,enclosure.getY()+3),juce::Point<float>(560,enclosure.getBottom()-3)}){
+            const auto faceTransform=scalpel::omnis::Layout(size.x,size.y).transform();
+            const juce::Rectangle<float> enclosure(0,0,1280,718);
+            for(auto logical:{juce::Point<float>(2,enclosure.getCentreY()),juce::Point<float>(1277,enclosure.getCentreY()),
+                              juce::Point<float>(640,enclosure.getY()+3),juce::Point<float>(640,enclosure.getBottom()-3)}){
                 const auto point=logical.transformedBy(faceTransform);
                 const int px=juce::jlimit(0,shot.getWidth()-1,juce::roundToInt(point.x*scale));
                 const int py=juce::jlimit(0,shot.getHeight()-1,juce::roundToInt(point.y*scale));
@@ -69,7 +69,8 @@ inline bool verifyChassis105(){
                 for(int dy=-radius;dy<=radius;++dy)for(int dx=-radius;dx<=radius;++dx)
                     bezel=juce::jmax(bezel,shot.getPixelAt(juce::jlimit(0,shot.getWidth()-1,px+dx),
                         juce::jlimit(0,shot.getHeight()-1,py+dy)).getBrightness());
-                if(bezel<.08f){std::cerr<<"Chassis: bezel displaced from locked edge\n";return false;}
+                // OMNIS has a restrained, directionally shaded edge, not the old chrome bezel.
+                if(bezel<.04f){std::cerr<<"Chassis: bezel displaced from locked edge\n";return false;}
             }
             const auto top=surgery::rack::StormChassis::top(size.x);
             if(top.getCentreX()!=size.x*.5f||top.getBottom()>40)return false;

@@ -3,6 +3,7 @@
 #include "../Source/SurgeryPrecision.h"
 #include "ScalpelModuleCapture.h"
 #include "ScalpelAuraNativeTests.h"
+#include "ScalpelOmnisNativeTests.h"
 #include <cmath>
 #include <iostream>
 #include <memory>
@@ -63,6 +64,7 @@ bool finiteBuffer(const juce::AudioBuffer<float>& buffer)
 }
 
 bool runQualityTests();
+bool runOmnisRailTests();
 bool runWeatherCalibration();
 bool runWeatherFieldTests();
 bool runStormChassisTests();
@@ -72,6 +74,8 @@ int main(int argc,char** argv)
     if(argc>1&&juce::String(argv[1])=="--weather-field")return runWeatherFieldTests()?0:72;
     if(argc>1&&juce::String(argv[1])=="--storm-chassis")return runStormChassisTests()?0:73;
     juce::ScopedJuceInitialiser_GUI gui;
+    if(argc>1&&juce::String(argv[1])=="--omnis-rails")return runOmnisRailTests()?0:79;
+    if(argc>1&&juce::String(argv[1])=="--omnis")return verifyScalpelOmnisNative()?0:78;
     if(argc>1&&juce::String(argv[1])=="--aura-c01")return verifyScalpelAuraNative()?0:77;
 #if JUCE_WINDOWS && JUCE_PLUGINHOST_VST3
     if(argc>2&&juce::String(argv[1])=="--capture-vst3")return captureScalpelModule(argv[2])?0:76;

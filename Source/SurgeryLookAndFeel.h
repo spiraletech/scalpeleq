@@ -10,9 +10,42 @@
 #include "OnyxRackSkin.h"
 #include "ScalpelMaterials.h"
 #include "ScalpelFinish.h"
+#include "ScalpelOmnis.h"
 class SurgeryLookAndFeel final : public juce::LookAndFeel_V4 {
-    bool finish_=false;
+    bool finish_=false,omnis_=false;
 public:
+    void setOmnisEnabled(bool enabled){omnis_=enabled;}
+    juce::Font getLabelFont(juce::Label& label) override {
+        if(!omnis_)return juce::LookAndFeel_V4::getLabelFont(label);
+        return scalpel::omnis::font(dynamic_cast<juce::Slider*>(label.getParentComponent())?24.f:12.f);
+    }
+    juce::Font getSliderPopupFont(juce::Slider& slider) override {
+        return omnis_?scalpel::omnis::font(12):juce::LookAndFeel_V4::getSliderPopupFont(slider);
+    }
+    juce::StringArray tooltipLines(const juce::String& message) const {
+        juce::StringArray words,lines;words.addTokens(message," ","");juce::String line;
+        const auto f=scalpel::omnis::font(11);
+        for(const auto& word:words){const auto candidate=line.isEmpty()?word:line+" "+word;
+            if(!line.isEmpty()&&f.getStringWidthFloat(candidate)>250){lines.add(line);line=word;}else line=candidate;}
+        if(!line.isEmpty())lines.add(line);return lines;
+    }
+    juce::Rectangle<int> getTooltipBounds(const juce::String& text,juce::Point<int> mouse,juce::Rectangle<int> parent) override {
+        if(!omnis_)return juce::LookAndFeel_V4::getTooltipBounds(text,mouse,parent);
+        const auto lines=tooltipLines(text);return juce::Rectangle<int>(mouse.x+12,mouse.y+16,270,lines.size()*16+16).constrainedWithin(parent);
+    }
+    void drawTooltip(juce::Graphics& g,const juce::String& text,int width,int height) override {
+        if(!omnis_){juce::LookAndFeel_V4::drawTooltip(g,text,width,height);return;}
+        const auto r=juce::Rectangle<float>(0,0,(float)width,(float)height).reduced(.5f);
+        g.setColour(juce::Colour(0xff08090a));g.fillRoundedRectangle(r,5);
+        g.setColour(juce::Colours::white.withAlpha(.18f));g.drawRoundedRectangle(r,5,1);
+        const auto lines=tooltipLines(text);for(int i=0;i<lines.size();++i)
+            scalpel::omnis::text(g,lines[i],{10.f,8.f+i*16.f,(float)width-20,16},11,.91f,false,0,-1);
+    }
+    juce::Slider::SliderLayout getSliderLayout(juce::Slider& slider) override {
+        if(!omnis_)return juce::LookAndFeel_V4::getSliderLayout(slider);
+        juce::Slider::SliderLayout l;l.sliderBounds={0,0,slider.getWidth(),130};
+        l.textBoxBounds={0,122,slider.getWidth(),31};return l;
+    }
     void setFinishEnabled(bool enabled){
         finish_=enabled;
         setColour(juce::PopupMenu::backgroundColourId,enabled?scalpel::finish::faceplate:juce::Colour(0xff0b141d));
@@ -27,9 +60,10 @@ public:
         setColour(juce::PopupMenu::highlightedTextColourId,juce::Colour(0xfff5fbff));
         setColour(juce::ComboBox::textColourId,juce::Colour(0xffedf5ff));
     }
-    juce::Font getComboBoxFont(juce::ComboBox&) override {return juce::Font(juce::FontOptions("Segoe UI",16.0f,juce::Font::plain));}
-    juce::Font getPopupMenuFont() override {return juce::Font(juce::FontOptions("Segoe UI",13.0f,juce::Font::plain));}
+    juce::Font getComboBoxFont(juce::ComboBox&) override {if(omnis_)return scalpel::omnis::font(12);return juce::Font(juce::FontOptions("Segoe UI",16.0f,juce::Font::plain));}
+    juce::Font getPopupMenuFont() override {if(omnis_)return scalpel::omnis::font(13);return juce::Font(juce::FontOptions("Segoe UI",13.0f,juce::Font::plain));}
     void positionComboBoxText(juce::ComboBox& box,juce::Label& label) override {
+        if(omnis_){label.setBounds(32,0,juce::jmax(0,box.getWidth()-64),box.getHeight());label.setJustificationType(juce::Justification::centred);return;}
         if(finish_){
             label.setBounds(42,0,juce::jmax(0,box.getWidth()-84),box.getHeight());
             label.setFont(scalpel::finish::font(19.f,false));
@@ -58,6 +92,7 @@ public:
     }
     void drawRotarySlider(juce::Graphics& g,int x,int y,int w,int h,float position,
                           float start,float end,juce::Slider& slider) override {
+        if(omnis_){scalpel::omnis::rotary(g,{x+w*.5f,y+65.f},59.f,position,slider.isEnabled());return;}
         if(finish_){scalpel::finish::knob(g,x,y,w,h,position,start,end,slider);return;}
         const float cx=x+w*.5f,cy=y+h*.46f;
         const float radius=juce::jlimit(14.f,44.f,.48f*(float)std::min(w,h));
@@ -110,6 +145,7 @@ public:
     }
     void drawButtonBackground(juce::Graphics& g,juce::Button& button,
                               const juce::Colour&,bool over,bool down) override {
+        if(omnis_){scalpel::omnis::oled(g,button,over,down);return;}
         const auto r=button.getLocalBounds().toFloat().reduced(1.5f);
         const bool active=button.getToggleState()||down;
         const bool xray=button.getButtonText()=="X-RAY";
@@ -345,6 +381,7 @@ public:
         if(over){g.setColour(juce::Colours::white.withAlpha(.08f));g.fillRoundedRectangle(r.reduced(2),3.f);}
     }
     void drawButtonText(juce::Graphics& g,juce::TextButton& b,bool,bool) override {
+        if(omnis_)return;
         if(b.getButtonText()=="FREEZE"||b.getButtonText()=="RESUME"||b.getButtonText().startsWith("SONAR ")||b.getButtonText()=="HEAT MAP")return;
         if(b.getComponentID().startsWith("master-output-")){
             g.setColour(b.findColour(b.getToggleState()?juce::TextButton::textColourOnId:
@@ -401,6 +438,10 @@ public:
     }
     void drawComboBox(juce::Graphics& g,int w,int h,bool,int,int,int,int,juce::ComboBox& box) override {
         auto r=juce::Rectangle<float>(1,1,(float)w-2,(float)h-2);
+        if(omnis_){
+            g.setColour(juce::Colours::white.withAlpha(box.isEnabled()?.50f:.15f));
+            for(int side:{-1,1}){const float cx=w*.5f+side*(w*.5f-12);juce::Path p;p.startNewSubPath(cx-side*3,h*.5f-4);p.lineTo(cx,h*.5f);p.lineTo(cx-side*3,h*.5f+4);g.strokePath(p,juce::PathStrokeType(1));}return;
+        }
         if(finish_){
             using A=scalpel::formidable::Art;
             const float chevronH=juce::jmin(22.f,r.getHeight()*.38f);
@@ -423,6 +464,15 @@ public:
         g.strokePath(arrow,juce::PathStrokeType(1.6f));
     }
     void drawLabel(juce::Graphics& g,juce::Label& label) override {
+        if(omnis_){
+            if(label.isBeingEdited())return;
+            const auto r=label.getLocalBounds().toFloat();
+            if(dynamic_cast<juce::Slider*>(label.getParentComponent()))scalpel::omnis::number(g,label.getText(),r,label.isEnabled());
+            else {const bool combo=dynamic_cast<juce::ComboBox*>(label.getParentComponent())!=nullptr;
+                scalpel::omnis::text(g,label.getText(),r,combo?12.f:11.f,label.isEnabled()?(combo?.86f:.91f):.30f,false,combo?0.f:1.4f,
+                    label.getJustificationType().testFlags(juce::Justification::left)?-1:0);}
+            return;
+        }
         if(finish_){
             if(label.getComponentID()=="master-caption"){
                 juce::LookAndFeel_V4::drawLabel(g,label);

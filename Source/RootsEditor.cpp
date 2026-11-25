@@ -39,6 +39,8 @@ juce::Colour territory(int i){
 }
 void rotary(juce::Slider& s,juce::String suffix,double resetValue) {
     s.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    s.setRotaryParameters(juce::MathConstants<float>::pi*1.25f,juce::MathConstants<float>::pi*2.75f,true);
+    s.setMouseDragSensitivity(400);
     s.setTextBoxStyle(juce::Slider::TextBoxBelow,false,106,30);
     s.setColour(juce::Slider::textBoxTextColourId,scalpel::finish::ice);
     s.setColour(juce::Slider::textBoxBackgroundColourId,juce::Colours::transparentBlack);
@@ -311,7 +313,7 @@ void RootsGraph::showRootMenu(int root,juce::Component& button){
 }
 void RootsGraph::paintStaticFrame(juce::Graphics& g) const {
     const auto full=getLocalBounds().toFloat(),r=area();
-    scalpel::finish::analyzerHousing(g,full);
+    scalpel::omnis::material(g,scalpel::omnis::analyzerInner.translated(-8,-150),scalpel::omnis::analyzerMaterial,9);
     g.setFont(scalpel::finish::font(14,false));
     g.setColour(scalpel::finish::text);
     // No inherited cyan spectrum title, old SONAR weather image or C1-C4
@@ -326,17 +328,52 @@ void RootsGraph::paintStaticFrame(juce::Graphics& g) const {
         g.setColour(juce::Colour(0xff707b86).withAlpha(.20f));
         g.drawVerticalLine(juce::roundToInt(x),r.getY(),r.getBottom());
         g.setColour(scalpel::finish::text);
-        g.drawText(hzText(f),juce::roundToInt(x-25),juce::roundToInt(r.getBottom()+5),
-                   50,20,juce::Justification::centred);
+        scalpel::omnis::text(g,hzText(f),{x-25,r.getBottom()+3,50,14},11,.82f);
     }
     for(const int db:scalpel::dbaxis::labels){
         const float y=scalpel::dbaxis::toY((float)db,r.getY(),r.getHeight());
         g.setColour(juce::Colour(0xff78818b).withAlpha(db==-30?.34f:.19f));
         g.drawHorizontalLine(juce::roundToInt(y),r.getX(),r.getRight());
     }
-    scalpel::dbaxis::draw(g,r);
+    for(int db:scalpel::dbaxis::labels)scalpel::omnis::text(g,juce::String(db),
+        {r.getRight()+4,scalpel::dbaxis::toY((float)db,r.getY(),r.getHeight())-7,28,14},10,.80f);
+    scalpel::omnis::text(g,"dBFS",{r.getRight()+2,r.getY()-17,32,14},9,.75f);
+}
+void RootsGraph::paintRails(juce::Graphics& g) const {
+    using namespace scalpel::omnis;
+    text(g,"PEAK (dBFS)",{1076,88,124,18},10,.78f);
+    const auto peak=processor_.getPeakHoldDb();
+    text(g,peak<=-140?juce::String("-inf"):juce::String(peak,2),{1076,109,124,34},24,.87f,true);
+    for(int ch=0;ch<2;++ch){
+        const float x=1214+ch*22.f;const float level=processor_.getChannelPeakDb(ch);
+        for(int i=0;i<24;++i){g.setColour(juce::Colours::white.withAlpha(level>=-60+i*2.5f?.86f:.06f));g.fillRoundedRectangle(x,231-i*8.f,15,3.5f,.7f);}
+        text(g,ch==0?"L":"R",{x,244,15,14},10,.75f);
+    }
 }
 void RootsGraph::paint(juce::Graphics& g){
+    const auto r=area();
+    if(displayVisible_>=1.)paintSignal(g);
+    else {
+        // Axes and optical rail are never part of the viewport collapse.
+        paintStaticFrame(g);
+        g.setColour(juce::Colours::black);g.fillRect(r);
+        if(displayVisible_>0){
+            const auto dpi=juce::jlimit(.5f,4.f,g.getInternalContext().getPhysicalPixelScaleFactor());
+            const int w=juce::roundToInt(getWidth()*dpi),h=juce::roundToInt(getHeight()*dpi);
+            if(signalFrame_.getWidth()!=w||signalFrame_.getHeight()!=h)signalFrame_=juce::Image(juce::Image::ARGB,w,h,true);
+            signalFrame_.clear(signalFrame_.getBounds());
+            juce::Graphics signal(signalFrame_);signal.addTransform(juce::AffineTransform::scale(dpi));paintSignal(signal);
+            const auto e=scalpel::omnis::crt(displayVisible_);
+            const auto dest=r.withSizeKeepingCentre(r.getWidth()*(float)e.width,r.getHeight()*(float)e.height);
+            juce::Graphics::ScopedSaveState saved(g);g.reduceClipRegion(r.toNearestInt());
+            g.drawImage(signalFrame_,dest.getX(),dest.getY(),dest.getWidth(),dest.getHeight(),
+                        r.getX()*dpi,r.getY()*dpi,r.getWidth()*dpi,r.getHeight()*dpi);
+            g.setColour(juce::Colours::white.withAlpha((float)e.phosphor));g.drawLine(dest.getX(),dest.getCentreY(),dest.getRight(),dest.getCentreY(),.8f);
+        }
+    }
+    paintRails(g);
+}
+void RootsGraph::paintSignal(juce::Graphics& g){
     ++paintedFrames_;
     const auto full=getLocalBounds().toFloat();
     const auto r=area();
@@ -877,9 +914,7 @@ void RootsGraph::paint(juce::Graphics& g){
     }
     // Real polycarbonate reflection sits above signal light and nodes, while
     // native labels/readouts remain crisp above the optical layer.
-    scalpel::finish::analyzerReflection(g,full);
-    scalpel::ui105::drawAnalyzerPanel(g,full,processor_.getPeakHoldDb(),
-        processor_.getChannelPeakDb(0),processor_.getChannelPeakDb(1),polished);
+
     const auto domain=displayDomain_;
     const auto peak=peakReadouts_[(size_t)selectedRoot];
     const juce::String output=domain==1?"MID OUT":domain==2?"SIDE OUT":"STEREO OUT";
@@ -887,13 +922,13 @@ void RootsGraph::paint(juce::Graphics& g){
         " PEAK "+(peak<=-140.f?juce::String("--"):juce::String(peak,1)+" dBFS");
     g.setColour(juce::Colours::white.withAlpha(.82f));
     g.setFont(juce::Font(juce::FontOptions("Segoe UI",11.0f,juce::Font::bold)));
-    g.drawText(info,r.reduced(12.f).removeFromTop(15.f),juce::Justification::centredLeft);
+    scalpel::omnis::text(g,info,r.reduced(12.f).removeFromTop(15.f),11,.82f,true,0,-1);
     if(showResponse){
         const auto graphLabel=bandEnabled
             ? "BAND EQ  "+juce::String(gain>=0.0?"+":"")+juce::String(gain,1)+" dB"
             : juce::String("BAND OFF");
         g.setColour(scalpel::finish::ice.withAlpha(.9f));
-        g.drawText(graphLabel,r.reduced(10.f).removeFromTop(15.f),juce::Justification::centredRight);
+        scalpel::omnis::text(g,graphLabel,r.reduced(10.f).removeFromTop(15.f),11,.90f,false,0,1);
         if(mode_==0&&compActive){
             static constexpr std::array<const char*,8> ratioText{
                 "AUTO","2:1","3:1","4:1","6:1","8:1","12:1","20:1"};
@@ -903,7 +938,7 @@ void RootsGraph::paint(juce::Graphics& g){
             g.setColour(scalpel::finish::accent.withAlpha(.82f));
             g.setFont(juce::Font(juce::FontOptions("Segoe UI",9.0f,juce::Font::bold)));
             auto status=r.reduced(10.f).removeFromTop(30.f);status.removeFromTop(15.f);
-            g.drawText(dynamics,status,juce::Justification::centredRight);
+            scalpel::omnis::text(g,dynamics,status,9,.82f,false,0,1);
         }
     }
     if(hover_&&r.contains(mouse_)){
@@ -934,7 +969,7 @@ void RootsGraph::paint(juce::Graphics& g){
                  juce::String(pval(processor_.apvts,id("q")),2)+" / GAIN "+
                  juce::String(processor_.getCarveGainDb(root,hoveredCarve),1)+" dB";
         }
-        const juce::Font hoverFont(juce::FontOptions("Segoe UI",11.0f,juce::Font::plain));
+        const auto hoverFont=scalpel::omnis::font(11);
         juce::GlyphArrangement glyphs;
         glyphs.addLineOfText(hoverFont,text,0,0);
         const float width=std::min(r.getWidth(),std::ceil(glyphs.getBoundingBox(0,-1,true).getWidth())+14.f);
@@ -947,8 +982,7 @@ void RootsGraph::paint(juce::Graphics& g){
         g.fillRoundedRectangle(tip,4.f);
         g.setColour(juce::Colour::fromRGB(236,243,247));
         g.setFont(hoverFont);
-        g.drawFittedText(text,tip.toNearestInt().reduced(6,1),
-                         juce::Justification::centredLeft,1);
+        scalpel::omnis::text(g,text,tip.reduced(6,1),11,.9f,false,0,-1);
     }
 }
 int RootsGraph::hitCarveTab(juce::Point<float> point) const {
@@ -1282,6 +1316,11 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     // is drawn by paintRack() and must never bleed into the plugin border.
     setOpaque(true);
     setLookAndFeel(&lookAndFeel_);
+    lookAndFeel_.setOmnisEnabled(true);
+    graphPower_.setClickingTogglesState(true);graphPower_.setToggleState(true,juce::dontSendNotification);
+    graphPower_.setTooltip("Graph display power only. Audio processing remains active.");
+    graphPower_.onClick=[this]{ignition_.target(graphPower_.getToggleState()?1.:0.,juce::Time::getMillisecondCounterHiRes(),reducedMotion());graph_.setDisplayVisibility(ignition_.sample(juce::Time::getMillisecondCounterHiRes()));};
+    addAndMakeVisible(graphPower_);addChildComponent(transitionShield_);
 
     addAndMakeVisible(graph_);
     graph_.onSelectNode=[this](int n){bindNode(n);};
@@ -1332,7 +1371,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
                               juce::MathConstants<float>::pi*2.75f,true);
     threshold_.setRotaryParameters(juce::MathConstants<float>::pi*1.25f,
                                    juce::MathConstants<float>::pi*2.75f,true);
-    gainLabel_.setText("BAND GAIN (dB)",juce::dontSendNotification);
+    gainLabel_.setText("BAND GAIN",juce::dontSendNotification);
     gain_.setTooltip("Selected BAND frequency range gain: -60 to +60 dB");
 
     thresholdLabel_.setText("COMP THRESHOLD",juce::dontSendNotification);
@@ -1401,6 +1440,9 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
         rotary(*s,"",0.0);addAndMakeVisible(*s);
     }
     carveDepth_.setDoubleClickReturnValue(true,0.0);
+    gain_.setNumDecimalPlacesToDisplay(2);gain_.setTextValueSuffix(" dB");
+    carveFrequency_.setNumDecimalPlacesToDisplay(2);carveFrequency_.setTextValueSuffix(" Hz");
+    carveDepth_.setNumDecimalPlacesToDisplay(2);carveDepth_.setTextValueSuffix(" dB");
     carveQ_.setDoubleClickReturnValue(true,surgery::precision::defaultCarveQ);
     carveFrequency_.setMouseDragSensitivity(400);
     carveQ_.setMouseDragSensitivity(600);
@@ -1411,9 +1453,9 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     carveQ_.setNumDecimalPlacesToDisplay(1);
     carveFrequency_.setTooltip("Exact Hz value: type in the field. CTRL+drag a CARVE node for fine frequency scrubbing.");
     carveQ_.setTooltip("Tightness 0-100% (type a percentage). Raw DSP/automation Q remains 0.300-96.000 on a logarithmic curve. Clockwise narrows the filter. SHIFT+wheel = fine adjustment.");
-    carveFrequencyLabel_.setText("FREQUENCY Hz",juce::dontSendNotification);
-    carveDepthLabel_.setText("CARVE GAIN dB",juce::dontSendNotification);
-    carveQLabel_.setText("Q / TIGHTNESS",juce::dontSendNotification);
+    carveFrequencyLabel_.setText("FREQUENCY",juce::dontSendNotification);
+    carveDepthLabel_.setText("CARVE GAIN",juce::dontSendNotification);
+    carveQLabel_.setText("Q WIDTH",juce::dontSendNotification);
     for(auto* b:{&carveOn_,&carveDynamic_}){
         b->setClickingTogglesState(true);
         addAndMakeVisible(*b);
@@ -1588,7 +1630,8 @@ void RootsEditor::bindNode(int n){
 }
 void RootsEditor::updateCarveTightness(){
     const float tight=surgery::precision::tightnessPercent((float)carveQ_.getValue());
-    const auto text="Q / "+juce::String(tight,1)+"% TIGHT";
+    juce::ignoreUnused(tight);
+    const juce::String text="Q WIDTH";
     if(carveQLabel_.getText()!=text)carveQLabel_.setText(text,juce::dontSendNotification);
 }
 void RootsEditor::bindCarve(){
@@ -1621,7 +1664,14 @@ void RootsEditor::bindCarve(){
     graph_.setPresentation(mode_,carveSlot_);
 }
 void RootsEditor::setMode(int next){
-    mode_=next==1||next==3?next:0;
+    next=next==1||next==3?next:0;
+    const bool animate=next!=mode_&&getWidth()>0;
+    juce::Image before;
+    if(animate){
+        if(transition_.running){before=juce::Image(juce::Image::ARGB,1280,166,true);juce::Graphics f(before);f.addTransform(juce::AffineTransform::translation(0,-538));drawTransition(f,juce::Time::getMillisecondCounterHiRes());}
+        else before=captureLower();
+    }
+    mode_=next;
     lookAndFeel_.setFinishEnabled(scalpel::finish::enabledForMode(mode_));
     for(int i=0;i<3;++i){
         auto& b=modeButtons_[(size_t)i];
@@ -1671,6 +1721,7 @@ void RootsEditor::setMode(int next){
     detector_.setVisible(false);detectorLabel_.setVisible(false);
     graph_.setPresentation(mode_,carveSlot_);
     resized();
+    if(animate){outgoing_=before;incoming_=captureLower();transition_.request(mode_,juce::Time::getMillisecondCounterHiRes(),reducedMotion());transitionShield_.setVisible(transition_.running);transitionShield_.toFront(false);}
     timerCallback();
     repaint();
 }
@@ -1728,6 +1779,13 @@ void RootsEditor::updateRootButtons(){
     graph_.setPeakWarnings(warnings);
 }
 void RootsEditor::timerCallback(){
+    const double auraNow=juce::Time::getMillisecondCounterHiRes();
+    if(reducedMotion())ignition_.settle();
+    graph_.setDisplayVisibility(ignition_.sample(auraNow));
+    const bool transitioning=transition_.running;transition_.tick(auraNow,reducedMotion());
+    transitionShield_.setVisible(transition_.running);
+    if(transitioning)repaint(scalpel::omnis::Layout(getWidth(),getHeight()).physical(scalpel::omnis::content));
+
     const bool b=processor_.comparisonSlot()==1;
     compare_.setButtonText(b?"A / B: B":"A / B: A");
     copy_.setButtonText(b?"COPY B > A":"COPY A > B");
@@ -1812,7 +1870,7 @@ void RootsEditor::paint(juce::Graphics& g){
     // scale rebuilds the surface even when logical editor dimensions match.
     const float dpi=juce::jlimit(.5f,4.f,g.getInternalContext().getPhysicalPixelScaleFactor());
     const int pw=juce::roundToInt(getWidth()*dpi),ph=juce::roundToInt(getHeight()*dpi);
-    if(rackBackground_.getWidth()!=pw||rackBackground_.getHeight()!=ph||backgroundMode_!=mode_||backgroundScale_!=dpi){
+    if(rackBackground_.getWidth()!=pw||rackBackground_.getHeight()!=ph||backgroundScale_!=dpi){
         rackBackground_=juce::Image(juce::Image::RGB,pw,ph,false);
         juce::Graphics background(rackBackground_);
         background.fillAll(juce::Colours::black);
@@ -1825,77 +1883,78 @@ void RootsEditor::paint(juce::Graphics& g){
 }
 void RootsEditor::resized(){rackBackground_={};backgroundScale_=0;layoutRack();repaint();}
 
+bool RootsEditor::reducedMotion() const {
+    // Existing visual preference remains authoritative; it is already host/preset synchronized.
+    return pval(processor_.apvts,"sonar_reduced_motion")>=.5f;
+}
 void RootsEditor::paintRack(juce::Graphics& g){
     juce::Graphics::ScopedSaveState saved(g);
-    g.addTransform(surgery::rack::contentTransform(getWidth(),getHeight()));
-    scalpel::ui105::drawRackFace(g,1120,630,mode_);
+    g.addTransform(scalpel::omnis::Layout(getWidth(),getHeight()).transform());
+    scalpel::omnis::chassis(g);
 }
-
 void RootsEditor::layoutRack(){
-    // The approved 16:9 console is authored on a 1120 x 630 logical grid.
-    // One uniform transform keeps assets, text and hit targets pixel-aligned.
-    const auto transform=surgery::rack::contentTransform(getWidth(),getHeight());
-    for(auto* child:getChildren()){
-        if(dynamic_cast<juce::ResizableCornerComponent*>(child)!=nullptr)child->setTransform({});
-        else child->setTransform(transform);
-    }
-    for(auto* label:{&gainLabel_,&thresholdLabel_,&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_,
-                     &analyzerDepthLabel_,&analyzerSlopeLabel_,&analyzerMemoryLabel_}){
-        label->setJustificationType(juce::Justification::centred);
-        label->setFont(juce::Font(juce::FontOptions("Segoe UI",14.0f,juce::Font::bold)));
-    }
+    using namespace scalpel::omnis;
+    const Layout l(getWidth(),getHeight());
+    for(auto* child:getChildren())child->setTransform(l.transform());
+    // C01 is authored in the protected 1120-wide grid. Keep its native bounds
+    // and scale; only vertically register the strip to OMNIS. No resampling redesign.
+    const float cs=l.scale*1280.f/1120.f;
+    const float stripOffset=l.oy+111.f*l.scale-100.5f*cs;
+    for(int i=0;i<7;++i){auto& b=rootButtons_[(size_t)i];b.setBounds(scalpel::reference::band(i));b.setTransform(juce::AffineTransform::scale(cs).translated(l.ox,stripOffset));}
+    graph_.setBounds(analyzer.toNearestInt());
+    for(int i=0;i<3;++i){modeButtons_[(size_t)i].setBounds(scalpel::reference::tab(scalpel::reference::modePages[(size_t)i]));masterButtons_[(size_t)i].setBounds(scalpel::reference::masterButton(i));}
+    masterLabel_.setBounds(21,170,89,20);graphPower_.setBounds(33,394,64,34);graphPower_.toFront(false);
+    xrayButton_.setBounds(1084,190,124,34);peakHold_.setBounds(1084,362,124,34);
+    const auto placePower=[](juce::Component& a,juce::Component& b){a.setBounds(62,572,146,46);b.setBounds(62,638,146,46);};
+    placePower(on_,off_);placePower(carveOn_,carveOff_);
+    const auto dial=[](juce::Slider& s,juce::Label& label,int x){
+        s.setBounds(x-84,554,168,154);label.setBounds(x-110,537,220,24);
+        s.setTextBoxStyle(juce::Slider::TextBoxBelow,false,168,31);
+    };
+    dial(gain_,gainLabel_,328);dial(threshold_,thresholdLabel_,518);
+    dial(carveFrequency_,carveFrequencyLabel_,340);dial(carveDepth_,carveDepthLabel_,568);dial(carveQ_,carveQLabel_,796);
+    dial(analyzerMemory_,analyzerMemoryLabel_,640);
+    compLabel_.setBounds(658,537,208,24);compressor_.setBounds(658,570,208,46);
+    ratioLabel_.setBounds(658,626,208,20);ratio_.setBounds(658,651,208,46);
+    for(int i=0;i<4;++i){auto r=juce::Rectangle<int>(922+(i%2)*167,572+(i/2)*66,146,46);carveSlotButtons_[(size_t)i].setBounds(r);
+        const std::array<juce::Button*,4> b{&mono_,&solo_,&phase_,&limit_};b[(size_t)i]->setBounds(r);}
+    selection_.setBounds(42,540,190,20);
+    analyzerDepthLabel_.setBounds(225,537,220,24);analyzerSlopeLabel_.setBounds(895,537,220,24);
+    heatToggle_.setBounds(262,596,146,46);freezeButton_.setBounds(932,596,146,46);
+    transitionShield_.setBounds(content.toNearestInt());transitionShield_.toFront(false);
     title_.setVisible(false);
-    using namespace scalpel::reference;
-    for(int root=0;root<7;++root){auto& button=rootButtons_[(size_t)root];button.setVisible(true);button.setBounds(band(root));}
-    graph_.setBounds(analyzer().toNearestInt());
-    for(int i=0;i<3;++i){
-        modeButtons_[(size_t)i].setBounds(tab(modePages[(size_t)i]));
-        masterButtons_[(size_t)i].setBounds(masterButton(i));
-    }
-    masterLabel_.setBounds(masterCaption());
-    xrayButton_.setBounds(analyzerXray());
-    peakHold_.setBounds(analyzerReset());
-
-    on_.setBounds(switchBounds(false));off_.setBounds(switchBounds(true));
-    gainLabel_.setBounds(bounds(344,595,180,28));gain_.setBounds(bounds(352,624,164,199));
-    thresholdLabel_.setBounds(bounds(580,595,190,28));threshold_.setBounds(bounds(592,624,166,199));
-    compLabel_.setBounds(bounds(843,601,270,28));compressor_.setBounds(bounds(837,636,296,55));
-    ratioLabel_.setBounds(bounds(843,698,270,28));ratio_.setBounds(bounds(837,732,296,55));
-    detectorLabel_.setBounds(0,0,1,1);detector_.setBounds(0,0,1,1);limitAmount_.setBounds(0,0,1,1);
-    mono_.setBounds(bandAction(0));solo_.setBounds(bandAction(1));
-    phase_.setBounds(bandAction(2));limit_.setBounds(bandAction(3));
-
-    selection_.setBounds(bounds(94,589,250,28));
-    carveOn_.setBounds(switchBounds(false));carveOff_.setBounds(switchBounds(true));
-    carveDynamic_.setBounds(0,0,1,1);
-    const std::array<juce::Slider*,3> cs{&carveFrequency_,&carveDepth_,static_cast<juce::Slider*>(&carveQ_)};
-    const std::array<juce::Label*,3> cl{&carveFrequencyLabel_,&carveDepthLabel_,&carveQLabel_};
-    for(int i=0;i<3;++i){
-        cs[(size_t)i]->setBounds(carveDial(i));
-        cl[(size_t)i]->setBounds(cs[(size_t)i]->getX()-20,bounds(0,589,1,28).getY(),cs[(size_t)i]->getWidth()+40,bounds(0,589,1,28).getHeight());
-    }
-    for(int i=0;i<4;++i)carveSlotButtons_[(size_t)i].setBounds(carveSlot(i));
-    // ANALYZE headings use measured reference hierarchy and remain clear of
-    // the knob canvas; do not alter typography on unrelated pages.
-    for(auto* label:{&analyzerDepthLabel_,&analyzerMemoryLabel_,&analyzerSlopeLabel_})
-        label->setFont(juce::Font(juce::FontOptions("Segoe UI",20.f,juce::Font::bold)));
-    analyzerDepthLabel_.setBounds(analyzeCaption(0));
-    analyzerMemoryLabel_.setBounds(analyzeCaption(1));
-    analyzerSlopeLabel_.setBounds(analyzeCaption(2));
-    heatToggle_.setBounds(analyzeButton(false));
-    analyzerMemory_.setTextBoxStyle(juce::Slider::TextBoxBelow,false,decayReadoutWidth,decayReadoutHeight);
-    analyzerMemory_.setBounds(decayDial());
-    freezeButton_.setBounds(analyzeButton(true));
-
-    jukeModeLabel_.setBounds(0,0,1,1);jukeMode_.setBounds(0,0,1,1);
-    weatherMode_.setBounds(0,0,1,1);reducedMotion_.setBounds(0,0,1,1);
-    analyzerDepth_.setBounds(0,0,1,1);analyzerSlope_.setBounds(0,0,1,1);
-    analyzerLegend_.setBounds(0,0,1,1);status_.setBounds(0,0,1,1);
-    bypass_.setBounds(0,0,1,1);compare_.setBounds(0,0,1,1);copy_.setBounds(0,0,1,1);
-    save_.setBounds(0,0,1,1);load_.setBounds(0,0,1,1);
-    outputLabel_.setBounds(0,0,1,1);output_.setBounds(0,0,1,1);
 }
-
-
-
-
+juce::Image RootsEditor::captureLower(){
+    juce::Image image(juce::Image::ARGB,1280,166,true);juce::Graphics g(image);
+    g.addTransform(juce::AffineTransform::translation(0,-538));
+    for(auto* c:getChildren())if(c!=&transitionShield_&&c->isVisible()&&c->getY()>=537){
+        const auto snap=c->createComponentSnapshot(c->getLocalBounds(),true,1.f);
+        g.drawImageAt(snap,c->getX(),c->getY());
+    }
+    return image;
+}
+void RootsEditor::drawTransition(juce::Graphics& g,double now){
+    using namespace scalpel::omnis;
+    const auto& image=transition_.incoming(now)?incoming_:outgoing_;
+    if(!image.isValid())return;
+    const float extent=(float)transition_.extent(now);
+    const float distortion=1.f-extent;
+    for(int i=0;i<5;++i){
+        juce::Graphics::ScopedSaveState saved(g);
+        auto slice=juce::Rectangle<float>(16,538+i*33.2f,1248,33.2f);
+        // Five bounded content slices: stationary navigation and analyzer.
+        g.reduceClipRegion(slice.toNearestInt());
+        const float shear=std::sin((float)i*1.7f)*distortion*54.f;
+        g.setOpacity(.32f+.68f*extent);
+        g.drawImageTransformed(image,juce::AffineTransform::scale(extent,1).translated(640*(1-extent)+std::abs(shear),538));
+    }
+    if(distortion>0){g.setColour(juce::Colours::white.withAlpha(.39f*distortion));g.fillRect(639.5f,552.f,1.f,138.f);}
+}
+void RootsEditor::paintOverChildren(juce::Graphics& g){
+    if(!transition_.running)return;
+    juce::Graphics::ScopedSaveState saved(g);g.addTransform(scalpel::omnis::Layout(getWidth(),getHeight()).transform());
+    g.reduceClipRegion(scalpel::omnis::content.toNearestInt());
+    scalpel::omnis::material(g,scalpel::omnis::touchscreen,scalpel::omnis::touchMaterial,12);
+    scalpel::omnis::material(g,scalpel::omnis::touchInner,scalpel::omnis::touchMaterial,8);
+    drawTransition(g,juce::Time::getMillisecondCounterHiRes());
+}
