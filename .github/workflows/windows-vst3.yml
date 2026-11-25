@@ -33,6 +33,8 @@ jobs:
             build/Testing/Temporary/LastTest.log
             build/surgery-ui-*.png
             build/scalpel-ui-*.png
+            build/omnis*.png
+            build/omnis-native-evidence.txt
             build/surgery-*.csv
             build/spectral-gate.csv
             build/candidate-*.csv
