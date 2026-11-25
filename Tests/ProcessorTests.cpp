@@ -2,6 +2,7 @@
 #include "../Source/PluginProcessor.h"
 #include "../Source/SurgeryPrecision.h"
 #include "ScalpelModuleCapture.h"
+#include "ScalpelAuraNativeTests.h"
 #include <cmath>
 #include <iostream>
 #include <memory>
@@ -71,6 +72,7 @@ int main(int argc,char** argv)
     if(argc>1&&juce::String(argv[1])=="--weather-field")return runWeatherFieldTests()?0:72;
     if(argc>1&&juce::String(argv[1])=="--storm-chassis")return runStormChassisTests()?0:73;
     juce::ScopedJuceInitialiser_GUI gui;
+    if(argc>1&&juce::String(argv[1])=="--aura-c01")return verifyScalpelAuraNative()?0:77;
 #if JUCE_WINDOWS && JUCE_PLUGINHOST_VST3
     if(argc>2&&juce::String(argv[1])=="--capture-vst3")return captureScalpelModule(argv[2])?0:76;
 #endif

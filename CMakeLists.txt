@@ -77,6 +77,8 @@ file(GLOB SCALPEL_FORMIDABLE_1086_ASSETS CONFIGURE_DEPENDS
   Assets/Scalpel/Formidable/1.0.8.6/f1086_*.png)
 file(GLOB SCALPEL_BUTTON_UPDATE_ASSETS CONFIGURE_DEPENDS
   Assets/Scalpel/Formidable/1.0.8.7/f1087_*.png)
+file(GLOB SCALPEL_AURA_C01_R02_ASSETS CONFIGURE_DEPENDS
+  Assets/Scalpel/AuraFoundry/C01_R02/*.png)
 
 juce_add_binary_data(SurgeryRackAssets SOURCES
   "${SCALPEL_ART_DIR}/chassis-1.0.3.png"
@@ -112,6 +114,7 @@ juce_add_binary_data(SurgeryRackAssets SOURCES
   ${SCALPEL_FORMIDABLE_10842_ASSETS}
   ${SCALPEL_FORMIDABLE_1086_ASSETS}
   ${SCALPEL_BUTTON_UPDATE_ASSETS}
+  ${SCALPEL_AURA_C01_R02_ASSETS}
   Assets/Scalpel/scalpel-knob.png
   Assets/Scalpel/scalpel-freeze.png
   Assets/Scalpel/scalpel-heatmap.png)
@@ -156,6 +159,9 @@ target_link_libraries(PRISMVST PRIVATE
 
 option(PRISMVST_BUILD_TESTS "Build DSP smoke tests" ON)
 if(PRISMVST_BUILD_TESTS)
+  add_executable(scalpel_aura_motion_tests Tests/ScalpelAuraMotionTests.cpp)
+  target_compile_features(scalpel_aura_motion_tests PRIVATE cxx_std_20)
+  add_test(NAME scalpel_aura_motion COMMAND scalpel_aura_motion_tests)
   add_executable(scalpel_db_axis_tests Tests/ScalpelDbAxisTests.cpp Source/ScalpelDbScale.h)
   target_compile_features(scalpel_db_axis_tests PRIVATE cxx_std_20)
   add_test(NAME scalpel_db_axis_calibration COMMAND scalpel_db_axis_tests)
@@ -226,6 +232,8 @@ if(PRISMVST_BUILD_TESTS)
     target_link_options(prismvst_tests PRIVATE /STACK:8388608)
   endif()
   add_test(NAME prismvst_tests COMMAND prismvst_tests)
+  add_test(NAME scalpel_aura_c01_native COMMAND prismvst_tests --aura-c01)
+  set_tests_properties(scalpel_aura_c01_native PROPERTIES TIMEOUT 90 RUN_SERIAL TRUE)
   add_test(NAME surgery_weather_calibration COMMAND prismvst_tests --weather-calibration)
   add_test(NAME surgery_weather_field COMMAND prismvst_tests --weather-field)
   # The legacy Surgery JUKE river renderer is no longer displayed by Scalpel.

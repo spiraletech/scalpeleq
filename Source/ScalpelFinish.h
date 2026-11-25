@@ -5,6 +5,7 @@
 #include <cmath>
 #include "ScalpelReferenceLayout.h"
 #include "ScalpelFormidableAssets.h"
+#include "ScalpelAuraPlush.h"
 // Formidable material masters. Rendering owns no processing state.
 namespace scalpel::finish {
 inline constexpr bool validatedAllPages=true;
@@ -73,9 +74,14 @@ inline void drawPageOrBandKey(juce::Graphics& g,juce::Rectangle<float> bounds,
                               const juce::Button& button,int column,bool page,bool over,bool down){
     // Atlas rows match the art handoff: disabled, pressed, selected, hover, idle.
     const int row=!button.isEnabled()?0:down?1:button.getToggleState()?2:over?3:4;
-    const int width=page?1028:408;
-    const int height=page?112:124;
-    const auto& atlas=formidable::image(page?formidable::Art::mode_keys_1087:formidable::Art::band_keys_1087);
+    if(!page){
+        const auto s=static_cast<scalpel::aura::State>(row);
+        scalpel::aura::draw(g,bounds,column,s,scalpel::aura::targetTravel(s));
+        return;
+    }
+    // Only page tabs reach the legacy path. BAND cells are handled above.
+    constexpr int width=1028,height=112;
+    const auto& atlas=formidable::image(formidable::Art::mode_keys_1087);
     const auto cell=atlas.getClippedImage({column*width,row*height,width,height});
     g.drawImage(cell,bounds,juce::RectanglePlacement::stretchToFit);
     if(button.hasKeyboardFocus(false)){

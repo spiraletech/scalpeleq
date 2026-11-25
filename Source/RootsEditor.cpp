@@ -1714,6 +1714,7 @@ void RootsEditor::updateRootButtons(){
         const bool selected=graph_.selectedNode()/2==root;
         auto& button=rootButtons_[(size_t)root];
         button.setToggleState(selected,juce::dontSendNotification);
+        button.advanceAura(nowMs);
         if(fresh&&processor_.getRootBandPeakDb(root)>=-0.01f)
             peakWarningUntilMs_[(size_t)root]=nowMs+750.0;
         const bool peak=nowMs<peakWarningUntilMs_[(size_t)root];

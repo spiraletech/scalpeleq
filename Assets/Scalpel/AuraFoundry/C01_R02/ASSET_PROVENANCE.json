@@ -1,0 +1,241 @@
+{
+  "authority": "AURA FOUNDRY C01 R02",
+  "action": "byte-preserving copy; filename namespace only",
+  "files": [
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_5_hover.png",
+      "target": "aura_c01_r02_lettering_BAND_5_hover.png",
+      "sha256": "87226d716b18474db5449b825010f3847e874afb5580bca74db0e03fd86c0001"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_6_selected.png",
+      "target": "aura_c01_r02_lettering_BAND_6_selected.png",
+      "sha256": "47090699d43ddea11aef8331b2452919e2212c69bc5aeac9cce9891f1e31922d"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_3_hover.png",
+      "target": "aura_c01_r02_lettering_BAND_3_hover.png",
+      "sha256": "1891d2277b249976f185f3a5ab3a967bf44caebb2bf3d7890e392138ce8df6f8"
+    },
+    {
+      "supplied": "animation_layers/png_4x/surface_idle.png",
+      "target": "aura_c01_r02_surface_idle.png",
+      "sha256": "646e99413167809a0a602860e5bebda42a1128bf3d20330288c0a84a71ce8d1d"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_5_idle.png",
+      "target": "aura_c01_r02_lettering_BAND_5_idle.png",
+      "sha256": "806d0c3e4f4b45cb75dfcf149c9c31db7757b8380abf00e737bb3dcecbedbc19"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_7_disabled.png",
+      "target": "aura_c01_r02_lettering_BAND_7_disabled.png",
+      "sha256": "222e6c5fa86701c696c9f4f326683ce56bad46bd005296f4cc80b81722fd217d"
+    },
+    {
+      "supplied": "animation_layers/png_4x/surface_disabled.png",
+      "target": "aura_c01_r02_surface_disabled.png",
+      "sha256": "156197410f3e6edd4fc43530e1cd6423f2ecfd100e932d2ae4f8491a508b2da0"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_3_pressed.png",
+      "target": "aura_c01_r02_lettering_BAND_3_pressed.png",
+      "sha256": "883e230e31d4463572119da8888586df8cdded5961675314914d416e8048decc"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_2_selected.png",
+      "target": "aura_c01_r02_lettering_BAND_2_selected.png",
+      "sha256": "4663a95ea87257177726086358001853ccee23feb790d36a8002674515d6420a"
+    },
+    {
+      "supplied": "animation_layers/png_4x/surface_pressed.png",
+      "target": "aura_c01_r02_surface_pressed.png",
+      "sha256": "36f3ad9e88193cdf6469271c91887df62134fb657ca2cc4178bb2d5ee248ac0f"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_2_pressed.png",
+      "target": "aura_c01_r02_lettering_BAND_2_pressed.png",
+      "sha256": "4663a95ea87257177726086358001853ccee23feb790d36a8002674515d6420a"
+    },
+    {
+      "supplied": "animation_layers/png_4x/indicator_disabled.png",
+      "target": "aura_c01_r02_indicator_disabled.png",
+      "sha256": "170a26d3660b57fd8a9ddf885153d0e7c09b5498e912a0f751e8e8aff346430f"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_4_pressed.png",
+      "target": "aura_c01_r02_lettering_BAND_4_pressed.png",
+      "sha256": "6f2e997fd4554f650103667bfd2c4d795c348e23fdada04d618407279d4a16b5"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_3_disabled.png",
+      "target": "aura_c01_r02_lettering_BAND_3_disabled.png",
+      "sha256": "bb610c1d5a0ecfbd2cc2fdf8208515839cbff1834932daadb8a67d9651ed936f"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_2_idle.png",
+      "target": "aura_c01_r02_lettering_BAND_2_idle.png",
+      "sha256": "4663a95ea87257177726086358001853ccee23feb790d36a8002674515d6420a"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_1_pressed.png",
+      "target": "aura_c01_r02_lettering_BAND_1_pressed.png",
+      "sha256": "db42a04546c174e3740fdcc39a1a0ac1024e0177dfd9d4fd3ca419d0440aaf94"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_4_hover.png",
+      "target": "aura_c01_r02_lettering_BAND_4_hover.png",
+      "sha256": "9ae1a0662b794c198e41b912fd25b660c630189357fb9c5af014c9547685cc7e"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_4_disabled.png",
+      "target": "aura_c01_r02_lettering_BAND_4_disabled.png",
+      "sha256": "5cfdc0660397f757c364473458775849e218d6a667d38a221bb7fcd938d19359"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_1_hover.png",
+      "target": "aura_c01_r02_lettering_BAND_1_hover.png",
+      "sha256": "b6e776fb6afd70d9f2100815a01f489968c1811eb142802255477c9a7b9a863b"
+    },
+    {
+      "supplied": "animation_layers/png_4x/indicator_idle.png",
+      "target": "aura_c01_r02_indicator_idle.png",
+      "sha256": "170a26d3660b57fd8a9ddf885153d0e7c09b5498e912a0f751e8e8aff346430f"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_1_disabled.png",
+      "target": "aura_c01_r02_lettering_BAND_1_disabled.png",
+      "sha256": "cf2f3494022d1e740bd9180a2ec75a3b519f8be0baa182df8dccbca15a3dd101"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_1_selected.png",
+      "target": "aura_c01_r02_lettering_BAND_1_selected.png",
+      "sha256": "db42a04546c174e3740fdcc39a1a0ac1024e0177dfd9d4fd3ca419d0440aaf94"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_5_pressed.png",
+      "target": "aura_c01_r02_lettering_BAND_5_pressed.png",
+      "sha256": "806d0c3e4f4b45cb75dfcf149c9c31db7757b8380abf00e737bb3dcecbedbc19"
+    },
+    {
+      "supplied": "animation_layers/png_4x/indicator_hover.png",
+      "target": "aura_c01_r02_indicator_hover.png",
+      "sha256": "170a26d3660b57fd8a9ddf885153d0e7c09b5498e912a0f751e8e8aff346430f"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_4_selected.png",
+      "target": "aura_c01_r02_lettering_BAND_4_selected.png",
+      "sha256": "6f2e997fd4554f650103667bfd2c4d795c348e23fdada04d618407279d4a16b5"
+    },
+    {
+      "supplied": "animation_layers/png_4x/surface_hover.png",
+      "target": "aura_c01_r02_surface_hover.png",
+      "sha256": "d3c1ee57281b62b9d56eb98ce3808b6920d7874c53748d9f819969549400fa27"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_7_idle.png",
+      "target": "aura_c01_r02_lettering_BAND_7_idle.png",
+      "sha256": "f71a07e2306423c19a034f124b54b5ff25003b55c985d6d71da22ed8711ff72a"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_6_pressed.png",
+      "target": "aura_c01_r02_lettering_BAND_6_pressed.png",
+      "sha256": "47090699d43ddea11aef8331b2452919e2212c69bc5aeac9cce9891f1e31922d"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_3_selected.png",
+      "target": "aura_c01_r02_lettering_BAND_3_selected.png",
+      "sha256": "883e230e31d4463572119da8888586df8cdded5961675314914d416e8048decc"
+    },
+    {
+      "supplied": "animation_layers/png_4x/stationary_housing.png",
+      "target": "aura_c01_r02_stationary_housing.png",
+      "sha256": "81612cefe10a99a8e3cb839ef1b15e4a1ade9ceedf5e591fc6055e7c88721a12"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_6_idle.png",
+      "target": "aura_c01_r02_lettering_BAND_6_idle.png",
+      "sha256": "47090699d43ddea11aef8331b2452919e2212c69bc5aeac9cce9891f1e31922d"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_2_hover.png",
+      "target": "aura_c01_r02_lettering_BAND_2_hover.png",
+      "sha256": "ee98f9133d472c49e58d3c256bd1386d1d6c08dd43fa19a2708c6910f2cdfe0e"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_6_disabled.png",
+      "target": "aura_c01_r02_lettering_BAND_6_disabled.png",
+      "sha256": "d2b8b447651545a3cf331d8bb8919db03bb3649485f16c55a55aa7501c95d6f4"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_3_idle.png",
+      "target": "aura_c01_r02_lettering_BAND_3_idle.png",
+      "sha256": "883e230e31d4463572119da8888586df8cdded5961675314914d416e8048decc"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_4_idle.png",
+      "target": "aura_c01_r02_lettering_BAND_4_idle.png",
+      "sha256": "6f2e997fd4554f650103667bfd2c4d795c348e23fdada04d618407279d4a16b5"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_5_disabled.png",
+      "target": "aura_c01_r02_lettering_BAND_5_disabled.png",
+      "sha256": "bc45b503944a987b743376095c6a4d60d699356f7202628b74c7e7f9f608c99b"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_2_disabled.png",
+      "target": "aura_c01_r02_lettering_BAND_2_disabled.png",
+      "sha256": "e8825e4e3d8fd7c87da6c596af8c97cf3acfb1e7bd19a0f184311221f052c028"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_6_hover.png",
+      "target": "aura_c01_r02_lettering_BAND_6_hover.png",
+      "sha256": "2e8e97a054259feeaf94ee80d00cd003bc6904942837edb21321d45ae89e0250"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_7_selected.png",
+      "target": "aura_c01_r02_lettering_BAND_7_selected.png",
+      "sha256": "f71a07e2306423c19a034f124b54b5ff25003b55c985d6d71da22ed8711ff72a"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_7_pressed.png",
+      "target": "aura_c01_r02_lettering_BAND_7_pressed.png",
+      "sha256": "f71a07e2306423c19a034f124b54b5ff25003b55c985d6d71da22ed8711ff72a"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_7_hover.png",
+      "target": "aura_c01_r02_lettering_BAND_7_hover.png",
+      "sha256": "5a9e003854e5bc385a0a4f1be74ac7b76a33c1c4003cd36cfee0e3455a866d40"
+    },
+    {
+      "supplied": "animation_layers/png_4x/surface_selected.png",
+      "target": "aura_c01_r02_surface_selected.png",
+      "sha256": "69e67cf920cdb255152293563ae7ac17749f800bf70b7f4e0ac9ba4cc670a0d5"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_1_idle.png",
+      "target": "aura_c01_r02_lettering_BAND_1_idle.png",
+      "sha256": "db42a04546c174e3740fdcc39a1a0ac1024e0177dfd9d4fd3ca419d0440aaf94"
+    },
+    {
+      "supplied": "animation_layers/png_4x/lettering_BAND_5_selected.png",
+      "target": "aura_c01_r02_lettering_BAND_5_selected.png",
+      "sha256": "806d0c3e4f4b45cb75dfcf149c9c31db7757b8380abf00e737bb3dcecbedbc19"
+    },
+    {
+      "supplied": "animation_layers/png_4x/indicator_selected.png",
+      "target": "aura_c01_r02_indicator_selected.png",
+      "sha256": "a3bb61cd01a19a7ae31178c5a90062a77d3586f9beeb37a747ae3dcbdefafcf8"
+    },
+    {
+      "supplied": "animation_layers/png_4x/indicator_pressed.png",
+      "target": "aura_c01_r02_indicator_pressed.png",
+      "sha256": "fe200eeda3d6abd73c648e624c23d22a27c511a1a276ca251b6adaaaafdb8fe5"
+    },
+    {
+      "supplied": "renderer_atlas/C01_FIVE_STATE_ATLAS_4x.png",
+      "target": "aura_c01_r02_five_state_atlas.png",
+      "sha256": "4b37835477873b009c58a53512410b979fdbd8f451fb65278d8a04725f8c0e22"
+    }
+  ]
+}

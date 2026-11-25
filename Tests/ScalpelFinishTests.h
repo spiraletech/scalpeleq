@@ -77,7 +77,11 @@ inline bool verifyScalpelFinish(){
     };
     for(const auto* text:{"BAND 1","BAND 7","BAND MODE","CARVE","ANALYZE"}){
         auto* key=button(text);
-        if(!key||redPixels(*key,false)!=0||redPixels(*key,true)==0)return fail(__LINE__);
+        if(!key)return fail(__LINE__);
+        // C01 R02 has a persistent selected underline. Page-tab expectations
+        // and the existing ANALYZE checks below remain unchanged.
+        const bool selectedBand=scalpel::finish::bandKeyIndex(key->getButtonText())>=0&&key->getToggleState();
+        if((redPixels(*key,false)>0)!=selectedBand||redPixels(*key,true)==0)return fail(__LINE__);
         key->setEnabled(false);
         const auto disabledRed=redPixels(*key,true);
         key->setEnabled(true);
@@ -117,7 +121,9 @@ inline bool verifyScalpelFinish(){
         record(page,*graph,"analyzer");
         for(int i=0;i<7;++i){
             auto* b=button("BAND "+juce::String(i+1));
-            if(!b||b->getBounds()!=scalpel::reference::band(i)||!contrast(*b,false))return fail(__LINE__);
+            // C01's lighter cloudy polymer is checked by its readable raised
+            // legend, rather than the superseded cap's near-black interior.
+            if(!b||b->getBounds()!=scalpel::reference::band(i)||!contrast(*b,true))return fail(__LINE__);
             record(page,*b,b->getButtonText());
         }
         int active=0;const char* tabs[]{"BAND MODE","CARVE","ANALYZE"};

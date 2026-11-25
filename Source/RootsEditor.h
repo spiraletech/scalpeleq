@@ -16,6 +16,7 @@
 #include "ScalpelMercuryField.h"
 #include "ScalpelFluid3D.h"
 #include "ScalpelBandModel.h"
+#include "ScalpelAuraPlush.h"
 #include <array>
 #include <functional>
 #include <memory>
@@ -58,6 +59,7 @@ private:
 
 class RootSelectorButton final : public juce::TextButton {
 public:
+    RootSelectorButton(){juce::ignoreUnused(scalpel::aura::Images::get());}
     std::function<void()> onContext;
     void mouseDown(const juce::MouseEvent& event) override {
         if(event.mods.isPopupMenu()) {
@@ -66,6 +68,39 @@ public:
         }
         juce::TextButton::mouseDown(event);
     }
+    // Called only by the existing editor scheduler. Presentation has no click
+    // callback and no authority over the graph's selected band.
+    void advanceAura(double nowMs){
+        const bool wasMoving=travel_.active(lastFrameMs_);
+        travel_.retarget(scalpel::aura::targetTravel(auraState()),nowMs);
+        if(wasMoving||travel_.active(nowMs))repaint();
+        lastFrameMs_=nowMs;
+    }
+    float auraTravel(double nowMs) const noexcept {return travel_.sample(nowMs);}
+protected:
+    void buttonStateChanged() override {
+        juce::TextButton::buttonStateChanged();
+        travel_.retarget(scalpel::aura::targetTravel(auraState()),juce::Time::getMillisecondCounterHiRes());
+        repaint();
+    }
+    void paintButton(juce::Graphics& g,bool over,bool down) override {
+        const int band=scalpel::finish::bandKeyIndex(getButtonText());
+        if(band<0){juce::TextButton::paintButton(g,over,down);return;}
+        scalpel::aura::draw(g,getLocalBounds().toFloat(),band,
+            scalpel::aura::state(isEnabled(),down,getToggleState(),over),
+            travel_.sample(juce::Time::getMillisecondCounterHiRes()));
+        // Retain the existing keyboard-only focus affordance.
+        if(hasKeyboardFocus(false)){
+            g.setColour(juce::Colours::white.withAlpha(.72f));
+            g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(2.f),4.f,.8f);
+        }
+    }
+private:
+    scalpel::aura::State auraState() const noexcept {
+        return scalpel::aura::state(isEnabled(),isDown(),getToggleState(),isOver());
+    }
+    scalpel::aura::Travel travel_;
+    double lastFrameMs_=0.0;
 };
 
 // A touch-first rotary carousel: arrows, wheel, keyboard and horizontal swipe
