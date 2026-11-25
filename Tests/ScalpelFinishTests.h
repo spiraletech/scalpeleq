@@ -55,12 +55,17 @@ inline bool verifyScalpelFinish(){
     // Exercise the actual shared LAF rotary entry, including all 33 regions.
     SurgeryLookAndFeel laf;laf.setOmnisEnabled(true);juce::Slider dial;dial.setBounds(0,0,168,166);
     for(float value:{0.f,.5f,1.f}){
-        juce::Image im(juce::Image::ARGB,168,130,true);juce::Graphics g(im);laf.drawRotarySlider(g,0,0,168,130,value,0,0,dial);
+        // Reference pixel assertions use a software surface and finish drawing
+        // before readback. Windows native image contexts may defer their writes.
+        juce::Image im(juce::Image::ARGB,168,130,true,juce::SoftwareImageType{});
+        {juce::Graphics g(im);laf.drawRotarySlider(g,0,0,168,130,value,0,0,dial);}
         int red=0;for(int y=0;y<130;++y)for(int x=0;x<168;++x){const auto c=im.getPixelAt(x,y);red+=c.getRed()>c.getGreen()+25&&c.getRed()>c.getBlue()+20;}
+        std::cout<<"OMNIS software rotary value="<<value<<" red_pixels="<<red<<'\n';
         if(value==0&&red!=0)return fail(__LINE__);if(value==.5f&&red<200)return fail(__LINE__);if(value==1&&red<400)return fail(__LINE__);
     }
     for(const auto* value:{"-60.00 dB","60.00 dB","20000.00 Hz","20.00 Hz","100.0","-9.0 dB","+9.0 dB"}){
-        juce::Image im(juce::Image::ARGB,168,31,true);juce::Graphics g(im);scalpel::omnis::number(g,value,{0,0,168,31},true);
+        juce::Image im(juce::Image::ARGB,168,31,true,juce::SoftwareImageType{});
+        {juce::Graphics g(im);scalpel::omnis::number(g,value,{0,0,168,31},true);}
         for(int y=0;y<31;++y)if(im.getPixelAt(0,y).getAlpha()||im.getPixelAt(167,y).getAlpha())return fail(__LINE__);
     }
     std::cout<<"OMNIS UI contract: protected C01 bounds/scale; 3 sizes x 3 modes; neutral OLED colours; shared rotary; native ON/OFF and exclusive MASTER passed\n";
