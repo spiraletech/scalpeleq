@@ -51,10 +51,10 @@ inline juce::Rectangle<int> analyzerReset(){return {1084,362,124,34};}
 // or scale the whole editor to reconcile differing screenshot/host chrome.
 inline float flushScale(){return deck().getWidth()/1574.f;}
 inline juce::Rectangle<int> flushRect(float x,float y,float w,float h){const auto d=deck();const float s=flushScale();return juce::Rectangle<float>{d.getX()+(x-32.f)*s,d.getY()+(y-567.f)*s,w*s,h*s}.toNearestInt();}
-inline juce::Rectangle<int> switchBounds(bool off,bool carve=false){juce::ignoreUnused(carve);return {62,off?638:572,146,46};}
-inline juce::Rectangle<int> bandAction(int i){return {922+(i%2)*167,572+(i/2)*66,146,46};}
+inline juce::Rectangle<int> switchBounds(bool off,bool carve=false){juce::ignoreUnused(carve);return scalpel::omnis::controls::power(off).toNearestInt();}
+inline juce::Rectangle<int> bandAction(int i){return scalpel::omnis::controls::function(i).toNearestInt();}
 inline juce::Rectangle<int> carveSlot(int i){return bandAction(i);}
-inline juce::Rectangle<int> carveDial(int i){return {340+i*228-84,554,168,154};}
+inline juce::Rectangle<int> carveDial(int i){return scalpel::omnis::controls::dial(340+i*228);}
 inline float carveDividerX(int i){
     constexpr std::array<float,4> screenX{256.f,484.f,712.f,940.f};
     const auto d=deck();return d.getX()+(screenX[(size_t)i]-31.f)*d.getWidth()/1276.f;
@@ -62,8 +62,8 @@ inline float carveDividerX(int i){
 inline float columnCentre(int i,int count){const auto d=deck();return d.getX()+d.getWidth()*(i+.5f)/count;}
 inline juce::Rectangle<int> colorDial(int i){auto r=rect(0,624,166,199);return r.withCentre({columnCentre(i,5),r.getCentreY()}).toNearestInt();}
 // ANALYZE control proportions measured from the supplied kit, relative to its deck.
-inline juce::Rectangle<int> analyzeButton(bool freeze){const float side=190.f*scale;return juce::Rectangle<float>{columnCentre(freeze?2:0,3)-side*.5f,deck().getY()+47.f,side,side}.toNearestInt();}
-inline juce::Rectangle<int> decayDial(){return {556,554,168,154};}
+inline juce::Rectangle<int> analyzeButton(bool freeze){return scalpel::omnis::controls::power(freeze).toNearestInt();}
+inline juce::Rectangle<int> decayDial(){return scalpel::omnis::controls::dial(568);}
 inline juce::Rectangle<int> analyzeCaption(int i){return juce::Rectangle<float>{columnCentre(i,3)-140.f*scale,deck().getY()+14.f,280.f*scale,36.f*scale}.toNearestInt();}
 inline constexpr int decayReadoutWidth=106,decayReadoutHeight=30;
 inline juce::Rectangle<float> plotLocal(){return scalpel::omnis::viewport.translated(-8,-150);}

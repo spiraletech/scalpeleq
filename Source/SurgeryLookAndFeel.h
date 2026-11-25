@@ -44,7 +44,7 @@ public:
     juce::Slider::SliderLayout getSliderLayout(juce::Slider& slider) override {
         if(!omnis_)return juce::LookAndFeel_V4::getSliderLayout(slider);
         juce::Slider::SliderLayout l;l.sliderBounds={0,0,slider.getWidth(),130};
-        l.textBoxBounds={0,122,slider.getWidth(),31};return l;
+        l.textBoxBounds={0,scalpel::omnis::controls::textboxTop,slider.getWidth(),scalpel::omnis::controls::textboxHeight};return l;
     }
     void setFinishEnabled(bool enabled){
         finish_=enabled;
@@ -60,7 +60,7 @@ public:
         setColour(juce::PopupMenu::highlightedTextColourId,juce::Colour(0xfff5fbff));
         setColour(juce::ComboBox::textColourId,juce::Colour(0xffedf5ff));
     }
-    juce::Font getComboBoxFont(juce::ComboBox&) override {if(omnis_)return scalpel::omnis::font(12);return juce::Font(juce::FontOptions("Segoe UI",16.0f,juce::Font::plain));}
+    juce::Font getComboBoxFont(juce::ComboBox&) override {if(omnis_)return scalpel::omnis::font(scalpel::omnis::controls::carouselFont);return juce::Font(juce::FontOptions("Segoe UI",16.0f,juce::Font::plain));}
     juce::Font getPopupMenuFont() override {if(omnis_)return scalpel::omnis::font(13);return juce::Font(juce::FontOptions("Segoe UI",13.0f,juce::Font::plain));}
     void positionComboBoxText(juce::ComboBox& box,juce::Label& label) override {
         if(omnis_){label.setBounds(32,0,juce::jmax(0,box.getWidth()-64),box.getHeight());label.setJustificationType(juce::Justification::centred);return;}
@@ -92,7 +92,7 @@ public:
     }
     void drawRotarySlider(juce::Graphics& g,int x,int y,int w,int h,float position,
                           float start,float end,juce::Slider& slider) override {
-        if(omnis_){scalpel::omnis::rotary(g,{x+w*.5f,y+65.f},59.f,position,slider.isEnabled());return;}
+        if(omnis_){scalpel::omnis::rotary(g,{x+w*.5f,y+scalpel::omnis::controls::localRotaryY},scalpel::omnis::RotaryGeometry::outer,position,slider.isEnabled());return;}
         if(finish_){scalpel::finish::knob(g,x,y,w,h,position,start,end,slider);return;}
         const float cx=x+w*.5f,cy=y+h*.46f;
         const float radius=juce::jlimit(14.f,44.f,.48f*(float)std::min(w,h));
@@ -439,8 +439,12 @@ public:
     void drawComboBox(juce::Graphics& g,int w,int h,bool,int,int,int,int,juce::ComboBox& box) override {
         auto r=juce::Rectangle<float>(1,1,(float)w-2,(float)h-2);
         if(omnis_){
+            using namespace scalpel::omnis;
+            auto body=juce::Rectangle<float>(0,0,(float)w,(float)h).withSizeKeepingCentre(controls::carouselWidth,controls::carouselHeight);
+            g.setColour(juce::Colours::white.withAlpha(box.isEnabled()?.23f:.08f));g.drawRoundedRectangle(body.reduced(.5f),12,1);
             g.setColour(juce::Colours::white.withAlpha(box.isEnabled()?.50f:.15f));
-            for(int side:{-1,1}){const float cx=w*.5f+side*(w*.5f-12);juce::Path p;p.startNewSubPath(cx-side*3,h*.5f-4);p.lineTo(cx,h*.5f);p.lineTo(cx-side*3,h*.5f+4);g.strokePath(p,juce::PathStrokeType(1));}return;
+            for(int side:{-1,1}){const float cx=w*.5f+side*(controls::carouselWidth*.5f-12);const float a=controls::carouselArrow*.5f;
+                juce::Path p;p.startNewSubPath(cx-side*a*.55f,h*.5f-a);p.lineTo(cx,h*.5f);p.lineTo(cx-side*a*.55f,h*.5f+a);g.strokePath(p,juce::PathStrokeType(1));}return;
         }
         if(finish_){
             using A=scalpel::formidable::Art;
@@ -469,7 +473,10 @@ public:
             const auto r=label.getLocalBounds().toFloat();
             if(dynamic_cast<juce::Slider*>(label.getParentComponent()))scalpel::omnis::number(g,label.getText(),r,label.isEnabled());
             else {const bool combo=dynamic_cast<juce::ComboBox*>(label.getParentComponent())!=nullptr;
-                scalpel::omnis::text(g,label.getText(),r,combo?12.f:11.f,label.isEnabled()?(combo?.86f:.91f):.30f,false,combo?0.f:1.4f,
+                if(label.getProperties().contains("aura-baseline")){
+                    scalpel::omnis::baselineText(g,label.getText(),r,(float)label.getProperties()["aura-baseline"],(float)label.getProperties().getWithDefault("aura-size",11.f),label.isEnabled()?.91f:.30f);return;
+                }
+                scalpel::omnis::text(g,label.getText(),r,combo?scalpel::omnis::controls::carouselFont:11.f,label.isEnabled()?(combo?.86f:.91f):.30f,false,combo?0.f:1.4f,
                     label.getJustificationType().testFlags(juce::Justification::left)?-1:0);}
             return;
         }

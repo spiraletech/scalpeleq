@@ -5,6 +5,15 @@
 // ET-MOTION-016: presentation only. No audio parameters or selection authority.
 namespace scalpel::omnis {
 inline constexpr double pi=3.14159265358979323846;
+// ET-MOTION-017: the 105% material enlargement is applied only here/rotary().
+struct RotaryGeometry {
+    static constexpr float enlargement=1.05f;
+    static constexpr float outer=59.f*enlargement,inner=49.f*enlargement;
+    static constexpr float thickness=3.5f*enlargement,pointerInner=39.f*enlargement,
+        pointerOuter=60.f*enlargement,pointerThickness=1.5f*enlargement;
+    static constexpr int segments=33;
+};
+
 inline double unit(double x) noexcept {return std::isfinite(x)?std::clamp(x,0.0,1.0):0.0;}
 inline double smooth(double x) noexcept {x=unit(x);return x*x*(3.-2.*x);}
 inline double angle(double u) noexcept {return (135.+unit(u)*270.)*pi/180.;}

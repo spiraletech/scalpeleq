@@ -1320,7 +1320,7 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     graphPower_.setClickingTogglesState(true);graphPower_.setToggleState(true,juce::dontSendNotification);
     graphPower_.setTooltip("Graph display power only. Audio processing remains active.");
     graphPower_.onClick=[this]{ignition_.target(graphPower_.getToggleState()?1.:0.,juce::Time::getMillisecondCounterHiRes(),reducedMotion());graph_.setDisplayVisibility(ignition_.sample(juce::Time::getMillisecondCounterHiRes()));};
-    addAndMakeVisible(graphPower_);addChildComponent(transitionShield_);
+    addAndMakeVisible(graphPower_);addChildComponent(transitionShield_);transitionShield_.setComponentID("aura-transition-shield");
 
     addAndMakeVisible(graph_);
     graph_.onSelectNode=[this](int n){bindNode(n);};
@@ -1554,12 +1554,12 @@ RootsEditor::RootsEditor(PRISMVSTAudioProcessor& p)
     output_.setVisible(false);outputLabel_.setVisible(false);
     bindNode(0);setMode(0);
     // Host resize handles remain available without JUCE's generic corner grip.
-    // Every user resize is snap-locked to the authored 16:9 rack face and
+    // Every user resize is snap-locked to the approved 224:131 rack face and
     // clamped to tested minimum/maximum sizes.
     setResizable(true,false);
-    setResizeLimits(896,504,1792,1008);
-    if(auto* constrainer=getConstrainer())constrainer->setFixedAspectRatio(16.0/9.0);
-    setSize(1344,756);
+    setResizeLimits(scalpel::omnis::minWidth,scalpel::omnis::minHeight,scalpel::omnis::maxWidth,scalpel::omnis::maxHeight);
+    if(auto* constrainer=getConstrainer())constrainer->setFixedAspectRatio(scalpel::omnis::editorAspect);
+    setSize(scalpel::omnis::defaultWidth,scalpel::omnis::defaultHeight);
     timerCallback();startTimerHz(60);
 }
 RootsEditor::~RootsEditor(){
@@ -1668,7 +1668,12 @@ void RootsEditor::setMode(int next){
     const bool animate=next!=mode_&&getWidth()>0;
     juce::Image before;
     if(animate){
-        if(transition_.running){before=juce::Image(juce::Image::ARGB,1280,166,true);juce::Graphics f(before);f.addTransform(juce::AffineTransform::translation(0,-538));drawTransition(f,juce::Time::getMillisecondCounterHiRes());}
+        if(transition_.running){
+            before=makeLowerRaster();juce::Graphics f(before);
+            const auto area=scalpel::omnis::content;
+            f.addTransform(juce::AffineTransform::translation(-area.getX(),-area.getY()).scaled(before.getWidth()/area.getWidth(),before.getHeight()/area.getHeight()));
+            drawTransition(f,juce::Time::getMillisecondCounterHiRes());
+        }
         else before=captureLower();
     }
     mode_=next;
@@ -1709,9 +1714,9 @@ void RootsEditor::setMode(int next){
     mono_.setVisible(mode_==0);
     const bool analyze=mode_==3;
     analyzerDepth_.setVisible(false);
-    analyzerDepthLabel_.setVisible(analyze);
+    analyzerDepthLabel_.setVisible(false);
     analyzerSlope_.setVisible(false);
-    analyzerSlopeLabel_.setVisible(analyze);
+    analyzerSlopeLabel_.setVisible(false);
     analyzerMemory_.setVisible(analyze);
     analyzerMemoryLabel_.setVisible(analyze);
     heatToggle_.setVisible(analyze);
@@ -1881,7 +1886,11 @@ void RootsEditor::paint(juce::Graphics& g){
     // A visual separation from Surgery EQ is intentional: its external
     // cyan/purple JUKE rails are not part of Scalpel's 1980s hardware face.
 }
-void RootsEditor::resized(){rackBackground_={};backgroundScale_=0;layoutRack();repaint();}
+void RootsEditor::resized(){
+    rackBackground_={};backgroundScale_=0;layoutRack();
+    refreshTransitionRaster();
+    repaint();
+}
 
 bool RootsEditor::reducedMotion() const {
     // Existing visual preference remains authoritative; it is already host/preset synchronized.
@@ -1905,31 +1914,64 @@ void RootsEditor::layoutRack(){
     for(int i=0;i<3;++i){modeButtons_[(size_t)i].setBounds(scalpel::reference::tab(scalpel::reference::modePages[(size_t)i]));masterButtons_[(size_t)i].setBounds(scalpel::reference::masterButton(i));}
     masterLabel_.setBounds(21,170,89,20);graphPower_.setBounds(33,394,64,34);graphPower_.toFront(false);
     xrayButton_.setBounds(1084,190,124,34);peakHold_.setBounds(1084,362,124,34);
-    const auto placePower=[](juce::Component& a,juce::Component& b){a.setBounds(62,572,146,46);b.setBounds(62,638,146,46);};
-    placePower(on_,off_);placePower(carveOn_,carveOff_);
-    const auto dial=[](juce::Slider& s,juce::Label& label,int x){
-        s.setBounds(x-84,554,168,154);label.setBounds(x-110,537,220,24);
-        s.setTextBoxStyle(juce::Slider::TextBoxBelow,false,168,31);
+    // Integer native hit rectangles with fractional logical translation retain the
+    // accepted centers; body and hit testing use the same component transform.
+    const auto place=[&](juce::Component& c,juce::Rectangle<float> r){
+        const auto bounds=r.toNearestInt();c.setBounds(bounds);
+        c.setTransform(juce::AffineTransform::translation(r.getX()-bounds.getX(),r.getY()-bounds.getY()).followedBy(l.transform()));
+    };
+    place(on_,controls::power(false));place(off_,controls::power(true));
+    place(carveOn_,controls::power(false));place(carveOff_,controls::power(true));
+    const auto labelAt=[](juce::Label& label,float x,float baseline,float width,float size){
+        const auto r=juce::Rectangle<float>(x-width*.5f,baseline-20.f,width,26).toNearestInt();
+        label.setBounds(r);label.getProperties().set("aura-baseline",baseline-r.getY());label.getProperties().set("aura-size",size);
+    };
+    const auto dial=[&](juce::Slider& s,juce::Label& label,int x){
+        s.setBounds(controls::dial(x));labelAt(label,(float)x,controls::labelBaseline,220,11);
+        s.setTextBoxStyle(juce::Slider::TextBoxBelow,false,controls::dialWidth,controls::textboxHeight);
     };
     dial(gain_,gainLabel_,328);dial(threshold_,thresholdLabel_,518);
     dial(carveFrequency_,carveFrequencyLabel_,340);dial(carveDepth_,carveDepthLabel_,568);dial(carveQ_,carveQLabel_,796);
-    dial(analyzerMemory_,analyzerMemoryLabel_,640);
-    compLabel_.setBounds(658,537,208,24);compressor_.setBounds(658,570,208,46);
-    ratioLabel_.setBounds(658,626,208,20);ratio_.setBounds(658,651,208,46);
-    for(int i=0;i<4;++i){auto r=juce::Rectangle<int>(922+(i%2)*167,572+(i/2)*66,146,46);carveSlotButtons_[(size_t)i].setBounds(r);
-        const std::array<juce::Button*,4> b{&mono_,&solo_,&phase_,&limit_};b[(size_t)i]->setBounds(r);}
+    dial(analyzerMemory_,analyzerMemoryLabel_,568);
+    for(int i=0;i<2;++i){
+        const auto body=controls::carousel(i!=0);
+        const auto hit=body.withSizeKeepingCentre(std::ceil(body.getWidth()),std::ceil(body.getHeight()));
+        place(i?static_cast<juce::Component&>(ratio_):static_cast<juce::Component&>(compressor_),hit);
+        labelAt(i?ratioLabel_:compLabel_,body.getCentreX(),body.getY()-8.f,controls::carouselWidth,controls::carouselLabelFont);
+    }
+    const std::array<juce::Button*,4> b{&mono_,&solo_,&phase_,&limit_};
+    for(int i=0;i<4;++i){place(carveSlotButtons_[(size_t)i],controls::function(i));place(*b[(size_t)i],controls::function(i));}
     selection_.setBounds(42,540,190,20);
-    analyzerDepthLabel_.setBounds(225,537,220,24);analyzerSlopeLabel_.setBounds(895,537,220,24);
-    heatToggle_.setBounds(262,596,146,46);freezeButton_.setBounds(932,596,146,46);
-    transitionShield_.setBounds(content.toNearestInt());transitionShield_.toFront(false);
+    place(heatToggle_,controls::power(false));place(freezeButton_,controls::power(true));
+    transitionShield_.setBounds(content.getSmallestIntegerContainer());transitionShield_.toFront(false);
     title_.setVisible(false);
 }
+juce::Point<int> RootsEditor::lowerRasterSize() const {
+    const scalpel::omnis::Layout layout(getWidth(),getHeight());
+    const float dpi=juce::jlimit(.5f,4.f,juce::jmax(backgroundScale_,juce::Component::getApproximateScaleFactorForComponent(this)));
+    return {(int)std::ceil(scalpel::omnis::content.getWidth()*layout.scale*dpi),
+            (int)std::ceil(scalpel::omnis::content.getHeight()*layout.scale*dpi)};
+}
+juce::Image RootsEditor::makeLowerRaster() const {
+    const auto size=lowerRasterSize();return juce::Image(juce::Image::ARGB,size.x,size.y,true);
+}
+void RootsEditor::refreshTransitionRaster(){
+    if(!transition_.running)return;
+    const auto size=lowerRasterSize();
+    if(incoming_.getWidth()==size.x&&incoming_.getHeight()==size.y)return;
+    incoming_=captureLower();
+    if(outgoing_.isValid())outgoing_=outgoing_.rescaled(size.x,size.y,juce::Graphics::highResamplingQuality);
+}
 juce::Image RootsEditor::captureLower(){
-    juce::Image image(juce::Image::ARGB,1280,166,true);juce::Graphics g(image);
-    g.addTransform(juce::AffineTransform::translation(0,-538));
+    using namespace scalpel::omnis;
+    const Layout layout(getWidth(),getHeight());
+    auto image=makeLowerRaster();const float raster=image.getWidth()/content.getWidth();
+    juce::Graphics g(image);
+    g.addTransform(juce::AffineTransform::translation(-content.getX(),-content.getY()).scaled(image.getWidth()/content.getWidth(),image.getHeight()/content.getHeight()));
     for(auto* c:getChildren())if(c!=&transitionShield_&&c->isVisible()&&c->getY()>=537){
-        const auto snap=c->createComponentSnapshot(c->getLocalBounds(),true,1.f);
-        g.drawImageAt(snap,c->getX(),c->getY());
+        const auto snap=c->createComponentSnapshot(c->getLocalBounds(),true,raster);
+        const auto logical=c->getBounds().toFloat().transformedBy(c->getTransform()).transformedBy(layout.transform().inverted());
+        g.drawImage(snap,logical);
     }
     return image;
 }
@@ -1941,17 +1983,19 @@ void RootsEditor::drawTransition(juce::Graphics& g,double now){
     const float distortion=1.f-extent;
     for(int i=0;i<5;++i){
         juce::Graphics::ScopedSaveState saved(g);
-        auto slice=juce::Rectangle<float>(16,538+i*33.2f,1248,33.2f);
+        const float sliceHeight=content.getHeight()/5.f;
+        auto slice=content.withY(content.getY()+i*sliceHeight).withHeight(sliceHeight);
         // Five bounded content slices: stationary navigation and analyzer.
         g.reduceClipRegion(slice.toNearestInt());
         const float shear=std::sin((float)i*1.7f)*distortion*54.f;
         g.setOpacity(.32f+.68f*extent);
-        g.drawImageTransformed(image,juce::AffineTransform::scale(extent,1).translated(640*(1-extent)+std::abs(shear),538));
+        g.drawImageTransformed(image,juce::AffineTransform::scale(content.getWidth()*extent/image.getWidth(),content.getHeight()/image.getHeight()).translated(content.getX()+content.getWidth()*.5f*(1-extent)+std::abs(shear),content.getY()));
     }
-    if(distortion>0){g.setColour(juce::Colours::white.withAlpha(.39f*distortion));g.fillRect(639.5f,552.f,1.f,138.f);}
+    if(distortion>0){g.setColour(juce::Colours::white.withAlpha(.39f*distortion));g.fillRect(content.getCentreX()-.5f,content.getY()+14.f,1.f,content.getHeight()-28.f);}
 }
 void RootsEditor::paintOverChildren(juce::Graphics& g){
     if(!transition_.running)return;
+    refreshTransitionRaster();
     juce::Graphics::ScopedSaveState saved(g);g.addTransform(scalpel::omnis::Layout(getWidth(),getHeight()).transform());
     g.reduceClipRegion(scalpel::omnis::content.toNearestInt());
     scalpel::omnis::material(g,scalpel::omnis::touchscreen,scalpel::omnis::touchMaterial,12);

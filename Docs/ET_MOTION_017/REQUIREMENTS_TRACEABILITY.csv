@@ -1,0 +1,12 @@
+Reference,Requirement,Native implementation,Verification gate
+LAB075,Historical dimensional exploration and accepted105% correction,Preserved history in engineering decisions,No replacement of prior research
+LAB078,1344x786;224:131;310.8px analyzer;292.5px touchscreen,ScalpelOmnis.h Layout and RootsEditor constructor,scalpel_dimensions_native and chassis/resize regressions
+LAB028-030+078,Universal105% rotary;all33 segments,ScalpelOmnisModel.h RotaryGeometry and SurgeryLookAndFeel shared caller,Model endpoints and six native ring comparison
+LAB029+035,24unit numbers;shared label/rotary/readout baselines,ScalpelOmnis.h number/baselineText and shared layout,Native geometry/readout/automation regression
+LAB079,143x46 ON/OFF;154x47 functions;shared centers,ScalpelOmnis.h controls and RootsEditor layout,Measured transformed envelopes and hit tests
+LAB076,242x48 rendered carousels;94px separation;19/12/18 typography,ScalpelOmnis.h controls and SurgeryLookAndFeel carousel,Native body metrics;FORM registration review remains open
+LAB037-047,Integrated ANALYZE toggles and central decay grid,RootsEditor layout/visibility and ScalpelOmnis OLED,All3 native captures;independent toggles;reserved area unpainted
+LAB043-044,Exact approved formal glyphs,Native paths retained unchanged pending source,BLOCKED exact paths unavailable
+LAB065,Expanded content transition;625ms preserved,RootsEditor lower raster/capture/slices/shield,Native interrupted transitions/resizes and reduced motion
+C01 R02,Protected material/geometry/motion/selection,Unchanged assets and RootSelectorButton,C01 native regression and pixel comparison
+AXIOM,No audio parameter or processing drift,Processor and DSP sources unchanged,Portable/native regression and controlled cross-binary comparison

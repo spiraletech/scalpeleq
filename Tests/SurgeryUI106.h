@@ -9,19 +9,19 @@ inline bool verifyUI106(PRISMVSTAudioProcessor&, juce::AudioProcessorEditor& edi
     if(constrainer==nullptr){
         std::cerr<<"UI106: editor has no resize constrainer\n";return false;
     }
-    constexpr double ratio=16.0/9.0;
+    constexpr double ratio=scalpel::omnis::editorAspect;
     if(std::abs(constrainer->getFixedAspectRatio()-ratio)>0.0001||
-       constrainer->getMinimumWidth()!=896||constrainer->getMinimumHeight()!=504||
-       constrainer->getMaximumWidth()!=1792||constrainer->getMaximumHeight()!=1008){
-        std::cerr<<"UI106: 16:9 snap lock or min/max resize contract changed\n";return false;
+       constrainer->getMinimumWidth()!=896||constrainer->getMinimumHeight()!=524||
+       constrainer->getMaximumWidth()!=1792||constrainer->getMaximumHeight()!=1048){
+        std::cerr<<"UI106: 224:131 snap lock or min/max resize contract changed\n";return false;
     }
 
-    editor.setSize(1344,756);
+    editor.setSize(1344,786);
     juce::Timer::callPendingTimersSynchronously();
 
     const auto transform=scalpel::omnis::Layout(editor.getWidth(),editor.getHeight()).transform();
     const auto topLeft=juce::Point<float>(0,0).transformedBy(transform);
-    const auto bottomRight=juce::Point<float>(1280,718).transformedBy(transform);
+    const auto bottomRight=juce::Point<float>(1280,scalpel::omnis::designHeight).transformedBy(transform);
     if(topLeft.getDistanceFrom({0,0})>2.f||
        bottomRight.getDistanceFrom({(float)editor.getWidth(),(float)editor.getHeight()})>2.f){
         std::cerr<<"UI106: rack transform leaves plugin-owned background around the face\n";return false;
@@ -91,7 +91,7 @@ inline bool verifyUI106(PRISMVSTAudioProcessor&, juce::AudioProcessorEditor& edi
         }
     }
 
-    std::cout<<"SCALPEL UI 1.0.6: edge-to-edge face and 16:9 resize contract passed\n";
+    std::cout<<"SCALPEL UI 1.0.6: edge-to-edge face and 224:131 resize contract passed\n";
     return true;
 }
 

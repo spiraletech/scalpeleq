@@ -6,8 +6,8 @@
 inline bool verifyUI105(PRISMVSTAudioProcessor& processor, juce::AudioProcessorEditor& editor)
 {
     // Earlier regression suites intentionally exercise alternate host sizes.
-    // Restore the shipped 16:9 size before validating the production console.
-    editor.setSize(1344,756);
+    // Restore the shipped 224:131 size before validating the production console.
+    editor.setSize(1344,786);
     juce::Timer::callPendingTimersSynchronously();
     auto findButton=[&](const juce::String& text)->juce::TextButton*{
         for(auto* child:editor.getChildren())
@@ -20,8 +20,8 @@ inline bool verifyUI105(PRISMVSTAudioProcessor& processor, juce::AudioProcessorE
         return false;
     };
 
-    if(editor.getWidth()!=1344||editor.getHeight()!=756){
-        std::cerr<<"UI105: production editor is not 1344x756\n";return false;
+    if(editor.getWidth()!=1344||editor.getHeight()!=786){
+        std::cerr<<"UI105: production editor is not 1344x786\n";return false;
     }
     int tabs=0,visibleBandButtons=0;
     RootsGraph* graph=nullptr;

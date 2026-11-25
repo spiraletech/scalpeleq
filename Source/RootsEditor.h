@@ -299,6 +299,9 @@ private:
     scalpel::omnis::Shear transition_;
     juce::Image outgoing_,incoming_;
     juce::Component transitionShield_;
+    juce::Point<int> lowerRasterSize() const;
+    juce::Image makeLowerRaster() const;
+    void refreshTransitionRaster();
     juce::Image captureLower();
     void drawTransition(juce::Graphics&,double);
     bool reducedMotion() const;

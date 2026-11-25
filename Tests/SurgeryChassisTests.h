@@ -8,10 +8,10 @@ inline bool verifyChassis105(){
     if(!graph)return false;
     std::ofstream csv("surgery-chassis-resize.csv");csv<<"width,height,scale,raster_w,raster_h,border_corner_error,signal_peak_db,snapshot_ms\n";
     juce::AudioBuffer<float> audio(2,512);juce::MidiBuffer midi;juce::Random noise(8015);
-    // 1.0.6 is a snap-locked 16:9 product face. Exercise the shipped minimum,
+    // 1.0.6 is a snap-locked 224:131 product face. Exercise the shipped minimum,
     // default and maximum plus two intermediate sizes; arbitrary host aspect
     // ratios are rejected by the editor constrainer and are not release states.
-    const std::array<juce::Point<int>,5> sizes{{{1344,756},{896,504},{1792,1008},{1120,630},{1600,900}}};
+    const std::array<juce::Point<int>,5> sizes{{{1344,786},{896,524},{1792,1048},{1120,655},{1568,917}}};
     for(auto size:sizes){
         editor->setSize(size.x,size.y);
         for(auto* child:editor->getChildren())if(auto* grip=dynamic_cast<juce::ResizableCornerComponent*>(child)){
@@ -19,7 +19,7 @@ inline bool verifyChassis105(){
         }
         for(auto* child:editor->getChildren())if(child->isVisible()&&dynamic_cast<juce::ResizableCornerComponent*>(child)==nullptr){
             const auto bounds=child->getBoundsInParent().toFloat();
-            if(!scalpel::omnis::Layout(size.x,size.y).physical({0,0,1280,718}).toFloat().expanded(2).contains(bounds)){
+            if(!scalpel::omnis::Layout(size.x,size.y).physical({0,0,1280,scalpel::omnis::designHeight}).toFloat().expanded(2).contains(bounds)){
                 std::cerr<<"Chassis: control overlaps frame "<<child->getName()<<" bounds="<<bounds.toString()<<'\n';return false;
             }
         }
@@ -51,11 +51,11 @@ inline bool verifyChassis105(){
                 }
             error=100.0*error/count;
             if(error>1.0){std::cerr<<"Chassis: exposed background in corners "<<error<<" percent\n";return false;}
-            // 1.0.5 is a strict 16:9 product face. Extreme host aspect ratios
+            // 1.0.5 is a strict 224:131 product face. Extreme host aspect ratios
             // letterbox instead of stretching the vent slots or circular knobs.
             // Validate the transformed console perimeter, not the host window edge.
             const auto faceTransform=scalpel::omnis::Layout(size.x,size.y).transform();
-            const juce::Rectangle<float> enclosure(0,0,1280,718);
+            const juce::Rectangle<float> enclosure(0,0,1280,scalpel::omnis::designHeight);
             for(auto logical:{juce::Point<float>(2,enclosure.getCentreY()),juce::Point<float>(1277,enclosure.getCentreY()),
                               juce::Point<float>(640,enclosure.getY()+3),juce::Point<float>(640,enclosure.getBottom()-3)}){
                 const auto point=logical.transformedBy(faceTransform);
@@ -84,6 +84,6 @@ inline bool verifyChassis105(){
     // Fast repeated logical resizes/moves while audio continues. Snapshot cost
     // above includes cold cache regeneration; steady paints are benchmarked separately.
     for(int n=0;n<16;++n){editor->setSize(840+n*48,610+n*28);editor->setTopLeftPosition(n*2,n);audio.clear();processor->processBlock(audio,midi);}
-    std::cout<<"STORM CHASSIS: 15 size/DPI captures, fixed X-head corners, connected 16:9 console edges, centred chamber, control containment and cache dimensions passed\n";
+    std::cout<<"STORM CHASSIS: 15 size/DPI captures, fixed X-head corners, connected 224:131 console edges, centred chamber, control containment and cache dimensions passed\n";
     return true;
 }

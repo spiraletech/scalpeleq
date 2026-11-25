@@ -12,7 +12,7 @@ inline bool verifyScalpelFinish(){
     const auto choose=[&](const char* name){auto* b=button(name);if(!b||!b->onClick)return false;b->onClick();juce::Timer::callPendingTimersSynchronously();return true;};
     const auto snapshot=[&]{std::vector<float> values;for(auto* v:p->getParameters())values.push_back(v->getValue());return values;};
     const auto baseline=snapshot();
-    for(const auto size:std::array<juce::Point<int>,3>{{{896,504},{1344,756},{1792,1008}}}){
+    for(const auto size:std::array<juce::Point<int>,3>{{{896,524},{1344,786},{1792,1048}}}){
         e->setSize(size.x,size.y);
         for(const auto* page:{"BAND MODE","CARVE","ANALYZE"}){
             if(!choose(page))return fail(__LINE__);
@@ -28,11 +28,12 @@ inline bool verifyScalpelFinish(){
                     selectedTabs+=b->getToggleState();if(b->getWidth()!=405||b->getHeight()!=54||b->getY()!=477)return fail(__LINE__);
                 }
                 if(auto* s=dynamic_cast<juce::Slider*>(c);s&&s->isVisible()){
-                    ++rotaries;if(s->getY()+65!=619||s->getWidth()!=168)return fail(__LINE__);
+                    ++rotaries;if(std::abs(s->getY()+scalpel::omnis::controls::localRotaryY-scalpel::omnis::controls::rotaryCentreY)>.001f||s->getWidth()!=168)return fail(__LINE__);
                     auto im=s->createComponentSnapshot(s->getLocalBounds());if(!im.isValid())return fail(__LINE__);
                 }
                 if(auto* b=dynamic_cast<juce::Button*>(c);b&&b->isVisible()&&b->getY()>=538){
-                    if(b->getWidth()!=146||b->getHeight()!=46)return fail(__LINE__);
+                    const bool power=b->getButtonText()=="ON"||b->getButtonText()=="OFF"||b->getButtonText()=="HEAT MAP"||b->getButtonText()=="FREEZE"||b->getButtonText()=="RESUME";
+                    if(b->getWidth()!=(power?143:154)||b->getHeight()!=(power?46:47))return fail(__LINE__);
                     auto im=b->createComponentSnapshot(b->getLocalBounds());
                     for(int y=0;y<im.getHeight();++y)for(int x=0;x<im.getWidth();++x){auto col=im.getPixelAt(x,y);if(col.getRed()>col.getGreen()+18||col.getGreen()>col.getRed()+18)return fail(__LINE__);}
                 }

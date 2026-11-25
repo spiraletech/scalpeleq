@@ -5,6 +5,8 @@
 int main(){
     using namespace scalpel::omnis;
     const auto check=[](bool b){if(!b){std::cerr<<"OMNIS model regression\n";std::exit(1);}};
+    check(std::abs(RotaryGeometry::outer-61.95f)<.0001f&&std::abs(RotaryGeometry::inner-51.45f)<.0001f);
+    check(std::abs(RotaryGeometry::pointerOuter-63.f)<.0001f&&RotaryGeometry::segments==33);
     check(litSegments(0)==0&&litSegments(.5)==17&&litSegments(1)==33);
     check(std::abs(std::cos(angle(0))+std::sqrt(.5))<1e-12);
     check(std::abs(std::sin(angle(.5))+1)<1e-12);

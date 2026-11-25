@@ -10,7 +10,7 @@ inline bool verifyScalpelOmnisNative(){
     auto p=std::make_unique<PRISMVSTAudioProcessor>();p->prepareToPlay(48000,512);
     auto set=[&](const juce::String& id,float value){auto* v=p->apvts.getParameter(id);if(!v)return false;v->setValueNotifyingHost(v->convertTo0to1(value));return true;};
     const auto now=juce::Time::getMillisecondCounterHiRes();
-    std::unique_ptr<juce::AudioProcessorEditor> e(p->createEditor());e->setSize(1344,756);e->addToDesktop(0);e->setVisible(true);pump(60);
+    std::unique_ptr<juce::AudioProcessorEditor> e(p->createEditor());e->setSize(1344,786);e->addToDesktop(0);e->setVisible(true);pump(60);
     std::ofstream log("omnis-native-evidence.txt");
     log<<"Platform="<<juce::SystemStats::getOperatingSystemName()<<"\nFont="<<scalpel::omnis::face()<<"\nHeaderFont="<<scalpel::omnis::face(true)<<"\nEditorInitAndFirstPumpMs="<<juce::Time::getMillisecondCounterHiRes()-now<<'\n';
     auto button=[&](const juce::String& label)->juce::Button*{for(auto* c:e->getChildren())if(auto* b=dynamic_cast<juce::Button*>(c);b&&b->getButtonText()==label)return b;return nullptr;};
@@ -36,9 +36,9 @@ inline bool verifyScalpelOmnisNative(){
     // Live APVTS restoration/automation feeds the existing attachments.
     for(const auto* mode:{"BAND MODE","CARVE","ANALYZE"}){
         if(!click(mode))return false;pump(40);
-        if(!save(e->createComponentSnapshot(e->getLocalBounds()),"omnis-"+juce::String(mode).replaceCharacter(' ','-')+"-1344x756.png"))return false;
+        if(!save(e->createComponentSnapshot(e->getLocalBounds()),"omnis-"+juce::String(mode).replaceCharacter(' ','-')+"-1344x786.png"))return false;
         for(auto* child:e->getChildren())if(auto* s=dynamic_cast<juce::Slider*>(child);s&&s->isVisible()){
-            const auto r=s->getBounds();if(r.getY()+65!=619||r.getWidth()!=168)return false;
+            const auto r=s->getBounds();if(std::abs(r.getY()+scalpel::omnis::controls::localRotaryY-scalpel::omnis::controls::rotaryCentreY)>.001f||r.getWidth()!=168)return false;
             const auto before=s->getValue();s->setValue(s->getMinimum(),juce::sendNotificationSync);
             if(!save(s->createComponentSnapshot(s->getLocalBounds()),"omnis-rotary-"+juce::String(r.getX())+"-"+juce::String(mode).replaceCharacter(' ','-')+"-min.png"))return false;
             s->setValue(s->getMaximum(),juce::sendNotificationSync);

@@ -62,7 +62,7 @@ inline bool captureScalpelModule(const juce::String& modulePath){
     } display;
     std::unique_ptr<juce::AudioProcessorEditor> editor(plugin->createEditorIfNeeded());
     if(!editor){std::cerr<<"MODULE CAPTURE: VST3 has no editor\n";return false;}
-    editor->setSize(1344,756);editor->addToDesktop(0);editor->setTopLeftPosition(30,30);editor->setVisible(true);pump(300);
+    editor->setSize(1344,786);editor->addToDesktop(0);editor->setTopLeftPosition(30,30);editor->setVisible(true);pump(300);
     auto* peer=editor->getPeer();if(!peer)return false;
     const auto window=(HWND)peer->getNativeHandle();SetForegroundWindow(window);pump(120);
     const auto click=[&](double x,double y){
@@ -78,7 +78,7 @@ inline bool captureScalpelModule(const juce::String& modulePath){
                            juce::Point<int> cursor=juce::Point<int>{110,45}){
         RECT r{};GetClientRect(window,&r);POINT origin{0,0};ClientToScreen(window,&origin);
         const int width=r.right-r.left,height=r.bottom-r.top;
-        if(width!=1344||height!=756){std::cerr<<"MODULE CAPTURE: native client size "<<width<<'x'<<height<<'\n';return false;}
+        if(width!=1344||height!=786){std::cerr<<"MODULE CAPTURE: native client size "<<width<<'x'<<height<<'\n';return false;}
         SetCursorPos(origin.x+cursor.x,origin.y+cursor.y);pump(65);
         HDC screen=GetDC(nullptr),memory=CreateCompatibleDC(screen);void* bytes=nullptr;
         BITMAPINFO info{};info.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);
@@ -106,7 +106,7 @@ inline bool captureScalpelModule(const juce::String& modulePath){
         // material. Require substantial visible edge/text detail inside BAND7
         // so a blank or clipped hosted HWND still fails deterministically.
         int bandDetail=0;
-        const scalpel::omnis::Layout layout(1344,756);const float c01Scale=layout.scale*1280.f/1120.f;
+        const scalpel::omnis::Layout layout(1344,786);const float c01Scale=layout.scale*1280.f/1120.f;
         const auto key=scalpel::reference::band(6).toFloat().transformedBy(juce::AffineTransform::scale(c01Scale).translated(layout.ox,layout.oy+111*layout.scale-100.5f*c01Scale)).toNearestInt().reduced(6);
         for(int y=key.getY();y<key.getBottom();++y)for(int x=key.getX();x<key.getRight();++x){
             const auto c=image.getPixelAt(x,y);
@@ -123,10 +123,10 @@ inline bool captureScalpelModule(const juce::String& modulePath){
     const auto hitBand=[&](int i){const auto c=scalpel::reference::band(i).getCentre().toFloat();return click(c.x*1280.f/1120.f,(c.y-100.5f)*1280.f/1120.f+111.f);};
     const auto hit=[&](juce::Rectangle<int> box){return click(box.getCentreX(),box.getCentreY());};
     using namespace scalpel::reference;
-    bool ok=hitBand(2)&&hit(tab(1))&&hit(carveSlot(3))&&capture("surgery-ui-VST3-CARVE-1344x756.png");
+    bool ok=hitBand(2)&&hit(tab(1))&&hit(carveSlot(3))&&capture("surgery-ui-VST3-CARVE-1344x786.png");
     ok=ok&&hit(switchBounds(false))&&capture("surgery-ui-VST3-CARVE-ON.png");
     ok=ok&&hit(switchBounds(true))&&capture("surgery-ui-VST3-CARVE-OFF.png");
-    ok=ok&&hit(tab(0))&&capture("surgery-ui-VST3-BAND-1344x756.png");
+    ok=ok&&hit(tab(0))&&capture("surgery-ui-VST3-BAND-1344x786.png");
     ok=ok&&hit(switchBounds(false))&&capture("surgery-ui-VST3-BAND-ON.png");
     ok=ok&&hit(switchBounds(true))&&capture("surgery-ui-VST3-BAND-OFF.png");
     // Reference BAND fixture: native client pixels, BAND1/ON, digital silence.
@@ -153,7 +153,7 @@ inline bool captureScalpelModule(const juce::String& modulePath){
     ok=ok&&capture("scalpel-VST3-10842-UNIFIED-GRAPH.png",hover);
     ok=ok&&setText("ROOT 1 ROOT Gain","0")&&setText("BAND 1 Dynamics Mode","Off")
         &&setText("BAND 1 Comp Calibration","0");
-    ok=ok&&hit(tab(3))&&capture("surgery-ui-VST3-ANALYZE-1344x756.png");
+    ok=ok&&hit(tab(3))&&capture("surgery-ui-VST3-ANALYZE-1344x786.png");
     // Actual compiled pointer/readout calibration. These are live host values,
     // not artwork or replacement waveforms. Restore the capture fixture below.
     ok=ok&&hitBand(2)&&hit(tab(0));
@@ -170,9 +170,9 @@ inline bool captureScalpelModule(const juce::String& modulePath){
     ok=ok&&setText("CARVE 3/4 Q","0.300");
     std::ofstream evidence("surgery-vst3-capture.csv");
     evidence<<"version,"<<types[0]->version<<"\n";
-    evidence<<"module,"<<modulePath<<"\neditor,1344x756\nfrequency,"<<parameter("CARVE 3/4 Frequency")->getCurrentValueAsText()<<"\nq,"<<parameter("CARVE 3/4 Q")->getCurrentValueAsText()<<"\n";
+    evidence<<"module,"<<modulePath<<"\neditor,1344x786\nfrequency,"<<parameter("CARVE 3/4 Frequency")->getCurrentValueAsText()<<"\nq,"<<parameter("CARVE 3/4 Q")->getCurrentValueAsText()<<"\n";
     editor->setVisible(false);editor->removeFromDesktop();editor.reset();plugin->releaseResources();
-    if(ok)std::cout<<"MODULE CAPTURE: built VST3 loaded in JUCE host; native CARVE/BAND/ANALYZE captured at 1344x756; fixture preserved\n";
+    if(ok)std::cout<<"MODULE CAPTURE: built VST3 loaded in JUCE host; native CARVE/BAND/ANALYZE captured at 1344x786; fixture preserved\n";
     return ok;
 }
 #endif
